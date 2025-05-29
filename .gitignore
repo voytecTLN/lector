@@ -1,0 +1,19 @@
+# Laravel
+/vendor
+/node_modules
+/public/build
+/storage/*.key
+.env
+.env.*
+
+# TypeScript
+*.tsbuildinfo
+
+# Docker & OS
+.docker/
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

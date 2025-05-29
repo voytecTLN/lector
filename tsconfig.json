@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020", "DOM"],
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["resources/ts/*"],
+      "@components/*": ["resources/ts/components/*"],
+      "@services/*": ["resources/ts/services/*"],
+      "@types/*": ["resources/ts/types/*"]
+    }
+  },
+  "include": ["resources/ts/**/*"],
+  "exclude": ["node_modules", "vendor"]
+}
