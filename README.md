@@ -1,8 +1,3 @@
-Masz rację! Artifact nie został zaktualizowany, ponieważ pierwotnie nie był plikiem README.md, tylko skryptem bash.
-
-Oto zaktualizowany README.md do skopiowania:
-
-```markdown
 # 🎯 Platforma Lektorów
 
 System zarządzania lekcjami języków obcych z TypeScript + Laravel.
@@ -142,5 +137,3 @@ docker-compose exec app rm -rf storage/framework/cache/*
 docker-compose exec app rm -rf bootstrap/cache/*
 ```
 ```
-
-Skopiuj to i zastąp zawartość pliku `README.md` w swoim projekcie! 📝
