@@ -21,6 +21,8 @@ return [
             Illuminate\Database\DatabaseServiceProvider::class,  // dla DB
             Illuminate\Translation\TranslationServiceProvider::class,  // dla lokalizacji
             Illuminate\Validation\ValidationServiceProvider::class,  // dla walidacji
+            Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
+            Laravel\Sanctum\SanctumServiceProvider::class,
             App\Providers\RouteServiceProvider::class,
     ],
 //     'providers' => [

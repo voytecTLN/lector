@@ -1,4 +1,4 @@
-.PHONY: help setup start stop logs shell npm build
+.PHONY: help setup start stop logs shell npm build migrate artisan
 
 help:
 	@echo "Platforma Lektorów - Development Commands"
@@ -35,3 +35,18 @@ npm:
 
 build:
 	docker-compose exec vite npm run build
+
+migrate:
+ 	docker-compose exec app php artisan migrate
+
+artisan:
+ 	docker-compose exec app php artisan $(CMD)
+
+# migration:
+# 	docker-compose exec app php artisan make:migration $(NAME)
+#
+# model:
+# 	docker-compose exec app php artisan make:model $(NAME)
+#
+# controller:
+# 	docker-compose exec app php artisan make:controller $(NAME)
