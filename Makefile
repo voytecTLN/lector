@@ -12,9 +12,9 @@ help:
 
 setup:
 	docker-compose up -d --build
-	sleep 10
+	sleep 15
 	docker-compose exec app composer install
-	docker-compose exec app php artisan key:generate
+	docker-compose exec app cp .env.example .env
 	docker-compose exec vite npm install
 	@echo "✅ Ready at http://localhost:8000"
 

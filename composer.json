@@ -5,8 +5,6 @@
     "require": {
         "php": "^8.2",
         "laravel/framework": "^10.0",
-        "laravel/sanctum": "^3.0",
-        "spatie/laravel-permission": "^5.0",
         "intervention/image": "^2.7",
         "maatwebsite/excel": "^3.1",
         "guzzlehttp/guzzle": "^7.0"
