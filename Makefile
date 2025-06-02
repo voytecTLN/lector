@@ -37,10 +37,10 @@ build:
 	docker-compose exec vite npm run build
 
 migrate:
- 	docker-compose exec app php artisan migrate
+	docker-compose exec app php artisan migrate
 
 artisan:
- 	docker-compose exec app php artisan $(CMD)
+	docker-compose exec app php artisan $(CMD)
 
 # migration:
 # 	docker-compose exec app php artisan make:migration $(NAME)

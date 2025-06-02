@@ -1,111 +1,13 @@
+/* Import Bootstrap and components */
 @import 'bootstrap/dist/css/bootstrap.min.css';
-
-:root {
-  /* Platforma Lektorów Brand Colors */
-  --primary: #e91e63;
-  --primary-hover: #c2185b;
-  --primary-light: #f8bbd9;
-  --secondary: #ff6b35;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --info: #3b82f6;
-
-  /* Layout & Effects */
-  --border-radius: 0.5rem;
-  --shadow: 0 1px 3px rgba(0,0,0,0.1);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
-  --transition: all 0.3s ease;
-}
-
-/* Enhanced Buttons */
-.btn {
-  border-radius: var(--border-radius);
-  transition: var(--transition);
-  font-weight: 500;
-}
-
-.btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-lg);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  border: none;
-}
-
-/* Cards */
-.card {
-  border: none;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  transition: var(--transition);
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-/* Form Controls */
-.form-control:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 0.2rem rgba(233, 30, 99, 0.25);
-}
-
-/* Notifications */
-.notification-toast {
-  min-width: 300px;
-  margin-bottom: 1rem;
-  animation: slideInRight 0.3s ease;
-}
-
-@keyframes slideInRight {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-/* Loading States */
-.loading {
-  opacity: 0.6;
-  pointer-events: none;
-  position: relative;
-}
-
-.loading::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 20px;
-  height: 20px;
-  margin: -10px 0 0 -10px;
-  border: 2px solid transparent;
-  border-top: 2px solid var(--primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Status Badges */
-.status-active { background-color: var(--success) !important; }
-.status-inactive { background-color: var(--warning) !important; }
-.status-blocked { background-color: var(--danger) !important; }
-
-/* Utility Classes */
-.text-gradient {
-  background: linear-gradient(45deg, var(--primary), var(--info));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.fade-in { animation: fadeIn 0.5s ease; }
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@import './components/variables.css';
+@import './components/base.css';
+@import './components/header.css';
+@import './components/hero.css';
+@import './components/features.css';
+@import './components/lecturers.css';
+@import './components/about.css';
+@import './components/footer.css';
+@import './components/utilities.css';
+@import './components/animations.css';
+@import './components/responsive.css';
