@@ -1,13 +1,13 @@
 <?php
 
 return [
-    'name' => 'Platforma Lektorów',
-    'env' => 'local',
-    'debug' => true,
-    'url' => 'http://localhost',
+    'name' => env('APP_NAME', 'Platforma Lektorów'),
+    'env' => env('APP_ENV', 'production'),
+    'debug' => (bool) env('APP_DEBUG', false),
+    'url' => env('APP_URL', 'http://localhost'),
     'timezone' => 'Europe/Warsaw',
     'locale' => 'pl',
-    'key' => 'base64:YOUR_APP_KEY_HERE',
+    'key' => env('APP_KEY'),
     'cipher' => 'AES-256-CBC',
 
     'providers' => [

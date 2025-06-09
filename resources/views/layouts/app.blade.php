@@ -201,8 +201,8 @@
                 <div class="footer-section">
                     <h3>Informacje</h3>
                     <ul class="footer-links">
-                        <li><a href="{{ route('terms') }}">Regulamin</a></li>
-                        <li><a href="{{ route('privacy') }}">Polityka prywatności</a></li>
+                        <li><a href="#terms">Regulamin</a></li>
+                        <li><a href="#policy">Polityka prywatności</a></li>
                         <li><a href="#pomoc">Pomoc</a></li>
                         <li><a href="#faq">FAQ</a></li>
                     </ul>
@@ -407,4 +407,3 @@
             }
         });
     </script>
-@endsection
