@@ -4,6 +4,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\StudentProfile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -151,5 +152,55 @@ class StudentService
         ]);
 
         return $user->fresh('studentProfile');
+    }
+
+    /**
+     * Search students by name or email
+     */
+    public function searchStudents(string $query)
+    {
+        return User::students()
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'like', '%' . $query . '%')
+                    ->orWhere('email', 'like', '%' . $query . '%');
+            })
+            ->limit(10)
+            ->get();
+    }
+
+    /**
+     * Bulk update student status
+     */
+    public function bulkUpdateStatus(array $ids, string $status): void
+    {
+        User::students()
+            ->whereIn('id', $ids)
+            ->update(['status' => $status]);
+    }
+
+    /**
+     * Get simple statistics for students
+     */
+    public function getStudentStats(): array
+    {
+        $total = User::students()->count();
+        $active = User::students()->where('status', User::STATUS_ACTIVE)->count();
+        $newThisMonth = User::students()
+            ->where('created_at', '>=', now()->subMonth())
+            ->count();
+
+        $byLanguage = [];
+        foreach (StudentProfile::all('learning_languages') as $profile) {
+            foreach ($profile->learning_languages as $lang) {
+                $byLanguage[$lang] = ($byLanguage[$lang] ?? 0) + 1;
+            }
+        }
+
+        return [
+            'total' => $total,
+            'active' => $active,
+            'new_this_month' => $newThisMonth,
+            'by_language' => $byLanguage,
+        ];
     }
 }

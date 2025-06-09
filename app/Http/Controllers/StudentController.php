@@ -105,4 +105,65 @@ class StudentController extends Controller
             ], 500);
         }
     }
+
+    public function updateLearningGoals(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'goals' => 'required|array',
+        ]);
+
+        try {
+            $student = $this->studentService->updateLearningGoals($id, $data['goals']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $student,
+                'message' => 'Cele nauki zostały zaktualizowane',
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Błąd podczas aktualizacji celów nauki',
+            ], 500);
+        }
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        $query = $request->input('q', '');
+
+        $students = $this->studentService->searchStudents($query);
+
+        return response()->json([
+            'success' => true,
+            'data' => $students,
+        ]);
+    }
+
+    public function bulkUpdateStatus(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'integer',
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        $this->studentService->bulkUpdateStatus($data['student_ids'], $data['status']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status został zaktualizowany',
+        ]);
+    }
+
+    public function getStats(): JsonResponse
+    {
+        $stats = $this->studentService->getStudentStats();
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats,
+        ]);
+    }
 }
