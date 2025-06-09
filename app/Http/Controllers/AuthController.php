@@ -1,10 +1,335 @@
 <?php
+// app/Http/Controllers/AuthController.php
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\PasswordResetRequest;
+use App\Http\Requests\NewPasswordRequest;
+use App\Models\User;
+use App\Services\AuthService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    //
+    public function __construct(
+        private AuthService $authService
+    ) {}
+
+    /**
+     * Handle user login
+     */
+    public function login(LoginRequest $request): JsonResponse
+    {
+        $credentials = $request->validated();
+
+        // Rate limiting
+        $key = Str::lower($request->input('email')) . '|' . $request->ip();
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = RateLimiter::availableIn($key);
+            throw ValidationException::withMessages([
+                'email' => "Zbyt wiele prób logowania. Spróbuj ponownie za {$seconds} sekund."
+            ]);
+        }
+
+        try {
+            $result = $this->authService->login($credentials, $request->ip());
+
+            RateLimiter::clear($key);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Zalogowano pomyślnie',
+                'data' => [
+                    'user' => $result['user'],
+                    'token' => $result['token'],
+                    'permissions' => $this->getUserPermissions($result['user'])
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            RateLimiter::hit($key, 300); // 5 minutes penalty
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 401);
+        }
+    }
+
+    /**
+     * Handle user registration
+     */
+    public function register(RegisterRequest $request): JsonResponse
+    {
+        try {
+            $userData = $request->validated();
+            $result = $this->authService->register($userData, $request->ip());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Konto zostało utworzone. Sprawdź email w celu weryfikacji.',
+                'data' => [
+                    'user' => $result['user'],
+                    'token' => $result['token'],
+                    'requires_verification' => true
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Handle user logout
+     */
+    public function logout(Request $request): JsonResponse
+    {
+        try {
+            $this->authService->logout($request->user());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Wylogowano pomyślnie'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Błąd podczas wylogowywania'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get current user information
+     */
+    public function me(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => $user->load(['studentProfile', 'tutorProfile']),
+                'permissions' => $this->getUserPermissions($user)
+            ]
+        ]);
+    }
+
+    /**
+     * Send password reset email
+     */
+    public function forgotPassword(PasswordResetRequest $request): JsonResponse
+    {
+        $email = $request->validated()['email'];
+
+        // Rate limiting for password reset
+        $key = 'password-reset:' . $email;
+
+        if (RateLimiter::tooManyAttempts($key, 3)) {
+            $seconds = RateLimiter::availableIn($key);
+            return response()->json([
+                'success' => false,
+                'message' => "Zbyt wiele prób resetowania hasła. Spróbuj ponownie za {$seconds} sekund."
+            ], 429);
+        }
+
+        try {
+            $this->authService->sendPasswordResetEmail($email);
+
+            RateLimiter::hit($key, 3600); // 1 hour
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Link do resetowania hasła został wysłany na podany adres email.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Reset password with token
+     */
+    public function resetPassword(NewPasswordRequest $request): JsonResponse
+    {
+        try {
+            $data = $request->validated();
+            $this->authService->resetPassword($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Hasło zostało zmienione pomyślnie.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Verify email address
+     */
+    public function verifyEmail(Request $request): JsonResponse
+    {
+        $token = $request->query('token');
+
+        if (!$token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nieprawidłowy token weryfikacyjny.'
+            ], 400);
+        }
+
+        try {
+            $this->authService->verifyEmail($token);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email został zweryfikowany pomyślnie.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Resend email verification
+     */
+    public function resendVerification(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->isVerified()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email jest już zweryfikowany.'
+            ], 400);
+        }
+
+        try {
+            $this->authService->resendVerificationEmail($user);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email weryfikacyjny został wysłany ponownie.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Błąd podczas wysyłania emaila weryfikacyjnego.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Change password for authenticated user
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Aktualne hasło jest nieprawidłowe.'
+            ], 400);
+        }
+
+        try {
+            $user->update([
+                'password' => Hash::make($request->new_password)
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Hasło zostało zmienione pomyślnie.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Błąd podczas zmiany hasła.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get user permissions based on role
+     */
+    private function getUserPermissions(User $user): array
+    {
+        $permissions = [];
+
+        switch ($user->role) {
+            case User::ROLE_ADMIN:
+                $permissions = [
+                    'manage_users',
+                    'manage_content',
+                    'manage_lessons',
+                    'view_analytics',
+                    'system_settings',
+                    'can_teach',
+                    'can_learn'
+                ];
+                break;
+
+            case User::ROLE_MODERATOR:
+                $permissions = [
+                    'manage_users',
+                    'manage_content',
+                    'view_analytics'
+                ];
+                break;
+
+            case User::ROLE_TUTOR:
+                $permissions = [
+                    'can_teach',
+                    'manage_own_lessons',
+                    'view_own_analytics'
+                ];
+                break;
+
+            case User::ROLE_STUDENT:
+                $permissions = [
+                    'can_learn',
+                    'book_lessons',
+                    'view_own_progress'
+                ];
+                break;
+        }
+
+        return $permissions;
+    }
 }

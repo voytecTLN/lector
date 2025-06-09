@@ -1,5 +1,5 @@
-// app/Http/Requests/CreateStudentRequest.php
 <?php
+// app/Http/Requests/CreateStudentRequest.php
 
 namespace App\Http\Requests;
 

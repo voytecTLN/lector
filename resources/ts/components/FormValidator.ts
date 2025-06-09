@@ -1,3 +1,5 @@
+// resources/ts/components/FormValidator.ts
+
 export class FormValidator {
     private errors: Record<string, string[]> = {}
 

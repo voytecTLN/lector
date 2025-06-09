@@ -1,7 +1,8 @@
+{{-- resources/views/layouts/app.blade.php - Updated with Authentication --}}
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
 <head>
-    <meta charset="utf-8">
+    <meta charset="uatf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -26,12 +27,87 @@
                 <li><a href="{{ route('home') }}#lecturers">Lektorzy</a></li>
                 <li><a href="{{ route('home') }}#about">O nas</a></li>
                 <li><a href="#contact">Kontakt</a></li>
+                
+                @auth
+                    <!-- Authenticated User Menu -->
+                    @if(auth()->user()->isAdmin())
+                        <li><a href="{{ route('admin.dashboard') }}">Panel Admin</a></li>
+                    @elseif(auth()->user()->isModerator())
+                        <li><a href="{{ route('moderator.dashboard') }}">Panel Moderatora</a></li>
+                    @elseif(auth()->user()->isTutor())
+                        <li><a href="{{ route('tutor.dashboard') }}">Panel Lektora</a></li>
+                    @elseif(auth()->user()->isStudent())
+                        <li><a href="{{ route('student.dashboard') }}">Panel Ucznia</a></li>
+                    @endif
+                @endauth
             </ul>
+            
             <div class="nav-actions">
-                <a href="#login" class="login-btn">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Zaloguj się
-                </a>
+                @guest
+                    <!-- Guest Navigation -->
+                    <a href="#login" class="login-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Zaloguj się
+                    </a>
+                @else
+                    <!-- Authenticated User Navigation -->
+                    <div class="user-menu" style="display: none;">
+                        <div class="user-dropdown">
+                            <button class="user-dropdown-toggle">
+                                <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="user-avatar">
+                                <span class="user-name">{{ auth()->user()->name }}</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="user-dropdown-menu">
+                                <div class="user-info">
+                                    <div class="user-name">{{ auth()->user()->name }}</div>
+                                    <div class="user-role">{{ ucfirst(auth()->user()->role) }}</div>
+                                    <div class="user-email">{{ auth()->user()->email }}</div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a href="{{ route('profile.edit') }}" class="dropdown-item">
+                                    <i class="fas fa-user"></i>
+                                    Profil
+                                </a>
+                                @if(auth()->user()->isAdmin())
+                                    <a href="{{ route('admin.dashboard') }}" class="dropdown-item">
+                                        <i class="fas fa-tachometer-alt"></i>
+                                        Panel Admin
+                                    </a>
+                                @elseif(auth()->user()->isModerator())
+                                    <a href="{{ route('moderator.dashboard') }}" class="dropdown-item">
+                                        <i class="fas fa-shield-alt"></i>
+                                        Panel Moderatora
+                                    </a>
+                                @elseif(auth()->user()->isTutor())
+                                    <a href="{{ route('tutor.dashboard') }}" class="dropdown-item">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                        Panel Lektora
+                                    </a>
+                                    <a href="{{ route('tutor.lessons') }}" class="dropdown-item">
+                                        <i class="fas fa-calendar"></i>
+                                        Moje lekcje
+                                    </a>
+                                @elseif(auth()->user()->isStudent())
+                                    <a href="{{ route('student.dashboard') }}" class="dropdown-item">
+                                        <i class="fas fa-graduation-cap"></i>
+                                        Panel Ucznia
+                                    </a>
+                                    <a href="{{ route('student.lessons') }}" class="dropdown-item">
+                                        <i class="fas fa-book"></i>
+                                        Moje lekcje
+                                    </a>
+                                @endif
+                                <div class="dropdown-divider"></div>
+                                <button class="dropdown-item logout-btn" style="display: none;">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Wyloguj się
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endguest
+                
                 <button class="mobile-menu-btn" aria-label="Menu">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -45,13 +121,50 @@
                 <li><a href="{{ route('home') }}#lecturers">Lektorzy</a></li>
                 <li><a href="{{ route('home') }}#about">O nas</a></li>
                 <li><a href="#contact">Kontakt</a></li>
-                <li><a href="#login" class="mobile-login-btn">Zaloguj się</a></li>
+                
+                @auth
+                    @if(auth()->user()->isAdmin())
+                        <li><a href="{{ route('admin.dashboard') }}">Panel Admin</a></li>
+                    @elseif(auth()->user()->isModerator())
+                        <li><a href="{{ route('moderator.dashboard') }}">Panel Moderatora</a></li>
+                    @elseif(auth()->user()->isTutor())
+                        <li><a href="{{ route('tutor.dashboard') }}">Panel Lektora</a></li>
+                        <li><a href="{{ route('tutor.lessons') }}">Moje lekcje</a></li>
+                    @elseif(auth()->user()->isStudent())
+                        <li><a href="{{ route('student.dashboard') }}">Panel Ucznia</a></li>
+                        <li><a href="{{ route('student.lessons') }}">Moje lekcje</a></li>
+                    @endif
+                    <li><a href="{{ route('profile.edit') }}">Profil</a></li>
+                    <li><button class="mobile-logout-btn logout-btn" style="display: none;">Wyloguj się</button></li>
+                @else
+                    <li><a href="#login" class="mobile-login-btn">Zaloguj się</a></li>
+                @endauth
             </ul>
         </div>
     </header>
 
     <!-- Main Content -->
     <main>
+        @if(!auth()->check() || !auth()->user()->isVerified())
+            @if(auth()->check() && !auth()->user()->isVerified())
+                <!-- Email Verification Notice -->
+                <div class="verification-notice">
+                    <div class="container">
+                        <div class="verification-content">
+                            <i class="fas fa-envelope"></i>
+                            <div>
+                                <strong>Zweryfikuj swój adres email</strong>
+                                <p>Sprawdź swoją skrzynkę pocztową i kliknij w link weryfikacyjny, aby uzyskać pełny dostęp do platformy.</p>
+                            </div>
+                            <button id="resend-verification" class="btn btn-outline-primary">
+                                Wyślij ponownie
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        @endif
+
         @yield('content')
     </main>
 
@@ -88,8 +201,8 @@
                 <div class="footer-section">
                     <h3>Informacje</h3>
                     <ul class="footer-links">
-                        <li><a href="#regulamin">Regulamin</a></li>
-                        <li><a href="#polityka">Polityka prywatności</a></li>
+                        <li><a href="{{ route('terms') }}">Regulamin</a></li>
+                        <li><a href="{{ route('privacy') }}">Polityka prywatności</a></li>
                         <li><a href="#pomoc">Pomoc</a></li>
                         <li><a href="#faq">FAQ</a></li>
                     </ul>
@@ -108,5 +221,190 @@
     <button id="back-to-top" class="back-to-top" aria-label="Wróć na górę">
         <i class="fas fa-chevron-up"></i>
     </button>
-</body>
-</html>
+
+    <style>
+        /* User Menu Styles */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-dropdown-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .user-dropdown-toggle:hover {
+            background: var(--bg-secondary);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            min-width: 240px;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid #e2e8f0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        .user-dropdown:hover .user-dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .user-info {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .user-info .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .user-info .user-role {
+            color: var(--primary-pink);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .user-info .user-email {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+            color: var(--primary-pink);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 0.5rem 0;
+        }
+
+        /* Verification Notice */
+        .verification-notice {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            padding: 1rem 0;
+        }
+
+        .verification-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .verification-content i {
+            font-size: 2rem;
+            opacity: 0.9;
+        }
+
+        .verification-content div {
+            flex: 1;
+        }
+
+        .verification-content strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .verification-content p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+
+        .btn-outline-primary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-outline-primary:hover {
+            background: white;
+            color: #f59e0b;
+        }
+
+        @media (max-width: 768px) {
+            .verification-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .user-dropdown-menu {
+                right: -1rem;
+                left: -1rem;
+                min-width: auto;
+            }
+        }
+    </style>
+
+    <script>
+        // Handle email verification resend
+        document.addEventListener('DOMContentLoaded', function() {
+            const resendBtn = document.getElementById('resend-verification');
+            if (resendBtn) {
+                resendBtn.addEventListener('click', async function() {
+                    try {
+                        await authService.resendVerification();
+                        this.textContent = 'Wysłano!';
+                        this.disabled = true;
+                        setTimeout(() => {
+                            this.textContent = 'Wyślij ponownie';
+                            this.disabled = false;
+                        }, 30000); // 30 seconds cooldown
+                    } catch (error) {
+                        console.error('Resend verification error:', error);
+                    }
+                });
+            }
+        });
+    </script>
+@endsection

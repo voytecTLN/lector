@@ -1,5 +1,10 @@
+// resources/ts/main.ts - Updated with Authentication Integration
+
 import '../css/app.css'
 import { Homepage } from './pages/homepage'
+import { authService } from '@services/AuthService'
+import { authModal } from '@components/auth/AuthModal'
+import { routeGuard } from '@components/RouteGuard'
 
 // Custom event interfaces
 interface NotificationEventDetail {
@@ -11,6 +16,12 @@ interface ValidationErrorEventDetail {
   errors: Record<string, string[]>;
 }
 
+interface AuthChangeEventDetail {
+  type: 'login' | 'logout' | 'register';
+  user: any;
+  isAuthenticated: boolean;
+}
+
 class TutoringApp {
   private homepage: Homepage | null = null;
 
@@ -19,7 +30,10 @@ class TutoringApp {
     this.init()
   }
 
-  private init(): void {
+  private async init(): Promise<void> {
+    // Initialize authentication first
+    await this.initAuthentication();
+
     // Initialize homepage functionality
     this.initHomepage();
 
@@ -29,11 +43,30 @@ class TutoringApp {
     // Initialize notifications
     this.initNotifications();
 
-    // Initialize form validators (for future use)
-    // this.initFormValidators();
+    // Initialize route protection
+    this.initRouteProtection();
+  }
 
-    // Initialize authentication service (for future use)
-    // this.initAuthService();
+  private async initAuthentication(): Promise<void> {
+    // Try to get current user if token exists
+    if (authService.getToken()) {
+      try {
+        await authService.getCurrentUser();
+        console.log('User authenticated:', authService.getUser());
+      } catch (error) {
+        console.log('Token invalid, user logged out');
+        authService.logout();
+      }
+    }
+
+    // Listen for auth changes
+    document.addEventListener('auth:change', (e: Event) => {
+      const customEvent = e as CustomEvent<AuthChangeEventDetail>;
+      this.handleAuthChange(customEvent.detail);
+    });
+
+    // Update navigation based on auth state
+    this.updateNavigation();
   }
 
   private initHomepage(): void {
@@ -52,6 +85,18 @@ class TutoringApp {
     // Global click handlers
     document.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
+
+      // Handle login button clicks
+      if (target.matches('.login-btn') || target.closest('.login-btn')) {
+        e.preventDefault();
+        this.handleLoginClick();
+      }
+
+      // Handle logout button clicks
+      if (target.matches('.logout-btn') || target.closest('.logout-btn')) {
+        e.preventDefault();
+        this.handleLogoutClick();
+      }
 
       // Handle CTA button clicks
       if (target.matches('.btn[href^="#"]') || target.closest('.btn[href^="#"]')) {
@@ -73,12 +118,16 @@ class TutoringApp {
 
     // Global keyboard events
     document.addEventListener('keydown', (e) => {
-      // Escape key to close mobile menu
+      // Escape key to close mobile menu or auth modal
       if (e.key === 'Escape') {
         const mobileMenu = document.querySelector('.mobile-menu.active');
         if (mobileMenu) {
           const mobileMenuBtn = document.querySelector('.mobile-menu-btn') as HTMLElement;
           mobileMenuBtn?.click();
+        }
+
+        if (authModal.isVisible()) {
+          authModal.hide();
         }
       }
 
@@ -104,6 +153,212 @@ class TutoringApp {
       const { errors } = customEvent.detail;
       this.handleFormValidationErrors(errors);
     });
+  }
+
+  private initRouteProtection(): void {
+    // Check route access on page load
+    this.checkCurrentRouteAccess();
+
+    // Listen for navigation events (if using SPA routing)
+    window.addEventListener('popstate', () => {
+      this.checkCurrentRouteAccess();
+    });
+  }
+
+  private async checkCurrentRouteAccess(): Promise<void> {
+    const path = window.location.pathname;
+    const routeConfig = this.getRouteConfig(path);
+
+    if (routeConfig) {
+      const hasAccess = await routeGuard.checkAccess(routeConfig);
+      if (!hasAccess) {
+        // Access denied - routeGuard will handle redirection
+        return;
+      }
+    }
+  }
+
+  private getRouteConfig(path: string): any {
+    // Define route protection rules
+    const routes: Record<string, any> = {
+      '/admin': {
+        requiresAuth: true,
+        requiresVerification: true,
+        roles: ['admin']
+      },
+      '/admin/dashboard': {
+        requiresAuth: true,
+        requiresVerification: true,
+        roles: ['admin']
+      },
+      '/moderator/dashboard': {
+        requiresAuth: true,
+        requiresVerification: true,
+        roles: ['moderator', 'admin']
+      },
+      '/tutor/dashboard': {
+        requiresAuth: true,
+        requiresVerification: true,
+        roles: ['tutor', 'admin']
+      },
+      '/student/dashboard': {
+        requiresAuth: true,
+        requiresVerification: true,
+        roles: ['student', 'admin']
+      },
+      '/profile': {
+        requiresAuth: true,
+        requiresVerification: true
+      }
+    };
+
+    // Check for exact match first
+    if (routes[path]) {
+      return routes[path];
+    }
+
+    // Check for pattern matches
+    for (const [pattern, config] of Object.entries(routes)) {
+      if (path.startsWith(pattern)) {
+        return config;
+      }
+    }
+
+    return null;
+  }
+
+  private handleAuthChange(detail: AuthChangeEventDetail): void {
+    console.log('Auth state changed:', detail);
+
+    // Update navigation
+    this.updateNavigation();
+
+    // Handle redirections
+    if (detail.type === 'login') {
+      this.handleSuccessfulLogin(detail.user);
+    } else if (detail.type === 'logout') {
+      this.handleLogout();
+    }
+  }
+
+  private updateNavigation(): void {
+    const isAuthenticated = authService.isAuthenticated();
+    const user = authService.getUser();
+
+    // Update login/logout buttons
+    const loginButtons = document.querySelectorAll('.login-btn');
+    const logoutButtons = document.querySelectorAll('.logout-btn');
+    const userMenus = document.querySelectorAll('.user-menu');
+
+    if (isAuthenticated && user) {
+      // Hide login buttons
+      loginButtons.forEach(btn => {
+        (btn as HTMLElement).style.display = 'none';
+      });
+
+      // Show logout buttons and user menus
+      logoutButtons.forEach(btn => {
+        (btn as HTMLElement).style.display = 'inline-flex';
+      });
+
+      userMenus.forEach(menu => {
+        (menu as HTMLElement).style.display = 'block';
+        // Update user info in menu
+        const userName = menu.querySelector('.user-name');
+        const userRole = menu.querySelector('.user-role');
+        if (userName) userName.textContent = user.name;
+        if (userRole) userRole.textContent = this.getRoleDisplayName(user.role);
+      });
+
+    } else {
+      // Show login buttons
+      loginButtons.forEach(btn => {
+        (btn as HTMLElement).style.display = 'inline-flex';
+      });
+
+      // Hide logout buttons and user menus
+      logoutButtons.forEach(btn => {
+        (btn as HTMLElement).style.display = 'none';
+      });
+
+      userMenus.forEach(menu => {
+        (menu as HTMLElement).style.display = 'none';
+      });
+    }
+  }
+
+  private getRoleDisplayName(role: string): string {
+    const roleNames = {
+      'admin': 'Administrator',
+      'moderator': 'Moderator',
+      'tutor': 'Lektor',
+      'student': 'Student'
+    };
+    return roleNames[role as keyof typeof roleNames] || role;
+  }
+
+  private handleLoginClick(): void {
+    if (this.isHomepage()) {
+      // Show auth modal on homepage
+      authModal.show('login');
+    } else {
+      // Redirect to login page
+      window.location.href = '/login';
+    }
+  }
+
+  private async handleLogoutClick(): Promise<void> {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout on client side even if API fails
+      authService.logout();
+    }
+  }
+
+  private handleSuccessfulLogin(user: any): void {
+    // Close auth modal if open
+    if (authModal.isVisible()) {
+      authModal.hide();
+    }
+
+    // Redirect based on role (only if on auth pages)
+    const currentPath = window.location.pathname;
+    const authPages = ['/login', '/register', '/forgot-password'];
+
+    if (authPages.includes(currentPath) || currentPath === '/') {
+      let redirectUrl = '/';
+
+      switch (user.role) {
+        case 'admin':
+          redirectUrl = '/admin/dashboard';
+          break;
+        case 'moderator':
+          redirectUrl = '/moderator/dashboard';
+          break;
+        case 'tutor':
+          redirectUrl = '/tutor/dashboard';
+          break;
+        case 'student':
+          redirectUrl = '/student/dashboard';
+          break;
+      }
+
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 1000);
+    }
+  }
+
+  private handleLogout(): void {
+    // Redirect to homepage if on protected page
+    const currentPath = window.location.pathname;
+    const protectedPaths = ['/admin', '/moderator', '/tutor', '/student', '/profile'];
+
+    if (protectedPaths.some(path => currentPath.startsWith(path))) {
+      window.location.href = '/';
+    }
   }
 
   public showNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
@@ -173,6 +428,14 @@ class TutoringApp {
   public getHomepage(): Homepage | null {
     return this.homepage;
   }
+
+  public getAuthService(): typeof authService {
+    return authService;
+  }
+
+  public getAuthModal(): typeof authModal {
+    return authModal;
+  }
 }
 
 // Global error handling
@@ -200,3 +463,6 @@ document.addEventListener('DOMContentLoaded', () => {
     app.showNotification(type as any, message);
   }
 };
+
+(window as any).authService = authService;
+(window as any).authModal = authModal;
