@@ -1,3 +1,4 @@
+{{-- resources/views/welcome.blade.php - Zaktualizowana strona główna --}}
 @extends('layouts.app')
 
 @section('title', 'Nauka języków online')
@@ -10,14 +11,47 @@
             <h1 class="hero-title">Nauka języków online z najlepszymi lektorami</h1>
             <p class="hero-subtitle">Personalizowane lekcje, elastyczny harmonogram, sprawdzone metody nauczania. Odkryj nowy sposób na naukę języków obcych.</p>
             <div class="cta-buttons">
-                <a href="#lecturers" class="btn btn-primary">
-                    <i class="fas fa-search"></i>
-                    Zobacz lektorów
-                </a>
-                <a href="#about" class="btn btn-secondary">
-                    <i class="fas fa-info-circle"></i>
-                    Dowiedz się więcej
-                </a>
+                @guest
+                    <!-- Buttons for not logged in users -->
+                    <a href="{{ route('register') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i>
+                        Dołącz za darmo
+                    </a>
+                    <a href="#lecturers" class="btn btn-secondary">
+                        <i class="fas fa-search"></i>
+                        Zobacz lektorów
+                    </a>
+                @else
+                    <!-- Buttons for logged in users -->
+                    @if(auth()->user()->isStudent())
+                        <a href="{{ route('student.tutors') }}" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                            Znajdź lektora
+                        </a>
+                        <a href="{{ route('student.dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-tachometer-alt"></i>
+                            Mój panel
+                        </a>
+                    @elseif(auth()->user()->isTutor())
+                        <a href="{{ route('tutor.dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-tachometer-alt"></i>
+                            Panel lektora
+                        </a>
+                        <a href="{{ route('tutor.lessons') }}" class="btn btn-secondary">
+                            <i class="fas fa-calendar"></i>
+                            Moje lekcje
+                        </a>
+                    @else
+                        <a href="{{ route(auth()->user()->role . '.dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-tachometer-alt"></i>
+                            Mój panel
+                        </a>
+                        <a href="#about" class="btn btn-secondary">
+                            <i class="fas fa-info-circle"></i>
+                            Dowiedz się więcej
+                        </a>
+                    @endif
+                @endguest
             </div>
         </div>
     </div>
@@ -140,10 +174,66 @@
                 </div>
             </div>
         </div>
-        <div class="login-note">
-            <i class="fas fa-info-circle"></i>
-            <strong>Chcesz zarezerwować lekcję?</strong> Zaloguj się do swojego konta lub skontaktuj się z nami.
-        </div>
+
+        @guest
+            <!-- Call to action for guests -->
+            <div class="login-note">
+                <div class="cta-content">
+                    <i class="fas fa-rocket"></i>
+                    <div class="cta-text">
+                        <strong>Gotowy na rozpoczęcie przygody z językami?</strong>
+                        <p>Dołącz do tysięcy zadowolonych użytkowników i zacznij naukę już dziś!</p>
+                    </div>
+                    <div class="cta-buttons-inline">
+                        <a href="{{ route('register') }}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i>
+                            Utwórz konto
+                        </a>
+                        <a href="{{ route('login') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Mam już konto
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @else
+            <!-- Message for logged in users -->
+            <div class="login-note">
+                <div class="welcome-message">
+                    <i class="fas fa-heart"></i>
+                    <div class="welcome-text">
+                        <strong>Witaj ponownie, {{ auth()->user()->name }}!</strong>
+                        <p>
+                            @if(auth()->user()->isStudent())
+                                Gotowy na kolejną lekcję? Sprawdź dostępnych lektorów lub zarządzaj swoimi lekcjami.
+                            @elseif(auth()->user()->isTutor())
+                                Sprawdź swój harmonogram i zarządzaj lekcjami ze swoimi studentami.
+                            @else
+                                Witamy w panelu {{ $this->getRoleDisplayName(auth()->user()->role) }}.
+                            @endif
+                        </p>
+                    </div>
+                    <div class="welcome-buttons">
+                        @if(auth()->user()->isStudent())
+                            <a href="{{ route('student.dashboard') }}" class="btn btn-primary">
+                                <i class="fas fa-tachometer-alt"></i>
+                                Mój panel
+                            </a>
+                        @elseif(auth()->user()->isTutor())
+                            <a href="{{ route('tutor.dashboard') }}" class="btn btn-primary">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                Panel lektora
+                            </a>
+                        @else
+                            <a href="{{ route(auth()->user()->role . '.dashboard') }}" class="btn btn-primary">
+                                <i class="fas fa-tachometer-alt"></i>
+                                Przejdź do panelu
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endguest
     </div>
 </section>
 
@@ -155,6 +245,18 @@
                 <h2>O nas</h2>
                 <p>Jesteśmy platformą łączącą uczniów z najlepszymi lektorami języków obcych. Nasze rozwiązanie pozwala na skuteczną naukę z każdego miejsca na świecie.</p>
                 <p>Dzięki nowoczesnym technologiom i doświadczonym lektorom, zapewniamy najwyższą jakość nauczania dostosowaną do indywidualnych potrzeb każdego ucznia.</p>
+
+                @guest
+                    <!-- Encourage registration -->
+                    <div class="about-cta">
+                        <h3>Rozpocznij swoją podróż językową</h3>
+                        <p>Dołącz do naszej społeczności i odkryj nowy sposób nauki języków. Rejestracja jest bezpłatna!</p>
+                        <a href="{{ route('register') }}" class="btn btn-gradient">
+                            <i class="fas fa-rocket"></i>
+                            Rozpocznij za darmo
+                        </a>
+                    </div>
+                @endguest
             </div>
             <div class="col-md-6">
                 <h3>Kontakt</h3>
@@ -176,4 +278,172 @@
         </div>
     </div>
 </section>
+
+<!-- Additional Styles for enhanced welcome page -->
+<style>
+/* CTA Content Styles */
+.cta-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.cta-content i {
+    font-size: 3rem;
+    color: var(--primary-orange);
+    flex-shrink: 0;
+}
+
+.cta-text {
+    flex: 1;
+}
+
+.cta-text strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.cta-text p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.cta-buttons-inline {
+    display: flex;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+/* Welcome Message Styles */
+.welcome-message {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.welcome-message i {
+    font-size: 3rem;
+    color: var(--primary-pink);
+    flex-shrink: 0;
+}
+
+.welcome-text {
+    flex: 1;
+}
+
+.welcome-text strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.welcome-text p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.welcome-buttons {
+    flex-shrink: 0;
+}
+
+/* About CTA Styles */
+.about-cta {
+    background: var(--bg-secondary);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    margin-top: 2rem;
+    border-left: 4px solid var(--primary-pink);
+}
+
+.about-cta h3 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.about-cta p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .cta-content,
+    .welcome-message {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .cta-buttons-inline {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .cta-buttons-inline .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .hero .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .hero .cta-buttons .btn {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+/* Enhanced hero section for different user states */
+.hero.authenticated {
+    background: linear-gradient(135deg, #4ade80 0%, #059669 100%);
+}
+
+@auth
+    .hero {
+        background: linear-gradient(135deg, #4ade80 0%, #059669 100%);
+    }
+@endauth
+</style>
+
+@push('scripts')
+<script>
+// Helper function dla ról użytkowników w Blade templates
+function getRoleDisplayName(role) {
+    const roleNames = {
+        'admin': 'Administrator',
+        'moderator': 'Moderator',
+        'tutor': 'Lektor',
+        'student': 'Student'
+    };
+    return roleNames[role] || role;
+}
+
+// Enhanced CTA tracking for analytics
+document.addEventListener('DOMContentLoaded', function() {
+    // Track CTA button clicks
+    document.querySelectorAll('.cta-buttons a, .cta-buttons-inline a').forEach(button => {
+        button.addEventListener('click', function() {
+            const buttonText = this.textContent.trim();
+            const section = this.closest('section')?.id || 'unknown';
+
+            console.log('CTA clicked:', {
+                text: buttonText,
+                section: section,
+                href: this.getAttribute('href'),
+                authenticated: {{ auth()->check() ? 'true' : 'false' }}
+            });
+
+            // Here you could send analytics data to your tracking service
+        });
+    });
+});
+</script>
+@endpush
 @endsection

@@ -1,4 +1,4 @@
-// resources/ts/main.ts - Updated with Authentication Integration
+// resources/ts/main.ts - Zaktualizowany z ulepszoną obsługą autentykacji i dashboardów
 
 import '../css/app.css'
 import { Homepage } from './pages/homepage'
@@ -34,7 +34,7 @@ class TutoringApp {
     // Initialize authentication first
     await this.initAuthentication();
 
-    // Initialize homepage functionality
+    // Initialize homepage functionality (tylko na stronie głównej)
     this.initHomepage();
 
     // Initialize global event listeners
@@ -45,6 +45,9 @@ class TutoringApp {
 
     // Initialize route protection
     this.initRouteProtection();
+
+    // Initialize dashboard features if on dashboard page
+    this.initDashboardFeatures();
   }
 
   private async initAuthentication(): Promise<void> {
@@ -81,6 +84,11 @@ class TutoringApp {
     return document.querySelector('.hero') !== null;
   }
 
+  private isDashboard(): boolean {
+    // Check if we're on any dashboard page
+    return document.querySelector('.dashboard-container') !== null;
+  }
+
   private initGlobalEvents(): void {
     // Global click handlers
     document.addEventListener('click', (e) => {
@@ -90,6 +98,12 @@ class TutoringApp {
       if (target.matches('.login-btn') || target.closest('.login-btn')) {
         e.preventDefault();
         this.handleLoginClick();
+      }
+
+      // Handle register button clicks
+      if (target.matches('.register-btn') || target.closest('.register-btn')) {
+        e.preventDefault();
+        this.handleRegisterClick();
       }
 
       // Handle logout button clicks
@@ -165,6 +179,44 @@ class TutoringApp {
     });
   }
 
+  private initDashboardFeatures(): void {
+    // Initialize dashboard-specific features if on dashboard page
+    if (this.isDashboard()) {
+      // Load dashboard stats based on current path
+      const path = window.location.pathname;
+
+      if (path.includes('/admin/dashboard')) {
+        this.initAdminDashboard();
+      } else if (path.includes('/tutor/dashboard')) {
+        this.initTutorDashboard();
+      } else if (path.includes('/student/dashboard')) {
+        this.initStudentDashboard();
+      } else if (path.includes('/moderator/dashboard')) {
+        this.initModeratorDashboard();
+      }
+    }
+  }
+
+  private initAdminDashboard(): void {
+    console.log('Initializing admin dashboard...');
+    // Load admin-specific dashboard functionality
+  }
+
+  private initTutorDashboard(): void {
+    console.log('Initializing tutor dashboard...');
+    // Load tutor-specific dashboard functionality
+  }
+
+  private initStudentDashboard(): void {
+    console.log('Initializing student dashboard...');
+    // Load student-specific dashboard functionality
+  }
+
+  private initModeratorDashboard(): void {
+    console.log('Initializing moderator dashboard...');
+    // Load moderator-specific dashboard functionality
+  }
+
   private async checkCurrentRouteAccess(): Promise<void> {
     const path = window.location.pathname;
     const routeConfig = this.getRouteConfig(path);
@@ -234,8 +286,8 @@ class TutoringApp {
     this.updateNavigation();
 
     // Handle redirections
-    if (detail.type === 'login') {
-      this.handleSuccessfulLogin(detail.user);
+    if (detail.type === 'login' || detail.type === 'register') {
+      this.handleSuccessfulAuth(detail.user);
     } else if (detail.type === 'logout') {
       this.handleLogout();
     }
@@ -247,12 +299,14 @@ class TutoringApp {
 
     // Update login/logout buttons
     const loginButtons = document.querySelectorAll('.login-btn');
+    const registerButtons = document.querySelectorAll('.register-btn');
     const logoutButtons = document.querySelectorAll('.logout-btn');
     const userMenus = document.querySelectorAll('.user-menu');
+    const authButtons = document.querySelectorAll('.auth-buttons');
 
     if (isAuthenticated && user) {
-      // Hide login buttons
-      loginButtons.forEach(btn => {
+      // Hide auth buttons
+      authButtons.forEach(btn => {
         (btn as HTMLElement).style.display = 'none';
       });
 
@@ -271,9 +325,9 @@ class TutoringApp {
       });
 
     } else {
-      // Show login buttons
-      loginButtons.forEach(btn => {
-        (btn as HTMLElement).style.display = 'inline-flex';
+      // Show auth buttons
+      authButtons.forEach(btn => {
+        (btn as HTMLElement).style.display = 'flex';
       });
 
       // Hide logout buttons and user menus
@@ -307,6 +361,16 @@ class TutoringApp {
     }
   }
 
+  private handleRegisterClick(): void {
+    if (this.isHomepage()) {
+      // Show auth modal on homepage
+      authModal.show('register');
+    } else {
+      // Redirect to register page
+      window.location.href = '/register';
+    }
+  }
+
   private async handleLogoutClick(): Promise<void> {
     try {
       await authService.logout();
@@ -317,13 +381,13 @@ class TutoringApp {
     }
   }
 
-  private handleSuccessfulLogin(user: any): void {
+  private handleSuccessfulAuth(user: any): void {
     // Close auth modal if open
     if (authModal.isVisible()) {
       authModal.hide();
     }
 
-    // Redirect based on role (only if on auth pages)
+    // Redirect based on role (only if on auth pages or homepage)
     const currentPath = window.location.pathname;
     const authPages = ['/login', '/register', '/forgot-password'];
 
@@ -345,9 +409,12 @@ class TutoringApp {
           break;
       }
 
+      // Show success message before redirect
+      this.showNotification('success', `Witamy ${user.name}! Przekierowujemy...`);
+
       setTimeout(() => {
         window.location.href = redirectUrl;
-      }, 1000);
+      }, 1500);
     }
   }
 
@@ -395,9 +462,17 @@ class TutoringApp {
 
     container.appendChild(notification);
 
+    // Add entrance animation
+    setTimeout(() => {
+      notification.classList.add('show');
+    }, 10);
+
     // Auto remove after 5 seconds
     setTimeout(() => {
-      notification.remove();
+      notification.classList.remove('show');
+      setTimeout(() => {
+        notification.remove();
+      }, 300);
     }, 5000);
   }
 

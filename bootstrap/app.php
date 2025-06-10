@@ -1,4 +1,5 @@
 <?php
+// bootstrap/app.php - Poprawiona konfiguracja aplikacji Laravel
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -12,7 +13,24 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Web middleware
+        $middleware->web(append: [
+            \App\Http\Middleware\HandleInertiaRequests::class,
+        ]);
+
+        // API middleware
+        $middleware->api(prepend: [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        ]);
+
+        // Alias middleware
+        $middleware->alias([
+            'verified' => \App\Http\Middleware\VerifiedMiddleware::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'tutor' => \App\Http\Middleware\TutorMiddleware::class,
+            'student' => \App\Http\Middleware\StudentMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

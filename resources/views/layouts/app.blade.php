@@ -1,8 +1,8 @@
-{{-- resources/views/layouts/app.blade.php - Updated with Authentication --}}
+{{-- resources/views/layouts/app.blade.php - Zaktualizowany layout z systemem autentykacji --}}
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
 <head>
-    <meta charset="uatf-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -22,12 +22,13 @@
                 <i class="fas fa-graduation-cap"></i>
                 <a href="{{ route('home') }}">Platforma Lektorów</a>
             </div>
+
             <ul class="nav-links">
                 <li><a href="{{ route('home') }}#home">Start</a></li>
                 <li><a href="{{ route('home') }}#lecturers">Lektorzy</a></li>
                 <li><a href="{{ route('home') }}#about">O nas</a></li>
-                <li><a href="#contact">Kontakt</a></li>
-                
+                <li><a href="{{ route('contact') }}">Kontakt</a></li>
+
                 @auth
                     <!-- Authenticated User Menu -->
                     @if(auth()->user()->isAdmin())
@@ -41,17 +42,23 @@
                     @endif
                 @endauth
             </ul>
-            
+
             <div class="nav-actions">
                 @guest
-                    <!-- Guest Navigation -->
-                    <a href="#login" class="login-btn">
-                        <i class="fas fa-sign-in-alt"></i>
-                        Zaloguj się
-                    </a>
+                    <!-- Guest Navigation - dodane przyciski logowania i rejestracji -->
+                    <div class="auth-buttons">
+                        <a href="{{ route('login') }}" class="login-btn">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Zaloguj się
+                        </a>
+                        <a href="{{ route('register') }}" class="register-btn">
+                            <i class="fas fa-user-plus"></i>
+                            Dołącz do nas
+                        </a>
+                    </div>
                 @else
                     <!-- Authenticated User Navigation -->
-                    <div class="user-menu" style="display: none;">
+                    <div class="user-menu">
                         <div class="user-dropdown">
                             <button class="user-dropdown-toggle">
                                 <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="user-avatar">
@@ -61,7 +68,7 @@
                             <div class="user-dropdown-menu">
                                 <div class="user-info">
                                     <div class="user-name">{{ auth()->user()->name }}</div>
-                                    <div class="user-role">{{ ucfirst(auth()->user()->role) }}</div>
+                                    <div class="user-role">{{ $this->getRoleDisplayName(auth()->user()->role) }}</div>
                                     <div class="user-email">{{ auth()->user()->email }}</div>
                                 </div>
                                 <div class="dropdown-divider"></div>
@@ -99,7 +106,7 @@
                                     </a>
                                 @endif
                                 <div class="dropdown-divider"></div>
-                                <button class="dropdown-item logout-btn" style="display: none;">
+                                <button class="dropdown-item logout-btn">
                                     <i class="fas fa-sign-out-alt"></i>
                                     Wyloguj się
                                 </button>
@@ -107,7 +114,7 @@
                         </div>
                     </div>
                 @endguest
-                
+
                 <button class="mobile-menu-btn" aria-label="Menu">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -120,8 +127,8 @@
                 <li><a href="{{ route('home') }}#home">Start</a></li>
                 <li><a href="{{ route('home') }}#lecturers">Lektorzy</a></li>
                 <li><a href="{{ route('home') }}#about">O nas</a></li>
-                <li><a href="#contact">Kontakt</a></li>
-                
+                <li><a href="{{ route('contact') }}">Kontakt</a></li>
+
                 @auth
                     @if(auth()->user()->isAdmin())
                         <li><a href="{{ route('admin.dashboard') }}">Panel Admin</a></li>
@@ -135,9 +142,10 @@
                         <li><a href="{{ route('student.lessons') }}">Moje lekcje</a></li>
                     @endif
                     <li><a href="{{ route('profile.edit') }}">Profil</a></li>
-                    <li><button class="mobile-logout-btn logout-btn" style="display: none;">Wyloguj się</button></li>
+                    <li><button class="mobile-logout-btn logout-btn">Wyloguj się</button></li>
                 @else
-                    <li><a href="#login" class="mobile-login-btn">Zaloguj się</a></li>
+                    <li><a href="{{ route('login') }}" class="mobile-login-btn">Zaloguj się</a></li>
+                    <li><a href="{{ route('register') }}" class="mobile-register-btn">Dołącz do nas</a></li>
                 @endauth
             </ul>
         </div>
@@ -201,10 +209,10 @@
                 <div class="footer-section">
                     <h3>Informacje</h3>
                     <ul class="footer-links">
-                        <li><a href="#terms">Regulamin</a></li>
-                        <li><a href="#policy">Polityka prywatności</a></li>
-                        <li><a href="#pomoc">Pomoc</a></li>
-                        <li><a href="#faq">FAQ</a></li>
+                        <li><a href="{{ route('terms') }}">Regulamin</a></li>
+                        <li><a href="{{ route('privacy') }}">Polityka prywatności</a></li>
+                        <li><a href="{{ route('help') }}">Pomoc</a></li>
+                        <li><a href="{{ route('faq') }}">FAQ</a></li>
                     </ul>
                 </div>
             </div>
@@ -223,7 +231,86 @@
     </button>
 
     <style>
-        /* User Menu Styles */
+        /* Auth Buttons Styles - nowe style dla przycisków autentykacji */
+        .auth-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .register-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: transparent;
+            color: var(--primary-pink);
+            border: 2px solid var(--primary-pink);
+            border-radius: var(--radius);
+            text-decoration: none;
+            font-weight: var(--font-semibold);
+            transition: var(--transition);
+            font-size: 0.875rem;
+        }
+
+        .register-btn:hover {
+            background: var(--primary-pink);
+            color: var(--text-white);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .login-btn {
+            background: var(--primary-gradient);
+            color: var(--text-white);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            text-decoration: none;
+            font-weight: var(--font-semibold);
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .login-btn:hover {
+            background: var(--primary-gradient-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+            color: var(--text-white);
+        }
+
+        /* Mobile Auth Buttons */
+        .mobile-register-btn {
+            background: transparent !important;
+            color: var(--primary-pink) !important;
+            border: 2px solid var(--primary-pink) !important;
+            text-align: center;
+            margin-top: var(--space-sm);
+            border-radius: var(--radius);
+            padding: var(--space-md);
+            display: block;
+            text-decoration: none;
+            font-weight: var(--font-semibold);
+            transition: var(--transition);
+        }
+
+        .mobile-register-btn:hover {
+            background: var(--primary-pink) !important;
+            color: var(--text-white) !important;
+        }
+
+        .mobile-login-btn {
+            background: var(--primary-gradient) !important;
+            color: var(--text-white) !important;
+            text-align: center;
+            margin-top: var(--space-md);
+        }
+
+        /* User Menu Styles - zaktualizowane style menu użytkownika */
         .user-menu {
             position: relative;
         }
@@ -255,10 +342,10 @@
             position: absolute;
             top: 100%;
             right: 0;
-            min-width: 240px;
+            min-width: 260px;
             background: white;
-            border-radius: 0.5rem;
-            box-shadow: var(--shadow-lg);
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-xl);
             border: 1px solid #e2e8f0;
             opacity: 0;
             visibility: hidden;
@@ -299,7 +386,7 @@
         .dropdown-item {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
             padding: 0.75rem 1rem;
             color: var(--text-primary);
             text-decoration: none;
@@ -309,11 +396,17 @@
             text-align: left;
             cursor: pointer;
             transition: all 0.2s ease;
+            font-size: 0.875rem;
         }
 
         .dropdown-item:hover {
             background: var(--bg-secondary);
             color: var(--primary-pink);
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            text-align: center;
         }
 
         .dropdown-divider {
@@ -372,6 +465,7 @@
             color: #f59e0b;
         }
 
+        /* Responsive Design */
         @media (max-width: 768px) {
             .verification-content {
                 flex-direction: column;
@@ -383,10 +477,46 @@
                 left: -1rem;
                 min-width: auto;
             }
+
+            .auth-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .auth-buttons .login-btn,
+            .auth-buttons .register-btn {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-btn {
+                display: none;
+            }
         }
     </style>
 
     <script>
+        // Helper function dla ról użytkowników
+        function getRoleDisplayName(role) {
+            const roleNames = {
+                'admin': 'Administrator',
+                'moderator': 'Moderator',
+                'tutor': 'Lektor',
+                'student': 'Student'
+            };
+            return roleNames[role] || role;
+        }
+
         // Handle email verification resend
         document.addEventListener('DOMContentLoaded', function() {
             const resendBtn = document.getElementById('resend-verification');
@@ -407,3 +537,7 @@
             }
         });
     </script>
+
+    @stack('scripts')
+</body>
+</html>

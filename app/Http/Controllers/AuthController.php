@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/AuthController.php
+// app/Http/Controllers/AuthController.php - Poprawiony kontroler autentykacji
 
 namespace App\Http\Controllers;
 
@@ -88,7 +88,8 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'errors' => method_exists($e, 'errors') ? $e->errors() : null
             ], 400);
         }
     }

@@ -1,0 +1,374 @@
+/* resources/css/components/forms.css - Kompletne style dla formularzy */
+
+/* Form Elements */
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius);
+    font-size: var(--font-size-base);
+    transition: var(--transition);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: inherit;
+}
+
+.form-control:focus {
+    border-color: var(--primary-pink);
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+    outline: none;
+}
+
+.form-control:disabled {
+    background-color: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.form-control::placeholder {
+    color: #94a3b8;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: var(--font-medium);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.form-group.required label::after {
+    content: ' *';
+    color: var(--danger);
+}
+
+/* Checkbox and Radio Styling */
+.form-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0;
+}
+
+.form-check-input {
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 4px !important;
+    background: white !important;
+    cursor: pointer !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    transition: all 0.2s ease !important;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-pink) !important;
+    border-color: var(--primary-pink) !important;
+}
+
+.form-check-input:checked::before {
+    content: '✓' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    color: white !important;
+    font-size: 12px !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1) !important;
+    outline: none !important;
+}
+
+.form-check-input:hover {
+    border-color: var(--primary-pink) !important;
+}
+
+.form-check-label {
+    font-size: 0.875rem !important;
+    line-height: 1.4 !important;
+    color: var(--text-secondary) !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    flex: 1 !important;
+}
+
+.form-check-label a {
+    color: var(--primary-pink) !important;
+    text-decoration: none !important;
+    font-weight: var(--font-medium) !important;
+}
+
+.form-check-label a:hover {
+    text-decoration: underline !important;
+}
+
+/* Password Input Wrapper */
+.password-input-wrapper {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: var(--transition);
+    z-index: 10;
+}
+
+.password-toggle:hover {
+    color: var(--primary-pink);
+    background-color: rgba(233, 30, 99, 0.1);
+}
+
+.password-toggle:focus {
+    outline: 2px solid var(--primary-pink);
+    outline-offset: 2px;
+}
+
+/* Select Styling */
+select.form-control {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px 12px;
+    padding-right: 40px;
+    cursor: pointer;
+}
+
+select.form-control:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23e91e63' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+}
+
+/* Form Validation States */
+.form-group.has-error .form-control {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.form-group.has-success .form-control {
+    border-color: var(--success) !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}
+
+.field-error {
+    color: var(--danger);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    display: block;
+    font-weight: var(--font-medium);
+}
+
+.field-success {
+    color: var(--success);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    display: block;
+    font-weight: var(--font-medium);
+}
+
+/* Button States */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--radius);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-semibold);
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: inherit;
+    line-height: 1;
+}
+
+.btn:focus {
+    outline: 2px solid var(--primary-pink);
+    outline-offset: 2px;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    color: white;
+    border: 2px solid transparent;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--primary-gradient-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-outline-primary {
+    background: transparent;
+    color: var(--primary-pink);
+    border: 2px solid var(--primary-pink);
+}
+
+.btn-outline-primary:hover:not(:disabled) {
+    background: var(--primary-pink);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+.btn-secondary {
+    background: var(--text-light);
+    color: white;
+    border: 2px solid transparent;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--text-secondary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+/* Loading States */
+.form-loading {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: btnSpin 1s linear infinite;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    color: white;
+}
+
+@keyframes btnSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Form Layout */
+.auth-form {
+    width: 100%;
+    max-width: 100%;
+}
+
+.auth-form .form-group:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .form-control {
+        padding: 10px 14px;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    .btn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+
+    .form-check {
+        align-items: flex-start;
+    }
+
+    .form-check-input {
+        margin-top: 2px !important;
+    }
+}
+
+/* Dark mode support (future) */
+@media (prefers-color-scheme: dark) {
+    .form-control {
+        background-color: #1f2937;
+        border-color: #374151;
+        color: #f9fafb;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-pink);
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: more) {
+    .form-control {
+        border-width: 3px;
+    }
+
+    .form-check-input {
+        border-width: 3px !important;
+    }
+
+    .btn {
+        border-width: 3px;
+    }
+}
+
+/* Focus improvements for accessibility */
+.form-control:focus-visible,
+.form-check-input:focus-visible,
+.btn:focus-visible {
+    outline: 3px solid var(--primary-pink);
+    outline-offset: 2px;
+}
+
+/* Error state improvements */
+.form-group.has-error .form-check-input {
+    border-color: var(--danger) !important;
+}
+
+.form-group.has-error .form-check-label {
+    color: var(--danger) !important;
+}
