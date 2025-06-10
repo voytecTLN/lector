@@ -111,6 +111,7 @@ export class ResetPasswordForm {
 
         const formData = new FormData(this.form)
         const data = {
+            email: formData.get('email') as string,
             token: formData.get('token') as string,
             password: formData.get('password') as string,
             password_confirmation: formData.get('password_confirmation') as string
@@ -284,12 +285,17 @@ export class ResetPasswordForm {
         if (!this.form) return
 
         const tokenField = this.form.querySelector('[name="token"]') as HTMLInputElement
+        const emailField = this.form.querySelector('[name="email"]') as HTMLInputElement
         const tokenValue = tokenField?.value
+        const emailValue = emailField?.value
 
         this.form.reset()
 
         if (tokenField && tokenValue) {
             tokenField.value = tokenValue
+        }
+        if (emailField && emailValue) {
+            emailField.value = emailValue
         }
 
         this.validator.clearErrors()

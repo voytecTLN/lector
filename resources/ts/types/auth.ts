@@ -22,6 +22,7 @@ export interface PasswordResetData {
 }
 
 export interface NewPasswordData {
+    email: string
     token: string
     password: string
     password_confirmation: string

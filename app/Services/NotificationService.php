@@ -52,7 +52,7 @@ class NotificationService
     public function sendPasswordResetEmail(User $user, string $token): void
     {
         try {
-            $resetUrl = url("/reset-password?token={$token}");
+            $resetUrl = url("/reset-password?token={$token}&email={$user->email}");
 
             Log::info("Password reset email should be sent to: {$user->email}");
             Log::info("Reset URL: {$resetUrl}");
