@@ -384,12 +384,8 @@ class TutoringApp {
       authModal.hide();
     }
 
-    // Redirect based on role (only if on auth pages or homepage)
-    const currentPath = window.location.pathname;
-    const authPages = ['/login', '/register', '/forgot-password'];
-
-    if (authPages.includes(currentPath) || currentPath === '/') {
-      let redirectUrl = '/';
+    // Redirect user to their dashboard after successful authentication
+    let redirectUrl = '/';
 
       switch (user.role) {
         case 'admin':
@@ -406,12 +402,11 @@ class TutoringApp {
           break;
       }
 
-      // Show success message
-      this.showNotification('success', `Witamy ${user.name}! Przekierowujemy...`);
+    // Show success message and redirect
+    this.showNotification('success', `Witamy ${user.name}! Przekierowujemy...`);
 
-      // Use location.replace to prevent back button issues
-      window.location.replace(redirectUrl);
-    }
+    // Use location.replace to prevent back button issues
+    window.location.replace(redirectUrl);
   }
 
   private handleLogout(): void {

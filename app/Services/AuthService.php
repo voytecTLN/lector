@@ -8,7 +8,7 @@ use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Password;
 use Exception;
 
 class AuthService
@@ -132,21 +132,21 @@ class AuthService
      */
     public function resetPassword(array $data): void
     {
-        $user = User::where('password_reset_token', $data['token'])->first();
+        $user = User::where('email', $data['email'])->first();
 
         if (!$user) {
+            throw new Exception('Nie znaleziono konta z tym adresem email');
+        }
+
+        if (!Password::tokenExists($user, $data['token'])) {
             throw new Exception('Nieprawidłowy token resetowania hasła');
         }
 
-        if ($user->password_reset_expires_at < Carbon::now()) {
-            throw new Exception('Token resetowania hasła wygasł');
-        }
-
         $user->update([
-            'password' => Hash::make($data['password']),
-            'password_reset_token' => null,
-            'password_reset_expires_at' => null
+            'password' => Hash::make($data['password'])
         ]);
+
+        Password::deleteToken($user);
 
         // Revoke all existing tokens for security
         $user->tokens()->delete();

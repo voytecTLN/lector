@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Password;
 
 class User extends Authenticatable
 {
@@ -30,8 +31,6 @@ class User extends Authenticatable
         'last_login_at',
         'last_login_ip',
         'verification_token',
-        'password_reset_token',
-        'password_reset_expires_at',
         'email_verified_at'
     ];
 
@@ -40,7 +39,6 @@ class User extends Authenticatable
         'remember_token',
         'two_factor_secret',
         'two_factor_recovery_codes',
-        'password_reset_token',
         'verification_token'
     ];
 
@@ -48,7 +46,6 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'birth_date' => 'date',
         'last_login_at' => 'datetime',
-        'password_reset_expires_at' => 'datetime',
         'is_verified' => 'boolean',
         'two_factor_recovery_codes' => 'array'
     ];
@@ -186,14 +183,7 @@ class User extends Authenticatable
     // Authentication helper methods
     public function generatePasswordResetToken(): string
     {
-        $token = bin2hex(random_bytes(32));
-
-        $this->update([
-            'password_reset_token' => $token,
-            'password_reset_expires_at' => Carbon::now()->addHours(24)
-        ]);
-
-        return $token;
+        return Password::createToken($this);
     }
 
     public function generateVerificationToken(): string

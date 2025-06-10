@@ -15,6 +15,7 @@
 
                 <form id="reset-password-form" class="auth-form">
                     <input type="hidden" name="token" value="{{ request('token') }}">
+                    <input type="hidden" name="email" value="{{ request('email') }}">
 
                     <div class="form-group">
                         <label for="password">Nowe hasło</label>
