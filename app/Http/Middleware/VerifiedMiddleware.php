@@ -1,5 +1,5 @@
 <?php
-// app/Http/Middleware/VerifiedMiddleware.php - Poprawiony
+// app/Http/Middleware/VerifiedMiddleware.php
 
 namespace App\Http\Middleware;
 
@@ -26,12 +26,14 @@ class VerifiedMiddleware
             return redirect()->route('login');
         }
 
-        if (!$user->isVerified()) {
+        // POPRAWIONA KONTROLA WERYFIKACJI
+        if (!$user->hasVerifiedEmail()) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Wymagana weryfikacja adresu email',
-                    'requires_verification' => true
+                    'message' => 'Wymagana weryfikacja adresu email. Sprawdź swoją skrzynkę pocztową.',
+                    'requires_verification' => true,
+                    'email' => $user->email
                 ], 403);
             }
             return redirect()->route('verification.notice');

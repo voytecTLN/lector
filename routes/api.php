@@ -16,6 +16,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('api.auth.register');
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('api.auth.forgot-password');
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('api.auth.reset-password');
+
+    // POPRAWIONA TRASA WERYFIKACJI EMAIL - bez middleware auth
     Route::get('/verify-email', [AuthController::class, 'verifyEmail'])->name('api.auth.verify-email');
 });
 

@@ -1,4 +1,4 @@
-{{-- resources/views/layouts/app.blade.php - Zaktualizowany layout z systemem autentykacji --}}
+{{-- resources/views/layouts/app.blade.php - Poprawiony z widocznym logout --}}
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
 <head>
@@ -45,7 +45,7 @@
 
             <div class="nav-actions">
                 @guest
-                    <!-- Guest Navigation - dodane przyciski logowania i rejestracji -->
+                    <!-- Guest Navigation -->
                     <div class="auth-buttons">
                         <a href="{{ route('login') }}" class="login-btn">
                             <i class="fas fa-sign-in-alt"></i>
@@ -68,8 +68,14 @@
                             <div class="user-dropdown-menu">
                                 <div class="user-info">
                                     <div class="user-name">{{ auth()->user()->name }}</div>
-                                    <div class="user-role">{{ $this->getRoleDisplayName(auth()->user()->role) }}</div>
+                                    <div class="user-role">{{ ucfirst(auth()->user()->role) }}</div>
                                     <div class="user-email">{{ auth()->user()->email }}</div>
+                                    @if(!auth()->user()->is_verified)
+                                        <div class="user-verification-status">
+                                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                                            Email niezweryfikowany
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="dropdown-divider"></div>
                                 <a href="{{ route('profile.edit') }}" class="dropdown-item">
@@ -142,7 +148,12 @@
                         <li><a href="{{ route('student.lessons') }}">Moje lekcje</a></li>
                     @endif
                     <li><a href="{{ route('profile.edit') }}">Profil</a></li>
-                    <li><button class="mobile-logout-btn logout-btn">Wyloguj się</button></li>
+                    <li>
+                        <button class="mobile-logout-btn logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Wyloguj się
+                        </button>
+                    </li>
                 @else
                     <li><a href="{{ route('login') }}" class="mobile-login-btn">Zaloguj się</a></li>
                     <li><a href="{{ route('register') }}" class="mobile-register-btn">Dołącz do nas</a></li>
@@ -153,24 +164,22 @@
 
     <!-- Main Content -->
     <main>
-        @if(!auth()->check() || !auth()->user()->isVerified())
-            @if(auth()->check() && !auth()->user()->isVerified())
-                <!-- Email Verification Notice -->
-                <div class="verification-notice">
-                    <div class="container">
-                        <div class="verification-content">
-                            <i class="fas fa-envelope"></i>
-                            <div>
-                                <strong>Zweryfikuj swój adres email</strong>
-                                <p>Sprawdź swoją skrzynkę pocztową i kliknij w link weryfikacyjny, aby uzyskać pełny dostęp do platformy.</p>
-                            </div>
-                            <button id="resend-verification" class="btn btn-outline-primary">
-                                Wyślij ponownie
-                            </button>
+        @if(auth()->check() && !auth()->user()->is_verified)
+            <!-- Email Verification Notice -->
+            <div class="verification-notice">
+                <div class="container">
+                    <div class="verification-content">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <strong>Zweryfikuj swój adres email</strong>
+                            <p>Sprawdź swoją skrzynkę pocztową i kliknij w link weryfikacyjny, aby uzyskać pełny dostęp do platformy.</p>
                         </div>
+                        <button id="resend-verification" class="btn btn-outline-primary">
+                            Wyślij ponownie
+                        </button>
                     </div>
                 </div>
-            @endif
+            </div>
         @endif
 
         @yield('content')
@@ -231,7 +240,7 @@
     </button>
 
     <style>
-        /* Auth Buttons Styles - nowe style dla przycisków autentykacji */
+        /* Auth Buttons Styles */
         .auth-buttons {
             display: flex;
             align-items: center;
@@ -283,34 +292,7 @@
             color: var(--text-white);
         }
 
-        /* Mobile Auth Buttons */
-        .mobile-register-btn {
-            background: transparent !important;
-            color: var(--primary-pink) !important;
-            border: 2px solid var(--primary-pink) !important;
-            text-align: center;
-            margin-top: var(--space-sm);
-            border-radius: var(--radius);
-            padding: var(--space-md);
-            display: block;
-            text-decoration: none;
-            font-weight: var(--font-semibold);
-            transition: var(--transition);
-        }
-
-        .mobile-register-btn:hover {
-            background: var(--primary-pink) !important;
-            color: var(--text-white) !important;
-        }
-
-        .mobile-login-btn {
-            background: var(--primary-gradient) !important;
-            color: var(--text-white) !important;
-            text-align: center;
-            margin-top: var(--space-md);
-        }
-
-        /* User Menu Styles - zaktualizowane style menu użytkownika */
+        /* User Menu Styles */
         .user-menu {
             position: relative;
         }
@@ -383,6 +365,13 @@
             font-size: 0.875rem;
         }
 
+        .user-verification-status {
+            color: var(--warning);
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 0.25rem;
+        }
+
         .dropdown-item {
             display: flex;
             align-items: center;
@@ -413,6 +402,25 @@
             height: 1px;
             background: #e2e8f0;
             margin: 0.5rem 0;
+        }
+
+        /* Mobile logout button */
+        .mobile-logout-btn {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            padding: var(--space-md);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            border-radius: var(--radius);
+            transition: var(--transition);
+        }
+
+        .mobile-logout-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--primary-pink);
         }
 
         /* Verification Notice */
@@ -506,17 +514,6 @@
     </style>
 
     <script>
-        // Helper function dla ról użytkowników
-        function getRoleDisplayName(role) {
-            const roleNames = {
-                'admin': 'Administrator',
-                'moderator': 'Moderator',
-                'tutor': 'Lektor',
-                'student': 'Student'
-            };
-            return roleNames[role] || role;
-        }
-
         // Handle email verification resend
         document.addEventListener('DOMContentLoaded', function() {
             const resendBtn = document.getElementById('resend-verification');

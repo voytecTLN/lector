@@ -1,4 +1,4 @@
-/* resources/css/components/forms.css */
+/* resources/css/components/forms.css - POPRAWIONY */
 
 /* Form Elements */
 .form-control {
@@ -58,7 +58,7 @@
 }
 
 .form-check-input {
-    width: 18px !important;
+    width: 18px !important; /* POPRAWKA - zmieniono z auto na 18px */
     height: 18px !important;
     margin: 0 !important;
     padding: 0 !important;

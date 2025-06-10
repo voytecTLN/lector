@@ -1,4 +1,4 @@
-// resources/ts/services/AuthService.ts - Poprawiony
+// resources/ts/services/AuthService.ts
 
 import { api } from '@services/ApiService'
 import type {
@@ -40,21 +40,44 @@ export class AuthService {
                 this.setAuthData(response.data.user, response.data.token, response.data.permissions)
                 this.notifyAuthChange('login')
 
-                document.dispatchEvent(new CustomEvent('notification:show', {
-                    detail: {
-                        type: 'success',
-                        message: 'Zalogowano pomyślnie!'
-                    }
-                }))
+                // SPRAWDŹ CZY WYMAGANA WERYFIKACJA
+                if (response.data.requires_verification) {
+                    document.dispatchEvent(new CustomEvent('notification:show', {
+                        detail: {
+                            type: 'warning',
+                            message: 'Musisz zweryfikować swój email przed uzyskaniem pełnego dostępu. Sprawdź swoją skrzynkę pocztową.'
+                        }
+                    }))
+                } else {
+                    document.dispatchEvent(new CustomEvent('notification:show', {
+                        detail: {
+                            type: 'success',
+                            message: 'Zalogowano pomyślnie!'
+                        }
+                    }))
+                }
             }
 
             return response
 
         } catch (error: any) {
+            // ULEPSZONA OBSŁUGA BŁĘDÓW LOGOWANIA
+            let errorMessage = 'Błąd podczas logowania'
+
+            if (error.message.includes('zweryfikować')) {
+                errorMessage = error.message
+            } else if (error.message.includes('Nieprawidłowy')) {
+                errorMessage = 'Nieprawidłowy email lub hasło'
+            } else if (error.message.includes('zablokowane')) {
+                errorMessage = 'Konto zostało zablokowane'
+            } else if (error.message) {
+                errorMessage = error.message
+            }
+
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'error',
-                    message: error.message || 'Błąd podczas logowania'
+                    message: errorMessage
                 }
             }))
             throw error
@@ -127,32 +150,11 @@ export class AuthService {
         }
 
         try {
-            // Dodaj token do nagłówka
-            const response = await fetch('/api/auth/me', {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.token}`,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': this.getCSRFToken()
-                }
-            })
+            const response = await api.get<CurrentUserResponse>('/auth/me')
 
-            if (!response.ok) {
-                if (response.status === 401) {
-                    // Token expired or invalid
-                    this.clearAuthData()
-                    return null
-                }
-                throw new Error(`HTTP ${response.status}`)
-            }
-
-            const data: CurrentUserResponse = await response.json()
-
-            if (data.success) {
-                this.user = data.data.user
-                this.permissions = data.data.permissions
+            if (response.success) {
+                this.user = response.data.user
+                this.permissions = response.data.permissions
                 this.saveToStorage()
                 return this.user
             }
@@ -164,14 +166,6 @@ export class AuthService {
             this.clearAuthData()
             return null
         }
-    }
-
-    /**
-     * Get CSRF token from meta tag
-     */
-    private getCSRFToken(): string {
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-        return token || ''
     }
 
     /**

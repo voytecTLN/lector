@@ -32,6 +32,11 @@ class AuthService
             throw new Exception('Konto jest nieaktywne lub zablokowane');
         }
 
+        // DODANA KONTROLA WERYFIKACJI EMAIL
+        if (!$user->is_verified) {
+            throw new Exception('Musisz zweryfikować swój adres email przed zalogowaniem. Sprawdź swoją skrzynkę pocztową.');
+        }
+
         // Update login information
         $user->updateLoginInfo($ip);
 
@@ -153,7 +158,7 @@ class AuthService
     }
 
     /**
-     * Verify email address
+     * Verify email address - POPRAWIONA METODA
      */
     public function verifyEmail(string $token): void
     {
@@ -163,7 +168,7 @@ class AuthService
             throw new Exception('Nieprawidłowy token weryfikacyjny');
         }
 
-        if ($user->isVerified()) {
+        if ($user->is_verified) {
             throw new Exception('Email jest już zweryfikowany');
         }
 
@@ -176,7 +181,7 @@ class AuthService
      */
     public function resendVerificationEmail(User $user): void
     {
-        if ($user->isVerified()) {
+        if ($user->is_verified) {
             throw new Exception('Email jest już zweryfikowany');
         }
 
@@ -200,7 +205,7 @@ class AuthService
                 break;
 
             case User::ROLE_TUTOR:
-                // Create tutor profile when TutorProfile model is ready
+                // Tutaj można dodać tworzenie profilu lektora gdy będzie gotowy model TutorProfile
                 break;
         }
     }

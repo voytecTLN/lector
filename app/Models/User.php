@@ -10,8 +10,9 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -155,6 +156,32 @@ class User extends Authenticatable
     public function isVerified(): bool
     {
         return $this->is_verified;
+    }
+
+    // IMPLEMENTACJA MustVerifyEmail
+    public function hasVerifiedEmail(): bool
+    {
+        return $this->is_verified && !is_null($this->email_verified_at);
+    }
+
+    public function markEmailAsVerified(): bool
+    {
+        return $this->update([
+            'email_verified_at' => now(),
+            'is_verified' => true,
+            'verification_token' => null
+        ]);
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        // Ta metoda jest wymagana przez interface MustVerifyEmail
+        // W naszym przypadku obsługujemy to w AuthService
+    }
+
+    public function getEmailForVerification(): string
+    {
+        return $this->email;
     }
 
     // Utility methods

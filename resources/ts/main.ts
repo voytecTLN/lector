@@ -1,10 +1,20 @@
-// resources/ts/main.ts - Zaktualizowany z ulepszoną obsługą autentykacji i dashboardów
+// resources/ts/main.ts - Poprawiony z ulepszoną obsługą autentykacji
 
 import '../css/app.css'
 import { Homepage } from './pages/homepage'
 import { authService } from '@services/AuthService'
 import { authModal } from '@components/auth/AuthModal'
 import { routeGuard } from '@components/RouteGuard'
+
+// Rozszerzenie globalne dla typów Window
+declare global {
+  interface Window {
+    tutoringApp: TutoringApp;
+    showNotification: (type: string, message: string) => void;
+    authService: typeof authService;
+    authModal: typeof authModal;
+  }
+}
 
 // Custom event interfaces
 interface NotificationEventDetail {
@@ -24,57 +34,102 @@ interface AuthChangeEventDetail {
 
 class TutoringApp {
   private homepage: Homepage | null = null;
+  private isInitialized = false;
 
   constructor() {
     console.log('🎯 Platforma Lektorów initialized!')
-    this.init()
   }
 
-  private async init(): Promise<void> {
-    // Initialize authentication first
-    await this.initAuthentication();
+  public async init(): Promise<void> {
+    if (this.isInitialized) {
+      console.warn('App already initialized');
+      return;
+    }
 
-    // Initialize homepage functionality (tylko na stronie głównej)
-    this.initHomepage();
+    try {
+      console.log('Initializing TutoringApp...');
 
-    // Initialize global event listeners
-    this.initGlobalEvents();
+      // Initialize authentication first
+      await this.initAuthentication();
 
-    // Initialize notifications
-    this.initNotifications();
+      // Initialize homepage functionality (tylko na stronie głównej)
+      this.initHomepage();
 
-    // Initialize route protection
-    this.initRouteProtection();
+      // Initialize global event listeners
+      this.initGlobalEvents();
 
-    // Initialize dashboard features if on dashboard page
-    this.initDashboardFeatures();
+      // Initialize notifications
+      this.initNotifications();
+
+      // Initialize route protection
+      this.initRouteProtection();
+
+      // Initialize dashboard features if on dashboard page
+      this.initDashboardFeatures();
+
+      // Initialize CSRF protection
+      await this.initCSRFProtection();
+
+      this.isInitialized = true;
+      console.log('✅ TutoringApp initialized successfully');
+
+    } catch (error) {
+      console.error('❌ Failed to initialize TutoringApp:', error);
+      this.showNotification('error', 'Błąd inicjalizacji aplikacji');
+    }
+  }
+
+  private async initCSRFProtection(): Promise<void> {
+    try {
+      // Inicjalizuj CSRF token dla Sanctum
+      await fetch('/sanctum/csrf-cookie', {
+        method: 'GET',
+        credentials: 'same-origin'
+      });
+      console.log('✅ CSRF token initialized');
+    } catch (error) {
+      console.warn('⚠️ Failed to initialize CSRF token:', error);
+    }
   }
 
   private async initAuthentication(): Promise<void> {
-    // Try to get current user if token exists
-    if (authService.getToken()) {
-      try {
-        await authService.getCurrentUser();
-        console.log('User authenticated:', authService.getUser());
-      } catch (error) {
-        console.log('Token invalid, user logged out');
-        authService.logout();
+    try {
+      console.log('Initializing authentication...');
+
+      // Sprawdź czy użytkownik jest już zalogowany (token w localStorage)
+      const token = authService.getToken();
+      if (token) {
+        console.log('Found existing token, verifying...');
+        try {
+          // Sprawdź czy token jest nadal ważny
+          await authService.getCurrentUser();
+          console.log('✅ User authenticated:', authService.getUser());
+        } catch (error) {
+          console.log('⚠️ Token invalid, clearing...');
+          authService.logout();
+        }
+      } else {
+        console.log('No existing token found');
       }
+
+      // Listen for auth changes
+      document.addEventListener('auth:change', (e: Event) => {
+        const customEvent = e as CustomEvent<AuthChangeEventDetail>;
+        this.handleAuthChange(customEvent.detail);
+      });
+
+      // Update navigation based on auth state
+      this.updateNavigation();
+
+    } catch (error) {
+      console.error('Authentication initialization failed:', error);
     }
-
-    // Listen for auth changes
-    document.addEventListener('auth:change', (e: Event) => {
-      const customEvent = e as CustomEvent<AuthChangeEventDetail>;
-      this.handleAuthChange(customEvent.detail);
-    });
-
-    // Update navigation based on auth state
-    this.updateNavigation();
   }
 
   private initHomepage(): void {
     // Only initialize homepage if we're on the homepage
     if (this.isHomepage()) {
+      console.log('Initializing homepage...');
       this.homepage = new Homepage();
     }
   }
@@ -90,6 +145,8 @@ class TutoringApp {
   }
 
   private initGlobalEvents(): void {
+    console.log('Initializing global events...');
+
     // Global click handlers
     document.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
@@ -151,6 +208,12 @@ class TutoringApp {
         (e.target as HTMLElement).click();
       }
     });
+
+    // Handle beforeunload for form changes
+    window.addEventListener('beforeunload', (e) => {
+      // Można tutaj sprawdzić czy są niezapisane zmiany w formularzach
+      // i ostrzec użytkownika
+    });
   }
 
   private initNotifications(): void {
@@ -167,6 +230,14 @@ class TutoringApp {
       const { errors } = customEvent.detail;
       this.handleFormValidationErrors(errors);
     });
+
+    // Create notification container if it doesn't exist
+    if (!document.getElementById('notification-container')) {
+      const container = document.createElement('div');
+      container.id = 'notification-container';
+      container.className = 'notification-container';
+      document.body.appendChild(container);
+    }
   }
 
   private initRouteProtection(): void {
@@ -182,8 +253,8 @@ class TutoringApp {
   private initDashboardFeatures(): void {
     // Initialize dashboard-specific features if on dashboard page
     if (this.isDashboard()) {
-      // Load dashboard stats based on current path
       const path = window.location.pathname;
+      console.log(`Initializing dashboard features for: ${path}`);
 
       if (path.includes('/admin/dashboard')) {
         this.initAdminDashboard();
@@ -224,14 +295,13 @@ class TutoringApp {
     if (routeConfig) {
       const hasAccess = await routeGuard.checkAccess(routeConfig);
       if (!hasAccess) {
-        // Access denied - routeGuard will handle redirection
+        console.log(`Access denied to ${path}`);
         return;
       }
     }
   }
 
   private getRouteConfig(path: string): any {
-    // Define route protection rules
     const routes: Record<string, any> = {
       '/admin': {
         requiresAuth: true,
@@ -297,12 +367,12 @@ class TutoringApp {
     const isAuthenticated = authService.isAuthenticated();
     const user = authService.getUser();
 
+    console.log('Updating navigation, authenticated:', isAuthenticated);
+
     // Update login/logout buttons
-    const loginButtons = document.querySelectorAll('.login-btn');
-    const registerButtons = document.querySelectorAll('.register-btn');
-    const logoutButtons = document.querySelectorAll('.logout-btn');
-    const userMenus = document.querySelectorAll('.user-menu');
     const authButtons = document.querySelectorAll('.auth-buttons');
+    const userMenus = document.querySelectorAll('.user-menu');
+    const logoutButtons = document.querySelectorAll('.logout-btn');
 
     if (isAuthenticated && user) {
       // Hide auth buttons
@@ -310,11 +380,7 @@ class TutoringApp {
         (btn as HTMLElement).style.display = 'none';
       });
 
-      // Show logout buttons and user menus
-      logoutButtons.forEach(btn => {
-        (btn as HTMLElement).style.display = 'inline-flex';
-      });
-
+      // Show user menus
       userMenus.forEach(menu => {
         (menu as HTMLElement).style.display = 'block';
         // Update user info in menu
@@ -324,19 +390,24 @@ class TutoringApp {
         if (userRole) userRole.textContent = this.getRoleDisplayName(user.role);
       });
 
+      // Show logout buttons
+      logoutButtons.forEach(btn => {
+        (btn as HTMLElement).style.display = 'inline-flex';
+      });
+
     } else {
       // Show auth buttons
       authButtons.forEach(btn => {
         (btn as HTMLElement).style.display = 'flex';
       });
 
-      // Hide logout buttons and user menus
-      logoutButtons.forEach(btn => {
-        (btn as HTMLElement).style.display = 'none';
-      });
-
+      // Hide user menus and logout buttons
       userMenus.forEach(menu => {
         (menu as HTMLElement).style.display = 'none';
+      });
+
+      logoutButtons.forEach(btn => {
+        (btn as HTMLElement).style.display = 'none';
       });
     }
   }
@@ -353,35 +424,39 @@ class TutoringApp {
 
   private handleLoginClick(): void {
     if (this.isHomepage()) {
-      // Show auth modal on homepage
+      console.log('Showing auth modal for login');
       authModal.show('login');
     } else {
-      // Redirect to login page
+      console.log('Redirecting to login page');
       window.location.href = '/login';
     }
   }
 
   private handleRegisterClick(): void {
     if (this.isHomepage()) {
-      // Show auth modal on homepage
+      console.log('Showing auth modal for register');
       authModal.show('register');
     } else {
-      // Redirect to register page
+      console.log('Redirecting to register page');
       window.location.href = '/register';
     }
   }
 
   private async handleLogoutClick(): Promise<void> {
     try {
+      console.log('Logging out user...');
       await authService.logout();
+      console.log('✅ User logged out successfully');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ Logout error:', error);
       // Force logout on client side even if API fails
       authService.logout();
     }
   }
 
   private handleSuccessfulAuth(user: any): void {
+    console.log('Handling successful authentication for:', user);
+
     // Close auth modal if open
     if (authModal.isVisible()) {
       authModal.hide();
@@ -409,20 +484,27 @@ class TutoringApp {
           break;
       }
 
+      console.log(`Redirecting to: ${redirectUrl}`);
+
       // Show success message
       this.showNotification('success', `Witamy ${user.name}! Przekierowujemy...`);
 
-      // Use location.replace to prevent back button issues
-      window.location.replace(redirectUrl);
+      // Use setTimeout to allow notification to show before redirect
+      setTimeout(() => {
+        window.location.replace(redirectUrl);
+      }, 1500);
     }
   }
 
   private handleLogout(): void {
+    console.log('Handling logout');
+
     // Redirect to homepage if on protected page
     const currentPath = window.location.pathname;
     const protectedPaths = ['/admin', '/moderator', '/tutor', '/student', '/profile'];
 
     if (protectedPaths.some(path => currentPath.startsWith(path))) {
+      console.log('Redirecting to homepage after logout');
       window.location.href = '/';
     }
   }
@@ -444,34 +526,51 @@ class TutoringApp {
       container = document.createElement('div');
       container.id = 'notification-container';
       container.className = 'notification-container';
+      container.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                max-width: 400px;
+                width: 100%;
+            `;
       document.body.appendChild(container);
     }
 
     const notification = document.createElement('div');
     notification.className = `notification-toast ${type}`;
+    notification.style.cssText = `
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid ${this.getNotificationColor(type)};
+            animation: slideInRight 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        `;
+
     notification.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <i class="fas ${this.getNotificationIcon(type)}"></i>
-        <span>${message}</span>
-        <button style="margin-left: auto; background: none; border: none; font-size: 1.2rem; opacity: 0.7; cursor: pointer;" onclick="this.parentElement.parentElement.remove()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-    `;
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas ${this.getNotificationIcon(type)}" style="color: ${this.getNotificationColor(type)}; font-size: 1.1rem;"></i>
+                <span style="flex: 1; color: #1e293b; font-weight: 500;">${message}</span>
+                <button style="background: none; border: none; font-size: 1.2rem; opacity: 0.7; cursor: pointer; padding: 4px;" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times" style="color: #64748b;"></i>
+                </button>
+            </div>
+        `;
 
     container.appendChild(notification);
 
-    // Add entrance animation
-    setTimeout(() => {
-      notification.classList.add('show');
-    }, 10);
-
     // Auto remove after 5 seconds
     setTimeout(() => {
-      notification.classList.remove('show');
-      setTimeout(() => {
-        notification.remove();
-      }, 300);
+      if (notification.parentElement) {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+          notification.remove();
+        }, 300);
+      }
     }, 5000);
   }
 
@@ -485,6 +584,16 @@ class TutoringApp {
     return icons[type as keyof typeof icons] || icons.info;
   }
 
+  private getNotificationColor(type: string): string {
+    const colors = {
+      success: '#10b981',
+      error: '#ef4444',
+      warning: '#f59e0b',
+      info: '#3b82f6'
+    };
+    return colors[type as keyof typeof colors] || colors.info;
+  }
+
   private handleFormValidationErrors(errors: Record<string, string[]>): void {
     // Handle form validation errors
     Object.entries(errors).forEach(([field, fieldErrors]) => {
@@ -494,9 +603,9 @@ class TutoringApp {
     });
   }
 
-  // Utility methods
+  // Public static methods
   public static getInstance(): TutoringApp {
-    return (window as any).tutoringApp;
+    return window.tutoringApp;
   }
 
   public getHomepage(): Homepage | null {
@@ -512,31 +621,78 @@ class TutoringApp {
   }
 }
 
+// CSS dla animacji notyfikacji
+const notificationStyles = document.createElement('style');
+notificationStyles.textContent = `
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    .notification-container {
+        pointer-events: none;
+    }
+
+    .notification-toast {
+        pointer-events: auto;
+    }
+`;
+document.head.appendChild(notificationStyles);
+
 // Global error handling
 window.addEventListener('error', (e) => {
-  console.error('Global error:', e.error);
-  // In production, you might want to send this to an error tracking service
+  console.error('🚨 Global error:', e.error);
+  // W przyszłości można dodać wysyłanie błędów do serwisu monitoringu
 });
 
 // Unhandled promise rejection handling
 window.addEventListener('unhandledrejection', (e) => {
-  console.error('Unhandled promise rejection:', e.reason);
-  // In production, you might want to send this to an error tracking service
+  console.error('🚨 Unhandled promise rejection:', e.reason);
+  // W przyszłości można dodać wysyłanie błędów do serwisu monitoringu
 });
 
 // Initialize app when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-  const app = new TutoringApp();
-  (window as any).tutoringApp = app; // Make it globally accessible for debugging
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    console.log('🚀 DOM loaded, initializing app...');
+    const app = new TutoringApp();
+    await app.init();
+
+    // Make it globally accessible
+    window.tutoringApp = app;
+
+    console.log('✅ App fully initialized and ready');
+  } catch (error) {
+    console.error('❌ Failed to initialize app:', error);
+  }
 });
 
-// Expose some utilities globally for Blade templates
-(window as any).showNotification = (type: string, message: string) => {
+// Expose utilities globally for Blade templates
+window.showNotification = (type: string, message: string) => {
   const app = TutoringApp.getInstance();
   if (app) {
     app.showNotification(type as any, message);
+  } else {
+    console.error('TutoringApp not initialized yet');
   }
 };
 
-(window as any).authService = authService;
-(window as any).authModal = authModal;
+window.authService = authService;
+window.authModal = authModal;
