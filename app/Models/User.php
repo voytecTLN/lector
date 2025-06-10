@@ -28,7 +28,11 @@ class User extends Authenticatable
         'avatar',
         'is_verified',
         'last_login_at',
-        'last_login_ip'
+        'last_login_ip',
+        'verification_token',
+        'password_reset_token',
+        'password_reset_expires_at',
+        'email_verified_at'
     ];
 
     protected $hidden = [
