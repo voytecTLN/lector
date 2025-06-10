@@ -13,7 +13,17 @@
                     <p>Wprowadź swoje dane, aby uzyskać dostęp do konta</p>
                 </div>
 
-                <form id="login-form" class="auth-form">
+                <form id="login-form" class="auth-form" method="POST" action="{{ route('login.post') }}">
+                    @csrf
+                    @if($errors->any())
+                        <div class="alert alert-danger">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
                     <div class="form-group">
                         <label for="email">Email</label>
                         <input type="email" id="email" name="email" class="form-control" required>
@@ -181,11 +191,7 @@
 }
 </style>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    new LoginForm('#login-form');
-});
-</script>
+
 @endsection
 
 

@@ -230,6 +230,10 @@
         <i class="fas fa-chevron-up"></i>
     </button>
 
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+        @csrf
+    </form>
+
     <style>
         /* Auth Buttons Styles - nowe style dla przycisków autentykacji */
         .auth-buttons {

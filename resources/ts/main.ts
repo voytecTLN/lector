@@ -371,13 +371,10 @@ class TutoringApp {
     }
   }
 
-  private async handleLogoutClick(): Promise<void> {
-    try {
-      await authService.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Force logout on client side even if API fails
-      authService.logout();
+  private handleLogoutClick(): void {
+    const form = document.getElementById('logout-form') as HTMLFormElement | null;
+    if (form) {
+      form.submit();
     }
   }
 

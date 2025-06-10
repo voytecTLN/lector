@@ -3,6 +3,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SessionController;
 
 // Homepage - publiczny
 Route::get('/', function () {
@@ -16,9 +17,8 @@ Route::get('/health', function () {
 
 // Authentication pages (tylko dla gości)
 Route::middleware('guest')->group(function () {
-    Route::get('/login', function () {
-        return view('auth.login');
-    })->name('login');
+    Route::get('/login', [SessionController::class, 'create'])->name('login');
+    Route::post('/login', [SessionController::class, 'store'])->name('login.post');
 
     Route::get('/register', function () {
         return view('auth.register');
@@ -33,8 +33,10 @@ Route::middleware('guest')->group(function () {
     })->name('password.reset');
 });
 
+Route::post('/logout', [SessionController::class, 'destroy'])->middleware('auth')->name('logout');
+
 // Dashboard routes (wymagają autentykacji i weryfikacji email)
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
 
     // Admin dashboard
     Route::middleware('role:admin')->group(function () {
