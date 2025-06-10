@@ -50,7 +50,8 @@ class AuthController extends Controller
                 'data' => [
                     'user' => $result['user'],
                     'token' => $result['token'],
-                    'permissions' => $this->getUserPermissions($result['user'])
+                    'permissions' => $this->getUserPermissions($result['user']),
+                    'requires_verification' => !$result['user']->is_verified
                 ]
             ]);
 
@@ -214,9 +215,9 @@ class AuthController extends Controller
     /**
      * Verify email address
      */
-    public function verifyEmail(Request $request): JsonResponse
+    public function verifyEmail(Request $request, ?string $token = null)
     {
-        $token = $request->query('token');
+        $token = $token ?? $request->query('token');
 
         if (!$token) {
             return response()->json([
@@ -228,16 +229,24 @@ class AuthController extends Controller
         try {
             $this->authService->verifyEmail($token);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Email został zweryfikowany pomyślnie.'
-            ]);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Email został zweryfikowany pomyślnie.'
+                ]);
+            }
+
+            return redirect()->route('login')->with('status', 'Email został zweryfikowany pomyślnie.');
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 400);
+            }
+
+            return redirect()->route('login')->with('error', $e->getMessage());
         }
     }
 

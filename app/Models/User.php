@@ -27,6 +27,10 @@ class User extends Authenticatable
         'status',
         'avatar',
         'is_verified',
+        'verification_token',
+        'email_verified_at',
+        'password_reset_token',
+        'password_reset_expires_at',
         'last_login_at',
         'last_login_ip'
     ];

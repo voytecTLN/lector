@@ -111,6 +111,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 });
 
 // Email verification
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
 Route::get('/email/verify/{token}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
 
 // Unauthorized access

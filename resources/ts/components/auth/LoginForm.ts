@@ -288,6 +288,11 @@ export class LoginForm {
         const user = authService.getUser()
         if (!user) return
 
+        if (!authService.isVerified()) {
+            window.location.replace('/email/verify')
+            return
+        }
+
         // Redirect based on role
         let redirectUrl = '/'
 
