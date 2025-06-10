@@ -1,4 +1,4 @@
-// resources/ts/services/AuthService.ts
+// resources/ts/services/AuthService.ts - Poprawiony
 
 import { api } from '@services/ApiService'
 import type {
@@ -98,9 +98,13 @@ export class AuthService {
      */
     async logout(): Promise<void> {
         try {
-            await api.post('/auth/logout', {})
+            // Tylko spróbuj wywołać API logout jeśli mamy token
+            if (this.token) {
+                await api.post('/auth/logout', {})
+            }
         } catch (error) {
             console.error('Logout API error:', error)
+            // Kontynuuj logout nawet jeśli API nie odpowie
         } finally {
             this.clearAuthData()
             this.notifyAuthChange('logout')
@@ -123,21 +127,51 @@ export class AuthService {
         }
 
         try {
-            const response = await api.get<CurrentUserResponse>('/auth/me')
+            // Dodaj token do nagłówka
+            const response = await fetch('/api/auth/me', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': this.getCSRFToken()
+                }
+            })
 
-            if (response.success) {
-                this.user = response.data.user
-                this.permissions = response.data.permissions
-                this.saveToStorage()
+            if (!response.ok) {
+                if (response.status === 401) {
+                    // Token expired or invalid
+                    this.clearAuthData()
+                    return null
+                }
+                throw new Error(`HTTP ${response.status}`)
             }
 
-            return this.user
+            const data: CurrentUserResponse = await response.json()
+
+            if (data.success) {
+                this.user = data.data.user
+                this.permissions = data.data.permissions
+                this.saveToStorage()
+                return this.user
+            }
+
+            throw new Error('Invalid response format')
 
         } catch (error) {
             console.error('Get current user error:', error)
             this.clearAuthData()
             return null
         }
+    }
+
+    /**
+     * Get CSRF token from meta tag
+     */
+    private getCSRFToken(): string {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        return token || ''
     }
 
     /**

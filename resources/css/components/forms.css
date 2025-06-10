@@ -1,4 +1,4 @@
-/* resources/css/components/forms.css - Kompletne style dla formularzy */
+/* resources/css/components/forms.css */
 
 /* Form Elements */
 .form-control {
@@ -47,13 +47,14 @@
     color: var(--danger);
 }
 
-/* Checkbox and Radio Styling */
+/* POPRAWIONA SEKCJA - Checkbox i Radio */
 .form-check {
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
     margin-bottom: 1rem;
     padding: 0;
+    min-height: auto;
 }
 
 .form-check-input {
@@ -71,11 +72,15 @@
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
     transition: all 0.2s ease !important;
+    box-shadow: none !important;
+    vertical-align: top !important;
+    margin-top: 2px !important; /* Align with text baseline */
 }
 
 .form-check-input:checked {
     background-color: var(--primary-pink) !important;
     border-color: var(--primary-pink) !important;
+    background-image: none !important;
 }
 
 .form-check-input:checked::before {
@@ -93,6 +98,7 @@
 .form-check-input:focus {
     box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1) !important;
     outline: none !important;
+    border-color: var(--primary-pink) !important;
 }
 
 .form-check-input:hover {
@@ -106,6 +112,7 @@
     cursor: pointer !important;
     margin: 0 !important;
     flex: 1 !important;
+    padding-top: 1px !important; /* Fine-tune alignment */
 }
 
 .form-check-label a {
@@ -116,6 +123,11 @@
 
 .form-check-label a:hover {
     text-decoration: underline !important;
+}
+
+/* Disable Bootstrap checkbox styles completely */
+.form-check-input:not([type="checkbox"]):not([type="radio"]) {
+    background-image: none !important;
 }
 
 /* Password Input Wrapper */
@@ -307,6 +319,15 @@ select.form-control:focus {
     margin-bottom: 0;
 }
 
+/* Form error handling for checkboxes */
+.form-group.has-error .form-check-input {
+    border-color: var(--danger) !important;
+}
+
+.form-group.has-error .form-check-label {
+    color: var(--danger) !important;
+}
+
 /* Responsive Design */
 @media (max-width: 640px) {
     .form-control {
@@ -339,6 +360,11 @@ select.form-control:focus {
     .form-control:focus {
         border-color: var(--primary-pink);
     }
+
+    .form-check-input {
+        background: #1f2937 !important;
+        border-color: #374151 !important;
+    }
 }
 
 /* High contrast mode */
@@ -362,13 +388,4 @@ select.form-control:focus {
 .btn:focus-visible {
     outline: 3px solid var(--primary-pink);
     outline-offset: 2px;
-}
-
-/* Error state improvements */
-.form-group.has-error .form-check-input {
-    border-color: var(--danger) !important;
-}
-
-.form-group.has-error .form-check-label {
-    color: var(--danger) !important;
 }

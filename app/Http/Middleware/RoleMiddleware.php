@@ -1,12 +1,11 @@
 <?php
-// app/Http/Middleware/RoleMiddleware.php
+// app/Http/Middleware/RoleMiddleware.php - Poprawiony (główne middleware do ról)
 
 namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use App\Models\User;
 
 class RoleMiddleware
 {
@@ -18,24 +17,33 @@ class RoleMiddleware
         $user = $request->user();
 
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Wymagane uwierzytelnienie'
-            ], 401);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Wymagane uwierzytelnienie'
+                ], 401);
+            }
+            return redirect()->route('login');
         }
 
         if (!$user->isActive()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Konto jest nieaktywne'
-            ], 403);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Konto jest nieaktywne'
+                ], 403);
+            }
+            return redirect()->route('login')->with('error', 'Konto zostało zablokowane');
         }
 
         if (!$user->hasAnyRole($roles)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Brak uprawnień do tej akcji'
-            ], 403);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Brak uprawnień do tej akcji'
+                ], 403);
+            }
+            return redirect()->route('unauthorized');
         }
 
         return $next($request);

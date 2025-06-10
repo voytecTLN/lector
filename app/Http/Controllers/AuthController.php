@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/AuthController.php - Poprawiony kontroler autentykacji
+// app/Http/Controllers/AuthController.php - Poprawiony
 
 namespace App\Http\Controllers;
 
@@ -11,9 +11,7 @@ use App\Models\User;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -81,7 +79,8 @@ class AuthController extends Controller
                 'data' => [
                     'user' => $result['user'],
                     'token' => $result['token'],
-                    'requires_verification' => true
+                    'permissions' => $this->getUserPermissions($result['user']),
+                    'requires_verification' => !$result['user']->is_verified
                 ]
             ], 201);
 
@@ -100,7 +99,12 @@ class AuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         try {
-            $this->authService->logout($request->user());
+            $user = $request->user();
+
+            if ($user) {
+                // Usuń tylko aktualny token
+                $request->user()->currentAccessToken()->delete();
+            }
 
             return response()->json([
                 'success' => true,
@@ -120,15 +124,33 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user();
+        try {
+            $user = $request->user();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'user' => $user->load(['studentProfile', 'tutorProfile']),
-                'permissions' => $this->getUserPermissions($user)
-            ]
-        ]);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Użytkownik nie jest zalogowany'
+                ], 401);
+            }
+
+            // Załaduj powiązane profile
+            $user->load(['studentProfile', 'tutorProfile']);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'user' => $user,
+                    'permissions' => $this->getUserPermissions($user)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Błąd podczas pobierania danych użytkownika'
+            ], 500);
+        }
     }
 
     /**
@@ -226,6 +248,13 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Użytkownik nie jest zalogowany.'
+            ], 401);
+        }
+
         if ($user->isVerified()) {
             return response()->json([
                 'success' => false,
@@ -261,6 +290,13 @@ class AuthController extends Controller
 
         $user = $request->user();
 
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Użytkownik nie jest zalogowany.'
+            ], 401);
+        }
+
         if (!Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'success' => false,
@@ -272,6 +308,9 @@ class AuthController extends Controller
             $user->update([
                 'password' => Hash::make($request->new_password)
             ]);
+
+            // Usuń wszystkie inne tokeny dla bezpieczeństwa
+            $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();
 
             return response()->json([
                 'success' => true,

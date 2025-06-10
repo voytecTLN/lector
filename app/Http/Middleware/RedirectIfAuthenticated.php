@@ -1,9 +1,8 @@
 <?php
-// app/Http/Middleware/RedirectIfAuthenticated.php
+// app/Http/Middleware/RedirectIfAuthenticated.php - Poprawiony
 
 namespace App\Http\Middleware;
 
-use App\Providers\RouteServiceProvider;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,11 +11,6 @@ class RedirectIfAuthenticated
 {
     /**
      * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @param  string|null  ...$guards
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function handle(Request $request, Closure $next, ...$guards)
     {
@@ -27,18 +21,15 @@ class RedirectIfAuthenticated
                 $user = Auth::guard($guard)->user();
 
                 // Redirect based on user role
-                switch ($user->role) {
-                    case 'admin':
-                        return redirect()->route('admin.dashboard');
-                    case 'moderator':
-                        return redirect()->route('moderator.dashboard');
-                    case 'tutor':
-                        return redirect()->route('tutor.dashboard');
-                    case 'student':
-                        return redirect()->route('student.dashboard');
-                    default:
-                        return redirect('/');
-                }
+                $dashboardRoute = match($user->role) {
+                    'admin' => 'admin.dashboard',
+                    'moderator' => 'moderator.dashboard',
+                    'tutor' => 'tutor.dashboard',
+                    'student' => 'student.dashboard',
+                    default => 'home'
+                };
+
+                return redirect()->route($dashboardRoute);
             }
         }
 

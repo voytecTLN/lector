@@ -1,5 +1,5 @@
 <?php
-// app/Http/Kernel.php
+// app/Http/Kernel.php - Poprawiony (usuń niepotrzebne middleware)
 
 namespace App\Http;
 
@@ -25,7 +25,7 @@ class Kernel extends HttpKernel
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+            \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
         'api' => [
@@ -49,10 +49,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \App\Http\Middleware\VerifiedMiddleware::class,
 
-        // Custom middleware dla ról i uprawnień
+        // Custom middleware dla ról
         'role' => \App\Http\Middleware\RoleMiddleware::class,
-        'admin' => \App\Http\Middleware\AdminMiddleware::class,
-        'tutor' => \App\Http\Middleware\TutorMiddleware::class,
-        'student' => \App\Http\Middleware\StudentMiddleware::class,
     ];
 }

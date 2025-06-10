@@ -1,5 +1,5 @@
 <?php
-// app/Http/Middleware/VerifiedMiddleware.php
+// app/Http/Middleware/VerifiedMiddleware.php - Poprawiony
 
 namespace App\Http\Middleware;
 
@@ -17,18 +17,24 @@ class VerifiedMiddleware
         $user = $request->user();
 
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Wymagane uwierzytelnienie'
-            ], 401);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Wymagane uwierzytelnienie'
+                ], 401);
+            }
+            return redirect()->route('login');
         }
 
         if (!$user->isVerified()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Wymagana weryfikacja adresu email',
-                'requires_verification' => true
-            ], 403);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Wymagana weryfikacja adresu email',
+                    'requires_verification' => true
+                ], 403);
+            }
+            return redirect()->route('verification.notice');
         }
 
         return $next($request);
