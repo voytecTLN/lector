@@ -414,10 +414,8 @@ export class RegisterForm {
                 break
         }
 
-        // Small delay to show success message
-        setTimeout(() => {
-            window.location.href = redirectUrl
-        }, 1000)
+        // Use direct navigation instead of location.href to prevent multiple redirects
+        window.location.replace(redirectUrl)
     }
 
     private handleRegistrationError(error: any): void {

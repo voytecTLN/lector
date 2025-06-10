@@ -301,7 +301,7 @@ export class AuthModal {
                 }
 
                 .form-check-input {
-                    width: auto;
+                    width: 18px !important;
                 }
 
                 .form-check-label {

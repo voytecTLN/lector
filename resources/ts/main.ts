@@ -409,12 +409,11 @@ class TutoringApp {
           break;
       }
 
-      // Show success message before redirect
+      // Show success message
       this.showNotification('success', `Witamy ${user.name}! Przekierowujemy...`);
 
-      setTimeout(() => {
-        window.location.href = redirectUrl;
-      }, 1500);
+      // Use location.replace to prevent back button issues
+      window.location.replace(redirectUrl);
     }
   }
 

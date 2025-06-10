@@ -55,3 +55,25 @@ fix-permissions:
 composer-update:
 	docker-compose exec app composer update
 	docker-compose exec app composer dump-autoload
+
+clear-cache:
+	@echo "🧹 Clearing all caches..."
+	docker-compose exec app php artisan cache:clear
+	docker-compose exec app php artisan config:clear
+	docker-compose exec app php artisan route:clear
+	docker-compose exec app php artisan view:clear
+	docker-compose exec app php artisan event:clear
+	docker-compose exec app php artisan clear-compiled
+	docker-compose exec app php artisan optimize:clear
+	docker-compose exec app composer dump-autoload
+	docker-compose exec app rm -rf bootstrap/cache/*
+	docker-compose exec app rm -rf storage/framework/cache/*
+	docker-compose exec app rm -rf storage/framework/sessions/*
+	docker-compose exec app rm -rf storage/framework/views/*
+	docker-compose exec app touch bootstrap/cache/.gitkeep
+	docker-compose exec app touch storage/framework/cache/.gitkeep
+	docker-compose exec app touch storage/framework/sessions/.gitkeep
+	docker-compose exec app touch storage/framework/views/.gitkeep
+	docker-compose exec app chown -R www:www storage bootstrap/cache
+	docker-compose exec app chmod -R 775 storage bootstrap/cache
+	@echo "✅ All caches cleared!"

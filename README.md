@@ -136,4 +136,141 @@ docker-compose exec app php artisan config:clear
 docker-compose exec app rm -rf storage/framework/cache/*
 docker-compose exec app rm -rf bootstrap/cache/*
 ```
+
+
+# Komendy do czyszczenia cache w Laravel
+
+## 1. Podstawowe komendy czyszczenia cache
+
+### Wyczyść cache aplikacji
+```bash
+docker-compose exec app php artisan cache:clear
+```
+
+### Wyczyść cache konfiguracji
+```bash
+docker-compose exec app php artisan config:clear
+```
+
+### Wyczyść cache routingu
+```bash
+docker-compose exec app php artisan route:clear
+```
+
+### Wyczyść cache widoków
+```bash
+docker-compose exec app php artisan view:clear
+```
+
+### Wyczyść cache autoloadera Composera
+```bash
+docker-compose exec app composer dump-autoload
+```
+
+## 2. Kompleksowe czyszczenie wszystkich cache'y
+
+### Jedna komenda do wyczyszczenia wszystkiego
+```bash
+docker-compose exec app php artisan optimize:clear
+```
+
+Ta komenda wykonuje:
+- `config:clear`
+- `cache:clear`
+- `route:clear`
+- `view:clear`
+- `event:clear`
+
+## 3. Dodatkowe komendy
+
+### Wyczyść sesje
+```bash
+docker-compose exec app rm -rf storage/framework/sessions/*
+```
+
+### Wyczyść logi
+```bash
+docker-compose exec app truncate -s 0 storage/logs/laravel.log
+```
+
+### Wyczyść cache Bootstrap
+```bash
+docker-compose exec app rm -rf bootstrap/cache/*
+```
+
+### Wyczyść cache npm/Vite
+```bash
+docker-compose exec vite npm cache clean --force
+docker-compose exec vite rm -rf node_modules/.vite
+```
+
+## 4. Skrypt do pełnego czyszczenia (dodaj do Makefile)
+
+```makefile
+clear-all:
+	docker-compose exec app php artisan optimize:clear
+	docker-compose exec app composer dump-autoload
+	docker-compose exec app rm -rf storage/framework/cache/*
+	docker-compose exec app rm -rf storage/framework/views/*
+	docker-compose exec app rm -rf storage/framework/sessions/*
+	docker-compose exec app rm -rf bootstrap/cache/*
+	docker-compose exec vite rm -rf node_modules/.vite
+	@echo "✅ Wszystkie cache wyczyszczone!"
+```
+
+## 5. Regeneracja cache po czyszczeniu
+
+### Wygeneruj nowy cache konfiguracji
+```bash
+docker-compose exec app php artisan config:cache
+```
+
+### Wygeneruj nowy cache routingu
+```bash
+docker-compose exec app php artisan route:cache
+```
+
+### Wygeneruj nowy cache widoków
+```bash
+docker-compose exec app php artisan view:cache
+```
+
+### Optymalizuj aplikację (wszystko naraz)
+```bash
+docker-compose exec app php artisan optimize
+```
+
+## 6. Rozwiązywanie problemów
+
+### Jeśli cache nie chce się wyczyścić
+```bash
+# Nadaj uprawnienia
+docker-compose exec app chmod -R 775 storage bootstrap/cache
+docker-compose exec app chown -R www-data:www-data storage bootstrap/cache
+
+# Wyczyść ręcznie
+docker-compose exec app rm -rf storage/framework/cache/data/*
+docker-compose exec app rm -rf storage/framework/views/*
+docker-compose exec app rm -rf bootstrap/cache/*
+```
+
+### Restart kontenerów po czyszczeniu
+```bash
+docker-compose restart app
+docker-compose restart vite
+```
+
+## 7. Użycie w developmencie
+
+Podczas developmentu najlepiej używać:
+```bash
+# Wyczyść wszystko i zrestartuj
+make clear-all && make start
+```
+
+lub ręcznie:
+```bash
+docker-compose exec app php artisan optimize:clear
+docker-compose exec app composer dump-autoload
+docker-compose restart app
 ```

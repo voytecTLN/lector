@@ -140,7 +140,7 @@
 }
 
 .form-check-input {
-    width: auto;
+    width: 18px;
 }
 
 .form-check-label {
