@@ -46,6 +46,15 @@ export class AuthService {
                         message: 'Zalogowano pomyślnie!'
                     }
                 }))
+
+                if (response.data.requires_verification) {
+                    document.dispatchEvent(new CustomEvent('notification:show', {
+                        detail: {
+                            type: 'info',
+                            message: 'Twoje konto nie zostało jeszcze zweryfikowane.'
+                        }
+                    }))
+                }
             }
 
             return response

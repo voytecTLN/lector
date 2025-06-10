@@ -142,11 +142,10 @@ class AuthService
             throw new Exception('Token resetowania hasła wygasł');
         }
 
-        $user->update([
-            'password' => Hash::make($data['password']),
-            'password_reset_token' => null,
-            'password_reset_expires_at' => null
-        ]);
+        $user->password = Hash::make($data['password']);
+        $user->password_reset_token = null;
+        $user->password_reset_expires_at = null;
+        $user->save();
 
         // Revoke all existing tokens for security
         $user->tokens()->delete();

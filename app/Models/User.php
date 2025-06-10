@@ -184,10 +184,9 @@ class User extends Authenticatable
     {
         $token = bin2hex(random_bytes(32));
 
-        $this->update([
-            'password_reset_token' => $token,
-            'password_reset_expires_at' => Carbon::now()->addHours(24)
-        ]);
+        $this->password_reset_token = $token;
+        $this->password_reset_expires_at = Carbon::now()->addHours(24);
+        $this->save();
 
         return $token;
     }
@@ -196,20 +195,18 @@ class User extends Authenticatable
     {
         $token = bin2hex(random_bytes(32));
 
-        $this->update([
-            'verification_token' => $token
-        ]);
+        $this->verification_token = $token;
+        $this->save();
 
         return $token;
     }
 
     public function markAsVerified(): void
     {
-        $this->update([
-            'is_verified' => true,
-            'verification_token' => null,
-            'email_verified_at' => Carbon::now()
-        ]);
+        $this->is_verified = true;
+        $this->verification_token = null;
+        $this->email_verified_at = Carbon::now();
+        $this->save();
     }
 
     public function updateLoginInfo(string $ip): void
