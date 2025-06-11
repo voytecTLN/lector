@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>Platforma Lektorów</title>
+
+    <!-- Fonts -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Vite assets -->
+    @vite(['resources/css/app.css', 'resources/ts/main.ts'])
+</head>
+<body>
+    <!-- SPA Root -->
+    <div id="app">
+        <!-- Loading spinner while app initializes -->
+        <div id="app-loading" class="app-loading">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Ładowanie aplikacji...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <style>
+        /* Loading styles */
+        .app-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ff6b35 0%, #e91e63 100%);
+            color: white;
+        }
+
+        .loading-spinner {
+            text-align: center;
+        }
+
+        .loading-spinner i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .loading-spinner p {
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        /* Hide loading when app is ready */
+        .app-ready #app-loading {
+            display: none;
+        }
+
+        /* Notification container */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+            width: 100%;
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,154 @@
+/* Notification Styles */
+.notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+    width: 100%;
+    pointer-events: none;
+}
+
+.notification-toast {
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xl);
+    margin-bottom: var(--space-sm);
+    border-left: 4px solid var(--primary-pink);
+    overflow: hidden;
+    pointer-events: auto;
+    transition: all 0.3s ease-in-out;
+}
+
+.notification-toast.success {
+    border-left-color: var(--success);
+}
+
+.notification-toast.error {
+    border-left-color: var(--danger);
+}
+
+.notification-toast.warning {
+    border-left-color: var(--warning);
+}
+
+.notification-toast.info {
+    border-left-color: var(--info);
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+}
+
+.notification-content i {
+    flex-shrink: 0;
+    font-size: var(--font-size-lg);
+}
+
+.notification-toast.success .notification-content i {
+    color: var(--success);
+}
+
+.notification-toast.error .notification-content i {
+    color: var(--danger);
+}
+
+.notification-toast.warning .notification-content i {
+    color: var(--warning);
+}
+
+.notification-toast.info .notification-content i {
+    color: var(--info);
+}
+
+.notification-message {
+    flex: 1;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--leading-normal);
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: var(--space-xs);
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.notification-close:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* Loading states */
+.app-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ff6b35 0%, #e91e63 100%);
+    color: white;
+}
+
+.app-ready .app-loading {
+    display: none;
+}
+
+/* Route-based styles */
+.route-loginpage,
+.route-registerpage,
+.route-forgotpasswordpage {
+    background: linear-gradient(135deg, #ff6b35 0%, #e91e63 100%);
+    min-height: 100vh;
+}
+
+.route-admindashboard,
+.route-moderatordashboard,
+.route-tutordashboard,
+.route-studentdashboard {
+    background: var(--bg-secondary);
+    min-height: 100vh;
+}
+
+/* Authentication state styles */
+.user-authenticated .auth-only {
+    display: block;
+}
+
+.user-guest .auth-only {
+    display: none;
+}
+
+.user-authenticated .guest-only {
+    display: none;
+}
+
+.user-guest .guest-only {
+    display: block;
+}
+
+/* Responsive notifications */
+@media (max-width: 640px) {
+    .notification-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+
+    .notification-content {
+        padding: var(--space-sm);
+    }
+
+    .notification-message {
+        font-size: var(--font-size-xs);
+    }
+}

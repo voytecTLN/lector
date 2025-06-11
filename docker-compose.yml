@@ -62,7 +62,7 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: tutoring_phpmyadmin
+    container_name: tutoring_phpmyadmin_dev
     environment:
       PMA_HOST: database
       PMA_PORT: 3306
