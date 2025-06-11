@@ -1,400 +1,254 @@
-// resources/ts/router/Router.ts
+// resources/ts/Router.ts
 
-import { authService } from '@services/AuthService'
-import type { User } from '@/types/auth'
+import { routeGuard } from '@/components/RouteGuard'
+import type { RouteGuardConfig } from '@/types/auth'
 
-export interface Route {
+interface Route {
     path: string
-    component: string
-    requiresAuth?: boolean
-    requiresVerification?: boolean
-    roles?: string[]
+    component: () => Promise<any>
+    guard?: RouteGuardConfig
     title?: string
 }
 
+interface RouterOptions {
+    mode?: 'hash' | 'history'
+    base?: string
+}
+
 export class Router {
-    private routes: Route[] = []
-    private currentRoute: Route | null = null
-    private appContainer: HTMLElement | null = null
+    private routes: Map<string, Route> = new Map()
+    private currentRoute: string = ''
+    private container: HTMLElement | null = null
+    private mode: 'hash' | 'history' = 'hash'
+    private base: string = ''
 
-    constructor() {
-        this.appContainer = document.getElementById('app')
-        this.initializeRoutes()
-        this.setupEventListeners()
+    constructor(options: RouterOptions = {}) {
+        this.mode = options.mode || 'hash'
+        this.base = options.base || ''
+        this.init()
     }
 
-    private initializeRoutes(): void {
-        this.routes = [
-            // Public routes
-            {
-                path: '/',
-                component: 'HomePage',
-                title: 'Platforma Lektorów'
-            },
-            {
-                path: '/login',
-                component: 'LoginPage',
-                title: 'Zaloguj się'
-            },
-            {
-                path: '/register',
-                component: 'RegisterPage',
-                title: 'Zarejestruj się'
-            },
-            {
-                path: '/forgot-password',
-                component: 'ForgotPasswordPage',
-                title: 'Resetuj hasło'
-            },
+    private init(): void {
+        // Set up container
+        this.container = document.getElementById('app')
+        if (!this.container) {
+            this.container = document.createElement('div')
+            this.container.id = 'app'
+            document.body.appendChild(this.container)
+        }
 
-            // Protected routes
-            {
-                path: '/dashboard',
-                component: 'DashboardPage',
-                requiresAuth: true,
-                requiresVerification: true,
-                title: 'Dashboard'
-            },
-            {
-                path: '/admin',
-                component: 'AdminDashboard',
-                requiresAuth: true,
-                requiresVerification: true,
-                roles: ['admin'],
-                title: 'Panel Administratora'
-            },
-            {
-                path: '/admin/users',
-                component: 'AdminUsersPage',
-                requiresAuth: true,
-                requiresVerification: true,
-                roles: ['admin'],
-                title: 'Zarządzanie użytkownikami'
-            },
-            {
-                path: '/moderator',
-                component: 'ModeratorDashboard',
-                requiresAuth: true,
-                requiresVerification: true,
-                roles: ['moderator', 'admin'],
-                title: 'Panel Moderatora'
-            },
-            {
-                path: '/tutor',
-                component: 'TutorDashboard',
-                requiresAuth: true,
-                requiresVerification: true,
-                roles: ['tutor', 'admin'],
-                title: 'Panel Lektora'
-            },
-            {
-                path: '/tutor/lessons',
-                component: 'TutorLessonsPage',
-                requiresAuth: true,
-                requiresVerification: true,
-                roles: ['tutor', 'admin'],
-                title: 'Moje lekcje'
-            },
-            {
-                path: '/student',
-                component: 'StudentDashboard',
-                requiresAuth: true,
-                requiresVerification: true,
-                roles: ['student', 'admin'],
-                title: 'Panel Studenta'
-            },
-            {
-                path: '/student/lessons',
-                component: 'StudentLessonsPage',
-                requiresAuth: true,
-                requiresVerification: true,
-                roles: ['student', 'admin'],
-                title: 'Moje lekcje'
-            },
-            {
-                path: '/profile',
-                component: 'ProfilePage',
-                requiresAuth: true,
-                requiresVerification: true,
-                title: 'Profil'
+        // Set up event listeners
+        if (this.mode === 'history') {
+            window.addEventListener('popstate', () => this.handleRoute())
+            document.addEventListener('click', (e) => this.handleClick(e))
+        } else {
+            window.addEventListener('hashchange', () => this.handleRoute())
+        }
+    }
+
+    public start(): void {
+        // Navigate to initial route
+        const initialPath = this.getCurrentPath()
+        this.navigate(initialPath || '/')
+    }
+
+    public addRoute(path: string, component: () => Promise<any>, guard?: RouteGuardConfig, title?: string): void {
+        this.routes.set(path, { path, component, guard, title })
+    }
+
+    public navigate(path: string): void {
+        // Update URL
+        if (this.mode === 'history') {
+            window.history.pushState({}, '', this.base + path)
+        } else {
+            window.location.hash = path
+        }
+
+        // Handle the route
+        this.handleRoute()
+    }
+
+    private getCurrentPath(): string {
+        if (this.mode === 'history') {
+            let path = window.location.pathname
+            if (this.base) {
+                path = path.replace(this.base, '')
             }
-        ]
+            return path || '/'
+        } else {
+            return window.location.hash.slice(1) || '/'
+        }
     }
 
-    private setupEventListeners(): void {
-        // Handle browser back/forward buttons
-        window.addEventListener('popstate', () => {
-            this.navigate(window.location.pathname, false)
-        })
-
-        // Handle link clicks
-        document.addEventListener('click', (e) => {
-            const link = (e.target as HTMLElement).closest('a[data-link]')
-            if (link) {
-                e.preventDefault()
-                const href = link.getAttribute('href')
-                if (href) {
-                    this.navigate(href)
-                }
-            }
-        })
-    }
-
-    public async navigate(path: string, pushState: boolean = true): Promise<void> {
+    private async handleRoute(): Promise<void> {
+        const path = this.getCurrentPath()
         const route = this.findRoute(path)
 
         if (!route) {
-            console.warn(`Route not found: ${path}`)
-            this.navigate('/404', false)
+            this.renderNotFound()
             return
         }
 
-        // Check authentication and authorization
-        const canAccess = await this.checkAccess(route)
-        if (!canAccess) {
-            return // checkAccess handles redirects
+        // Check route guards
+        if (route.guard) {
+            const hasAccess = await routeGuard.checkAccess(route.guard)
+            if (!hasAccess) {
+                return // routeGuard handles redirects
+            }
         }
 
-        // Update browser history
-        if (pushState) {
-            window.history.pushState({}, '', path)
+        // Set page title
+        if (route.title) {
+            document.title = route.title
         }
 
-        // Update page title
-        document.title = route.title || 'Platforma Lektorów'
-
-        // Store current route
-        this.currentRoute = route
-
-        // Render component
-        await this.renderComponent(route.component)
-
-        // Dispatch route change event
-        this.dispatchRouteChange(route, path)
+        try {
+            // Load and render component
+            await this.loadComponent(route)
+            this.currentRoute = path
+        } catch (error) {
+            console.error('Error loading route:', error)
+            this.renderError()
+        }
     }
 
     private findRoute(path: string): Route | null {
         // Exact match first
-        let route = this.routes.find(r => r.path === path)
-
-        if (!route) {
-            // Try partial matches for dynamic routes
-            route = this.routes.find(r => {
-                if (r.path.includes('{') || path.startsWith(r.path.replace('/{any?}', ''))) {
-                    return true
-                }
-                return false
-            })
+        if (this.routes.has(path)) {
+            return this.routes.get(path)!
         }
 
-        return route || null
+        // Pattern matching for dynamic routes
+        for (const [pattern, route] of this.routes) {
+            if (this.matchPattern(pattern, path)) {
+                return route
+            }
+        }
+
+        return null
     }
 
-    private async checkAccess(route: Route): Promise<boolean> {
-        const user = authService.getUser()
-        const isAuthenticated = authService.isAuthenticated()
+    private matchPattern(pattern: string, path: string): boolean {
+        const patternParts = pattern.split('/')
+        const pathParts = path.split('/')
 
-        // Check authentication
-        if (route.requiresAuth && !isAuthenticated) {
-            this.navigate('/login', false)
+        if (patternParts.length !== pathParts.length) {
             return false
         }
 
-        // Check verification
-        if (route.requiresVerification && (!user || !authService.isVerified())) {
-            this.showNotification('warning', 'Wymagana weryfikacja adresu email')
-            return false
-        }
-
-        // Check roles
-        if (route.roles && user && !authService.hasAnyRole(route.roles)) {
-            this.navigate('/unauthorized', false)
-            return false
-        }
-
-        // Redirect authenticated users away from auth pages
-        if (!route.requiresAuth && isAuthenticated && ['LoginPage', 'RegisterPage'].includes(route.component)) {
-            this.redirectToDashboard(user)
-            return false
-        }
-
-        return true
+        return patternParts.every((part, i) => {
+            return part.startsWith(':') || part === pathParts[i]
+        })
     }
 
-    private redirectToDashboard(user: User | null): void {
-        if (!user) return
-
-        const dashboardRoutes = {
-            'admin': '/admin',
-            'moderator': '/moderator',
-            'tutor': '/tutor',
-            'student': '/student'
-        }
-
-        const redirectPath = dashboardRoutes[user.role as keyof typeof dashboardRoutes] || '/dashboard'
-        this.navigate(redirectPath, false)
-    }
-
-    private async renderComponent(componentName: string): Promise<void> {
-        if (!this.appContainer) return
-
-        // Show loading state
-        this.showLoading()
-
+    private async loadComponent(route: Route): Promise<void> {
         try {
-            // Dynamic import of component
-            const component = await this.loadComponent(componentName)
+            const moduleExports = await route.component()
 
-            if (component) {
-                // Clear app container
-                this.appContainer.innerHTML = ''
-
-                // Render component
-                component.render(this.appContainer)
-
-                // Hide loading state
-                this.hideLoading()
+            // Handle different export patterns
+            let ComponentClass
+            if (moduleExports.default) {
+                ComponentClass = moduleExports.default
+            } else if (typeof moduleExports === 'function') {
+                ComponentClass = moduleExports
             } else {
-                throw new Error(`Component ${componentName} not found`)
+                throw new Error('Invalid component export')
             }
 
-        } catch (error) {
-            console.error('Error rendering component:', error)
-            this.showError('Błąd podczas ładowania strony')
-        }
-    }
+            // Create and render component
+            const componentInstance = new ComponentClass()
 
-    private async loadComponent(componentName: string): Promise<any> {
-        try {
-            // Dynamic imports for components
-            switch (componentName) {
-                case 'HomePage':
-                    const { HomePage } = await import('@/pages/HomePage')
-                    return new HomePage()
+            if (this.container) {
+                this.container.innerHTML = ''
 
-                case 'LoginPage':
-                    const { LoginPage } = await import('@/pages/LoginPage')
-                    return new LoginPage()
+                if (componentInstance.render && typeof componentInstance.render === 'function') {
+                    const content = componentInstance.render()
+                    if (typeof content === 'string') {
+                        this.container.innerHTML = content
+                    } else {
+                        this.container.appendChild(content)
+                    }
+                } else if (componentInstance.element) {
+                    this.container.appendChild(componentInstance.element)
+                } else {
+                    // Fallback - try to call it directly
+                    const content = ComponentClass()
+                    if (typeof content === 'string') {
+                        this.container.innerHTML = content
+                    } else {
+                        this.container.appendChild(content)
+                    }
+                }
 
-                case 'RegisterPage':
-                    const { RegisterPage } = await import('@/pages/RegisterPage')
-                    return new RegisterPage()
-
-                case 'DashboardPage':
-                    const { DashboardPage } = await import('@/pages/DashboardPage')
-                    return new DashboardPage()
-
-                case 'AdminDashboard':
-                    const { AdminDashboard } = await import('@/pages/AdminDashboard')
-                    return new AdminDashboard()
-
-                case 'StudentDashboard':
-                    const { StudentDashboard } = await import('@/pages/StudentDashboard')
-                    return new StudentDashboard()
-
-                case 'TutorDashboard':
-                    const { TutorDashboard } = await import('@/pages/TutorDashboard')
-                    return new TutorDashboard()
-
-                case 'ModeratorDashboard':
-                    const { ModeratorDashboard } = await import('@/pages/ModeratorDashboard')
-                    return new ModeratorDashboard()
-
-                default:
-                    return null
+                // Initialize component if it has init method
+                if (componentInstance.init && typeof componentInstance.init === 'function') {
+                    componentInstance.init()
+                }
             }
         } catch (error) {
-            console.error(`Error loading component ${componentName}:`, error)
-            return null
+            console.error('Error loading component:', error)
+            throw error
         }
     }
 
-    private showLoading(): void {
-        document.body.classList.remove('app-ready')
-        const loading = document.getElementById('app-loading')
-        if (loading) {
-            loading.style.display = 'flex'
+    private handleClick(e: Event): void {
+        if (this.mode !== 'history') return
+
+        const target = e.target as HTMLElement
+        const link = target.closest('a[href]') as HTMLAnchorElement
+
+        if (!link) return
+
+        const href = link.getAttribute('href')
+        if (!href || href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('tel:')) {
+            return
         }
+
+        e.preventDefault()
+        this.navigate(href)
     }
 
-    private hideLoading(): void {
-        document.body.classList.add('app-ready')
-        const loading = document.getElementById('app-loading')
-        if (loading) {
-            loading.style.display = 'none'
-        }
-    }
-
-    private showError(message: string): void {
-        this.hideLoading()
-        if (this.appContainer) {
-            this.appContainer.innerHTML = `
+    private renderNotFound(): void {
+        if (this.container) {
+            this.container.innerHTML = `
                 <div class="error-page">
-                    <div class="error-content">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h2>Ups! Coś poszło nie tak</h2>
-                        <p>${message}</p>
-                        <button onclick="window.location.reload()" class="btn btn-primary">
-                            Odśwież stronę
-                        </button>
-                    </div>
+                    <h1>404 - Strona nie znaleziona</h1>
+                    <p>Przepraszamy, ale strona której szukasz nie istnieje.</p>
+                    <a href="#/">Powrót do strony głównej</a>
                 </div>
             `
         }
     }
 
-    private showNotification(type: string, message: string): void {
-        // Create notification
-        const notification = document.createElement('div')
-        notification.className = `notification-toast ${type}`
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas fa-${this.getNotificationIcon(type)}"></i>
-                <span>${message}</span>
-                <button onclick="this.parentElement.parentElement.remove()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `
-
-        // Add to container
-        const container = document.getElementById('notification-container')
-        if (container) {
-            container.appendChild(notification)
-
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                notification.remove()
-            }, 5000)
+    private renderError(): void {
+        if (this.container) {
+            this.container.innerHTML = `
+                <div class="error-page">
+                    <h1>Błąd ładowania</h1>
+                    <p>Wystąpił błąd podczas ładowania strony.</p>
+                    <button onclick="location.reload()">Odśwież stronę</button>
+                </div>
+            `
         }
     }
 
-    private getNotificationIcon(type: string): string {
-        const icons = {
-            success: 'check-circle',
-            error: 'exclamation-circle',
-            warning: 'exclamation-triangle',
-            info: 'info-circle'
-        }
-        return icons[type as keyof typeof icons] || 'info-circle'
-    }
-
-    private dispatchRouteChange(route: Route, path: string): void {
-        window.dispatchEvent(new CustomEvent('route:change', {
-            detail: { route, path }
-        }))
-    }
-
-    // Public methods
-    public getCurrentRoute(): Route | null {
+    public getCurrentRoute(): string {
         return this.currentRoute
     }
 
-    public init(): void {
-        // Initialize router with current path
-        this.navigate(window.location.pathname, false)
+    public getRoutes(): Map<string, Route> {
+        return this.routes
     }
 }
 
-// Create global router instance
-export const router = new Router()
+// Singleton router instance
+export const router = new Router({ mode: 'hash' })
+
+// Make router globally available
+declare global {
+    interface Window {
+        router: Router
+    }
+}
+
+window.router = router

@@ -101,15 +101,15 @@ class TutoringApp {
     // Render the appropriate page
     switch (pageType) {
       case 'homepage':
-        this.currentPageComponent = new Homepage(this.mainContent)
+        this.currentPageComponent = new Homepage()
         break
 
       case 'login':
-        this.currentPageComponent = new LoginPage(this.mainContent)
+        this.currentPageComponent = new LoginPage()
         break
 
       case 'register':
-        this.currentPageComponent = new RegisterPage(this.mainContent)
+        this.currentPageComponent = new RegisterPage()
         break
 
       case 'admin-dashboard':
@@ -421,7 +421,7 @@ class TutoringApp {
 
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && authModal.isVisible()) {
+      if (e.key === 'Escape' && authModal.isModalVisible()) {
         authModal.hide()
       }
     })
@@ -619,7 +619,7 @@ class TutoringApp {
 
   private handleSuccessfulAuth(user: any): void {
     // Close auth modal if open
-    if (authModal.isVisible()) {
+    if (authModal.isModalVisible()) {
       authModal.hide()
     }
 
