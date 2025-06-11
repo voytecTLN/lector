@@ -1,4 +1,4 @@
-// resources/ts/services/AuthService.ts
+// resources/ts/services/AuthService.ts - Poprawiony z właściwym zarządzaniem weryfikacji
 
 import { api } from '@services/ApiService'
 import type {
@@ -40,44 +40,21 @@ export class AuthService {
                 this.setAuthData(response.data.user, response.data.token, response.data.permissions)
                 this.notifyAuthChange('login')
 
-                // SPRAWDŹ CZY WYMAGANA WERYFIKACJA
-                if (response.data.requires_verification) {
-                    document.dispatchEvent(new CustomEvent('notification:show', {
-                        detail: {
-                            type: 'warning',
-                            message: 'Musisz zweryfikować swój email przed uzyskaniem pełnego dostępu. Sprawdź swoją skrzynkę pocztową.'
-                        }
-                    }))
-                } else {
-                    document.dispatchEvent(new CustomEvent('notification:show', {
-                        detail: {
-                            type: 'success',
-                            message: 'Zalogowano pomyślnie!'
-                        }
-                    }))
-                }
+                document.dispatchEvent(new CustomEvent('notification:show', {
+                    detail: {
+                        type: 'success',
+                        message: 'Zalogowano pomyślnie!'
+                    }
+                }))
             }
 
             return response
 
         } catch (error: any) {
-            // ULEPSZONA OBSŁUGA BŁĘDÓW LOGOWANIA
-            let errorMessage = 'Błąd podczas logowania'
-
-            if (error.message.includes('zweryfikować')) {
-                errorMessage = error.message
-            } else if (error.message.includes('Nieprawidłowy')) {
-                errorMessage = 'Nieprawidłowy email lub hasło'
-            } else if (error.message.includes('zablokowane')) {
-                errorMessage = 'Konto zostało zablokowane'
-            } else if (error.message) {
-                errorMessage = error.message
-            }
-
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'error',
-                    message: errorMessage
+                    message: error.message || 'Błąd podczas logowania'
                 }
             }))
             throw error
@@ -95,12 +72,22 @@ export class AuthService {
                 this.setAuthData(response.data.user, response.data.token, response.data.permissions)
                 this.notifyAuthChange('register')
 
-                document.dispatchEvent(new CustomEvent('notification:show', {
-                    detail: {
-                        type: 'success',
-                        message: 'Konto zostało utworzone! Sprawdź email w celu weryfikacji.'
-                    }
-                }))
+                // Pokazuj różne komunikaty w zależności od tego czy wymaga weryfikacji
+                if (response.data.requires_verification) {
+                    document.dispatchEvent(new CustomEvent('notification:show', {
+                        detail: {
+                            type: 'warning',
+                            message: 'Konto zostało utworzone! Sprawdź email w celu weryfikacji.'
+                        }
+                    }))
+                } else {
+                    document.dispatchEvent(new CustomEvent('notification:show', {
+                        detail: {
+                            type: 'success',
+                            message: 'Konto zostało utworzone pomyślnie!'
+                        }
+                    }))
+                }
             }
 
             return response
@@ -145,16 +132,37 @@ export class AuthService {
      * Get current user data
      */
     async getCurrentUser(): Promise<User | null> {
+        //here
         if (!this.token) {
             return null
         }
 
         try {
-            const response = await api.get<CurrentUserResponse>('/auth/me')
+            const response = await fetch('/api/auth/me', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': this.getCSRFToken()
+                }
+            })
 
-            if (response.success) {
-                this.user = response.data.user
-                this.permissions = response.data.permissions
+            if (!response.ok) {
+                if (response.status === 401) {
+                    // Token expired or invalid
+                    this.clearAuthData()
+                    return null
+                }
+                throw new Error(`HTTP ${response.status}`)
+            }
+
+            const data: CurrentUserResponse = await response.json()
+
+            if (data.success) {
+                this.user = data.data.user
+                this.permissions = data.data.permissions
                 this.saveToStorage()
                 return this.user
             }
@@ -166,6 +174,14 @@ export class AuthService {
             this.clearAuthData()
             return null
         }
+    }
+
+    /**
+     * Get CSRF token from meta tag
+     */
+    private getCSRFToken(): string {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        return token || ''
     }
 
     /**
@@ -248,6 +264,36 @@ export class AuthService {
     }
 
     /**
+     * POPRAWIONA METODA - weryfikacja emaila z tokenem
+     */
+    async verifyEmail(token: string): Promise<void> {
+        try {
+            const response = await api.post<ApiResponse>('/auth/verify-email', { token })
+
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'success',
+                    message: 'Email został zweryfikowany pomyślnie!'
+                }
+            }))
+
+            // Odśwież dane użytkownika po weryfikacji
+            if (this.token) {
+                await this.getCurrentUser()
+            }
+
+        } catch (error: any) {
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: error.message || 'Błąd podczas weryfikacji emaila'
+                }
+            }))
+            throw error
+        }
+    }
+
+    /**
      * Resend email verification
      */
     async resendVerification(): Promise<void> {
@@ -276,14 +322,16 @@ export class AuthService {
      * Check if user is authenticated
      */
     isAuthenticated(): boolean {
+        console.log('!!this.token, !!this.user');
+        console.log(this.token, this.user);
         return !!this.token && !!this.user
     }
 
     /**
-     * Check if user is verified
+     * POPRAWIONA METODA - sprawdza weryfikację emaila
      */
     isVerified(): boolean {
-        return !!this.user?.is_verified
+        return !!this.user?.is_verified && !!this.user?.email_verified_at
     }
 
     /**

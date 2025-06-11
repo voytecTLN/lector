@@ -29,7 +29,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'avatar',
         'is_verified',
         'last_login_at',
-        'last_login_ip'
+        'last_login_ip',
+        'email_verified_at',
+        'verification_token'
     ];
 
     protected $hidden = [
@@ -153,35 +155,10 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->status === self::STATUS_BLOCKED;
     }
 
+    // POPRAWIONA METODA - sprawdza zarówno is_verified jak i email_verified_at
     public function isVerified(): bool
     {
-        return $this->is_verified;
-    }
-
-    // IMPLEMENTACJA MustVerifyEmail
-    public function hasVerifiedEmail(): bool
-    {
-        return $this->is_verified && !is_null($this->email_verified_at);
-    }
-
-    public function markEmailAsVerified(): bool
-    {
-        return $this->update([
-            'email_verified_at' => now(),
-            'is_verified' => true,
-            'verification_token' => null
-        ]);
-    }
-
-    public function sendEmailVerificationNotification(): void
-    {
-        // Ta metoda jest wymagana przez interface MustVerifyEmail
-        // W naszym przypadku obsługujemy to w AuthService
-    }
-
-    public function getEmailForVerification(): string
-    {
-        return $this->email;
+        return $this->is_verified && $this->hasVerifiedEmail();
     }
 
     // Utility methods
@@ -206,6 +183,18 @@ class User extends Authenticatable implements MustVerifyEmail
         return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=e91e63&background=f8fafc';
     }
 
+    // POPRAWIONA METODA - generuje i ZAPISUJE token weryfikacyjny
+    public function generateVerificationToken(): string
+    {
+        $token = bin2hex(random_bytes(32));
+
+        // WAŻNE: Bezpośrednio zapisz token do bazy danych
+        $this->verification_token = $token;
+        $this->save();
+
+        return $token;
+    }
+
     // Authentication helper methods
     public function generatePasswordResetToken(): string
     {
@@ -219,24 +208,31 @@ class User extends Authenticatable implements MustVerifyEmail
         return $token;
     }
 
-    public function generateVerificationToken(): string
-    {
-        $token = bin2hex(random_bytes(32));
-
-        $this->update([
-            'verification_token' => $token
-        ]);
-
-        return $token;
-    }
-
+    // POPRAWIONA METODA - oznacza jako zweryfikowany i usuwa token
     public function markAsVerified(): void
     {
         $this->update([
             'is_verified' => true,
-            'verification_token' => null,
-            'email_verified_at' => Carbon::now()
+            'email_verified_at' => Carbon::now(),
+            'verification_token' => null // Usuń token po weryfikacji
         ]);
+    }
+
+    // NOWA METODA - weryfikuje email na podstawie tokenu
+    public function verifyEmailWithToken(string $token): bool
+    {
+        if ($this->verification_token !== $token) {
+            return false;
+        }
+
+        if ($this->hasVerifiedEmail()) {
+            return true; // Już zweryfikowany
+        }
+
+        $this->markEmailAsVerified();
+        $this->markAsVerified();
+
+        return true;
     }
 
     public function updateLoginInfo(string $ip): void

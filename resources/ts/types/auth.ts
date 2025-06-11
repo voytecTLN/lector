@@ -41,6 +41,7 @@ export interface AuthUser {
     is_verified: boolean
     created_at: string
     updated_at: string
+    email_verified_at: string | null
     studentProfile?: StudentProfile
     tutorProfile?: TutorProfile
 }

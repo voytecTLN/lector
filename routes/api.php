@@ -17,8 +17,11 @@ Route::prefix('auth')->group(function () {
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('api.auth.forgot-password');
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('api.auth.reset-password');
 
-    // POPRAWIONA TRASA WERYFIKACJI EMAIL - bez middleware auth
-    Route::get('/verify-email', [AuthController::class, 'verifyEmail'])->name('api.auth.verify-email');
+    // POPRAWIONE - weryfikacja emaila jako POST (dla frontend)
+    Route::post('/verify-email', [AuthController::class, 'verifyEmail'])->name('api.auth.verify-email');
+
+    // DODANE - weryfikacja emaila jako GET (dla linków w emailu)
+    Route::get('/verify-email', [AuthController::class, 'verifyEmailFromLink'])->name('api.auth.verify-email-link');
 });
 
 // Protected routes (wymagają autentykacji Sanctum)

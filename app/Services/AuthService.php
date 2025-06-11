@@ -32,11 +32,6 @@ class AuthService
             throw new Exception('Konto jest nieaktywne lub zablokowane');
         }
 
-        // DODANA KONTROLA WERYFIKACJI EMAIL
-        if (!$user->is_verified) {
-            throw new Exception('Musisz zweryfikować swój adres email przed zalogowaniem. Sprawdź swoją skrzynkę pocztową.');
-        }
-
         // Update login information
         $user->updateLoginInfo($ip);
 
@@ -53,7 +48,7 @@ class AuthService
     }
 
     /**
-     * Register new user
+     * POPRAWIONA METODA - Register new user z właściwym generowaniem tokenu
      */
     public function register(array $userData, string $ip): array
     {
@@ -77,11 +72,13 @@ class AuthService
             // Create role-specific profile
             $this->createRoleProfile($user, $userData);
 
-            // Generate verification token and send email
+            // WAŻNE: Wygeneruj i zapisz token weryfikacyjny
             $verificationToken = $user->generateVerificationToken();
+
+            // Wyślij email weryfikacyjny
             $this->notificationService->sendEmailVerification($user, $verificationToken);
 
-            // Create token
+            // Create authentication token
             $token = $user->createToken('auth_token', $this->getTokenAbilities($user))->plainTextToken;
 
             DB::commit();
@@ -158,7 +155,7 @@ class AuthService
     }
 
     /**
-     * Verify email address - POPRAWIONA METODA
+     * POPRAWIONA METODA - Verify email address z tokenem
      */
     public function verifyEmail(string $token): void
     {
@@ -168,24 +165,32 @@ class AuthService
             throw new Exception('Nieprawidłowy token weryfikacyjny');
         }
 
-        if ($user->is_verified) {
-            throw new Exception('Email jest już zweryfikowany');
+        if ($user->isVerified()) {
+            // Już zweryfikowany - usuń token i kontynuuj
+            $user->update(['verification_token' => null]);
+            return;
         }
 
+        // Oznacz jako zweryfikowany
         $user->markAsVerified();
+
+        // Wyślij email powitalny
         $this->notificationService->sendWelcomeEmail($user);
     }
 
     /**
-     * Resend email verification
+     * POPRAWIONA METODA - Resend email verification z nowym tokenem
      */
     public function resendVerificationEmail(User $user): void
     {
-        if ($user->is_verified) {
+        if ($user->isVerified()) {
             throw new Exception('Email jest już zweryfikowany');
         }
 
+        // Wygeneruj NOWY token weryfikacyjny
         $token = $user->generateVerificationToken();
+
+        // Wyślij email z nowym tokenem
         $this->notificationService->sendEmailVerification($user, $token);
     }
 
@@ -205,7 +210,16 @@ class AuthService
                 break;
 
             case User::ROLE_TUTOR:
-                // Tutaj można dodać tworzenie profilu lektora gdy będzie gotowy model TutorProfile
+                $user->tutorProfile()->create([
+                    'languages' => [],
+                    'specializations' => [],
+                    'hourly_rate' => 0,
+                    'description' => null,
+                    'weekly_availability' => [],
+                    'is_verified' => false,
+                    'verification_status' => 'pending',
+                    'is_accepting_students' => false
+                ]);
                 break;
         }
     }

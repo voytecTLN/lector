@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\Events\Verified;
 
 class AuthController extends Controller
 {
@@ -50,13 +51,12 @@ class AuthController extends Controller
                 'data' => [
                     'user' => $result['user'],
                     'token' => $result['token'],
-                    'permissions' => $this->getUserPermissions($result['user']),
-                    'requires_verification' => !$result['user']->is_verified
+                    'permissions' => $this->getUserPermissions($result['user'])
                 ]
             ]);
 
         } catch (\Exception $e) {
-            RateLimiter::hit($key, 300);
+            RateLimiter::hit($key, 300); // 5 minutes penalty
 
             return response()->json([
                 'success' => false,
@@ -81,7 +81,7 @@ class AuthController extends Controller
                     'user' => $result['user'],
                     'token' => $result['token'],
                     'permissions' => $this->getUserPermissions($result['user']),
-                    'requires_verification' => !$result['user']->is_verified
+                    'requires_verification' => !$result['user']->isVerified()
                 ]
             ], 201);
 
@@ -103,6 +103,7 @@ class AuthController extends Controller
             $user = $request->user();
 
             if ($user) {
+                // Usuń tylko aktualny token
                 $request->user()->currentAccessToken()->delete();
             }
 
@@ -134,6 +135,7 @@ class AuthController extends Controller
                 ], 401);
             }
 
+            // Załaduj powiązane profile
             $user->load(['studentProfile', 'tutorProfile']);
 
             return response()->json([
@@ -148,56 +150,6 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Błąd podczas pobierania danych użytkownika'
-            ], 500);
-        }
-    }
-
-    /**
-     * Verify email address - POPRAWIONA METODA
-     */
-    public function verifyEmail(Request $request): JsonResponse
-    {
-        try {
-            // Pobierz token z URL lub z request body
-            $token = $request->query('token') ?? $request->input('token');
-
-            if (!$token) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Brak tokenu weryfikacyjnego.'
-                ], 400);
-            }
-
-            // Znajdź użytkownika po tokenie
-            $user = User::where('verification_token', $token)->first();
-
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Nieprawidłowy token weryfikacyjny.'
-                ], 400);
-            }
-
-            // Sprawdź czy email jest już zweryfikowany
-            if ($user->is_verified) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Email jest już zweryfikowany.'
-                ]);
-            }
-
-            // Zweryfikuj email
-            $user->markAsVerified();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Email został zweryfikowany pomyślnie.'
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Błąd podczas weryfikacji emaila.'
             ], 500);
         }
     }
@@ -261,6 +213,103 @@ class AuthController extends Controller
     }
 
     /**
+     * Verify email address with token (POST endpoint for frontend)
+     */
+    public function verifyEmail(Request $request): JsonResponse
+    {
+        $request->validate([
+            'token' => 'required|string'
+        ]);
+
+        $token = $request->input('token');
+
+        try {
+            $user = User::where('verification_token', $token)->first();
+// var_dump($user);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nieprawidłowy token weryfikacyjny.'
+                ], 400);
+            }
+
+            if ($user->isVerified()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Email jest już zweryfikowany.'
+                ]);
+            }
+
+            // Oznacz jako zweryfikowany
+            $user->markAsVerified();
+
+            // Wywołaj event weryfikacji
+            event(new Verified($user));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email został zweryfikowany pomyślnie.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Błąd podczas weryfikacji emaila.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Verify email address from link (GET endpoint for email links)
+     */
+    public function verifyEmailFromLink(Request $request): JsonResponse
+    {
+        $token = $request->query('token');
+
+        if (!$token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Brak tokenu weryfikacyjnego.'
+            ], 400);
+        }
+
+        try {
+            $user = User::where('verification_token', $token)->first();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nieprawidłowy token weryfikacyjny.'
+                ], 400);
+            }
+
+            if ($user->isVerified()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Email jest już zweryfikowany.'
+                ]);
+            }
+
+            // Oznacz jako zweryfikowany
+            $user->markAsVerified();
+
+            // Wywołaj event weryfikacji
+            event(new Verified($user));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email został zweryfikowany pomyślnie.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Błąd podczas weryfikacji emaila.'
+            ], 500);
+        }
+    }
+
+    /**
      * Resend email verification
      */
     public function resendVerification(Request $request): JsonResponse
@@ -274,15 +323,26 @@ class AuthController extends Controller
             ], 401);
         }
 
-        if ($user->is_verified) {
+        if ($user->isVerified()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Email jest już zweryfikowany.'
             ], 400);
         }
 
+        // Rate limiting
+        $key = 'resend-verification:' . $user->id;
+        if (RateLimiter::tooManyAttempts($key, 3)) {
+            $seconds = RateLimiter::availableIn($key);
+            return response()->json([
+                'success' => false,
+                'message' => "Zbyt wiele prób. Spróbuj ponownie za {$seconds} sekund."
+            ], 429);
+        }
+
         try {
             $this->authService->resendVerificationEmail($user);
+            RateLimiter::hit($key, 300); // 5 minutes
 
             return response()->json([
                 'success' => true,

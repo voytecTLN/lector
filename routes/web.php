@@ -35,7 +35,6 @@ Route::middleware('guest')->group(function () {
 
 // Dashboard routes (wymagają autentykacji i weryfikacji email)
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
-
     // Admin dashboard
     Route::middleware('role:admin')->group(function () {
         Route::get('/admin/dashboard', function () {

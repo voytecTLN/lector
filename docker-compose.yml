@@ -60,6 +60,20 @@ services:
     networks:
       - tutoring_network
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: tutoring_phpmyadmin
+    environment:
+      PMA_HOST: database
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root_secret
+    ports:
+      - "8080:80"
+    depends_on:
+      - database
+    networks:
+      - tutoring_network
+
 volumes:
   mysql_data:
 

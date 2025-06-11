@@ -182,6 +182,8 @@
 </style>
 
 <script>
+import { LoginForm } from '/resources/ts/components/auth/LoginForm.js';l
+
 document.addEventListener('DOMContentLoaded', function() {
     new LoginForm('#login-form');
 });

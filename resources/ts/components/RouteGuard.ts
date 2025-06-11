@@ -15,6 +15,8 @@ export class RouteGuard {
 
     public async checkAccess(guard: RouteGuardConfig): Promise<boolean> {
         // Check authentication
+        console.log('checkAccess');
+        console.log(guard.requiresAuth, !authService.isAuthenticated());
         if (guard.requiresAuth && !authService.isAuthenticated()) {
             this.redirectToLogin()
             return false
