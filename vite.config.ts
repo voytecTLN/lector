@@ -17,7 +17,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'resources/ts'),
       '@components': path.resolve(__dirname, 'resources/ts/components'),
       '@services': path.resolve(__dirname, 'resources/ts/services'),
-      '@types': path.resolve(__dirname, 'resources/ts/types')
+      '@types': path.resolve(__dirname, 'resources/ts/types'),
+      '@utils': path.resolve(__dirname, 'resources/ts/utils'),
+      '@router': path.resolve(__dirname, 'resources/ts/router')
     }
   },
   server: {
@@ -26,5 +28,9 @@ export default defineConfig({
     hmr: {
       host: 'localhost'
     }
+  },
+  define: {
+    __VUE_OPTIONS_API__: false,
+    __VUE_PROD_DEVTOOLS__: false,
   }
 })

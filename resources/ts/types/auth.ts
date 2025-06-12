@@ -1,5 +1,4 @@
-// resources/ts/types/auth.ts
-
+// resources/ts/types/auth.ts - Zgodne z Laravel backend
 export interface LoginCredentials {
     email: string
     password: string
@@ -27,6 +26,7 @@ export interface NewPasswordData {
     password_confirmation: string
 }
 
+// Zgodne z Laravel User model
 export interface AuthUser {
     id: number
     name: string
@@ -39,13 +39,14 @@ export interface AuthUser {
     status: 'active' | 'inactive' | 'blocked'
     avatar?: string
     is_verified: boolean
+    email_verified_at: string | null
     created_at: string
     updated_at: string
-    email_verified_at: string | null
     studentProfile?: StudentProfile
     tutorProfile?: TutorProfile
 }
 
+// Zgodne z Laravel AuthController responses
 export interface AuthResponse {
     success: boolean
     message?: string
@@ -77,6 +78,7 @@ export interface AuthError {
     errors?: Record<string, string[]>
 }
 
+// Zgodne z Laravel models
 export interface StudentProfile {
     id: number
     user_id: number
@@ -96,11 +98,13 @@ export interface TutorProfile {
     hourly_rate: number
     description?: string
     weekly_availability: Record<string, any>
+    is_verified: boolean
+    verification_status: string
     created_at: string
     updated_at: string
 }
 
-// Re-export User type for compatibility with existing code
+// Re-export User type for compatibility
 export type User = AuthUser
 
 // Auth event types
@@ -110,7 +114,7 @@ export interface AuthChangeEventDetail {
     isAuthenticated: boolean
 }
 
-// Form validation types
+// Form validation types (unchanged)
 export interface LoginFormData {
     email: string
     password: string
@@ -143,7 +147,7 @@ export interface ChangePasswordFormData {
     new_password_confirmation: string
 }
 
-// Role and permission constants
+// Role and permission constants (unchanged)
 export const USER_ROLES = {
     ADMIN: 'admin',
     MODERATOR: 'moderator',
@@ -154,24 +158,17 @@ export const USER_ROLES = {
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES]
 
 export const USER_PERMISSIONS = {
-    // Admin permissions
     MANAGE_USERS: 'manage_users',
     MANAGE_CONTENT: 'manage_content',
     MANAGE_LESSONS: 'manage_lessons',
     VIEW_ANALYTICS: 'view_analytics',
     SYSTEM_SETTINGS: 'system_settings',
-
-    // Tutor permissions
     CAN_TEACH: 'can_teach',
     MANAGE_OWN_LESSONS: 'manage_own_lessons',
     VIEW_OWN_ANALYTICS: 'view_own_analytics',
-
-    // Student permissions
     CAN_LEARN: 'can_learn',
     BOOK_LESSONS: 'book_lessons',
     VIEW_OWN_PROGRESS: 'view_own_progress',
-
-    // Common permissions
     PROFILE_UPDATE: 'profile:update',
     USERS_READ: 'users:read',
     TUTORS_READ: 'tutors:read',
@@ -180,7 +177,6 @@ export const USER_PERMISSIONS = {
 
 export type UserPermission = typeof USER_PERMISSIONS[keyof typeof USER_PERMISSIONS]
 
-// Auth route guards
 export interface RouteGuardConfig {
     requiresAuth?: boolean
     requiresVerification?: boolean

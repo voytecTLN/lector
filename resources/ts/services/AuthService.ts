@@ -1,5 +1,4 @@
-// resources/ts/services/AuthService.ts - Poprawiony z właściwym zarządzaniem weryfikacji
-
+// resources/ts/services/AuthService.ts - Zgodny z Laravel Backend
 import { api } from '@services/ApiService'
 import type {
     User,
@@ -8,9 +7,33 @@ import type {
     AuthResponse,
     PasswordResetData,
     NewPasswordData,
-    ApiResponse,
     CurrentUserResponse
 } from '@/types/auth'
+
+// Dopasowane do Laravel AuthController responses
+interface LaravelAuthResponse {
+    success: boolean
+    message?: string
+    data: {
+        user: User
+        token: string
+        permissions: string[]
+        requires_verification?: boolean
+    }
+}
+
+interface LaravelUserResponse {
+    success: boolean
+    data: {
+        user: User
+        permissions: string[]
+    }
+}
+
+interface LaravelMessageResponse {
+    success: boolean
+    message: string
+}
 
 export class AuthService {
     private static instance: AuthService
@@ -30,20 +53,26 @@ export class AuthService {
     }
 
     /**
-     * Login user with email and password
+     * Login - zgodny z Laravel AuthController::login
      */
-    async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    async login(credentials: LoginCredentials): Promise<LaravelAuthResponse> {
         try {
-            const response = await api.post<AuthResponse>('/auth/login', credentials)
+            console.log('🔐 AuthService: Attempting login')
 
-            if (response.success) {
+            const response = await api.post<LaravelAuthResponse>('/auth/login', {
+                email: credentials.email,
+                password: credentials.password,
+                remember: credentials.remember || false
+            })
+
+            if (response.success && response.data) {
                 this.setAuthData(response.data.user, response.data.token, response.data.permissions)
                 this.notifyAuthChange('login')
 
                 document.dispatchEvent(new CustomEvent('notification:show', {
                     detail: {
                         type: 'success',
-                        message: 'Zalogowano pomyślnie!'
+                        message: response.message || 'Zalogowano pomyślnie!'
                     }
                 }))
             }
@@ -51,6 +80,8 @@ export class AuthService {
             return response
 
         } catch (error: any) {
+            console.error('❌ Login error:', error)
+
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'error',
@@ -62,37 +93,40 @@ export class AuthService {
     }
 
     /**
-     * Register new user
+     * Register - zgodny z Laravel AuthController::register
      */
-    async register(userData: RegisterData): Promise<AuthResponse> {
+    async register(userData: RegisterData): Promise<LaravelAuthResponse> {
         try {
-            const response = await api.post<AuthResponse>('/auth/register', userData)
+            console.log('📝 AuthService: Attempting registration')
 
-            if (response.success) {
+            const response = await api.post<LaravelAuthResponse>('/auth/register', {
+                name: userData.name,
+                email: userData.email,
+                password: userData.password,
+                password_confirmation: userData.password_confirmation,
+                role: userData.role,
+                phone: userData.phone,
+                city: userData.city,
+                terms_accepted: userData.terms_accepted
+            })
+
+            if (response.success && response.data) {
                 this.setAuthData(response.data.user, response.data.token, response.data.permissions)
                 this.notifyAuthChange('register')
 
-                // Pokazuj różne komunikaty w zależności od tego czy wymaga weryfikacji
-                if (response.data.requires_verification) {
-                    document.dispatchEvent(new CustomEvent('notification:show', {
-                        detail: {
-                            type: 'warning',
-                            message: 'Konto zostało utworzone! Sprawdź email w celu weryfikacji.'
-                        }
-                    }))
-                } else {
-                    document.dispatchEvent(new CustomEvent('notification:show', {
-                        detail: {
-                            type: 'success',
-                            message: 'Konto zostało utworzone pomyślnie!'
-                        }
-                    }))
-                }
+                const messageType = response.data.requires_verification ? 'warning' : 'success'
+                const message = response.message || 'Konto zostało utworzone pomyślnie!'
+
+                document.dispatchEvent(new CustomEvent('notification:show', {
+                    detail: { type: messageType, message }
+                }))
             }
 
             return response
 
         } catch (error: any) {
+            console.error('❌ Registration error:', error)
+
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'error',
@@ -104,17 +138,18 @@ export class AuthService {
     }
 
     /**
-     * Logout user
+     * Logout - zgodny z Laravel AuthController::logout
      */
     async logout(): Promise<void> {
         try {
-            // Tylko spróbuj wywołać API logout jeśli mamy token
+            console.log('🚪 AuthService: Logging out')
+
+            // Tylko spróbuj API logout jeśli mamy token
             if (this.token) {
-                await api.post('/auth/logout', {})
+                await api.post<LaravelMessageResponse>('/auth/logout')
             }
         } catch (error) {
-            console.error('Logout API error:', error)
-            // Kontynuuj logout nawet jeśli API nie odpowie
+            console.warn('⚠️ Logout API error (continuing anyway):', error)
         } finally {
             this.clearAuthData()
             this.notifyAuthChange('logout')
@@ -129,40 +164,22 @@ export class AuthService {
     }
 
     /**
-     * Get current user data
+     * Get current user - zgodny z Laravel AuthController::me
      */
     async getCurrentUser(): Promise<User | null> {
-        //here
         if (!this.token) {
+            console.log('🚫 No token available for getCurrentUser')
             return null
         }
 
         try {
-            const response = await fetch('/api/auth/me', {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.token}`,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': this.getCSRFToken()
-                }
-            })
+            console.log('👤 AuthService: Getting current user')
 
-            if (!response.ok) {
-                if (response.status === 401) {
-                    // Token expired or invalid
-                    this.clearAuthData()
-                    return null
-                }
-                throw new Error(`HTTP ${response.status}`)
-            }
+            const response = await api.get<LaravelUserResponse>('/auth/me')
 
-            const data: CurrentUserResponse = await response.json()
-
-            if (data.success) {
-                this.user = data.data.user
-                this.permissions = data.data.permissions
+            if (response.success && response.data) {
+                this.user = response.data.user
+                this.permissions = response.data.permissions
                 this.saveToStorage()
                 return this.user
             }
@@ -170,31 +187,25 @@ export class AuthService {
             throw new Error('Invalid response format')
 
         } catch (error) {
-            console.error('Get current user error:', error)
+            console.error('❌ Get current user error:', error)
             this.clearAuthData()
             return null
         }
     }
 
     /**
-     * Get CSRF token from meta tag
-     */
-    private getCSRFToken(): string {
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-        return token || ''
-    }
-
-    /**
-     * Send password reset email
+     * Forgot password - zgodny z Laravel AuthController::forgotPassword
      */
     async forgotPassword(email: string): Promise<void> {
         try {
-            await api.post<ApiResponse>('/auth/forgot-password', { email })
+            console.log('📧 AuthService: Sending password reset')
+
+            const response = await api.post<LaravelMessageResponse>('/auth/forgot-password', { email })
 
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'success',
-                    message: 'Link do resetowania hasła został wysłany na podany adres email.'
+                    message: response.message || 'Link do resetowania hasła został wysłany.'
                 }
             }))
 
@@ -210,16 +221,22 @@ export class AuthService {
     }
 
     /**
-     * Reset password with token
+     * Reset password - zgodny z Laravel AuthController::resetPassword
      */
     async resetPassword(data: NewPasswordData): Promise<void> {
         try {
-            await api.post<ApiResponse>('/auth/reset-password', data)
+            console.log('🔑 AuthService: Resetting password')
+
+            const response = await api.post<LaravelMessageResponse>('/auth/reset-password', {
+                token: data.token,
+                password: data.password,
+                password_confirmation: data.password_confirmation
+            })
 
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'success',
-                    message: 'Hasło zostało zmienione pomyślnie.'
+                    message: response.message || 'Hasło zostało zmienione pomyślnie.'
                 }
             }))
 
@@ -235,45 +252,18 @@ export class AuthService {
     }
 
     /**
-     * Change password for authenticated user
-     */
-    async changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Promise<void> {
-        try {
-            await api.post<ApiResponse>('/auth/change-password', {
-                current_password: currentPassword,
-                new_password: newPassword,
-                new_password_confirmation: confirmPassword
-            })
-
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'success',
-                    message: 'Hasło zostało zmienione pomyślnie.'
-                }
-            }))
-
-        } catch (error: any) {
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'error',
-                    message: error.message || 'Błąd podczas zmiany hasła'
-                }
-            }))
-            throw error
-        }
-    }
-
-    /**
-     * POPRAWIONA METODA - weryfikacja emaila z tokenem
+     * Verify email - zgodny z Laravel AuthController::verifyEmail
      */
     async verifyEmail(token: string): Promise<void> {
         try {
-            const response = await api.post<ApiResponse>('/auth/verify-email', { token })
+            console.log('✅ AuthService: Verifying email')
+
+            const response = await api.post<LaravelMessageResponse>('/auth/verify-email', { token })
 
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'success',
-                    message: 'Email został zweryfikowany pomyślnie!'
+                    message: response.message || 'Email został zweryfikowany pomyślnie!'
                 }
             }))
 
@@ -294,16 +284,18 @@ export class AuthService {
     }
 
     /**
-     * Resend email verification
+     * Resend verification - zgodny z Laravel AuthController::resendVerification
      */
     async resendVerification(): Promise<void> {
         try {
-            await api.post<ApiResponse>('/auth/resend-verification', {})
+            console.log('📧 AuthService: Resending verification')
+
+            const response = await api.post<LaravelMessageResponse>('/auth/resend-verification')
 
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'success',
-                    message: 'Email weryfikacyjny został wysłany ponownie.'
+                    message: response.message || 'Email weryfikacyjny został wysłany ponownie.'
                 }
             }))
 
@@ -319,66 +311,69 @@ export class AuthService {
     }
 
     /**
-     * Check if user is authenticated
+     * Change password - zgodny z Laravel AuthController::changePassword
      */
+    async changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Promise<void> {
+        try {
+            console.log('🔐 AuthService: Changing password')
+
+            const response = await api.post<LaravelMessageResponse>('/auth/change-password', {
+                current_password: currentPassword,
+                new_password: newPassword,
+                new_password_confirmation: confirmPassword
+            })
+
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'success',
+                    message: response.message || 'Hasło zostało zmienione pomyślnie.'
+                }
+            }))
+
+        } catch (error: any) {
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: error.message || 'Błąd podczas zmiany hasła'
+                }
+            }))
+            throw error
+        }
+    }
+
+    // Pozostałe metody bez zmian...
     isAuthenticated(): boolean {
-        console.log('!!this.token, !!this.user');
-        console.log(this.token, this.user);
         return !!this.token && !!this.user
     }
 
-    /**
-     * POPRAWIONA METODA - sprawdza weryfikację emaila
-     */
     isVerified(): boolean {
         return !!this.user?.is_verified && !!this.user?.email_verified_at
     }
 
-    /**
-     * Check if user has specific role
-     */
     hasRole(role: string): boolean {
         return this.user?.role === role
     }
 
-    /**
-     * Check if user has any of the specified roles
-     */
     hasAnyRole(roles: string[]): boolean {
         return !!this.user?.role && roles.includes(this.user.role)
     }
 
-    /**
-     * Check if user has specific permission
-     */
     hasPermission(permission: string): boolean {
         return this.permissions.includes(permission)
     }
 
-    /**
-     * Get current user
-     */
     getUser(): User | null {
         return this.user
     }
 
-    /**
-     * Get current token
-     */
     getToken(): string | null {
         return this.token
     }
 
-    /**
-     * Get user permissions
-     */
     getPermissions(): string[] {
         return this.permissions
     }
 
-    /**
-     * Set authentication data
-     */
     private setAuthData(user: User, token: string, permissions: string[]): void {
         this.user = user
         this.token = token
@@ -386,9 +381,6 @@ export class AuthService {
         this.saveToStorage()
     }
 
-    /**
-     * Clear authentication data
-     */
     private clearAuthData(): void {
         this.user = null
         this.token = null
@@ -396,9 +388,6 @@ export class AuthService {
         this.clearStorage()
     }
 
-    /**
-     * Save auth data to local storage
-     */
     private saveToStorage(): void {
         if (this.user && this.token) {
             localStorage.setItem('auth_user', JSON.stringify(this.user))
@@ -407,9 +396,6 @@ export class AuthService {
         }
     }
 
-    /**
-     * Load auth data from local storage
-     */
     private loadFromStorage(): void {
         try {
             const user = localStorage.getItem('auth_user')
@@ -427,18 +413,12 @@ export class AuthService {
         }
     }
 
-    /**
-     * Clear storage
-     */
     private clearStorage(): void {
         localStorage.removeItem('auth_user')
         localStorage.removeItem('auth_token')
         localStorage.removeItem('auth_permissions')
     }
 
-    /**
-     * Notify auth state change
-     */
     private notifyAuthChange(type: 'login' | 'logout' | 'register'): void {
         document.dispatchEvent(new CustomEvent('auth:change', {
             detail: {

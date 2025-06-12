@@ -1,6 +1,12 @@
-// resources/ts/services/ApiService.ts - Poprawiony
+// resources/ts/services/ApiService.ts - Zgodny z Laravel Sanctum
+import { ValidationError } from "@/types/models"
 
-import {ValidationError} from "@/types/models";
+interface LaravelResponse<T = any> {
+  success: boolean
+  message?: string
+  data?: T
+  errors?: Record<string, string[]>
+}
 
 export class ApiService {
   private baseURL = '/api'
@@ -20,16 +26,24 @@ export class ApiService {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    // Pobierz najnowszy token z localStorage
+    // Najpierw pobierz CSRF cookie dla Sanctum (tylko jeśli potrzebne)
+    if (!this.csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method?.toUpperCase() || 'GET')) {
+      await this.refreshCSRF()
+    }
+
     const authToken = this.getAuthToken()
 
     const headers: Record<string, string> = {
       'Accept': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
-      'X-CSRF-TOKEN': this.csrfToken,
     }
 
-    // Dodaj token autoryzacji jeśli jest dostępny
+    // Dodaj CSRF token dla Sanctum
+    if (this.csrfToken) {
+      headers['X-CSRF-TOKEN'] = this.csrfToken
+    }
+
+    // Dodaj Authorization header jeśli mamy token
     if (authToken) {
       headers['Authorization'] = `Bearer ${authToken}`
     }
@@ -39,43 +53,53 @@ export class ApiService {
       headers['Content-Type'] = 'application/json'
     }
 
-    // Połącz nagłówki
+    // Połącz z przekazanymi nagłówkami
     const finalHeaders = {
       ...headers,
       ...options.headers
     }
 
     try {
+      console.log(`🌐 API Request: ${options.method || 'GET'} ${endpoint}`)
+
       const response = await fetch(`${this.baseURL}${endpoint}`, {
         ...options,
         headers: finalHeaders,
-        credentials: 'same-origin' // Dodaj obsługę ciasteczek
+        credentials: 'same-origin' // Ważne dla Laravel Sanctum
       })
 
-      // Sprawdź czy odpowiedź ma content
+      console.log(`📡 API Response: ${response.status} ${response.statusText}`)
+
+      // Sprawdź content-type
       const contentType = response.headers.get('content-type')
       if (!contentType || !contentType.includes('application/json')) {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
-        // Jeśli nie ma JSON, zwróć pustą odpowiedź
+        // Zwróć pustą odpowiedź jeśli nie ma JSON
         return {} as T
       }
 
-      const result = await response.json()
+      const result: LaravelResponse<T> = await response.json()
 
       if (!response.ok) {
+        // Laravel validation errors (422)
         if (response.status === 422 && result.errors) {
-          throw new ValidationError(result.errors, result.message)
+          throw new ValidationError(result.errors, result.message || 'Błąd walidacji')
         }
 
+        // Unauthorized - wyczyść auth data
         if (response.status === 401) {
-          // Token wygasł lub nieprawidłowy - wyczyść localStorage
           localStorage.removeItem('auth_token')
           localStorage.removeItem('auth_user')
           localStorage.removeItem('auth_permissions')
 
-          // Przekieruj do logowania jeśli nie jesteśmy już na stronie logowania
+          // Emit auth change event
+          document.dispatchEvent(new CustomEvent('auth:change', {
+            detail: { type: 'logout', isAuthenticated: false, user: null }
+          }))
+
+          // Redirect tylko jeśli nie jesteśmy już na stronie auth
           if (!window.location.pathname.includes('/login')) {
             window.location.href = '/login'
           }
@@ -84,10 +108,12 @@ export class ApiService {
         throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`)
       }
 
-      return result
+      // Laravel zawsze zwraca success/data format
+      return result.data || result as T
 
     } catch (error) {
-      // Jeśli to błąd sieci lub inny nieoczekiwany błąd
+      console.error(`❌ API Error: ${endpoint}`, error)
+
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error('Błąd połączenia z serwerem. Sprawdź połączenie internetowe.')
       }
@@ -100,10 +126,10 @@ export class ApiService {
     return this.request<T>(endpoint, { method: 'GET' })
   }
 
-  async post<T>(endpoint: string, data: any): Promise<T> {
+  async post<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: data ? JSON.stringify(data) : undefined
     })
   }
 
@@ -114,10 +140,6 @@ export class ApiService {
     })
   }
 
-  async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' })
-  }
-
   async patch<T>(endpoint: string, data: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
@@ -125,19 +147,22 @@ export class ApiService {
     })
   }
 
-  // Metoda do odświeżenia CSRF tokenu
+  async delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: 'DELETE' })
+  }
+
+  // Metoda do odświeżenia CSRF tokenu dla Sanctum
   async refreshCSRF(): Promise<void> {
     try {
-      const response = await fetch('/sanctum/csrf-cookie', {
+      await fetch('/sanctum/csrf-cookie', {
         method: 'GET',
         credentials: 'same-origin'
       })
 
-      if (response.ok) {
-        this.initCSRF()
-      }
+      // Odczytaj token ponownie
+      this.initCSRF()
     } catch (error) {
-      console.error('Failed to refresh CSRF token:', error)
+      console.warn('Failed to refresh CSRF token:', error)
     }
   }
 }
