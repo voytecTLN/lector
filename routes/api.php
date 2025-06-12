@@ -128,7 +128,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// CSRF Cookie endpoint for SPA authentication
-Route::get('/sanctum/csrf-cookie', function () {
-    return response()->json(['message' => 'CSRF cookie set']);
-})->middleware('web');
+// // CSRF Cookie endpoint for SPA authentication
+// Route::get('/sanctum/csrf-cookie', function () {
+//     return response()->json(['message' => 'CSRF cookie set']);
+// })->middleware('web');
