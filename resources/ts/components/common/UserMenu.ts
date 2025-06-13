@@ -1,4 +1,4 @@
-// resources/ts/components/common/UserMenu.ts
+// resources/ts/components/common/UserMenu.ts - POPRAWIONE
 import { authService } from '@services/AuthService'
 import type { RouteComponent } from '@/router/routes'
 
@@ -55,7 +55,9 @@ export class UserMenu implements RouteComponent {
                 <div class="menu-notifications">
                     <button class="notification-btn" id="notification-btn" aria-label="Powiadomienia">
                         <span class="notification-icon">🔔</span>
-                        <span class="notification-badge" id="notification-badge">3</span>
+                        <span class="notification-badge ${this.getNotificationCount() === 0 ? 'hidden' : ''}" id="notification-badge">
+                            ${this.getNotificationCount()}
+                        </span>
                     </button>
                     <div class="notification-dropdown" id="notification-dropdown">
                         <div class="notification-header">
@@ -63,16 +65,10 @@ export class UserMenu implements RouteComponent {
                             <button class="mark-all-read" id="mark-all-read">Oznacz jako przeczytane</button>
                         </div>
                         <div class="notification-list" id="notification-list">
-                            <!-- Notifications will be loaded here -->
-                            <div class="notification-item">
-                                <div class="notification-content">
-                                    <p class="notification-text">Przykładowe powiadomienie</p>
-                                    <span class="notification-time">5 min temu</span>
-                                </div>
-                            </div>
+                            ${this.getNotificationListHTML()}
                         </div>
                         <div class="notification-footer">
-                            <a href="/notifications" data-navigate>Zobacz wszystkie</a>
+                            <div class="notification-info">Wszystkie powiadomienia</div>
                         </div>
                     </div>
                 </div>
@@ -106,32 +102,45 @@ export class UserMenu implements RouteComponent {
                                     <h4>${user.name}</h4>
                                     <p>${user.email}</p>
                                     <span class="role-badge role-${user.role}">${roleLabel}</span>
+                                    ${!user.is_verified ? `
+                                        <div class="verification-warning">
+                                            <span class="status-badge status-unverified">
+                                                ⚠️ Email niezweryfikowany
+                                            </span>
+                                        </div>
+                                    ` : ''}
                                 </div>
                             </div>
                         </div>
                         
                         <div class="dropdown-content">
                             <div class="dropdown-section">
-                                <a href="/profile" data-navigate class="dropdown-item">
+                                <div class="dropdown-item disabled">
                                     <span class="item-icon">👤</span>
-                                    Mój profil
-                                </a>
-                                <a href="/settings" data-navigate class="dropdown-item">
+                                    <span class="item-text">Mój profil</span>
+                                    <span class="item-badge">Wkrótce</span>
+                                </div>
+                                <div class="dropdown-item disabled">
                                     <span class="item-icon">⚙️</span>
-                                    Ustawienia
-                                </a>
+                                    <span class="item-text">Ustawienia</span>
+                                    <span class="item-badge">Wkrótce</span>
+                                </div>
                                 ${this.getRoleDashboardLink(user.role)}
                             </div>
                             
+                            ${!user.is_verified ? this.getVerificationSection() : ''}
+                            
                             <div class="dropdown-section">
-                                <a href="/help" data-navigate class="dropdown-item">
+                                <div class="dropdown-item disabled">
                                     <span class="item-icon">❓</span>
-                                    Pomoc
-                                </a>
-                                <a href="/feedback" data-navigate class="dropdown-item">
+                                    <span class="item-text">Pomoc</span>
+                                    <span class="item-badge">Wkrótce</span>
+                                </div>
+                                <div class="dropdown-item disabled">
                                     <span class="item-icon">💬</span>
-                                    Opinie
-                                </a>
+                                    <span class="item-text">Opinie</span>
+                                    <span class="item-badge">Wkrótce</span>
+                                </div>
                             </div>
                         </div>
                         
@@ -145,6 +154,83 @@ export class UserMenu implements RouteComponent {
                 </div>
             </div>
         `
+    }
+
+    private getVerificationSection(): string {
+        return `
+            <div class="dropdown-section verification-section">
+                <div class="verification-info">
+                    <div class="verification-icon">⚠️</div>
+                    <div class="verification-text">
+                        <h5>Zweryfikuj email</h5>
+                        <p>Aby uzyskać pełny dostęp</p>
+                    </div>
+                </div>
+                <div class="verification-actions">
+                    <a href="/verify-email" data-navigate class="btn btn-sm btn-primary">
+                        Weryfikuj teraz
+                    </a>
+                    <button class="btn btn-sm btn-outline-primary" id="resend-verification-btn">
+                        Wyślij ponownie
+                    </button>
+                </div>
+            </div>
+        `
+    }
+
+    private getNotificationListHTML(): string {
+        const notifications = this.getMockNotifications()
+
+        if (notifications.length === 0) {
+            return `
+                <div class="notification-empty">
+                    <div class="empty-icon">🔔</div>
+                    <p>Brak nowych powiadomień</p>
+                </div>
+            `
+        }
+
+        return notifications.map(notification => `
+            <div class="notification-item ${notification.read ? 'read' : 'unread'}">
+                <div class="notification-content">
+                    <div class="notification-icon">${notification.icon}</div>
+                    <div class="notification-body">
+                        <p class="notification-text">${notification.message}</p>
+                        <span class="notification-time">${notification.time}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('')
+    }
+
+    private getMockNotifications(): Array<{
+        id: string
+        message: string
+        icon: string
+        time: string
+        read: boolean
+    }> {
+        // POPRAWIONE - symulowane powiadomienia zamiast API call
+        return [
+            {
+                id: '1',
+                message: 'Witaj w Platforma Lektorów! Uzupełnij swój profil.',
+                icon: '👋',
+                time: '2 min temu',
+                read: false
+            },
+            {
+                id: '2',
+                message: 'Nowe funkcje będą dostępne wkrótce!',
+                icon: '🎉',
+                time: '1 godzinę temu',
+                read: false
+            }
+        ]
+    }
+
+    private getNotificationCount(): number {
+        return this.getMockNotifications().filter(n => !n.read).length
     }
 
     private getInitials(name: string): string {
@@ -178,7 +264,7 @@ export class UserMenu implements RouteComponent {
             return `
                 <a href="${route}" data-navigate class="dropdown-item">
                     <span class="item-icon">📊</span>
-                    Dashboard
+                    <span class="item-text">Dashboard</span>
                 </a>
             `
         }
@@ -204,14 +290,21 @@ export class UserMenu implements RouteComponent {
         const markAllRead = this.container.querySelector('#mark-all-read')
         markAllRead?.addEventListener('click', this.markAllNotificationsRead.bind(this))
 
+        // Resend verification email
+        const resendBtn = this.container.querySelector('#resend-verification-btn')
+        resendBtn?.addEventListener('click', this.handleResendVerification.bind(this))
+
+        // Disabled items info
+        const disabledItems = this.container.querySelectorAll('.dropdown-item.disabled')
+        disabledItems.forEach(item => {
+            item.addEventListener('click', this.handleDisabledItemClick.bind(this))
+        })
+
         // Close dropdowns on outside click
         document.addEventListener('click', this.handleOutsideClick.bind(this))
 
         // Listen for auth changes
         document.addEventListener('auth:change', this.handleAuthChange.bind(this) as EventListener)
-
-        // Load notifications
-        this.loadNotifications()
     }
 
     private toggleUserMenu(event: Event): void {
@@ -237,7 +330,7 @@ export class UserMenu implements RouteComponent {
         // Toggle notifications
         dropdown?.classList.toggle('open')
 
-        // Mark as read when opened
+        // Mark badge as viewed when opened
         if (dropdown?.classList.contains('open')) {
             this.markNotificationsAsViewed()
         }
@@ -247,8 +340,10 @@ export class UserMenu implements RouteComponent {
         event.preventDefault()
 
         const logoutBtn = event.target as HTMLButtonElement
+        const originalText = logoutBtn.innerHTML
+
         logoutBtn.disabled = true
-        logoutBtn.textContent = 'Wylogowywanie...'
+        logoutBtn.innerHTML = '<span class="item-icon">⏳</span>Wylogowywanie...'
 
         try {
             await authService.logout()
@@ -256,12 +351,11 @@ export class UserMenu implements RouteComponent {
         } catch (error) {
             console.error('Logout error:', error)
             logoutBtn.disabled = false
-            logoutBtn.innerHTML = '<span class="item-icon">🚪</span>Wyloguj się'
+            logoutBtn.innerHTML = originalText
         }
     }
 
     private markAllNotificationsRead(): void {
-        // TODO: Implement mark all as read API call
         const badge = this.container?.querySelector('#notification-badge')
         if (badge) {
             badge.textContent = '0'
@@ -270,8 +364,17 @@ export class UserMenu implements RouteComponent {
 
         const notifications = this.container?.querySelectorAll('.notification-item')
         notifications?.forEach(notification => {
+            notification.classList.remove('unread')
             notification.classList.add('read')
         })
+
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'success',
+                message: 'Wszystkie powiadomienia zostały oznaczone jako przeczytane',
+                duration: 2000
+            }
+        }))
     }
 
     private markNotificationsAsViewed(): void {
@@ -282,17 +385,53 @@ export class UserMenu implements RouteComponent {
         }
     }
 
-    private async loadNotifications(): Promise<void> {
-        const badge = this.container?.querySelector('#notification-badge')
-        if (badge) {
-            // Simulate API call
+    private async handleResendVerification(): Promise<void> {
+        const button = this.container?.querySelector('#resend-verification-btn') as HTMLButtonElement
+        if (!button) return
+
+        const originalText = button.textContent
+        button.disabled = true
+        button.textContent = 'Wysyłanie...'
+
+        try {
+            await authService.resendVerification()
+            button.textContent = 'Wysłano!'
+
             setTimeout(() => {
-                // Losowa liczba powiadomień dla testów
-                const count: number = Math.floor(Math.random() * 6) // 0-5 notifications
-                badge.textContent = count.toString()
-                badge.classList.toggle('hidden', count === 0)
-            }, 1000)
+                button.textContent = originalText
+                button.disabled = false
+            }, 3000)
+
+        } catch (error) {
+            console.error('Resend verification error:', error)
+            button.textContent = 'Błąd'
+
+            setTimeout(() => {
+                button.textContent = originalText
+                button.disabled = false
+            }, 3000)
         }
+    }
+
+    private handleDisabledItemClick(event: Event): void {
+        event.preventDefault()
+
+        const item = event.currentTarget as HTMLElement
+        const text = item.querySelector('.item-text')?.textContent || 'Ta funkcja'
+
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `${text} będzie dostępna wkrótce!`,
+                duration: 3000
+            }
+        }))
+
+        // Visual feedback
+        item.classList.add('clicked')
+        setTimeout(() => {
+            item.classList.remove('clicked')
+        }, 200)
     }
 
     private handleOutsideClick(event: Event): void {
