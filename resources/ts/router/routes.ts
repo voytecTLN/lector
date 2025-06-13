@@ -115,20 +115,20 @@ export const routes: RouteDefinition[] = [
         }
     },
 
-    // // Protected dashboard routes - require auth + verification + specific roles
-    // {
-    //     path: '/admin/dashboard',
-    //     name: 'admin.dashboard',
-    //     component: () => import('@/components/dashboard/AdminDashboard').then(m => new m.AdminDashboard()),
-    //     title: 'Panel Administratora - Platforma Lektorów',
-    //     meta: {
-    //         requiresAuth: true,
-    //         requiresVerification: true,
-    //         roles: ['admin'],
-    //         layout: 'app',
-    //         permissions: ['manage_users', 'view_analytics', 'system_settings']
-    //     }
-    // },
+    // Protected dashboard routes - require auth + verification + specific roles
+    {
+        path: '/admin/dashboard',
+        name: 'admin.dashboard',
+        component: () => import('@/components/dashboard/AdminDashboard').then(m => new m.AdminDashboard()),
+        title: 'Panel Administratora - Platforma Lektorów',
+        meta: {
+            requiresAuth: true,
+            requiresVerification: true,
+            roles: ['admin'],
+            layout: 'app',
+            permissions: ['manage_users', 'view_analytics', 'system_settings']
+        }
+    },
     // {
     //     path: '/moderator/dashboard',
     //     name: 'moderator.dashboard',
@@ -155,20 +155,20 @@ export const routes: RouteDefinition[] = [
     //         permissions: ['can_teach', 'manage_own_lessons']
     //     }
     // },
-    // {
-    //     path: '/student/dashboard',
-    //     name: 'student.dashboard',
-    //     component: () => import('@/components/dashboard/StudentDashboard').then(m => new m.StudentDashboard()),
-    //     title: 'Panel Studenta - Platforma Lektorów',
-    //     meta: {
-    //         requiresAuth: true,
-    //         requiresVerification: true,
-    //         roles: ['student', 'admin'],
-    //         layout: 'app',
-    //         permissions: ['can_learn', 'book_lessons']
-    //     }
-    // },
-    //
+    {
+        path: '/student/dashboard',
+        name: 'student.dashboard',
+        component: () => import('@/components/dashboard/StudentDashboard').then(m => new m.StudentDashboard()),
+        title: 'Panel Studenta - Platforma Lektorów',
+        meta: {
+            requiresAuth: true,
+            requiresVerification: true,
+            roles: ['student', 'admin'],
+            layout: 'app',
+            permissions: ['can_learn', 'book_lessons']
+        }
+    },
+
     // // Profile routes - require auth + verification
     // {
     //     path: '/profile',
