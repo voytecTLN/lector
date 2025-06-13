@@ -79,37 +79,37 @@ export const routes: RouteDefinition[] = [
             requiresGuest: true
         }
     },
-    // {
-    //     path: '/forgot-password',
-    //     name: 'forgot-password',
-    //     component: () => import('@/components/auth/ForgotPasswordPage').then(m => new m.ForgotPasswordPage()),
-    //     title: 'Resetowanie hasła - Platforma Lektorów',
-    //     meta: {
-    //         layout: 'auth',
-    //         requiresGuest: true
-    //     }
-    // },
-    // {
-    //     path: '/reset-password',
-    //     name: 'reset-password',
-    //     component: () => import('@/components/auth/ResetPasswordPage').then(m => new m.ResetPasswordPage()),
-    //     title: 'Nowe hasło - Platforma Lektorów',
-    //     meta: {
-    //         layout: 'auth',
-    //         requiresGuest: true
-    //     }
-    // },
-    // {
-    //     path: '/verify-email',
-    //     name: 'verify-email',
-    //     component: () => import('@/components/auth/EmailVerificationPage').then(m => new m.EmailVerificationPage()),
-    //     title: 'Weryfikacja email - Platforma Lektorów',
-    //     meta: {
-    //         layout: 'auth',
-    //         requiresAuth: true
-    //     }
-    // },
-    //
+    {
+        path: '/forgot-password',
+        name: 'forgot-password',
+        component: () => import('@/components/auth/ForgotPasswordPage').then(m => new m.ForgotPasswordPage()),
+        title: 'Resetowanie hasła - Platforma Lektorów',
+        meta: {
+            layout: 'auth',
+            requiresGuest: true
+        }
+    },
+    {
+        path: '/reset-password',
+        name: 'reset-password',
+        component: () => import('@/components/auth/ResetPasswordPage').then(m => new m.ResetPasswordPage()),
+        title: 'Nowe hasło - Platforma Lektorów',
+        meta: {
+            layout: 'auth',
+            requiresGuest: true
+        }
+    },
+    {
+        path: '/verify-email',
+        name: 'verify-email',
+        component: () => import('@/components/auth/EmailVerificationPage').then(m => new m.EmailVerificationPage()),
+        title: 'Weryfikacja email - Platforma Lektorów',
+        meta: {
+            layout: 'auth',
+            requiresAuth: true
+        }
+    },
+
     // // Protected dashboard routes
     // {
     //     path: '/admin/dashboard',

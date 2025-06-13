@@ -171,11 +171,6 @@ export class LoginPage implements RouteComponent {
             input.addEventListener('blur', this.validateField.bind(this))
             input.addEventListener('input', this.clearFieldError.bind(this))
         })
-
-        // Enter key handling
-        // inputs.forEach(input => {
-        //     input.addEventListener('keydown', this.handleKeyDown.bind(this))
-        // })
     }
 
     private initFormValidation(): void {
@@ -246,7 +241,7 @@ export class LoginPage implements RouteComponent {
                 }, 1500)
             }
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('❌ Login error:', error)
 
             if (error instanceof ValidationError) {
@@ -308,24 +303,6 @@ export class LoginPage implements RouteComponent {
     private clearFieldError(event: Event): void {
         const input = event.target as HTMLInputElement
         this.showFieldError(input.name, '')
-    }
-
-    private handleKeyDown(event: KeyboardEvent): void {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            const input = event.target as HTMLInputElement
-            const form = input.closest('form')
-
-            if (input.name === 'email') {
-                // Move to password field
-                const passwordInput = form?.querySelector('#password') as HTMLInputElement
-                passwordInput?.focus()
-                event.preventDefault()
-            } else if (input.name === 'password') {
-                // Submit form
-                form?.requestSubmit()
-                event.preventDefault()
-            }
-        }
     }
 
     private togglePassword(): void {
