@@ -1,4 +1,4 @@
-// resources/ts/router/guards.ts - IMPROVED VERSION
+// resources/ts/router/guards.ts - POPRAWIONA WERSJA
 import { authService } from '@services/AuthService'
 import type { MatchedRoute } from './routes'
 
@@ -68,45 +68,6 @@ export class AuthGuard implements RouteGuard {
     }
 }
 
-// Role Guard - sprawdza uprawnienia użytkownika
-export class RoleGuard implements RouteGuard {
-    name = 'role'
-
-    execute(context: GuardContext): GuardResult {
-        const user = authService.getUser()
-        const requiredRoles = context.to.route.meta?.roles
-
-        console.log(`🎭 RoleGuard: checking roles for ${context.to.route.name}`, {
-            requiredRoles,
-            userRole: user?.role
-        })
-
-        if (!requiredRoles || requiredRoles.length === 0) {
-            return { allowed: true }
-        }
-
-        if (!user) {
-            return {
-                allowed: false,
-                redirect: '/login',
-                message: 'Wymagane uwierzytelnienie'
-            }
-        }
-
-        const hasRequiredRole = authService.hasAnyRole(requiredRoles)
-
-        if (!hasRequiredRole) {
-            return {
-                allowed: false,
-                redirect: '/unauthorized',
-                message: `Nie masz uprawnień do tej strony. Wymagana rola: ${requiredRoles.join(' lub ')}`
-            }
-        }
-
-        return { allowed: true }
-    }
-}
-
 // Verification Guard - sprawdza weryfikację email
 export class VerificationGuard implements RouteGuard {
     name = 'verification'
@@ -145,6 +106,45 @@ export class VerificationGuard implements RouteGuard {
                 allowed: false,
                 redirect: '/verify-email',
                 message: 'Wymagana weryfikacja adresu email'
+            }
+        }
+
+        return { allowed: true }
+    }
+}
+
+// Role Guard - sprawdza uprawnienia użytkownika (POPRAWIONY - usunięto PHP debug kod)
+export class RoleGuard implements RouteGuard {
+    name = 'role'
+
+    execute(context: GuardContext): GuardResult {
+        const user = authService.getUser()
+        const requiredRoles = context.to.route.meta?.roles
+
+        console.log(`🎭 RoleGuard: checking roles for ${context.to.route.name}`, {
+            requiredRoles,
+            userRole: user?.role
+        })
+
+        if (!requiredRoles || requiredRoles.length === 0) {
+            return { allowed: true }
+        }
+
+        if (!user) {
+            return {
+                allowed: false,
+                redirect: '/login',
+                message: 'Wymagane uwierzytelnienie'
+            }
+        }
+
+        const hasRequiredRole = authService.hasAnyRole(requiredRoles)
+
+        if (!hasRequiredRole) {
+            return {
+                allowed: false,
+                redirect: '/unauthorized',
+                message: `Nie masz uprawnień do tej strony. Wymagana rola: ${requiredRoles.join(' lub ')}`
             }
         }
 
@@ -234,7 +234,7 @@ export class AccountStatusGuard implements RouteGuard {
     }
 }
 
-// Development Guard - blokuje access w trybie developerskim
+// Development Guard - blokuje dostęp w trybie production
 export class DevelopmentGuard implements RouteGuard {
     name = 'development'
 
@@ -257,9 +257,9 @@ export class DevelopmentGuard implements RouteGuard {
 // Default guards that will be applied to all routes
 export const defaultGuards: RouteGuard[] = [
     new AuthGuard(),
-    new AccountStatusGuard(), // NEW - check account status first
-    new RoleGuard(),
+    new AccountStatusGuard(),
     new VerificationGuard(),
+    new RoleGuard(),
     new PermissionGuard(),
     new DevelopmentGuard()
 ]

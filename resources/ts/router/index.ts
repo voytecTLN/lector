@@ -1,4 +1,4 @@
-// resources/ts/router/index.ts
+// resources/ts/router/index.ts - POPRAWIONA INTEGRACJA Z GUARDS
 import { BrowserHistory } from './history'
 import { routes, RouteMatcher, type RouteDefinition, type MatchedRoute } from './routes'
 import { defaultGuards, type RouteGuard, type GuardResult } from './guards'
@@ -9,6 +9,7 @@ export class Router {
     private appContainer: HTMLElement | null = null
     private guards: RouteGuard[] = []
     private isNavigating: boolean = false
+    private navigationQueue: Array<() => Promise<void>> = []
 
     constructor() {
         this.history = new BrowserHistory()
@@ -34,9 +35,15 @@ export class Router {
     }
 
     async navigate(path: string, replace: boolean = false): Promise<boolean> {
+        // Queue navigation if already navigating
         if (this.isNavigating) {
-            console.warn('Navigation already in progress, ignoring new navigation')
-            return false
+            console.warn('Navigation already in progress, queueing new navigation')
+            return new Promise((resolve) => {
+                this.navigationQueue.push(async () => {
+                    const result = await this.navigate(path, replace)
+                    resolve(result)
+                })
+            })
         }
 
         console.log(`🧭 Navigating to: ${path}`)
@@ -47,38 +54,61 @@ export class Router {
             // Match route
             const matchedRoute = RouteMatcher.match(path, routes)
             if (!matchedRoute) {
-                console.error(`Route not found: ${path}`)
+                console.error(`❌ Route not found: ${path}`)
+                await this.handleNotFound(path)
                 return false
             }
 
-            // Run guards
+            console.log(`✅ Route matched: ${matchedRoute.route.name}`)
+
+            // Run guards BEFORE loading component
             const guardResult = await this.runGuards(matchedRoute)
             if (!guardResult.allowed) {
+                console.log(`🛡️ Guard blocked navigation:`, guardResult)
+
                 if (guardResult.redirect) {
                     // Prevent infinite redirects
                     if (guardResult.redirect !== path) {
+                        console.log(`↩️ Redirecting to: ${guardResult.redirect}`)
                         return this.navigate(guardResult.redirect, true)
+                    } else {
+                        console.error(`⚠️ Infinite redirect detected: ${path}`)
+                        await this.handleNotFound(path)
+                        return false
                     }
                 }
+
                 if (guardResult.message) {
                     this.showNotification(guardResult.message, 'warning')
                 }
                 return false
             }
 
+            console.log(`✅ All guards passed for: ${matchedRoute.route.name}`)
+
             // Load component
             try {
+                console.log(`📦 Loading component for: ${matchedRoute.route.name}`)
                 matchedRoute.component = await matchedRoute.route.component()
+                console.log(`✅ Component loaded: ${matchedRoute.route.name}`)
             } catch (error) {
-                console.error('Failed to load route component:', error)
+                console.error(`❌ Failed to load route component:`, error)
                 this.showNotification('Błąd podczas ładowania strony', 'error')
+                await this.handleNotFound(path)
                 return false
             }
 
             // Execute component lifecycle hooks
             if (matchedRoute.component.onBeforeEnter) {
-                const canEnter = await matchedRoute.component.onBeforeEnter()
-                if (canEnter === false) {
+                console.log(`🎣 Executing onBeforeEnter for: ${matchedRoute.route.name}`)
+                try {
+                    const canEnter = await matchedRoute.component.onBeforeEnter()
+                    if (canEnter === false) {
+                        console.log(`🚫 Component onBeforeEnter blocked navigation`)
+                        return false
+                    }
+                } catch (error) {
+                    console.error(`❌ Error in onBeforeEnter:`, error)
                     return false
                 }
             }
@@ -96,17 +126,23 @@ export class Router {
             return true
 
         } catch (error) {
-            console.error('Navigation error:', error)
+            console.error('❌ Navigation error:', error)
             this.showNotification('Błąd podczas nawigacji', 'error')
             return false
         } finally {
             this.isNavigating = false
+            // Process queue
+            if (this.navigationQueue.length > 0) {
+                const nextNavigation = this.navigationQueue.shift()
+                if (nextNavigation) {
+                    setTimeout(nextNavigation, 0)
+                }
+            }
         }
     }
 
     async handleRouteChange(path: string): Promise<void> {
         if (this.isNavigating) return
-
         await this.navigate(path, true)
     }
 
@@ -120,41 +156,81 @@ export class Router {
             from: this.currentRoute || undefined
         }
 
-        // Run route-specific guards first
-        if (route.route.guards) {
+        console.log(`🛡️ Running guards for route: ${route.route.name}`)
+
+        // Run route-specific guards first (if any)
+        if (route.route.guards && route.route.guards.length > 0) {
+            console.log(`🔒 Running ${route.route.guards.length} route-specific guards`)
             for (const guard of route.route.guards) {
-                const result = await guard.execute(context)
-                if (!result.allowed) {
-                    return result
+                console.log(`🛡️ Executing route guard: ${guard.name}`)
+                try {
+                    const result = await guard.execute(context)
+                    if (!result.allowed) {
+                        console.log(`🚫 Route guard '${guard.name}' blocked navigation:`, result)
+                        return result
+                    }
+                    console.log(`✅ Route guard '${guard.name}' passed`)
+                } catch (error) {
+                    console.error(`❌ Error in route guard '${guard.name}':`, error)
+                    return {
+                        allowed: false,
+                        message: `Błąd w guard: ${guard.name}`
+                    }
                 }
             }
         }
 
-        // Run default guards
+        // Run global guards
+        console.log(`🌍 Running ${this.guards.length} global guards`)
         for (const guard of this.guards) {
-            const result = await guard.execute(context)
-            if (!result.allowed) {
-                return result
+            console.log(`🛡️ Executing global guard: ${guard.name}`)
+            try {
+                const result = await guard.execute(context)
+                if (!result.allowed) {
+                    console.log(`🚫 Global guard '${guard.name}' blocked navigation:`, result)
+                    return result
+                }
+                console.log(`✅ Global guard '${guard.name}' passed`)
+            } catch (error) {
+                console.error(`❌ Error in global guard '${guard.name}':`, error)
+                return {
+                    allowed: false,
+                    message: `Błąd w guard: ${guard.name}`
+                }
             }
         }
 
+        console.log(`✅ All guards passed for: ${route.route.name}`)
         return { allowed: true }
     }
 
     private async renderRoute(matchedRoute: MatchedRoute): Promise<void> {
         if (!this.appContainer) return
 
+        console.log(`🎨 Rendering route: ${matchedRoute.route.name}`)
+
         // Cleanup previous route
         if (this.currentRoute?.component?.onBeforeLeave) {
-            const canLeave = await this.currentRoute.component.onBeforeLeave()
-            if (canLeave === false) {
-                return
+            console.log(`🎣 Executing onBeforeLeave for: ${this.currentRoute.route.name}`)
+            try {
+                const canLeave = await this.currentRoute.component.onBeforeLeave()
+                if (canLeave === false) {
+                    console.log(`🚫 Previous component onBeforeLeave blocked navigation`)
+                    return
+                }
+            } catch (error) {
+                console.error(`❌ Error in onBeforeLeave:`, error)
             }
         }
 
         // Unmount previous component
         if (this.currentRoute?.component?.unmount) {
-            this.currentRoute.component.unmount()
+            console.log(`🔄 Unmounting previous component: ${this.currentRoute.route.name}`)
+            try {
+                this.currentRoute.component.unmount()
+            } catch (error) {
+                console.error(`❌ Error unmounting component:`, error)
+            }
         }
 
         // Show loading state
@@ -162,6 +238,7 @@ export class Router {
 
         try {
             // Render new component
+            console.log(`🎨 Rendering component: ${matchedRoute.route.name}`)
             const element = await matchedRoute.component.render()
 
             // Clear container and add new content
@@ -170,15 +247,22 @@ export class Router {
 
             // Mount component
             if (matchedRoute.component.mount) {
+                console.log(`🔧 Mounting component: ${matchedRoute.route.name}`)
                 matchedRoute.component.mount(this.appContainer)
             }
 
-            // Update current route
+            // Update current route BEFORE executing hooks
+            const previousRoute = this.currentRoute
             this.currentRoute = matchedRoute
 
             // Execute after enter hook
             if (matchedRoute.component.onAfterEnter) {
-                matchedRoute.component.onAfterEnter()
+                console.log(`🎣 Executing onAfterEnter for: ${matchedRoute.route.name}`)
+                try {
+                    matchedRoute.component.onAfterEnter()
+                } catch (error) {
+                    console.error(`❌ Error in onAfterEnter:`, error)
+                }
             }
 
             // Update document title
@@ -190,22 +274,51 @@ export class Router {
             this.updateBodyClasses(matchedRoute)
 
             // Execute after leave hook for previous route
-            if (this.currentRoute?.component?.onAfterLeave) {
-                this.currentRoute.component.onAfterLeave()
+            if (previousRoute?.component?.onAfterLeave) {
+                console.log(`🎣 Executing onAfterLeave for: ${previousRoute.route.name}`)
+                try {
+                    previousRoute.component.onAfterLeave()
+                } catch (error) {
+                    console.error(`❌ Error in onAfterLeave:`, error)
+                }
             }
 
             // Hide loading state
             this.hideLoadingState()
 
-            console.log(`✅ Route rendered: ${matchedRoute.route.name}`)
+            console.log(`✅ Route rendered successfully: ${matchedRoute.route.name}`)
 
         } catch (error) {
-            console.error('Route rendering error:', error)
+            console.error('❌ Route rendering error:', error)
             this.hideLoadingState()
             this.showNotification('Błąd podczas renderowania strony', 'error')
 
             // Try to render error page
-            await this.navigate('/not-found', true)
+            await this.handleNotFound(this.history.getCurrentPath())
+        }
+    }
+
+    private async handleNotFound(attemptedPath: string): Promise<void> {
+        console.log(`❌ Handling 404 for path: ${attemptedPath}`)
+
+        try {
+            // Try to navigate to 404 page, but avoid infinite loop
+            if (!attemptedPath.includes('/not-found')) {
+                await this.navigate('/not-found', true)
+            } else {
+                // If we're already on not-found and it's still failing, show basic error
+                if (this.appContainer) {
+                    this.appContainer.innerHTML = `
+                        <div style="padding: 50px; text-align: center;">
+                            <h1>404 - Strona nie znaleziona</h1>
+                            <p>Przepraszamy, wystąpił błąd podczas ładowania strony.</p>
+                            <a href="/" style="color: #e91e63;">Wróć do strony głównej</a>
+                        </div>
+                    `
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error handling 404:', error)
         }
     }
 
@@ -213,7 +326,7 @@ export class Router {
         // Remove old route classes
         document.body.className = document.body.className
             .split(' ')
-            .filter(cls => !cls.startsWith('route-'))
+            .filter(cls => !cls.startsWith('route-') && !cls.startsWith('layout-'))
             .join(' ')
 
         // Add new route class
@@ -223,6 +336,8 @@ export class Router {
         // Add layout class
         const layout = route.route.meta?.layout || 'guest'
         document.body.classList.add(`layout-${layout}`)
+
+        console.log(`🎨 Updated body classes: ${routeClass}, layout-${layout}`)
     }
 
     private showLoadingState(): void {
@@ -250,10 +365,15 @@ export class Router {
 
     addGuard(guard: RouteGuard): void {
         this.guards.push(guard)
+        console.log(`➕ Added guard: ${guard.name}`)
     }
 
     removeGuard(guardName: string): void {
+        const initialLength = this.guards.length
         this.guards = this.guards.filter(guard => guard.name !== guardName)
+        if (this.guards.length < initialLength) {
+            console.log(`➖ Removed guard: ${guardName}`)
+        }
     }
 
     // Helper methods for navigation
@@ -290,9 +410,13 @@ export class Router {
 
         return true
     }
-}
 
-// Export router instance
-export * from './routes'
-export * from './guards'
-export * from './history'
+    // Debug method
+    debugRouting(enabled: boolean = true): void {
+        if (enabled) {
+            console.log('🔍 Router Debug Mode Enabled')
+            console.log('Current route:', this.currentRoute)
+            console.log('Registered guards:', this.guards.map(g => g.name))
+        }
+    }
+}
