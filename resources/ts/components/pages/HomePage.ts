@@ -1,4 +1,4 @@
-// resources/ts/components/pages/HomePage.ts
+// resources/ts/components/pages/HomePage.ts - POPRAWIONE
 import type { RouteComponent } from '@/router/routes'
 
 export class HomePage implements RouteComponent {
@@ -185,9 +185,10 @@ export class HomePage implements RouteComponent {
                         </div>
                     </div>
                     <div class="languages-cta">
-                        <a href="/languages" data-navigate class="btn btn-outline-primary">
-                            Zobacz wszystkie języki
-                        </a>
+                        <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                        <button class="btn btn-outline-primary disabled" disabled>
+                            Zobacz wszystkie języki (Wkrótce)
+                        </button>
                     </div>
                 </div>
             </section>
@@ -262,9 +263,10 @@ export class HomePage implements RouteComponent {
                             <a href="/register?role=student" data-navigate class="btn btn-primary btn-lg">
                                 Rozpocznij za darmo
                             </a>
-                            <a href="/demo" data-navigate class="btn btn-outline-white btn-lg">
-                                Zobacz demo
-                            </a>
+                            <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                            <button class="btn btn-outline-white btn-lg disabled" disabled>
+                                Zobacz demo (Wkrótce)
+                            </button>
                         </div>
                         <div class="cta-features">
                             <div class="cta-feature">
@@ -303,7 +305,7 @@ export class HomePage implements RouteComponent {
     private initEventListeners(): void {
         if (!this.container) return
 
-        // Language card clicks
+        // Language card clicks - POPRAWIONE
         const languageCards = this.container.querySelectorAll('.language-card')
         languageCards.forEach(card => {
             card.addEventListener('click', this.handleLanguageCardClick.bind(this))
@@ -323,17 +325,43 @@ export class HomePage implements RouteComponent {
         const card = event.currentTarget as HTMLElement
         const language = card.getAttribute('data-language')
 
+        // POPRAWIONE - obsługa kliknięć w karty języków
         if (language && language !== 'more') {
-            // Navigate to language-specific page
-            window.dispatchEvent(new CustomEvent('navigate', {
-                detail: { path: `/languages/${language}` }
+            // Pokazuj info zamiast nawigacji do nieistniejących stron
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'info',
+                    message: `Strona dla języka ${this.getLanguageName(language)} będzie dostępna wkrótce!`,
+                    duration: 3000
+                }
             }))
         } else if (language === 'more') {
-            // Navigate to all languages page
-            window.dispatchEvent(new CustomEvent('navigate', {
-                detail: { path: '/languages' }
+            // Pokazuj info o wszystkich językach
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'info',
+                    message: 'Pełna lista języków będzie dostępna wkrótce!',
+                    duration: 3000
+                }
             }))
         }
+
+        // Visual feedback
+        card.classList.add('clicked')
+        setTimeout(() => {
+            card.classList.remove('clicked')
+        }, 200)
+    }
+
+    private getLanguageName(language: string): string {
+        const languageNames: Record<string, string> = {
+            english: 'angielski',
+            german: 'niemiecki',
+            french: 'francuski',
+            spanish: 'hiszpański',
+            italian: 'włoski'
+        }
+        return languageNames[language] || language
     }
 
     private handleCardHover(event: Event): void {

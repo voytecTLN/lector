@@ -1,4 +1,4 @@
-// resources/ts/components/common/Navigation.ts
+// resources/ts/components/common/Navigation.ts - POPRAWIONE
 import { authService } from '@services/AuthService'
 import type { RouteComponent } from '@/router/routes'
 
@@ -51,154 +51,167 @@ export class Navigation implements RouteComponent {
         return `
             <div class="nav-links">
                 <a href="/" data-navigate class="nav-link">Strona główna</a>
-                <a href="/tutors" data-navigate class="nav-link">Lektorzy</a>
-               <a href="/courses" data-navigate class="nav-link">Kursy</a>
-               <a href="/about" data-navigate class="nav-link">O nas</a>
-               <a href="/contact" data-navigate class="nav-link">Kontakt</a>
-           </div>
-       `
+                <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                <button class="nav-link nav-link-disabled" disabled>Lektorzy (Wkrótce)</button>
+                <button class="nav-link nav-link-disabled" disabled>Kursy (Wkrótce)</button>
+                <button class="nav-link nav-link-disabled" disabled>O nas (Wkrótce)</button>
+                <button class="nav-link nav-link-disabled" disabled>Kontakt (Wkrótce)</button>
+            </div>
+        `
     }
 
     private getAdminNavigation(): string {
         return `
-           <div class="nav-links">
-               <a href="/admin/dashboard" data-navigate class="nav-link">
-                   <span class="nav-icon">📊</span>
-                   Dashboard
-               </a>
-               <div class="nav-dropdown">
-                   <a href="#" class="nav-link dropdown-toggle">
-                       <span class="nav-icon">👥</span>
-                       Użytkownicy
-                       <span class="dropdown-arrow">▼</span>
-                   </a>
-                   <div class="dropdown-menu">
-                       <a href="/admin/users" data-navigate class="dropdown-item">Wszyscy użytkownicy</a>
-                       <a href="/admin/students" data-navigate class="dropdown-item">Studenci</a>
-                       <a href="/admin/tutors" data-navigate class="dropdown-item">Lektorzy</a>
-                       <a href="/admin/moderators" data-navigate class="dropdown-item">Moderatorzy</a>
-                   </div>
-               </div>
-               <div class="nav-dropdown">
-                   <a href="#" class="nav-link dropdown-toggle">
-                       <span class="nav-icon">📚</span>
-                       Zawartość
-                       <span class="dropdown-arrow">▼</span>
-                   </a>
-                   <div class="dropdown-menu">
-                       <a href="/admin/lessons" data-navigate class="dropdown-item">Lekcje</a>
-                       <a href="/admin/courses" data-navigate class="dropdown-item">Kursy</a>
-                       <a href="/admin/content" data-navigate class="dropdown-item">Treści</a>
-                   </div>
-               </div>
-               <a href="/admin/analytics" data-navigate class="nav-link">
-                   <span class="nav-icon">📈</span>
-                   Analityki
-               </a>
-               <a href="/admin/settings" data-navigate class="nav-link">
-                   <span class="nav-icon">⚙️</span>
-                   Ustawienia
-               </a>
-           </div>
-       `
+            <div class="nav-links">
+                <a href="/admin/dashboard" data-navigate class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    Dashboard
+                </a>
+                <div class="nav-dropdown">
+                    <button class="nav-link dropdown-toggle">
+                        <span class="nav-icon">👥</span>
+                        Użytkownicy
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                        <button class="dropdown-item disabled" disabled>Wszyscy użytkownicy (Wkrótce)</button>
+                        <button class="dropdown-item disabled" disabled>Studenci (Wkrótce)</button>
+                        <button class="dropdown-item disabled" disabled>Lektorzy (Wkrótce)</button>
+                        <button class="dropdown-item disabled" disabled>Moderatorzy (Wkrótce)</button>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-link dropdown-toggle">
+                        <span class="nav-icon">📚</span>
+                        Zawartość
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                        <button class="dropdown-item disabled" disabled>Lekcje (Wkrótce)</button>
+                        <button class="dropdown-item disabled" disabled>Kursy (Wkrótce)</button>
+                        <button class="dropdown-item disabled" disabled>Treści (Wkrótce)</button>
+                    </div>
+                </div>
+                <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">📈</span>
+                    Analityki (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">⚙️</span>
+                    Ustawienia (Wkrótce)
+                </button>
+            </div>
+        `
     }
 
     private getModeratorNavigation(): string {
         return `
-           <div class="nav-links">
-               <a href="/moderator/dashboard" data-navigate class="nav-link">
-                   <span class="nav-icon">📊</span>
-                   Dashboard
-               </a>
-               <a href="/moderator/reviews" data-navigate class="nav-link">
-                   <span class="nav-icon">📝</span>
-                   Moderacja
-               </a>
-               <a href="/moderator/reports" data-navigate class="nav-link">
-                   <span class="nav-icon">🚨</span>
-                   Zgłoszenia
-               </a>
-               <a href="/moderator/content" data-navigate class="nav-link">
-                   <span class="nav-icon">📚</span>
-                   Zawartość
-               </a>
-               <a href="/moderator/users" data-navigate class="nav-link">
-                   <span class="nav-icon">👥</span>
-                   Użytkownicy
-               </a>
-           </div>
-       `
+            <div class="nav-links">
+                <!-- POPRAWIONE - zakomentowane nieistniejące strony z adnotacjami -->
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">📊</span>
+                    Dashboard (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">📝</span>
+                    Moderacja (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">🚨</span>
+                    Zgłoszenia (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">📚</span>
+                    Zawartość (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">👥</span>
+                    Użytkownicy (Wkrótce)
+                </button>
+            </div>
+        `
     }
 
     private getTutorNavigation(): string {
         return `
-           <div class="nav-links">
-               <a href="/tutor/dashboard" data-navigate class="nav-link">
-                   <span class="nav-icon">📊</span>
-                   Dashboard
-               </a>
-               <a href="/tutor/schedule" data-navigate class="nav-link">
-                   <span class="nav-icon">📅</span>
-                   Harmonogram
-               </a>
-               <a href="/tutor/lessons" data-navigate class="nav-link">
-                   <span class="nav-icon">🎓</span>
-                   Lekcje
-               </a>
-               <a href="/tutor/students" data-navigate class="nav-link">
-                   <span class="nav-icon">👨‍🎓</span>
-                   Studenci
-               </a>
-               <a href="/tutor/materials" data-navigate class="nav-link">
-                   <span class="nav-icon">📚</span>
-                   Materiały
-               </a>
-               <a href="/tutor/earnings" data-navigate class="nav-link">
-                   <span class="nav-icon">💰</span>
-                   Zarobki
-               </a>
-           </div>
-       `
+            <div class="nav-links">
+                <!-- POPRAWIONE - zakomentowane nieistniejące strony z adnotacjami -->
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">📊</span>
+                    Dashboard (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">📅</span>
+                    Harmonogram (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">🎓</span>
+                    Lekcje (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">👨‍🎓</span>
+                    Studenci (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">📚</span>
+                    Materiały (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">💰</span>
+                    Zarobki (Wkrótce)
+                </button>
+            </div>
+        `
     }
 
     private getStudentNavigation(): string {
         return `
-           <div class="nav-links">
-               <a href="/student/dashboard" data-navigate class="nav-link">
-                   <span class="nav-icon">📊</span>
-                   Dashboard
-               </a>
-               <a href="/student/lessons" data-navigate class="nav-link">
-                   <span class="nav-icon">🎓</span>
-                   Moje lekcje
-               </a>
-               <a href="/student/tutors" data-navigate class="nav-link">
-                   <span class="nav-icon">👨‍🏫</span>
-                   Lektorzy
-               </a>
-               <a href="/student/progress" data-navigate class="nav-link">
-                   <span class="nav-icon">📈</span>
-                   Postępy
-               </a>
-               <a href="/student/schedule" data-navigate class="nav-link">
-                   <span class="nav-icon">📅</span>
-                   Harmonogram
-               </a>
-               <a href="/student/materials" data-navigate class="nav-link">
-                   <span class="nav-icon">📚</span>
-                   Materiały
-               </a>
-           </div>
-       `
+            <div class="nav-links">
+                <a href="/student/dashboard" data-navigate class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    Dashboard
+                </a>
+                <!-- POPRAWIONE - zakomentowane nieistniejące strony z adnotacjami -->
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">🎓</span>
+                    Moje lekcje (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">👨‍🏫</span>
+                    Lektorzy (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">📈</span>
+                    Postępy (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">📅</span>
+                    Harmonogram (Wkrótce)
+                </button>
+                <button class="nav-link nav-link-disabled" disabled>
+                    <span class="nav-icon">📚</span>
+                    Materiały (Wkrótce)
+                </button>
+            </div>
+        `
     }
 
     private initEventListeners(): void {
         if (!this.container) return
 
-        // Handle dropdown toggles
+        // Handle dropdown toggles - POPRAWIONE
         const dropdownToggles = this.container.querySelectorAll('.dropdown-toggle')
         dropdownToggles.forEach(toggle => {
             toggle.addEventListener('click', this.handleDropdownToggle.bind(this))
+        })
+
+        // Handle disabled navigation clicks - POPRAWIONE
+        const disabledLinks = this.container.querySelectorAll('.nav-link-disabled, .dropdown-item.disabled')
+        disabledLinks.forEach(link => {
+            link.addEventListener('click', this.handleDisabledClick.bind(this))
         })
 
         // Close dropdowns on outside click
@@ -226,6 +239,27 @@ export class Navigation implements RouteComponent {
             // Toggle current dropdown
             dropdown.classList.toggle('open', !isOpen)
         }
+    }
+
+    private handleDisabledClick(event: Event): void {
+        event.preventDefault()
+        const element = event.currentTarget as HTMLElement
+        const text = element.textContent?.trim() || 'Ta funkcja'
+
+        // Show notification about coming soon feature
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `${text.replace(' (Wkrótce)', '')} będzie dostępna wkrótce!`,
+                duration: 3000
+            }
+        }))
+
+        // Visual feedback
+        element.classList.add('clicked')
+        setTimeout(() => {
+            element.classList.remove('clicked')
+        }, 200)
     }
 
     private handleOutsideClick(event: Event): void {
