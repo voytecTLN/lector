@@ -1,4 +1,4 @@
-// resources/ts/router/routes.ts
+// resources/ts/router/routes.ts - IMPROVED VERSION
 import type { RouteGuard } from './guards'
 
 export interface RouteComponent {
@@ -27,9 +27,11 @@ export interface RouteDefinition {
     meta?: {
         requiresAuth?: boolean
         requiresVerification?: boolean
+        requiresGuest?: boolean // NEW - for login/register pages
         roles?: string[]
         permissions?: string[]
         layout?: 'app' | 'auth' | 'guest'
+        requiresDevelopment?: boolean // NEW - for dev-only routes
         [key: string]: any
     }
     guards?: RouteGuard[]
@@ -47,7 +49,7 @@ export interface MatchedRoute {
 
 // Route definitions
 export const routes: RouteDefinition[] = [
-    // Public routes
+    // Public routes (guest layout)
     {
         path: '/',
         name: 'home',
@@ -58,7 +60,7 @@ export const routes: RouteDefinition[] = [
         }
     },
 
-    // Auth routes (for guests only)
+    // Auth routes (for guests only - redirect if logged in)
     {
         path: '/login',
         name: 'login',
@@ -66,7 +68,7 @@ export const routes: RouteDefinition[] = [
         title: 'Logowanie - Platforma Lektorów',
         meta: {
             layout: 'auth',
-            requiresGuest: true
+            requiresGuest: true // Redirect to dashboard if already logged in
         }
     },
     {
@@ -99,6 +101,8 @@ export const routes: RouteDefinition[] = [
             requiresGuest: true
         }
     },
+
+    // Email verification (requires auth but NOT verification - special case)
     {
         path: '/verify-email',
         name: 'verify-email',
@@ -107,73 +111,189 @@ export const routes: RouteDefinition[] = [
         meta: {
             layout: 'auth',
             requiresAuth: true
+            // NOTE: NO requiresVerification here - this page is FOR verification
         }
     },
 
-    // // Protected dashboard routes
+    // // Protected dashboard routes - require auth + verification + specific roles
     // {
     //     path: '/admin/dashboard',
     //     name: 'admin.dashboard',
     //     component: () => import('@/components/dashboard/AdminDashboard').then(m => new m.AdminDashboard()),
-    //     title: 'Panel Administratora',
+    //     title: 'Panel Administratora - Platforma Lektorów',
     //     meta: {
     //         requiresAuth: true,
     //         requiresVerification: true,
     //         roles: ['admin'],
-    //         layout: 'app'
+    //         layout: 'app',
+    //         permissions: ['manage_users', 'view_analytics', 'system_settings']
     //     }
     // },
     // {
     //     path: '/moderator/dashboard',
     //     name: 'moderator.dashboard',
     //     component: () => import('@/components/dashboard/ModeratorDashboard').then(m => new m.ModeratorDashboard()),
-    //     title: 'Panel Moderatora',
+    //     title: 'Panel Moderatora - Platforma Lektorów',
     //     meta: {
     //         requiresAuth: true,
     //         requiresVerification: true,
     //         roles: ['moderator', 'admin'],
-    //         layout: 'app'
+    //         layout: 'app',
+    //         permissions: ['manage_content']
     //     }
     // },
     // {
     //     path: '/tutor/dashboard',
     //     name: 'tutor.dashboard',
     //     component: () => import('@/components/dashboard/TutorDashboard').then(m => new m.TutorDashboard()),
-    //     title: 'Panel Lektora',
+    //     title: 'Panel Lektora - Platforma Lektorów',
     //     meta: {
     //         requiresAuth: true,
     //         requiresVerification: true,
     //         roles: ['tutor', 'admin'],
-    //         layout: 'app'
+    //         layout: 'app',
+    //         permissions: ['can_teach', 'manage_own_lessons']
     //     }
     // },
     // {
     //     path: '/student/dashboard',
     //     name: 'student.dashboard',
     //     component: () => import('@/components/dashboard/StudentDashboard').then(m => new m.StudentDashboard()),
-    //     title: 'Panel Studenta',
+    //     title: 'Panel Studenta - Platforma Lektorów',
     //     meta: {
     //         requiresAuth: true,
     //         requiresVerification: true,
     //         roles: ['student', 'admin'],
-    //         layout: 'app'
+    //         layout: 'app',
+    //         permissions: ['can_learn', 'book_lessons']
     //     }
     // },
     //
-    // // Profile routes
+    // // Profile routes - require auth + verification
     // {
     //     path: '/profile',
     //     name: 'profile',
     //     component: () => import('@/components/profile/ProfilePage').then(m => new m.ProfilePage()),
-    //     title: 'Mój Profil',
+    //     title: 'Mój Profil - Platforma Lektorów',
     //     meta: {
     //         requiresAuth: true,
     //         requiresVerification: true,
     //         layout: 'app'
     //     }
     // },
+    // {
+    //     path: '/settings',
+    //     name: 'settings',
+    //     component: () => import('@/components/profile/SettingsPage').then(m => new m.SettingsPage()),
+    //     title: 'Ustawienia - Platforma Lektorów',
+    //     meta: {
+    //         requiresAuth: true,
+    //         requiresVerification: true,
+    //         layout: 'app'
+    //     }
+    // },
+    //
+    // // Public content pages (guest layout, no auth required)
+    // {
+    //     path: '/tutors',
+    //     name: 'tutors',
+    //     component: () => import('@/components/pages/TutorsPage').then(m => new m.TutorsPage()),
+    //     title: 'Lektorzy - Platforma Lektorów',
+    //     meta: {
+    //         layout: 'guest'
+    //     }
+    // },
+    // {
+    //     path: '/courses',
+    //     name: 'courses',
+    //     component: () => import('@/components/pages/CoursesPage').then(m => new m.CoursesPage()),
+    //     title: 'Kursy - Platforma Lektorów',
+    //     meta: {
+    //         layout: 'guest'
+    //     }
+    // },
+    // {
+    //     path: '/about',
+    //     name: 'about',
+    //     component: () => import('@/components/pages/AboutPage').then(m => new m.AboutPage()),
+    //     title: 'O nas - Platforma Lektorów',
+    //     meta: {
+    //         layout: 'guest'
+    //     }
+    // },
+    // {
+    //     path: '/contact',
+    //     name: 'contact',
+    //     component: () => import('@/components/pages/ContactPage').then(m => new m.ContactPage()),
+    //     title: 'Kontakt - Platforma Lektorów',
+    //     meta: {
+    //         layout: 'guest'
+    //     }
+    // },
+    // {
+    //     path: '/help',
+    //     name: 'help',
+    //     component: () => import('@/components/pages/HelpPage').then(m => new m.HelpPage()),
+    //     title: 'Pomoc - Platforma Lektorów',
+    //     meta: {
+    //         layout: 'guest'
+    //     }
+    // },
+    //
+    // // Admin routes - high security
+    // {
+    //     path: '/admin/users',
+    //     name: 'admin.users',
+    //     component: () => import('@/components/admin/UsersPage').then(m => new m.UsersPage()),
+    //     title: 'Zarządzanie Użytkownikami - Panel Administratora',
+    //     meta: {
+    //         requiresAuth: true,
+    //         requiresVerification: true,
+    //         roles: ['admin'],
+    //         layout: 'app',
+    //         permissions: ['manage_users']
+    //     }
+    // },
+    // {
+    //     path: '/admin/students',
+    //     name: 'admin.students',
+    //     component: () => import('@/components/admin/StudentsPage').then(m => new m.StudentsPage()),
+    //     title: 'Zarządzanie Studentami - Panel Administratora',
+    //     meta: {
+    //         requiresAuth: true,
+    //         requiresVerification: true,
+    //         roles: ['admin', 'moderator'],
+    //         layout: 'app',
+    //         permissions: ['manage_users']
+    //     }
+    // },
+    // {
+    //     path: '/admin/tutors',
+    //     name: 'admin.tutors',
+    //     component: () => import('@/components/admin/TutorsPage').then(m => new m.TutorsPage()),
+    //     title: 'Zarządzanie Lektorami - Panel Administratora',
+    //     meta: {
+    //         requiresAuth: true,
+    //         requiresVerification: true,
+    //         roles: ['admin', 'moderator'],
+    //         layout: 'app',
+    //         permissions: ['manage_users']
+    //     }
+    // },
+    //
+    // // Development routes (only in dev mode)
+    // {
+    //     path: '/dev/test',
+    //     name: 'dev.test',
+    //     component: () => import('@/components/dev/TestPage').then(m => new m.TestPage()),
+    //     title: 'Test Page - Development',
+    //     meta: {
+    //         requiresDevelopment: true,
+    //         layout: 'guest'
+    //     }
+    // },
 
-    // Error routes
+    // Error routes (no guards needed)
     {
         path: '/unauthorized',
         name: 'unauthorized',
@@ -184,7 +304,7 @@ export const routes: RouteDefinition[] = [
         }
     },
 
-    // 404 - must be last
+    // 404 - must be LAST (catch-all route)
     {
         path: '/:pathMatch(.*)*',
         name: 'not-found',
@@ -319,5 +439,69 @@ export class RouteMatcher {
             }
         }
         return null
+    }
+
+    // Helper methods for route checking
+    static getRouteByName(name: string): RouteDefinition | null {
+        return this.findRouteByName(name, routes)
+    }
+
+    static getAllRoutes(): RouteDefinition[] {
+        return routes
+    }
+
+    static getRoutesByRole(role: string): RouteDefinition[] {
+        return routes.filter(route => {
+            const requiredRoles = route.meta?.roles
+            return !requiredRoles || requiredRoles.includes(role)
+        })
+    }
+
+    static getPublicRoutes(): RouteDefinition[] {
+        return routes.filter(route => !route.meta?.requiresAuth)
+    }
+
+    static getProtectedRoutes(): RouteDefinition[] {
+        return routes.filter(route => route.meta?.requiresAuth)
+    }
+}
+
+// Route helper functions
+export const RouteHelpers = {
+    // Check if route requires authentication
+    requiresAuth(route: RouteDefinition): boolean {
+        return !!route.meta?.requiresAuth
+    },
+
+    // Check if route requires verification
+    requiresVerification(route: RouteDefinition): boolean {
+        return !!route.meta?.requiresVerification
+    },
+
+    // Check if route is for guests only
+    isGuestOnly(route: RouteDefinition): boolean {
+        return !!route.meta?.requiresGuest
+    },
+
+    // Get route layout
+    getLayout(route: RouteDefinition): string {
+        return route.meta?.layout || 'guest'
+    },
+
+    // Check if route has specific role requirement
+    hasRoleRequirement(route: RouteDefinition, role: string): boolean {
+        const requiredRoles = route.meta?.roles
+        return !!requiredRoles && requiredRoles.includes(role)
+    },
+
+    // Get dashboard route for role
+    getDashboardRoute(role: string): string {
+        const dashboardRoutes: Record<string, string> = {
+            admin: '/admin/dashboard',
+            moderator: '/moderator/dashboard',
+            tutor: '/tutor/dashboard',
+            student: '/student/dashboard'
+        }
+        return dashboardRoutes[role] || '/student/dashboard'
     }
 }

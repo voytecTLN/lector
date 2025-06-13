@@ -1,4 +1,4 @@
-// resources/ts/router/guards.ts
+// resources/ts/router/guards.ts - IMPROVED VERSION
 import { authService } from '@services/AuthService'
 import type { MatchedRoute } from './routes'
 
@@ -26,6 +26,12 @@ export class AuthGuard implements RouteGuard {
         const isAuthenticated = authService.isAuthenticated()
         const requiresAuth = context.to.route.meta?.requiresAuth
         const requiresGuest = context.to.route.meta?.requiresGuest
+
+        console.log(`🛡️ AuthGuard: checking route ${context.to.route.name}`, {
+            requiresAuth,
+            requiresGuest,
+            isAuthenticated
+        })
 
         // Route requires authentication but user is not logged in
         if (requiresAuth && !isAuthenticated) {
@@ -70,6 +76,11 @@ export class RoleGuard implements RouteGuard {
         const user = authService.getUser()
         const requiredRoles = context.to.route.meta?.roles
 
+        console.log(`🎭 RoleGuard: checking roles for ${context.to.route.name}`, {
+            requiredRoles,
+            userRole: user?.role
+        })
+
         if (!requiredRoles || requiredRoles.length === 0) {
             return { allowed: true }
         }
@@ -88,7 +99,7 @@ export class RoleGuard implements RouteGuard {
             return {
                 allowed: false,
                 redirect: '/unauthorized',
-                message: 'Nie masz uprawnień do tej strony'
+                message: `Nie masz uprawnień do tej strony. Wymagana rola: ${requiredRoles.join(' lub ')}`
             }
         }
 
@@ -102,6 +113,10 @@ export class VerificationGuard implements RouteGuard {
 
     execute(context: GuardContext): GuardResult {
         const requiresVerification = context.to.route.meta?.requiresVerification
+
+        console.log(`✅ VerificationGuard: checking verification for ${context.to.route.name}`, {
+            requiresVerification
+        })
 
         if (!requiresVerification) {
             return { allowed: true }
@@ -118,6 +133,12 @@ export class VerificationGuard implements RouteGuard {
         }
 
         const isVerified = authService.isVerified()
+
+        console.log(`✅ VerificationGuard: user verification status`, {
+            isVerified,
+            user_is_verified: user.is_verified,
+            email_verified_at: user.email_verified_at
+        })
 
         if (!isVerified) {
             return {
@@ -138,6 +159,10 @@ export class PermissionGuard implements RouteGuard {
     execute(context: GuardContext): GuardResult {
         const requiredPermissions = context.to.route.meta?.permissions
 
+        console.log(`🔐 PermissionGuard: checking permissions for ${context.to.route.name}`, {
+            requiredPermissions
+        })
+
         if (!requiredPermissions || requiredPermissions.length === 0) {
             return { allowed: true }
         }
@@ -156,11 +181,72 @@ export class PermissionGuard implements RouteGuard {
             authService.hasPermission(permission)
         )
 
+        console.log(`🔐 PermissionGuard: permission check result`, {
+            hasPermission,
+            userPermissions: authService.getPermissions()
+        })
+
         if (!hasPermission) {
             return {
                 allowed: false,
                 redirect: '/unauthorized',
-                message: 'Brak wymaganych uprawnień'
+                message: `Brak wymaganych uprawnień: ${requiredPermissions.join(', ')}`
+            }
+        }
+
+        return { allowed: true }
+    }
+}
+
+// Account Status Guard - sprawdza status konta (active/blocked)
+export class AccountStatusGuard implements RouteGuard {
+    name = 'accountStatus'
+
+    execute(context: GuardContext): GuardResult {
+        const user = authService.getUser()
+
+        if (!user) {
+            return { allowed: true } // Other guards will handle auth
+        }
+
+        console.log(`📊 AccountStatusGuard: checking account status`, {
+            userStatus: user.status,
+            route: context.to.route.name
+        })
+
+        if (user.status === 'blocked') {
+            return {
+                allowed: false,
+                redirect: '/unauthorized',
+                message: 'Twoje konto zostało zablokowane. Skontaktuj się z administratorem.'
+            }
+        }
+
+        if (user.status === 'inactive') {
+            return {
+                allowed: false,
+                redirect: '/unauthorized',
+                message: 'Twoje konto jest nieaktywne.'
+            }
+        }
+
+        return { allowed: true }
+    }
+}
+
+// Development Guard - blokuje access w trybie developerskim
+export class DevelopmentGuard implements RouteGuard {
+    name = 'development'
+
+    execute(context: GuardContext): GuardResult {
+        const isDevelopment = import.meta.env.DEV
+        const requiresDevelopment = context.to.route.meta?.requiresDevelopment
+
+        if (requiresDevelopment && !isDevelopment) {
+            return {
+                allowed: false,
+                redirect: '/',
+                message: 'Ta strona jest dostępna tylko w trybie deweloperskim'
             }
         }
 
@@ -171,7 +257,59 @@ export class PermissionGuard implements RouteGuard {
 // Default guards that will be applied to all routes
 export const defaultGuards: RouteGuard[] = [
     new AuthGuard(),
+    new AccountStatusGuard(), // NEW - check account status first
     new RoleGuard(),
     new VerificationGuard(),
-    new PermissionGuard()
+    new PermissionGuard(),
+    new DevelopmentGuard()
 ]
+
+// Helper function to create custom guard
+export function createCustomGuard(
+    name: string,
+    guardFunction: (context: GuardContext) => GuardResult | Promise<GuardResult>
+): RouteGuard {
+    return {
+        name,
+        execute: guardFunction
+    }
+}
+
+// Guard result helpers
+export const GuardResults = {
+    allow(): GuardResult {
+        return { allowed: true }
+    },
+
+    deny(message: string, redirect?: string): GuardResult {
+        return {
+            allowed: false,
+            message,
+            redirect
+        }
+    },
+
+    redirectToLogin(message: string = 'Wymagane uwierzytelnienie'): GuardResult {
+        return {
+            allowed: false,
+            redirect: '/login',
+            message
+        }
+    },
+
+    redirectToUnauthorized(message: string = 'Brak uprawnień'): GuardResult {
+        return {
+            allowed: false,
+            redirect: '/unauthorized',
+            message
+        }
+    },
+
+    redirectToVerification(message: string = 'Wymagana weryfikacja email'): GuardResult {
+        return {
+            allowed: false,
+            redirect: '/verify-email',
+            message
+        }
+    }
+}
