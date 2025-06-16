@@ -348,7 +348,6 @@ console.log(response.success, response.data);
         }
     }
 
-    // Pozostałe metody bez zmian...
     isAuthenticated(): boolean {
         console.log('!!this.token && !!this.user');
         console.log(this.token, this.user);
