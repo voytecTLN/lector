@@ -1,5 +1,7 @@
 /* Import Bootstrap and components */
 
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
 /* NEW STYLES */
 @import './components/layout.css';
 @import './components/auth.css';
@@ -7,7 +9,6 @@
 
 
 /* OLD STYLES */
-@import 'bootstrap/dist/css/bootstrap.min.css';
 @import './components/variables.css';
 @import "./components/base.css";
 @import './components/notifications.css';
