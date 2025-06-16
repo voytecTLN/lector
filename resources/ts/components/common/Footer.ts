@@ -311,6 +311,7 @@ export class Footer implements RouteComponent {
         }
 
         // Show loading state
+        submitBtn.classList.add('btn-loading')
         btnText.classList.add('hidden')
         btnLoading.classList.remove('hidden')
         submitBtn.disabled = true
@@ -326,6 +327,7 @@ export class Footer implements RouteComponent {
             this.showNewsletterMessage('Wystąpił błąd. Spróbuj ponownie później.', 'error')
         } finally {
             // Reset button state
+            submitBtn.classList.remove('btn-loading')
             btnText.classList.remove('hidden')
             btnLoading.classList.add('hidden')
             submitBtn.disabled = false

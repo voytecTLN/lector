@@ -444,6 +444,7 @@ export class ResetPasswordPage implements RouteComponent {
 
         if (submitBtn && btnText && btnLoading) {
             submitBtn.disabled = loading
+            submitBtn.classList.toggle('btn-loading', loading)
             btnText.classList.toggle('hidden', loading)
             btnLoading.classList.toggle('hidden', !loading)
         }
