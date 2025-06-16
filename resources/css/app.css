@@ -1,5 +1,18 @@
 /* Bootstrap core */
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
+/* Component styles */
+@import './components/navigation.css';
+@import './components/footer.css';
 
-
+/* Page styles */
+@import './pages/home.css';
+@import './pages/login.css';
+@import './pages/register.css';
+@import './pages/forgot-password.css';
+@import './pages/reset-password.css';
+@import './pages/email-verification.css';
+@import './pages/admin-dashboard.css';
+@import './pages/student-dashboard.css';
+@import './pages/not-found.css';
+@import './pages/unauthorized.css';
