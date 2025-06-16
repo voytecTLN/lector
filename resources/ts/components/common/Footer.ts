@@ -1,4 +1,3 @@
-
 export class Footer {
     render(): HTMLElement {
         const footer = document.createElement('footer')

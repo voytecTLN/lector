@@ -33,6 +33,7 @@ nav.navbar {
 .navbar .nav-links a:hover {
     color: #e91e63;
 }
+
 .navbar .nav-actions {
     display: flex;
     gap: 1rem;
@@ -45,22 +46,11 @@ nav.navbar {
     font-weight: 500;
     transition: background 0.3s, color 0.3s;
 }
-.navbar .login-btn {
-    background: #e91e63;
-    color: #fff;
-}
+
 .navbar .login-btn:hover {
     background: #c2185b;
 }
-.navbar .join-btn {
-    background: transparent;
-    color: #e91e63;
-    border: 2px solid #e91e63;
-}
-.navbar .join-btn:hover {
-    background: #e91e63;
-    color: #fff;
-}
+
 @media (max-width: 768px) {
     .navbar .nav-links {
         display: none;

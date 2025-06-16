@@ -1,4 +1,3 @@
-
 export class Navigation {
     render(): HTMLElement {
         const header = document.createElement('header')
