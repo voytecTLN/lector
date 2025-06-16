@@ -1,4 +1,4 @@
-// resources/ts/components/pages/UnauthorizedPage.ts
+// resources/ts/components/pages/UnauthorizedPage.ts - POPRAWIONE
 import { authService } from '@services/AuthService'
 import type { RouteComponent } from '@/router/routes'
 
@@ -47,27 +47,28 @@ export class UnauthorizedPage implements RouteComponent {
                     <div class="help-section">
                         <h3>Potrzebujesz pomocy?</h3>
                         <div class="help-options">
-                            <a href="/help" data-navigate class="help-option">
+                            <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                            <button class="help-option help-disabled" disabled>
                                 <span class="help-icon">❓</span>
                                 <div class="help-content">
                                     <h4>Centrum pomocy</h4>
-                                    <p>Znajdź odpowiedzi na najczęstsze pytania</p>
+                                    <p>Znajdź odpowiedzi na najczęstsze pytania (Wkrótce)</p>
                                 </div>
-                            </a>
-                            <a href="/contact" data-navigate class="help-option">
+                            </button>
+                            <button class="help-option help-disabled" disabled>
                                 <span class="help-icon">💬</span>
                                 <div class="help-content">
                                     <h4>Skontaktuj się z nami</h4>
-                                    <p>Nasz zespół pomoże rozwiązać problem</p>
+                                    <p>Nasz zespół pomoże rozwiązać problem (Wkrótce)</p>
                                 </div>
-                            </a>
-                            <a href="/faq" data-navigate class="help-option">
+                            </button>
+                            <button class="help-option help-disabled" disabled>
                                 <span class="help-icon">📖</span>
                                 <div class="help-content">
                                     <h4>FAQ</h4>
-                                    <p>Sprawdź często zadawane pytania</p>
+                                    <p>Sprawdź często zadawane pytania (Wkrótce)</p>
                                 </div>
-                            </a>
+                            </button>
                         </div>
                     </div>
 
@@ -188,9 +189,10 @@ export class UnauthorizedPage implements RouteComponent {
            <a href="${this.getDashboardRoute(user?.role)}" data-navigate class="btn btn-primary btn-lg">
                📊 Mój panel
            </a>
-           <a href="/profile" data-navigate class="btn btn-outline-primary">
-               👤 Mój profil
-           </a>
+           <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+           <button class="btn btn-outline-primary btn-disabled" id="profile-btn" disabled>
+               👤 Mój profil (Wkrótce)
+           </button>
            <button class="btn btn-secondary" id="logout-btn">
                🚪 Wyloguj się
            </button>
@@ -222,7 +224,7 @@ export class UnauthorizedPage implements RouteComponent {
             tutor: '/tutor/dashboard',
             student: '/student/dashboard'
         }
-        return dashboardRoutes[role] || '/profile'
+        return dashboardRoutes[role] || '/student/dashboard'
     }
 
     private initEventListeners(): void {
@@ -236,9 +238,21 @@ export class UnauthorizedPage implements RouteComponent {
         const logoutBtn = this.container.querySelector('#logout-btn')
         logoutBtn?.addEventListener('click', this.handleLogout.bind(this))
 
-        // Help options hover
-        const helpOptions = this.container.querySelectorAll('.help-option')
+        // POPRAWIONE - obsługa wyłączonych przycisków
+        const disabledButtons = this.container.querySelectorAll('.btn-disabled')
+        disabledButtons.forEach(button => {
+            button.addEventListener('click', this.handleDisabledButtonClick.bind(this))
+        })
+
+        // POPRAWIONE - obsługa wyłączonych opcji pomocy
+        const helpOptions = this.container.querySelectorAll('.help-disabled')
         helpOptions.forEach(option => {
+            option.addEventListener('click', this.handleHelpOptionClick.bind(this))
+        })
+
+        // Help options hover - tylko dla działających
+        const workingOptions = this.container.querySelectorAll('.help-option:not(.help-disabled)')
+        workingOptions.forEach(option => {
             option.addEventListener('mouseenter', this.handleHelpOptionHover.bind(this))
         })
     }
@@ -306,6 +320,48 @@ export class UnauthorizedPage implements RouteComponent {
         }
     }
 
+    private handleDisabledButtonClick(event: Event): void {
+        event.preventDefault()
+        const button = event.currentTarget as HTMLElement
+        const text = button.textContent?.trim() || 'Ta funkcja'
+
+        // Show notification about coming soon feature
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `${text.replace(' (Wkrótce)', '')} będzie dostępna wkrótce!`,
+                duration: 3000
+            }
+        }))
+
+        // Visual feedback
+        button.classList.add('clicked')
+        setTimeout(() => {
+            button.classList.remove('clicked')
+        }, 200)
+    }
+
+    private handleHelpOptionClick(event: Event): void {
+        event.preventDefault()
+        const option = event.currentTarget as HTMLElement
+        const title = option.querySelector('h4')?.textContent || 'Ta funkcja'
+
+        // Show notification about coming soon feature
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `${title} będzie dostępna wkrótce!`,
+                duration: 3000
+            }
+        }))
+
+        // Visual feedback
+        option.classList.add('clicked')
+        setTimeout(() => {
+            option.classList.remove('clicked')
+        }, 200)
+    }
+
     private handleHelpOptionHover(event: Event): void {
         const option = event.currentTarget as HTMLElement
         option.classList.add('hovered')
@@ -332,7 +388,7 @@ export class UnauthorizedPage implements RouteComponent {
     }
 
     private trackUnauthorizedAccess(): void {
-        // TODO: Implement analytics tracking for unauthorized access
+        // POPRAWIONE - uproszczone logowanie dostępu bez uprawnień
         const user = authService.getUser()
         console.log('Unauthorized access:', {
             path: window.location.pathname,

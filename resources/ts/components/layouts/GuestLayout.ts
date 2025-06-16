@@ -1,4 +1,4 @@
-// resources/ts/components/layouts/GuestLayout.ts
+// resources/ts/components/layouts/GuestLayout.ts - POPRAWIONE
 import type { RouteComponent } from '@/router/routes'
 
 export class GuestLayout implements RouteComponent {
@@ -28,10 +28,11 @@ export class GuestLayout implements RouteComponent {
                                 <nav class="main-navigation" id="main-navigation">
                                     <div class="nav-links">
                                         <a href="/" data-navigate class="nav-link">Strona główna</a>
-                                        <a href="/tutors" data-navigate class="nav-link">Lektorzy</a>
-                                        <a href="/courses" data-navigate class="nav-link">Kursy</a>
-                                        <a href="/about" data-navigate class="nav-link">O nas</a>
-                                        <a href="/contact" data-navigate class="nav-link">Kontakt</a>
+                                        <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                                        <button class="nav-link nav-link-disabled" disabled>Lektorzy (Wkrótce)</button>
+                                        <button class="nav-link nav-link-disabled" disabled>Kursy (Wkrótce)</button>
+                                        <button class="nav-link nav-link-disabled" disabled>O nas (Wkrótce)</button>
+                                        <button class="nav-link nav-link-disabled" disabled>Kontakt (Wkrótce)</button>
                                     </div>
                                 </nav>
                             </div>
@@ -77,10 +78,11 @@ export class GuestLayout implements RouteComponent {
                                     Najlepsza platforma do nauki języków obcych z wykwalifikowanymi lektorami.
                                 </p>
                                 <div class="social-links">
-                                    <a href="#" class="social-link" aria-label="Facebook">📘</a>
-                                    <a href="#" class="social-link" aria-label="Twitter">🐦</a>
-                                    <a href="#" class="social-link" aria-label="LinkedIn">💼</a>
-                                    <a href="#" class="social-link" aria-label="Instagram">📷</a>
+                                    <!-- POPRAWIONE - social linki jako buttony z powiadomieniami -->
+                                    <button class="social-link" aria-label="Facebook" data-social="facebook">📘</button>
+                                    <button class="social-link" aria-label="Twitter" data-social="twitter">🐦</button>
+                                    <button class="social-link" aria-label="LinkedIn" data-social="linkedin">💼</button>
+                                    <button class="social-link" aria-label="Instagram" data-social="instagram">📷</button>
                                 </div>
                             </div>
                             
@@ -88,9 +90,10 @@ export class GuestLayout implements RouteComponent {
                                 <h4>Dla Studentów</h4>
                                 <ul class="footer-links">
                                     <li><a href="/register?role=student" data-navigate>Rozpocznij naukę</a></li>
-                                    <li><a href="/tutors" data-navigate>Znajdź lektora</a></li>
-                                    <li><a href="/courses" data-navigate>Przeglądaj kursy</a></li>
-                                    <li><a href="/pricing" data-navigate>Cennik</a></li>
+                                    <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                                    <li><button class="footer-link-disabled" disabled>Znajdź lektora (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Przeglądaj kursy (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Cennik (Wkrótce)</button></li>
                                 </ul>
                             </div>
                             
@@ -98,19 +101,21 @@ export class GuestLayout implements RouteComponent {
                                 <h4>Dla Lektorów</h4>
                                 <ul class="footer-links">
                                     <li><a href="/register?role=tutor" data-navigate>Zostań lektorem</a></li>
-                                    <li><a href="/tutor-guide" data-navigate>Przewodnik lektora</a></li>
-                                    <li><a href="/resources" data-navigate>Zasoby</a></li>
-                                    <li><a href="/community" data-navigate>Społeczność</a></li>
+                                    <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                                    <li><button class="footer-link-disabled" disabled>Przewodnik lektora (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Zasoby (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Społeczność (Wkrótce)</button></li>
                                 </ul>
                             </div>
                             
                             <div class="footer-section">
                                 <h4>Wsparcie</h4>
                                 <ul class="footer-links">
-                                    <li><a href="/help" data-navigate>Centrum pomocy</a></li>
-                                    <li><a href="/contact" data-navigate>Kontakt</a></li>
-                                    <li><a href="/faq" data-navigate>FAQ</a></li>
-                                    <li><a href="/privacy" data-navigate>Polityka prywatności</a></li>
+                                    <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                                    <li><button class="footer-link-disabled" disabled>Centrum pomocy (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Kontakt (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>FAQ (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Polityka prywatności (Wkrótce)</button></li>
                                 </ul>
                             </div>
                         </div>
@@ -121,9 +126,10 @@ export class GuestLayout implements RouteComponent {
                             </div>
                             <div class="footer-bottom-right">
                                 <div class="footer-bottom-links">
-                                    <a href="/terms" data-navigate>Regulamin</a>
-                                    <a href="/privacy" data-navigate>Prywatność</a>
-                                    <a href="/cookies" data-navigate>Cookies</a>
+                                    <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                                    <button class="footer-link-disabled" disabled>Regulamin (Wkrótce)</button>
+                                    <button class="footer-link-disabled" disabled>Prywatność (Wkrótce)</button>
+                                    <button class="footer-link-disabled" disabled>Cookies (Wkrótce)</button>
                                 </div>
                             </div>
                         </div>
@@ -167,6 +173,18 @@ export class GuestLayout implements RouteComponent {
         const navigation = this.container.querySelector('#main-navigation')
         navigation?.addEventListener('click', this.handleNavigationClick.bind(this))
 
+        // POPRAWIONE - obsługa wyłączonych linków
+        const disabledLinks = this.container.querySelectorAll('.nav-link-disabled, .footer-link-disabled')
+        disabledLinks.forEach(link => {
+            link.addEventListener('click', this.handleDisabledClick.bind(this))
+        })
+
+        // POPRAWIONE - obsługa social linków
+        const socialLinks = this.container.querySelectorAll('.social-link')
+        socialLinks.forEach(link => {
+            link.addEventListener('click', this.handleSocialClick.bind(this))
+        })
+
         // Close mobile menu on outside click
         document.addEventListener('click', this.handleOutsideClick.bind(this))
 
@@ -202,6 +220,48 @@ export class GuestLayout implements RouteComponent {
             // Close mobile menu after navigation
             this.closeMobileMenu()
         }
+    }
+
+    private handleDisabledClick(event: Event): void {
+        event.preventDefault()
+        const element = event.currentTarget as HTMLElement
+        const text = element.textContent?.trim() || 'Ta funkcja'
+
+        // Show notification about coming soon feature
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `${text.replace(' (Wkrótce)', '')} będzie dostępna wkrótce!`,
+                duration: 3000
+            }
+        }))
+
+        // Visual feedback
+        element.classList.add('clicked')
+        setTimeout(() => {
+            element.classList.remove('clicked')
+        }, 200)
+    }
+
+    private handleSocialClick(event: Event): void {
+        event.preventDefault()
+        const element = event.currentTarget as HTMLElement
+        const platform = element.getAttribute('data-social') || 'Social media'
+
+        // Show notification about social links
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `${platform} będzie dostępny wkrótce!`,
+                duration: 3000
+            }
+        }))
+
+        // Visual feedback
+        element.classList.add('clicked')
+        setTimeout(() => {
+            element.classList.remove('clicked')
+        }, 200)
     }
 
     private handleOutsideClick(event: Event): void {

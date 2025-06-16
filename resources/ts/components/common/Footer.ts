@@ -1,4 +1,4 @@
-// resources/ts/components/common/Footer.ts
+// resources/ts/components/common/Footer.ts - POPRAWIONE
 import type { RouteComponent } from '@/router/routes'
 
 export class Footer implements RouteComponent {
@@ -26,21 +26,22 @@ export class Footer implements RouteComponent {
                                     Dołącz do tysięcy zadowolonych uczniów z całego świata!
                                 </p>
                                 <div class="social-links">
-                                    <a href="https://facebook.com" target="_blank" rel="noopener" class="social-link facebook" aria-label="Facebook">
+                                    <!-- POPRAWIONE - social linki jako buttony z powiadomieniami -->
+                                    <button class="social-link facebook" aria-label="Facebook" data-social="Facebook">
                                         <span class="social-icon">📘</span>
-                                    </a>
-                                    <a href="https://twitter.com" target="_blank" rel="noopener" class="social-link twitter" aria-label="Twitter">
+                                    </button>
+                                    <button class="social-link twitter" aria-label="Twitter" data-social="Twitter">
                                         <span class="social-icon">🐦</span>
-                                    </a>
-                                    <a href="https://linkedin.com" target="_blank" rel="noopener" class="social-link linkedin" aria-label="LinkedIn">
+                                    </button>
+                                    <button class="social-link linkedin" aria-label="LinkedIn" data-social="LinkedIn">
                                         <span class="social-icon">💼</span>
-                                    </a>
-                                    <a href="https://instagram.com" target="_blank" rel="noopener" class="social-link instagram" aria-label="Instagram">
+                                    </button>
+                                    <button class="social-link instagram" aria-label="Instagram" data-social="Instagram">
                                         <span class="social-icon">📷</span>
-                                    </a>
-                                    <a href="https://youtube.com" target="_blank" rel="noopener" class="social-link youtube" aria-label="YouTube">
+                                    </button>
+                                    <button class="social-link youtube" aria-label="YouTube" data-social="YouTube">
                                         <span class="social-icon">📺</span>
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
 
@@ -49,11 +50,12 @@ export class Footer implements RouteComponent {
                                 <h4 class="footer-title">Dla Studentów</h4>
                                 <ul class="footer-links">
                                     <li><a href="/register?role=student" data-navigate>Rozpocznij naukę</a></li>
-                                    <li><a href="/tutors" data-navigate>Znajdź lektora</a></li>
-                                    <li><a href="/courses" data-navigate>Przeglądaj kursy</a></li>
-                                    <li><a href="/pricing" data-navigate>Cennik</a></li>
-                                    <li><a href="/demo" data-navigate>Darmowa lekcja próbna</a></li>
-                                    <li><a href="/student-success" data-navigate>Historie sukcesu</a></li>
+                                    <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                                    <li><button class="footer-link-disabled" disabled>Znajdź lektora (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Przeglądaj kursy (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Cennik (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Darmowa lekcja próbna (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Historie sukcesu (Wkrótce)</button></li>
                                 </ul>
                             </div>
 
@@ -62,11 +64,12 @@ export class Footer implements RouteComponent {
                                 <h4 class="footer-title">Dla Lektorów</h4>
                                 <ul class="footer-links">
                                     <li><a href="/register?role=tutor" data-navigate>Zostań lektorem</a></li>
-                                    <li><a href="/tutor-guide" data-navigate>Przewodnik lektora</a></li>
-                                    <li><a href="/teaching-resources" data-navigate>Zasoby do nauczania</a></li>
-                                    <li><a href="/tutor-community" data-navigate>Społeczność lektorów</a></li>
-                                    <li><a href="/earnings" data-navigate>Ile można zarobić?</a></li>
-                                    <li><a href="/certification" data-navigate>Certyfikacja</a></li>
+                                    <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                                    <li><button class="footer-link-disabled" disabled>Przewodnik lektora (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Zasoby do nauczania (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Społeczność lektorów (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Ile można zarobić? (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Certyfikacja (Wkrótce)</button></li>
                                 </ul>
                             </div>
 
@@ -74,12 +77,13 @@ export class Footer implements RouteComponent {
                             <div class="footer-section">
                                 <h4 class="footer-title">Języki</h4>
                                 <ul class="footer-links">
-                                    <li><a href="/languages/english" data-navigate>Angielski</a></li>
-                                    <li><a href="/languages/german" data-navigate>Niemiecki</a></li>
-                                    <li><a href="/languages/french" data-navigate>Francuski</a></li>
-                                    <li><a href="/languages/spanish" data-navigate>Hiszpański</a></li>
-                                    <li><a href="/languages/italian" data-navigate>Włoski</a></li>
-                                    <li><a href="/languages" data-navigate>Wszystkie języki</a></li>
+                                    <!-- POPRAWIONE - zakomentowane nieistniejące strony języków -->
+                                    <li><button class="footer-link-disabled" disabled>Angielski (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Niemiecki (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Francuski (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Hiszpański (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Włoski (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Wszystkie języki (Wkrótce)</button></li>
                                 </ul>
                             </div>
 
@@ -87,12 +91,13 @@ export class Footer implements RouteComponent {
                             <div class="footer-section">
                                 <h4 class="footer-title">Firma</h4>
                                 <ul class="footer-links">
-                                    <li><a href="/about" data-navigate>O nas</a></li>
-                                    <li><a href="/careers" data-navigate>Kariera</a></li>
-                                    <li><a href="/press" data-navigate>Prasa</a></li>
-                                    <li><a href="/blog" data-navigate>Blog</a></li>
-                                    <li><a href="/partnerships" data-navigate>Partnerzy</a></li>
-                                    <li><a href="/investors" data-navigate>Inwestorzy</a></li>
+                                    <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                                    <li><button class="footer-link-disabled" disabled>O nas (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Kariera (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Prasa (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Blog (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Partnerzy (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Inwestorzy (Wkrótce)</button></li>
                                 </ul>
                             </div>
 
@@ -100,12 +105,13 @@ export class Footer implements RouteComponent {
                             <div class="footer-section">
                                 <h4 class="footer-title">Wsparcie</h4>
                                 <ul class="footer-links">
-                                    <li><a href="/help" data-navigate>Centrum pomocy</a></li>
-                                    <li><a href="/contact" data-navigate>Kontakt</a></li>
-                                    <li><a href="/faq" data-navigate>FAQ</a></li>
-                                    <li><a href="/technical-support" data-navigate>Wsparcie techniczne</a></li>
-                                    <li><a href="/feedback" data-navigate>Opinie</a></li>
-                                    <li><a href="/report-issue" data-navigate>Zgłoś problem</a></li>
+                                    <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                                    <li><button class="footer-link-disabled" disabled>Centrum pomocy (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Kontakt (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>FAQ (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Wsparcie techniczne (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Opinie (Wkrótce)</button></li>
+                                    <li><button class="footer-link-disabled" disabled>Zgłoś problem (Wkrótce)</button></li>
                                 </ul>
                             </div>
                         </div>
@@ -138,7 +144,7 @@ export class Footer implements RouteComponent {
                                         <input type="checkbox" required class="newsletter-checkbox">
                                         <span class="checkmark"></span>
                                         Zgadzam się na otrzymywanie newslettera zgodnie z 
-                                        <a href="/privacy" data-navigate>polityką prywatności</a>
+                                        <button type="button" class="footer-link-disabled privacy-link" disabled>polityką prywatności (Wkrótce)</button>
                                     </label>
                                 </div>
                             </form>
@@ -187,10 +193,11 @@ export class Footer implements RouteComponent {
                                     &copy; ${this.currentYear} Platforma Lektorów. Wszystkie prawa zastrzeżone.
                                 </p>
                                 <div class="footer-bottom-links">
-                                    <a href="/terms" data-navigate>Regulamin</a>
-                                    <a href="/privacy" data-navigate>Polityka prywatności</a>
-                                    <a href="/cookies" data-navigate>Polityka cookies</a>
-                                    <a href="/gdpr" data-navigate>GDPR</a>
+                                    <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                                    <button class="footer-link-disabled" disabled>Regulamin (Wkrótce)</button>
+                                    <button class="footer-link-disabled" disabled>Polityka prywatności (Wkrótce)</button>
+                                    <button class="footer-link-disabled" disabled>Polityka cookies (Wkrótce)</button>
+                                    <button class="footer-link-disabled" disabled>GDPR (Wkrótce)</button>
                                 </div>
                             </div>
                             <div class="footer-bottom-right">
@@ -260,10 +267,16 @@ export class Footer implements RouteComponent {
         const backToTop = this.container.querySelector('#back-to-top')
         backToTop?.addEventListener('click', this.scrollToTop.bind(this))
 
-        // Social links tracking
+        // POPRAWIONE - obsługa wyłączonych linków
+        const disabledLinks = this.container.querySelectorAll('.footer-link-disabled')
+        disabledLinks.forEach(link => {
+            link.addEventListener('click', this.handleDisabledClick.bind(this))
+        })
+
+        // POPRAWIONE - obsługa social linków
         const socialLinks = this.container.querySelectorAll('.social-link')
         socialLinks.forEach(link => {
-            link.addEventListener('click', this.trackSocialClick.bind(this))
+            link.addEventListener('click', this.handleSocialClick.bind(this))
         })
 
         // Close dropdowns on outside click
@@ -303,10 +316,10 @@ export class Footer implements RouteComponent {
         submitBtn.disabled = true
 
         try {
-            // TODO: Implement actual newsletter API call
+            // POPRAWIONE - symulacja zamiast prawdziwego API
             await this.simulateNewsletterSignup(emailInput.value)
 
-            this.showNewsletterMessage('Dziękujemy! Sprawdź swoją skrzynkę pocztową.', 'success')
+            this.showNewsletterMessage('Dziękujemy! Newsletter będzie dostępny wkrótce.', 'info')
             form.reset()
 
         } catch (error) {
@@ -321,19 +334,14 @@ export class Footer implements RouteComponent {
 
     private async simulateNewsletterSignup(email: string): Promise<void> {
         // Simulate API call
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             setTimeout(() => {
-                // 90% success rate for demo
-                if (Math.random() > 0.1) {
-                    resolve()
-                } else {
-                    reject(new Error('Network error'))
-                }
-            }, 2000)
+                resolve()
+            }, 1500)
         })
     }
 
-    private showNewsletterMessage(message: string, type: 'success' | 'error'): void {
+    private showNewsletterMessage(message: string, type: 'success' | 'error' | 'info'): void {
         // Remove existing messages
         this.container?.querySelectorAll('.newsletter-message').forEach(msg => msg.remove())
 
@@ -379,22 +387,75 @@ export class Footer implements RouteComponent {
             // Close dropdown
             this.container?.querySelector('#language-dropdown')?.classList.remove('open')
 
-            // TODO: Implement actual language change
+            // POPRAWIONE - symulacja zmiany języka
             this.changeLanguage(lang)
         }
     }
 
     private changeLanguage(lang: string): void {
-        // TODO: Implement language change logic
-        console.log(`Changing language to: ${lang}`)
+        // POPRAWIONE - powiadomienie o zmianie języka
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `Zmiana języka na ${this.getLanguageName(lang)} będzie dostępna wkrótce!`,
+                duration: 3000
+            }
+        }))
 
         // Store preference
         localStorage.setItem('preferred_language', lang)
+    }
 
-        // Dispatch event for app to handle
-        document.dispatchEvent(new CustomEvent('language:change', {
-            detail: { language: lang }
+    private getLanguageName(lang: string): string {
+        const languageNames: Record<string, string> = {
+            pl: 'polski',
+            en: 'angielski',
+            de: 'niemiecki',
+            fr: 'francuski'
+        }
+        return languageNames[lang] || lang
+    }
+
+    private handleDisabledClick(event: Event): void {
+        event.preventDefault()
+        const element = event.currentTarget as HTMLElement
+        const text = element.textContent?.trim() || 'Ta funkcja'
+
+        // Show notification about coming soon feature
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `${text.replace(' (Wkrótce)', '')} będzie dostępna wkrótce!`,
+                duration: 3000
+            }
         }))
+
+        // Visual feedback
+        element.classList.add('clicked')
+        setTimeout(() => {
+            element.classList.remove('clicked')
+        }, 200)
+    }
+
+    private handleSocialClick(event: Event): void {
+        event.preventDefault()
+        const element = event.currentTarget as HTMLElement
+        const platform = element.getAttribute('data-social') || 'Social media'
+
+        // Show notification about social links
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `${platform} będzie dostępny wkrótce!`,
+                duration: 3000
+            }
+        }))
+
+        // Visual feedback
+        element.classList.add('clicked')
+        setTimeout(() => {
+            element.classList.remove('clicked')
+        }, 200)
     }
 
     private scrollToTop(): void {
@@ -402,14 +463,6 @@ export class Footer implements RouteComponent {
             top: 0,
             behavior: 'smooth'
         })
-    }
-
-    private trackSocialClick(event: Event): void {
-        const link = event.target as HTMLElement
-        const platform = link.closest('.social-link')?.classList[1] // e.g., 'facebook'
-
-        // TODO: Implement analytics tracking
-        console.log(`Social click: ${platform}`)
     }
 
     private handleOutsideClick(event: Event): void {

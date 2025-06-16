@@ -1,4 +1,4 @@
-// resources/ts/components/pages/NotFoundPage.ts
+// resources/ts/components/pages/NotFoundPage.ts - POPRAWIONE
 import type { RouteComponent } from '@/router/routes'
 
 export class NotFoundPage implements RouteComponent {
@@ -48,27 +48,28 @@ export class NotFoundPage implements RouteComponent {
                                     <p>Wróć na stronę główną</p>
                                 </div>
                             </a>
-                            <a href="/tutors" data-navigate class="suggestion-card">
+                            <!-- POPRAWIONE - zakomentowane nieistniejące strony -->
+                            <button class="suggestion-card suggestion-disabled" disabled>
                                 <div class="suggestion-icon">👨‍🏫</div>
                                 <div class="suggestion-content">
                                     <h4>Lektorzy</h4>
-                                    <p>Znajdź idealnego lektora</p>
+                                    <p>Znajdź idealnego lektora (Wkrótce)</p>
                                 </div>
-                            </a>
-                            <a href="/courses" data-navigate class="suggestion-card">
+                            </button>
+                            <button class="suggestion-card suggestion-disabled" disabled>
                                 <div class="suggestion-icon">📚</div>
                                 <div class="suggestion-content">
                                     <h4>Kursy</h4>
-                                    <p>Przeglądaj dostępne kursy</p>
+                                    <p>Przeglądaj dostępne kursy (Wkrótce)</p>
                                 </div>
-                            </a>
-                            <a href="/help" data-navigate class="suggestion-card">
+                            </button>
+                            <button class="suggestion-card suggestion-disabled" disabled>
                                 <div class="suggestion-icon">❓</div>
                                 <div class="suggestion-content">
                                     <h4>Pomoc</h4>
-                                    <p>Centrum wsparcia</p>
+                                    <p>Centrum wsparcia (Wkrótce)</p>
                                 </div>
-                            </a>
+                            </button>
                         </div>
                     </div>
 
@@ -148,10 +149,16 @@ export class NotFoundPage implements RouteComponent {
         const reportBtn = this.container.querySelector('#report-btn')
         reportBtn?.addEventListener('click', this.handleReport.bind(this))
 
-        // Suggestion cards hover
-        const suggestionCards = this.container.querySelectorAll('.suggestion-card')
+        // Suggestion cards hover - tylko dla działających
+        const suggestionCards = this.container.querySelectorAll('.suggestion-card:not(.suggestion-disabled)')
         suggestionCards.forEach(card => {
             card.addEventListener('mouseenter', this.handleCardHover.bind(this))
+        })
+
+        // POPRAWIONE - obsługa wyłączonych kart sugestii
+        const disabledCards = this.container.querySelectorAll('.suggestion-disabled')
+        disabledCards.forEach(card => {
+            card.addEventListener('click', this.handleDisabledCardClick.bind(this))
         })
     }
 
@@ -191,23 +198,64 @@ export class NotFoundPage implements RouteComponent {
         const query = input.value.trim()
 
         if (query) {
-            // Navigate to search results
-            window.location.href = `/search?q=${encodeURIComponent(query)}`
+            // POPRAWIONE - pokazuj powiadomienie zamiast nawigacji do nieistniejącej strony
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'info',
+                    message: `Wyszukiwarka dla "${query}" będzie dostępna wkrótce!`,
+                    duration: 4000
+                }
+            }))
+
+            // Clear input
+            input.value = ''
         }
     }
 
     private handleReport(): void {
-        // Open report modal or navigate to contact
+        // POPRAWIONE - pokazuj powiadomienie zamiast nawigacji do contact
         const currentUrl = window.location.href
-        const subject = encodeURIComponent('Zgłoszenie błędu 404')
-        const body = encodeURIComponent(`Znalazłem błąd na stronie: ${currentUrl}\n\nOpis problemu:\n`)
 
-        window.location.href = `/contact?subject=${subject}&body=${body}`
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: 'Formularz zgłaszania problemów będzie dostępny wkrótce. Problem zostanie zarejestrowany automatycznie.',
+                duration: 5000
+            }
+        }))
+
+        // Log error for debugging
+        console.log('404 Error reported:', {
+            url: currentUrl,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent
+        })
     }
 
     private handleCardHover(event: Event): void {
         const card = event.currentTarget as HTMLElement
         card.classList.add('hovered')
+    }
+
+    private handleDisabledCardClick(event: Event): void {
+        event.preventDefault()
+        const card = event.currentTarget as HTMLElement
+        const title = card.querySelector('h4')?.textContent || 'Ta funkcja'
+
+        // Show notification about coming soon feature
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `${title} będzie dostępna wkrótce!`,
+                duration: 3000
+            }
+        }))
+
+        // Visual feedback
+        card.classList.add('clicked')
+        setTimeout(() => {
+            card.classList.remove('clicked')
+        }, 200)
     }
 
     onBeforeEnter(): boolean {
@@ -231,7 +279,11 @@ export class NotFoundPage implements RouteComponent {
     }
 
     private track404Error(): void {
-        // TODO: Implement analytics tracking for 404 errors
-        console.log('404 Page viewed:', window.location.pathname)
+        // POPRAWIONE - uproszczone logowanie błędów 404
+        console.log('404 Page viewed:', {
+            path: window.location.pathname,
+            referrer: document.referrer,
+            timestamp: new Date().toISOString()
+        })
     }
 }
