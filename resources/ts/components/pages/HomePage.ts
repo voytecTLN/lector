@@ -16,6 +16,7 @@ export class HomePage implements RouteComponent {
                     <div class="cta-buttons">
                         <a href="#lecturers" class="btn btn-primary">Zobacz lektorów</a>
                         <a href="#about" class="btn btn-secondary">Dowiedz się więcej</a>
+                        <a href="/register" class="btn btn-primary">Dołącz do nas</a>
                     </div>
                 </div>
             </section>

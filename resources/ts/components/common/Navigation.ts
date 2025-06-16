@@ -10,7 +10,10 @@ export class Navigation {
                     <li><a href="/#about">O nas</a></li>
                     <li><a href="/#contact">Kontakt</a></li>
                 </ul>
-                <a href="/login" class="login-btn">Zaloguj się</a>
+                <div class="nav-actions">
+                    <a href="/register" class="join-btn">Dołącz do nas</a>
+                    <a href="/login" class="login-btn">Zaloguj się</a>
+                </div>
             </nav>
         `
         return header
