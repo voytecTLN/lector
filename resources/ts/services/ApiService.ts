@@ -109,7 +109,8 @@ export class ApiService {
       }
 
       // Laravel zawsze zwraca success/data format
-      return result.data || result as T
+      // return result.data || result as T
+      return result as T
 
     } catch (error) {
       console.error(`❌ API Error: ${endpoint}`, error)

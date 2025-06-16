@@ -58,14 +58,18 @@ export class AuthService {
     async login(credentials: LoginCredentials): Promise<LaravelAuthResponse> {
         try {
             console.log('🔐 AuthService: Attempting login')
-
+            console.log('email: credentials.email,password: credentials.password, remember: credentials.remember');
+            console.log(credentials.email, credentials.password, credentials.remember);
             const response = await api.post<LaravelAuthResponse>('/auth/login', {
                 email: credentials.email,
                 password: credentials.password,
                 remember: credentials.remember || false
             })
-
+console.log('response.success && response.data');
+console.log(response.success, response.data);
             if (response.success && response.data) {
+                console.log('response.data.user, response.data.token, response.data.permissions');
+                console.log(response.data.user, response.data.token, response.data.permissions);
                 this.setAuthData(response.data.user, response.data.token, response.data.permissions)
                 this.notifyAuthChange('login')
 
@@ -109,8 +113,11 @@ export class AuthService {
                 city: userData.city,
                 terms_accepted: userData.terms_accepted
             })
-
+            console.log('response.success && response.data');
+            console.log(response.success, response.data);
             if (response.success && response.data) {
+                console.log('response.data.user, response.data.token, response.data.permissions')
+                console.log(response.data.user, response.data.token, response.data.permissions)
                 this.setAuthData(response.data.user, response.data.token, response.data.permissions)
                 this.notifyAuthChange('register')
 
@@ -341,8 +348,9 @@ export class AuthService {
         }
     }
 
-    // Pozostałe metody bez zmian...
     isAuthenticated(): boolean {
+        console.log('!!this.token && !!this.user');
+        console.log(this.token, this.user);
         return !!this.token && !!this.user
     }
 
