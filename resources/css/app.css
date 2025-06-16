@@ -1,29 +1,5 @@
-/* ------------------------------------------------------------------
-   Base Imports
-   ------------------------------------------------------------------ */
-
 /* Bootstrap core */
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
-/* Shared variables and utilities used by all styles */
-@import './components/variables.css';
-@import './components/animations.css';
-@import './components/utilities.css';
-@import './components/responsive.css';
-@import './components/base.css';
-@import './components/notifications.css';
 
-/* Legacy front‑end components (homepage sections, footer, etc.) */
-@import './components/header.css';
-@import './components/hero.css';
-@import './components/features.css';
-@import './components/about.css';
-@import './components/lecturers.css';
-@import './components/footer.css';
-@import './components/pages.css';
-
-/* New SPA specific styles */
-@import './components/layout.css';
-@import './components/auth.css';
-@import './components/dashboard.css';
 
