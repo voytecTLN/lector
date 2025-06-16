@@ -1,4 +1,12 @@
 /* Import Bootstrap and components */
+
+/* NEW STYLES */
+@import './components/layout.css';
+@import './components/auth.css';
+@import './components/dashboard.css';
+
+
+/* OLD STYLES */
 @import 'bootstrap/dist/css/bootstrap.min.css';
 @import './components/variables.css';
 @import "./components/base.css";
@@ -6,3 +14,4 @@
 @import './components/utilities.css';
 @import './components/animations.css';
 @import './components/responsive.css';
+
