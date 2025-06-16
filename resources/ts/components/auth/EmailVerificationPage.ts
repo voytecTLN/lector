@@ -533,6 +533,7 @@ export class EmailVerificationPage implements RouteComponent {
         const btnLoading = button.querySelector('.btn-loading')
 
         button.disabled = loading
+        button.classList.toggle('btn-loading', loading)
 
         if (btnText && btnLoading) {
             btnText.classList.toggle('hidden', loading)
