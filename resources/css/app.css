@@ -20,6 +20,7 @@
 @import './components/about.css';
 @import './components/lecturers.css';
 @import './components/footer.css';
+@import './components/pages.css';
 
 /* New SPA specific styles */
 @import './components/layout.css';
