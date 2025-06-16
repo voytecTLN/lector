@@ -6,6 +6,7 @@ export class AppLayout implements RouteComponent {
     private container: HTMLElement | null = null
     private navigationComponent: any = null
     private userMenuComponent: any = null
+    private footerComponent: any = null
 
     async render(): Promise<HTMLElement> {
         const layout = document.createElement('div')
@@ -55,22 +56,7 @@ export class AppLayout implements RouteComponent {
                 </main>
 
                 <!-- Footer -->
-                <footer class="app-footer">
-                    <div class="container">
-                        <div class="footer-content">
-                            <div class="footer-left">
-                                <p>&copy; 2025 Platforma Lektorów. Wszystkie prawa zastrzeżone.</p>
-                            </div>
-                            <div class="footer-right">
-                                <div class="footer-links">
-                                    <a href="/privacy" data-navigate>Polityka prywatności</a>
-                                    <a href="/terms" data-navigate>Regulamin</a>
-                                    <a href="/contact" data-navigate>Kontakt</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </footer>
+                <div id="footer-container"></div>
             </div>
         `
 
@@ -116,6 +102,19 @@ export class AppLayout implements RouteComponent {
 
                 if (this.userMenuComponent.mount) {
                     this.userMenuComponent.mount(userMenuContainer as HTMLElement)
+                }
+            }
+
+            // Initialize Footer
+            const footerContainer = layout.querySelector('#footer-container')
+            if (footerContainer) {
+                const { Footer } = await import('@/components/common/Footer')
+                this.footerComponent = new Footer()
+                const footerElement = await this.footerComponent.render()
+                footerContainer.appendChild(footerElement)
+
+                if (this.footerComponent.mount) {
+                    this.footerComponent.mount(footerElement as HTMLElement)
                 }
             }
 
@@ -201,6 +200,9 @@ export class AppLayout implements RouteComponent {
         }
         if (this.userMenuComponent?.unmount) {
             this.userMenuComponent.unmount()
+        }
+        if (this.footerComponent?.unmount) {
+            this.footerComponent.unmount()
         }
 
         // Remove event listeners
