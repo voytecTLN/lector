@@ -254,8 +254,44 @@ export class DevelopmentGuard implements RouteGuard {
     }
 }
 
+export class SessionGuard implements RouteGuard {
+    name = 'session'
+
+    async execute(context: GuardContext): Promise<GuardResult> {
+        const token = authService.getToken()
+        const user = authService.getUser()
+
+        // Jeśli mamy token ale nie mamy użytkownika, spróbuj pobrać dane
+        if (token && !user) {
+            console.log('🔄 SessionGuard: Token exists but no user data, fetching...')
+
+            try {
+                await authService.getCurrentUser()
+                return { allowed: true }
+            } catch (error) {
+                console.log('❌ SessionGuard: Failed to fetch user, session expired')
+
+                // Wyczyść nieważne dane
+                authService.logout()
+
+                // Przekieruj na login tylko jeśli trasa wymaga autoryzacji
+                if (context.to.route.meta?.requiresAuth) {
+                    return {
+                        allowed: false,
+                        redirect: '/login',
+                        message: 'Sesja wygasła. Zaloguj się ponownie.'
+                    }
+                }
+            }
+        }
+
+        return { allowed: true }
+    }
+}
+
 // Default guards that will be applied to all routes
 export const defaultGuards: RouteGuard[] = [
+    new SessionGuard(),
     new AuthGuard(),
     new AccountStatusGuard(),
     new VerificationGuard(),

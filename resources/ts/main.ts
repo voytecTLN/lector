@@ -139,6 +139,28 @@ class Application {
         document.body.classList.toggle('user-guest', !isAuthenticated)
 
         console.log(`Auth state changed: ${type}, authenticated: ${isAuthenticated}`)
+
+        // Jeśli użytkownik został wylogowany i jest na chronionej stronie
+        if (!isAuthenticated && type === 'logout') {
+            const currentPath = window.location.pathname
+            const protectedPaths = ['/admin', '/moderator', '/tutor', '/student', '/profile', '/settings']
+
+            if (protectedPaths.some(path => currentPath.startsWith(path))) {
+                console.log('🔒 User logged out from protected route, redirecting to home...')
+                this.router.navigate('/')
+            }
+        }
+
+        // Jeśli użytkownik się zalogował, odśwież stronę aby zaktualizować nawigację
+        if (isAuthenticated && (type === 'login' || type === 'register')) {
+            // Opcjonalnie: możesz przekierować na odpowiedni dashboard
+            const user = customEvent.detail.user
+            if (user && window.location.pathname === '/') {
+                const dashboardRoute = `/${user.role}/dashboard`
+                console.log(`🏠 Redirecting to dashboard: ${dashboardRoute}`)
+                this.router.navigate(dashboardRoute)
+            }
+        }
     }
 
     private handleGlobalError(event: ErrorEvent): void {
