@@ -1,5 +1,3 @@
-import '../../../css/components/navigation.css'
-
 export class Navigation {
     render(): HTMLElement {
         const header = document.createElement('header')

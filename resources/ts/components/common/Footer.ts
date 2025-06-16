@@ -1,5 +1,3 @@
-import '../../../css/components/footer.css'
-
 export class Footer {
     render(): HTMLElement {
         const footer = document.createElement('footer')

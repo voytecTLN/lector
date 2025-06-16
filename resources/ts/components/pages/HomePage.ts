@@ -1,4 +1,3 @@
-import '../../../css/pages/home.css'
 import { Navigation } from '../common/Navigation'
 import { Footer } from '../common/Footer'
 import type { RouteComponent } from '@router/routes'

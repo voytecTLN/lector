@@ -1,4 +1,3 @@
-import '../../../css/pages/login.css'
 import { authService } from '@services/AuthService'
 import type { RouteComponent } from '@router/routes'
 
