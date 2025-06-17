@@ -3,25 +3,47 @@
 
 use Illuminate\Support\Facades\Route;
 
+// Helper closure to serve SPA routes and pass flash messages
+$spa = function (string $hashPath) {
+    return function () use ($hashPath) {
+        $message = session('success') ?? session('error') ?? session('info');
+        $type = session()->has('success') ? 'success'
+            : (session()->has('error') ? 'error'
+                : (session()->has('info') ? 'info' : 'info'));
+
+        $query = request()->query();
+        if ($message) {
+            $query['message'] = $message;
+            $query['type'] = $type;
+        }
+
+        $hashUrl = '/#' . ($hashPath === '/' ? '/' : $hashPath);
+        if (!empty($query)) {
+            $hashUrl .= '?' . http_build_query($query);
+            return redirect($hashUrl);
+        }
+
+        if ($message) {
+            return redirect($hashUrl);
+        }
+
+        return view('app');
+    };
+};
+
 // Health check
 Route::get('/health', function () {
     return response()->json(['status' => 'ok', 'timestamp' => now()]);
 });
 
-// Handle redirects with flash messages for SPA
-Route::get('/login', function () {
-    $message = session('success') ?? session('error') ?? session('info');
-    $type = session()->has('success') ? 'success' : (session()->has('error') ? 'error' : 'info');
-
-    if ($message) {
-        return redirect('/#/login?' . http_build_query([
-            'message' => $message,
-            'type' => $type
-        ]));
-    }
-
-    return view('app');
-})->name('login');
+// SPA entry routes with optional flash messages
+Route::get('/', $spa('/'))->name('home');
+Route::get('/login', $spa('/login'))->name('login');
+Route::get('/register', $spa('/register'))->name('register');
+Route::get('/forgot-password', $spa('/forgot-password'))->name('password.request');
+Route::get('/reset-password', $spa('/reset-password'))->name('password.reset');
+Route::get('/verify-email', $spa('/verify-email'))->name('verification.notice');
+Route::get('/unauthorized', $spa('/unauthorized'))->name('unauthorized');
 
 // SPA Route - catch all routes and serve the main app
 Route::get('/{any}', function () {
