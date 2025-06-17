@@ -1,3 +1,4 @@
+// resources/ts/components/auth/LoginPage.ts
 import { authService } from '@services/AuthService'
 import type { RouteComponent } from '@router/routes'
 
@@ -7,10 +8,25 @@ export class LoginPage implements RouteComponent {
     async render(): Promise<HTMLElement> {
         const container = document.createElement('div')
         document.body.classList.add('login-page')
+
+        // Check for flash messages in URL params
+        const params = new URLSearchParams(window.location.search)
+        const message = params.get('message')
+        const type = params.get('type') || 'info'
+
         container.innerHTML = `
             <div class="login-container">
                 <div class="login-form-section">
                     <div class="login-logo">Platforma Lektorów</div>
+                    
+                    ${message ? `
+                        <div class="notification-banner notification-${type}">
+                            <i class="bi ${this.getIconForType(type)}"></i>
+                            <span>${decodeURIComponent(message)}</span>
+                            <button class="notification-close" aria-label="Zamknij">×</button>
+                        </div>
+                    ` : ''}
+                    
                     <h1 class="form-title">Witaj ponownie!</h1>
                     <p class="form-subtitle">Zaloguj się, aby rozpocząć naukę</p>
                     <form id="loginForm">
@@ -50,6 +66,19 @@ export class LoginPage implements RouteComponent {
     mount(container: HTMLElement): void {
         this.form = container.querySelector('#loginForm') as HTMLFormElement
         this.form?.addEventListener('submit', this.handleSubmit)
+
+        // Handle notification close
+        const closeBtn = container.querySelector('.notification-close')
+        closeBtn?.addEventListener('click', (e) => {
+            const notification = (e.target as HTMLElement).closest('.notification-banner')
+            notification?.remove()
+
+            // Clean URL
+            const url = new URL(window.location.href)
+            url.searchParams.delete('message')
+            url.searchParams.delete('type')
+            window.history.replaceState({}, document.title, url.pathname)
+        })
     }
 
     unmount(): void {
@@ -57,6 +86,16 @@ export class LoginPage implements RouteComponent {
             this.form.removeEventListener('submit', this.handleSubmit)
         }
         document.body.classList.remove('login-page')
+    }
+
+    private getIconForType(type: string): string {
+        const icons: Record<string, string> = {
+            'success': 'bi-check-circle-fill',
+            'error': 'bi-exclamation-circle-fill',
+            'warning': 'bi-exclamation-triangle-fill',
+            'info': 'bi-info-circle-fill'
+        }
+        return icons[type] || icons.info
     }
 
     private handleSubmit = async (e: Event) => {

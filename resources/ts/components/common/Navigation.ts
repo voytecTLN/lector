@@ -12,7 +12,7 @@ export class Navigation {
             <div class="nav-actions">
                 <span class="nav-user-name">👤 ${user.name}</span>
                 <a href="/${user.role}/dashboard" class="btn btn-primary">Panel</a>
-                <button class="btn btn-secondary" id="logout-btn">Wyloguj</button>
+                <a href="/logout" class="logout-btn">Wyloguj</a>
             </div>
         ` : `
             <div class="nav-actions">
