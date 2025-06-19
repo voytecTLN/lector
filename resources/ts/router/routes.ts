@@ -1,5 +1,6 @@
 // resources/ts/router/routes.ts - IMPROVED VERSION
 import type { RouteGuard } from './guards'
+import {authService} from "@services/AuthService";
 
 export interface RouteComponent {
     render(): Promise<HTMLElement> | HTMLElement
@@ -113,6 +114,33 @@ export const routes: RouteDefinition[] = [
             requiresAuth: false,      // ZMIANA: NIE wymaga autoryzacji
             requiresGuest: false,     // ZMIANA: Dostępne dla wszystkich
             requiresVerification: false  // DODANE: Oczywiście NIE wymaga weryfikacji (to strona DO weryfikacji)
+        }
+    },
+
+    {
+        path: '/logout',
+        name: 'logout',
+        component: () => {
+            // Ten komponent może być bardzo prosty - tylko wywołuje logout i przekierowuje
+            return {
+                render: async () => {
+                    const div = document.createElement('div');
+                    div.textContent = 'Wylogowywanie...';
+                    return div;
+                },
+                async mount(container) {
+                    try {
+                        await authService.logout();
+                        window.location.href = '/';
+                    } catch (error) {
+                        console.error('Błąd podczas wylogowywania', error);
+                        window.location.href = '/';
+                    }
+                }
+            };
+        },
+        meta: {
+            requiresAuth: true
         }
     },
 
