@@ -97,7 +97,6 @@ export class VerificationGuard implements RouteGuard {
 
         console.log(`✅ VerificationGuard: user verification status`, {
             isVerified,
-            user_is_verified: user.is_verified,
             email_verified_at: user.email_verified_at
         })
 

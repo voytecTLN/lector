@@ -81,7 +81,7 @@ class AuthController extends Controller
                     'user' => $result['user'],
                     'token' => $result['token'],
                     'permissions' => $this->getUserPermissions($result['user']),
-                    'requires_verification' => !$result['user']->isVerified()
+                    'requires_verification' => !$result['user']->hasVerifiedEmail()
                 ]
             ], 201);
 
@@ -233,7 +233,7 @@ class AuthController extends Controller
                 ], 400);
             }
 
-            if ($user->isVerified()) {
+            if ($user->hasVerifiedEmail()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Email jest już zweryfikowany.'
@@ -279,7 +279,7 @@ class AuthController extends Controller
                 return redirect('/#/verify-email?error=' . urlencode('Nieprawidłowy token weryfikacyjny'));
             }
 
-            if ($user->isVerified()) {
+            if ($user->hasVerifiedEmail()) {
                 // Już zweryfikowany - przekieruj na login
                 return redirect('/#/login?message=' . urlencode('Email jest już zweryfikowany. Możesz się zalogować.') . '&type=info');
             }
@@ -313,7 +313,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-        if ($user->isVerified()) {
+        if ($user->hasVerifiedEmail()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Email jest już zweryfikowany.'

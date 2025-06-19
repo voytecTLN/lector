@@ -38,12 +38,10 @@ export interface AuthUser {
     country?: string
     status: 'active' | 'inactive' | 'blocked'
     avatar?: string
-    is_verified: boolean
     email_verified_at: string | null
     created_at: string
     updated_at: string
     studentProfile?: StudentProfile
-    tutorProfile?: TutorProfile
 }
 
 // Zgodne z Laravel AuthController responses
@@ -86,20 +84,6 @@ export interface StudentProfile {
     current_levels: Record<string, string>
     learning_goals: string[]
     preferred_schedule: Record<string, any>
-    created_at: string
-    updated_at: string
-}
-
-export interface TutorProfile {
-    id: number
-    user_id: number
-    languages: string[]
-    specializations: string[]
-    hourly_rate: number
-    description?: string
-    weekly_availability: Record<string, any>
-    is_verified: boolean
-    verification_status: string
     created_at: string
     updated_at: string
 }

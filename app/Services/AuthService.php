@@ -32,6 +32,11 @@ class AuthService
             throw new Exception('Konto jest nieaktywne lub zablokowane');
         }
 
+        // Sprawdź weryfikację
+        if (!$user->hasVerifiedEmail()) {
+            throw new Exception('Konto nie zostało zweryfikowane. Sprawdź swoją skrzynkę email.');
+        }
+
         // Update login information
         $user->updateLoginInfo($ip);
 
@@ -65,7 +70,6 @@ class AuthService
                 'city' => $userData['city'] ?? null,
                 'country' => 'Polska',
                 'status' => User::STATUS_ACTIVE,
-                'is_verified' => false,
                 'last_login_ip' => $ip
             ]);
 
@@ -166,7 +170,7 @@ class AuthService
             throw new Exception('Nieprawidłowy token weryfikacyjny');
         }
 
-        if ($user->isVerified()) {
+        if ($user->hasVerifiedEmail()) {
             // Już zweryfikowany - usuń token i kontynuuj
             $user->update(['verification_token' => null]);
             return;
@@ -184,7 +188,7 @@ class AuthService
      */
     public function resendVerificationEmail(User $user): void
     {
-        if ($user->isVerified()) {
+        if ($user->hasVerifiedEmail()) {
             throw new Exception('Email jest już zweryfikowany');
         }
 
@@ -193,36 +197,6 @@ class AuthService
 
         // Wyślij email z nowym tokenem
         $this->notificationService->sendEmailVerification($user, $token);
-    }
-
-    /**
-     * Create role-specific profile
-     */
-    private function createRoleProfile(User $user, array $userData): void
-    {
-        switch ($user->role) {
-            case User::ROLE_STUDENT:
-                $user->studentProfile()->create([
-                    'learning_languages' => [],
-                    'current_levels' => [],
-                    'learning_goals' => [],
-                    'preferred_schedule' => []
-                ]);
-                break;
-
-            case User::ROLE_TUTOR:
-                $user->tutorProfile()->create([
-                    'languages' => [],
-                    'specializations' => [],
-                    'hourly_rate' => 0,
-                    'description' => null,
-                    'weekly_availability' => [],
-                    'is_verified' => false,
-                    'verification_status' => 'pending',
-                    'is_accepting_students' => false
-                ]);
-                break;
-        }
     }
 
     /**

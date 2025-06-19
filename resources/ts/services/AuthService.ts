@@ -374,8 +374,13 @@ console.log(response.success, response.data);
         return !!this.token && !!this.user
     }
 
+    /*isVerified(): boolean {
+        // Używamy tylko email_verified_at zgodnie z Laravel
+        return !!this.user?.email_verified_at
+    }*/
     isVerified(): boolean {
-        return !!this.user?.is_verified && !!this.user?.email_verified_at
+        // Używamy tylko email_verified_at zgodnie z Laravel
+        return !!this.user?.email_verified_at;
     }
 
     hasRole(role: string): boolean {

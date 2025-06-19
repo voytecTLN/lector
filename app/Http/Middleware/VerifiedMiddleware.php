@@ -26,8 +26,7 @@ class VerifiedMiddleware
             return redirect()->route('login');
         }
 
-        // POPRAWIONA KONTROLA WERYFIKACJI - sprawdzamy oba pola
-        if (!$user->is_verified || !$user->email_verified_at) {
+        if (!$user->email_verified_at) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
