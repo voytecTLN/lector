@@ -262,32 +262,23 @@ class AuthController extends Controller
     /**
      * Verify email address from link (GET endpoint for email links)
      */
-    public function verifyEmailFromLink(Request $request): JsonResponse
+    public function verifyEmailFromLink(Request $request)
     {
         $token = $request->query('token');
 
         if (!$token) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Brak tokenu weryfikacyjnego.'
-            ], 400);
+            return redirect('/login')->with('error', 'Brak tokenu weryfikacyjnego.');
         }
 
         try {
             $user = User::where('verification_token', $token)->first();
 
             if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Nieprawidłowy token weryfikacyjny.'
-                ], 400);
+                return redirect('/login')->with('error', 'Nieprawidłowy token weryfikacyjny.');
             }
 
             if ($user->isVerified()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Email jest już zweryfikowany.'
-                ]);
+                return redirect('/login')->with('info', 'Email jest już zweryfikowany. Możesz się zalogować.');
             }
 
             // Oznacz jako zweryfikowany
@@ -296,16 +287,11 @@ class AuthController extends Controller
             // Wywołaj event weryfikacji
             event(new Verified($user));
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Email został zweryfikowany pomyślnie.'
-            ]);
+            // Przekieruj na stronę logowania z komunikatem sukcesu
+            return redirect('/login')->with('success', 'Email został zweryfikowany pomyślnie! Możesz się teraz zalogować.');
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Błąd podczas weryfikacji emaila.'
-            ], 500);
+            return redirect('/login')->with('error', 'Błąd podczas weryfikacji emaila.');
         }
     }
 

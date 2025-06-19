@@ -1,1 +1,102 @@
 @import './login.css';
+
+.email-icon-wrapper {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+}
+
+.email-icon-wrapper i {
+    font-size: 3rem;
+    color: white;
+}
+
+.btn-primary {
+    background: #e91e63;
+    border-color: #e91e63;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #c2185b;
+    border-color: #c2185b;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3);
+}
+
+.btn-outline-primary {
+    color: #e91e63;
+    border-color: #e91e63;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+    background: #e91e63;
+    border-color: #e91e63;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3);
+}
+
+.link-primary {
+    color: #e91e63 !important;
+    transition: all 0.2s ease;
+}
+
+.link-primary:hover {
+    color: #c2185b !important;
+    text-decoration: underline !important;
+}
+
+.card {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.btn-lg {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+@media (max-width: 576px) {
+    .email-icon-wrapper {
+        width: 80px;
+        height: 80px;
+    }
+
+    .email-icon-wrapper i {
+        font-size: 2.5rem;
+    }
+
+    .btn-lg {
+        font-size: 1rem;
+        padding: 0.75rem 1.5rem !important;
+    }
+
+    .d-flex.gap-3 {
+        gap: 0.75rem !important;
+    }
+
+    .fs-5 {
+        font-size: 1.1rem !important;
+    }
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+.alert-success {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.alert-danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+}

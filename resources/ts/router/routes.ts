@@ -129,32 +129,32 @@ export const routes: RouteDefinition[] = [
             permissions: ['manage_users', 'view_analytics', 'system_settings']
         }
     },
-    // {
-    //     path: '/moderator/dashboard',
-    //     name: 'moderator.dashboard',
-    //     component: () => import('@/components/dashboard/ModeratorDashboard').then(m => new m.ModeratorDashboard()),
-    //     title: 'Panel Moderatora - Platforma Lektorów',
-    //     meta: {
-    //         requiresAuth: true,
-    //         requiresVerification: true,
-    //         roles: ['moderator', 'admin'],
-    //         layout: 'app',
-    //         permissions: ['manage_content']
-    //     }
-    // },
-    // {
-    //     path: '/tutor/dashboard',
-    //     name: 'tutor.dashboard',
-    //     component: () => import('@/components/dashboard/TutorDashboard').then(m => new m.TutorDashboard()),
-    //     title: 'Panel Lektora - Platforma Lektorów',
-    //     meta: {
-    //         requiresAuth: true,
-    //         requiresVerification: true,
-    //         roles: ['tutor', 'admin'],
-    //         layout: 'app',
-    //         permissions: ['can_teach', 'manage_own_lessons']
-    //     }
-    // },
+    {
+        path: '/moderator/dashboard',
+        name: 'moderator.dashboard',
+        component: () => import('@/components/dashboard/ModeratorDashboard').then(m => new m.ModeratorDashboard()),
+        title: 'Panel Moderatora - Platforma Lektorów',
+        meta: {
+            requiresAuth: true,
+            requiresVerification: true,
+            roles: ['moderator', 'admin'],
+            layout: 'app',
+            permissions: ['manage_content']
+        }
+    },
+    {
+        path: '/tutor/dashboard',
+        name: 'tutor.dashboard',
+        component: () => import('@/components/dashboard/TutorDashboard').then(m => new m.TutorDashboard()),
+        title: 'Panel Lektora - Platforma Lektorów',
+        meta: {
+            requiresAuth: true,
+            requiresVerification: true,
+            roles: ['tutor', 'admin'],
+            layout: 'app',
+            permissions: ['can_teach', 'manage_own_lessons']
+        }
+    },
     {
         path: '/student/dashboard',
         name: 'student.dashboard',
@@ -168,130 +168,6 @@ export const routes: RouteDefinition[] = [
             permissions: ['can_learn', 'book_lessons']
         }
     },
-
-    // // Profile routes - require auth + verification
-    // {
-    //     path: '/profile',
-    //     name: 'profile',
-    //     component: () => import('@/components/profile/ProfilePage').then(m => new m.ProfilePage()),
-    //     title: 'Mój Profil - Platforma Lektorów',
-    //     meta: {
-    //         requiresAuth: true,
-    //         requiresVerification: true,
-    //         layout: 'app'
-    //     }
-    // },
-    // {
-    //     path: '/settings',
-    //     name: 'settings',
-    //     component: () => import('@/components/profile/SettingsPage').then(m => new m.SettingsPage()),
-    //     title: 'Ustawienia - Platforma Lektorów',
-    //     meta: {
-    //         requiresAuth: true,
-    //         requiresVerification: true,
-    //         layout: 'app'
-    //     }
-    // },
-    //
-    // // Public content pages (guest layout, no auth required)
-    // {
-    //     path: '/tutors',
-    //     name: 'tutors',
-    //     component: () => import('@/components/pages/TutorsPage').then(m => new m.TutorsPage()),
-    //     title: 'Lektorzy - Platforma Lektorów',
-    //     meta: {
-    //         layout: 'guest'
-    //     }
-    // },
-    // {
-    //     path: '/courses',
-    //     name: 'courses',
-    //     component: () => import('@/components/pages/CoursesPage').then(m => new m.CoursesPage()),
-    //     title: 'Kursy - Platforma Lektorów',
-    //     meta: {
-    //         layout: 'guest'
-    //     }
-    // },
-    // {
-    //     path: '/about',
-    //     name: 'about',
-    //     component: () => import('@/components/pages/AboutPage').then(m => new m.AboutPage()),
-    //     title: 'O nas - Platforma Lektorów',
-    //     meta: {
-    //         layout: 'guest'
-    //     }
-    // },
-    // {
-    //     path: '/contact',
-    //     name: 'contact',
-    //     component: () => import('@/components/pages/ContactPage').then(m => new m.ContactPage()),
-    //     title: 'Kontakt - Platforma Lektorów',
-    //     meta: {
-    //         layout: 'guest'
-    //     }
-    // },
-    // {
-    //     path: '/help',
-    //     name: 'help',
-    //     component: () => import('@/components/pages/HelpPage').then(m => new m.HelpPage()),
-    //     title: 'Pomoc - Platforma Lektorów',
-    //     meta: {
-    //         layout: 'guest'
-    //     }
-    // },
-    //
-    // // Admin routes - high security
-    // {
-    //     path: '/admin/users',
-    //     name: 'admin.users',
-    //     component: () => import('@/components/admin/UsersPage').then(m => new m.UsersPage()),
-    //     title: 'Zarządzanie Użytkownikami - Panel Administratora',
-    //     meta: {
-    //         requiresAuth: true,
-    //         requiresVerification: true,
-    //         roles: ['admin'],
-    //         layout: 'app',
-    //         permissions: ['manage_users']
-    //     }
-    // },
-    // {
-    //     path: '/admin/students',
-    //     name: 'admin.students',
-    //     component: () => import('@/components/admin/StudentsPage').then(m => new m.StudentsPage()),
-    //     title: 'Zarządzanie Studentami - Panel Administratora',
-    //     meta: {
-    //         requiresAuth: true,
-    //         requiresVerification: true,
-    //         roles: ['admin', 'moderator'],
-    //         layout: 'app',
-    //         permissions: ['manage_users']
-    //     }
-    // },
-    // {
-    //     path: '/admin/tutors',
-    //     name: 'admin.tutors',
-    //     component: () => import('@/components/admin/TutorsPage').then(m => new m.TutorsPage()),
-    //     title: 'Zarządzanie Lektorami - Panel Administratora',
-    //     meta: {
-    //         requiresAuth: true,
-    //         requiresVerification: true,
-    //         roles: ['admin', 'moderator'],
-    //         layout: 'app',
-    //         permissions: ['manage_users']
-    //     }
-    // },
-    //
-    // // Development routes (only in dev mode)
-    // {
-    //     path: '/dev/test',
-    //     name: 'dev.test',
-    //     component: () => import('@/components/dev/TestPage').then(m => new m.TestPage()),
-    //     title: 'Test Page - Development',
-    //     meta: {
-    //         requiresDevelopment: true,
-    //         layout: 'guest'
-    //     }
-    // },
 
     // Error routes (no guards needed)
     {
