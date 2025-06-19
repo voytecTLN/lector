@@ -48,7 +48,7 @@ class AuthService
     }
 
     /**
-     * POPRAWIONA METODA - Register new user z właściwym generowaniem tokenu
+     * Register new user bez tworzenia tokenu
      */
     public function register(array $userData, string $ip): array
     {
@@ -78,14 +78,15 @@ class AuthService
             // Wyślij email weryfikacyjny
             $this->notificationService->sendEmailVerification($user, $verificationToken);
 
-            // Create authentication token
-            $token = $user->createToken('auth_token', $this->getTokenAbilities($user))->plainTextToken;
+            // NIE TWORZYMY TOKENU AUTORYZACJI DLA NIEZWERYFIKOWANEGO UŻYTKOWNIKA!
+            // Usunięto: $token = $user->createToken(...)
 
             DB::commit();
 
             return [
                 'user' => $user->load(['studentProfile', 'tutorProfile']),
-                'token' => $token
+                'token' => null, // WAŻNE: Zwracamy null zamiast tokenu
+                'requires_verification' => true // Flaga informująca że wymaga weryfikacji
             ];
 
         } catch (Exception $e) {

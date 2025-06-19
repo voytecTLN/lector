@@ -110,8 +110,9 @@ export const routes: RouteDefinition[] = [
         title: 'Weryfikacja email - Platforma Lektorów',
         meta: {
             layout: 'auth',
-            requiresAuth: true
-            // NOTE: NO requiresVerification here - this page is FOR verification
+            requiresAuth: false,      // ZMIANA: NIE wymaga autoryzacji
+            requiresGuest: false,     // ZMIANA: Dostępne dla wszystkich
+            requiresVerification: false  // DODANE: Oczywiście NIE wymaga weryfikacji (to strona DO weryfikacji)
         }
     },
 

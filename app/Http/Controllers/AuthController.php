@@ -267,18 +267,21 @@ class AuthController extends Controller
         $token = $request->query('token');
 
         if (!$token) {
-            return redirect('/login')->with('error', 'Brak tokenu weryfikacyjnego.');
+            // Przekieruj na stronę weryfikacji z błędem
+            return redirect('/#/verify-email?error=' . urlencode('Brak tokenu weryfikacyjnego'));
         }
 
         try {
             $user = User::where('verification_token', $token)->first();
 
             if (!$user) {
-                return redirect('/login')->with('error', 'Nieprawidłowy token weryfikacyjny.');
+                // Przekieruj na stronę weryfikacji z błędem
+                return redirect('/#/verify-email?error=' . urlencode('Nieprawidłowy token weryfikacyjny'));
             }
 
             if ($user->isVerified()) {
-                return redirect('/login')->with('info', 'Email jest już zweryfikowany. Możesz się zalogować.');
+                // Już zweryfikowany - przekieruj na login
+                return redirect('/#/login?message=' . urlencode('Email jest już zweryfikowany. Możesz się zalogować.') . '&type=info');
             }
 
             // Oznacz jako zweryfikowany
@@ -288,10 +291,11 @@ class AuthController extends Controller
             event(new Verified($user));
 
             // Przekieruj na stronę logowania z komunikatem sukcesu
-            return redirect('/login')->with('success', 'Email został zweryfikowany pomyślnie! Możesz się teraz zalogować.');
+            return redirect('/#/login?message=' . urlencode('Email został zweryfikowany pomyślnie! Możesz się teraz zalogować.') . '&type=success');
 
         } catch (\Exception $e) {
-            return redirect('/login')->with('error', 'Błąd podczas weryfikacji emaila.');
+            \Log::error('Email verification error: ' . $e->getMessage());
+            return redirect('/#/verify-email?error=' . urlencode('Błąd podczas weryfikacji emaila'));
         }
     }
 
