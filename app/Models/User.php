@@ -27,7 +27,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'country',
         'status',
         'avatar',
-        'is_verified',
         'last_login_at',
         'last_login_ip',
         'email_verified_at',
@@ -48,7 +47,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'birth_date' => 'date',
         'last_login_at' => 'datetime',
         'password_reset_expires_at' => 'datetime',
-        'is_verified' => 'boolean',
         'two_factor_recovery_codes' => 'array'
     ];
 
@@ -155,10 +153,10 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->status === self::STATUS_BLOCKED;
     }
 
-    // POPRAWIONA METODA - sprawdza zarówno is_verified jak i email_verified_at
+    // POPRAWIONA METODA - używamy tylko email_verified_at zgodnie z Laravel
     public function isVerified(): bool
     {
-        return $this->is_verified && $this->hasVerifiedEmail();
+        return $this->hasVerifiedEmail();
     }
 
     // Utility methods
@@ -208,31 +206,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $token;
     }
 
-    // POPRAWIONA METODA - oznacza jako zweryfikowany i usuwa token
+    // POPRAWIONA METODA - używamy tylko email_verified_at
     public function markAsVerified(): void
     {
-        $this->update([
-            'is_verified' => true,
-            'email_verified_at' => Carbon::now(),
-            'verification_token' => null // Usuń token po weryfikacji
-        ]);
-    }
-
-    // NOWA METODA - weryfikuje email na podstawie tokenu
-    public function verifyEmailWithToken(string $token): bool
-    {
-        if ($this->verification_token !== $token) {
-            return false;
-        }
-
-        if ($this->hasVerifiedEmail()) {
-            return true; // Już zweryfikowany
-        }
-
+        // Używamy wbudowanej metody Laravel
         $this->markEmailAsVerified();
-        $this->markAsVerified();
 
-        return true;
+        // Dodatkowo usuwamy token weryfikacyjny
+        $this->update([
+            'verification_token' => null
+        ]);
     }
 
     public function updateLoginInfo(string $ip): void
@@ -251,7 +234,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function scopeVerified($query)
     {
-        return $query->where('is_verified', true);
+        return $query->whereNotNull('email_verified_at');;
     }
 
     public function scopeByRole($query, string $role)
