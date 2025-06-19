@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
 
 class VerifiedMiddleware
 {
@@ -26,8 +26,8 @@ class VerifiedMiddleware
             return redirect()->route('login');
         }
 
-        // POPRAWIONA KONTROLA WERYFIKACJI
-        if (!$user->hasVerifiedEmail()) {
+        // POPRAWIONA KONTROLA WERYFIKACJI - sprawdzamy oba pola
+        if (!$user->is_verified || !$user->email_verified_at) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -36,7 +36,9 @@ class VerifiedMiddleware
                     'email' => $user->email
                 ], 403);
             }
-            return redirect()->route('verification.notice');
+
+            // Dla web requests - przekieruj na stronę weryfikacji
+            return redirect()->to('/#/verify-email');
         }
 
         return $next($request);
