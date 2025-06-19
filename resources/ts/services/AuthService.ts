@@ -71,7 +71,6 @@ console.log(response.success, response.data);
                 console.log('response.data.user, response.data.token, response.data.permissions');
                 console.log(response.data.user, response.data.token, response.data.permissions);
                 this.setAuthData(response.data.user, response.data.token, response.data.permissions)
-                this.saveToStorage()
                 this.notifyAuthChange('login')
 
                 document.dispatchEvent(new CustomEvent('notification:show', {
@@ -114,20 +113,40 @@ console.log(response.success, response.data);
                 city: userData.city,
                 terms_accepted: userData.terms_accepted
             })
+
             console.log('response.success && response.data');
             console.log(response.success, response.data);
+
             if (response.success && response.data) {
-                console.log('response.data.user, response.data.token, response.data.permissions')
-                console.log(response.data.user, response.data.token, response.data.permissions)
-                this.setAuthData(response.data.user, response.data.token, response.data.permissions)
-                this.notifyAuthChange('register')
+                // WAŻNE: NIE logujemy użytkownika jeśli wymaga weryfikacji
+                if (response.data.requires_verification) {
+                    console.log('✉️ User requires email verification')
 
-                const messageType = response.data.requires_verification ? 'warning' : 'success'
-                const message = response.message || 'Konto zostało utworzone pomyślnie!'
+                    // NIE zapisujemy danych autoryzacji!
+                    // this.setAuthData() - USUNIĘTE
+                    // this.saveToStorage() - USUNIĘTE
+                    // this.notifyAuthChange() - USUNIĘTE
 
-                document.dispatchEvent(new CustomEvent('notification:show', {
-                    detail: { type: messageType, message }
-                }))
+                    // Tylko pokazujemy komunikat
+                    document.dispatchEvent(new CustomEvent('notification:show', {
+                        detail: {
+                            type: 'warning',
+                            message: response.message || 'Sprawdź swoją skrzynkę email i potwierdź adres aby się zalogować.'
+                        }
+                    }))
+                } else {
+                    // Tylko jeśli użytkownik jest już zweryfikowany (edge case)
+                    console.log('✅ User already verified, logging in')
+                    console.log('response.data.user, response.data.token, response.data.permissions')
+                    console.log(response.data.user, response.data.token, response.data.permissions)
+
+                    // Tylko jeśli mamy token
+                    if (response.data.token) {
+                        this.setAuthData(response.data.user, response.data.token, response.data.permissions)
+                        this.saveToStorage()
+                        this.notifyAuthChange('register')
+                    }
+                }
             }
 
             return response
@@ -387,7 +406,7 @@ console.log(response.success, response.data);
         this.user = user
         this.token = token
         this.permissions = permissions
-        //this.saveToStorage()
+        this.saveToStorage()
     }
 
     private clearAuthData(): void {

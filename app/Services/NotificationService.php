@@ -25,9 +25,6 @@ class NotificationService
         }
     }
 
-    /**
-     * POPRAWIONA METODA - Send email verification z logowaniem tokenu
-     */
     public function sendEmailVerification(User $user, string $token): void
     {
         try {
@@ -52,6 +49,7 @@ class NotificationService
                 Log::info("Token correctly saved in database for user: {$user->email}");
             }
 
+            // WAŻNE: Link prowadzi do BACKEND endpoint, nie frontend!
             $verificationUrl = url("/api/auth/verify-email?token={$token}");
 
             Log::info("Email verification details", [

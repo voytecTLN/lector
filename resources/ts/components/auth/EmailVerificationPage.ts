@@ -17,7 +17,10 @@ export class EmailVerificationPage implements RouteComponent {
                                 </div>
                             </div>
                             <h1 class="mb-4 fw-bold">Weryfikacja e-mail</h1>
-                            <p class="mb-5 text-muted fs-5">Potwierdź swój adres e-mail, aby korzystać z platformy.</p>
+                            
+                            <div id="message-container">
+                                <!-- Dynamiczna treść będzie tutaj -->
+                            </div>
                             
                             <div class="d-flex justify-content-center gap-3 flex-wrap mb-4">
                                 <a href="/" class="btn btn-outline-primary btn-lg px-4 py-3 rounded-pill">
@@ -58,15 +61,60 @@ export class EmailVerificationPage implements RouteComponent {
 
     mount(container: HTMLElement): void {
         const params = new URLSearchParams(window.location.search)
-        const token = params.get('token')
-        if (token) {
-            authService.verifyEmail(token).catch(err => alert(err.message))
+        const error = params.get('error')
+        const messageContainer = container.querySelector('#message-container')
+
+        if (!messageContainer) return
+
+        // WAŻNE: NIE próbujemy weryfikować tokenu!
+        // Backend już to zrobił i przekierował nas tutaj
+
+        if (error) {
+            // Wyświetl błąd jeśli został przekazany z backend
+            messageContainer.innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    ${decodeURIComponent(error)}
+                </div>
+                <p class="mb-5 text-muted fs-5">
+                    Wystąpił problem z weryfikacją. Spróbuj ponownie lub skontaktuj się z pomocą techniczną.
+                </p>
+            `
+        } else {
+            // Domyślna wiadomość informacyjna
+            messageContainer.innerHTML = `
+                <p class="mb-5 text-muted fs-5">
+                    Sprawdź swoją skrzynkę pocztową i kliknij w link aktywacyjny, aby potwierdzić swój adres e-mail.
+                </p>
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Email z linkiem aktywacyjnym został wysłany na adres podany podczas rejestracji.
+                </div>
+            `
         }
 
         // Add event listener for resend verification email
         const resendLink = container.querySelector('#resend-link')
         resendLink?.addEventListener('click', async (e) => {
             e.preventDefault()
+
+            // Sprawdź czy użytkownik jest zalogowany
+            if (!authService.isAuthenticated()) {
+                // Show error message
+                const alertDiv = document.createElement('div')
+                alertDiv.className = 'alert alert-warning alert-dismissible fade show mt-3'
+                alertDiv.innerHTML = `
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Musisz być zalogowany aby wysłać email ponownie.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `
+                const cardBody = container.querySelector('.card-body')
+                cardBody?.appendChild(alertDiv)
+
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => alertDiv.remove(), 5000)
+                return
+            }
 
             try {
                 await authService.resendVerification()
