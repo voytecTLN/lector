@@ -286,6 +286,15 @@ export class Router {
             // Hide loading state
             this.hideLoadingState()
 
+            // Scroll to hash target if present
+            if (location.hash) {
+                const id = location.hash.substring(1)
+                setTimeout(() => {
+                    const el = document.getElementById(id)
+                    if (el) el.scrollIntoView({ behavior: 'smooth' })
+                }, 100)
+            }
+
             console.log(`✅ Route rendered successfully: ${matchedRoute.route.name}`)
 
         } catch (error) {

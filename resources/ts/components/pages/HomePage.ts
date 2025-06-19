@@ -88,7 +88,42 @@ export class HomePage implements RouteComponent {
                     </div>
                 </div>
             </section>
-        `
+            
+            <section class="about" id="about">
+                <div class="container">
+                    <h2>O naszej platformie</h2>
+                    <div class="about-grid">
+                        <div class="about-card">
+                            <div class="about-icon">🎓</div>
+                            <div class="about-info">
+                                <h3>Misja edukacyjna</h3>
+                                <p>
+                                    Naszym celem jest udostępnienie skutecznej i dostępnej nauki języków każdemu, niezależnie od miejsca zamieszkania.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="about-card">
+                            <div class="about-icon">🌐</div>
+                            <div class="about-info">
+                                <h3>Nowoczesna technologia</h3>
+                                <p>
+                                    Wykorzystujemy sprawdzone narzędzia online, aby zapewnić płynną komunikację i wygodne zarządzanie lekcjami.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="about-card">
+                            <div class="about-icon">💬</div>
+                            <div class="about-info">
+                                <h3>Społeczność i wsparcie</h3>
+                                <p>
+                                    Tworzymy społeczność uczniów i lektorów, gdzie każdy może liczyć na pomoc i motywację w nauce.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+             `
         container.appendChild(footer.render())
         return container
     }
