@@ -6,13 +6,14 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Http\JsonResponse;
 
 class RoleMiddleware
 {
     /**
      * Handle an incoming request.
      */
-    public function handle(Request $request, Closure $next, string ...$roles): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response | JsonResponse
     {
         $user = $request->user();
         if (!$user) {
