@@ -71,6 +71,7 @@ console.log(response.success, response.data);
                 console.log('response.data.user, response.data.token, response.data.permissions');
                 console.log(response.data.user, response.data.token, response.data.permissions);
                 this.setAuthData(response.data.user, response.data.token, response.data.permissions)
+                this.saveToStorage()
                 this.notifyAuthChange('login')
 
                 document.dispatchEvent(new CustomEvent('notification:show', {
@@ -386,7 +387,7 @@ console.log(response.success, response.data);
         this.user = user
         this.token = token
         this.permissions = permissions
-        this.saveToStorage()
+        //this.saveToStorage()
     }
 
     private clearAuthData(): void {
