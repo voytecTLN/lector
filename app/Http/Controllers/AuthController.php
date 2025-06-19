@@ -224,12 +224,22 @@ class AuthController extends Controller
         $token = $request->input('token');
 
         try {
-            $user = User::where('verification_token', $token)->first();
-// var_dump($user);
+            // Znajdź użytkownika po hashu tokenu
+            $tokenHash = hash('sha256', $token);
+            $user = User::where('verification_token_hash', $tokenHash)->first();
+
             if (!$user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Nieprawidłowy token weryfikacyjny.'
+                ], 400);
+            }
+
+            // Sprawdź czy token jest ważny
+            if (!$user->isVerificationTokenValid($token)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token weryfikacyjny wygasł. Poproś o nowy.'
                 ], 400);
             }
 
@@ -267,20 +277,24 @@ class AuthController extends Controller
         $token = $request->query('token');
 
         if (!$token) {
-            // Przekieruj na stronę weryfikacji z błędem
             return redirect('/#/verify-email?error=' . urlencode('Brak tokenu weryfikacyjnego'));
         }
 
         try {
-            $user = User::where('verification_token', $token)->first();
+            // Znajdź użytkownika po hashu tokenu
+            $tokenHash = hash('sha256', $token);
+            $user = User::where('verification_token_hash', $tokenHash)->first();
 
             if (!$user) {
-                // Przekieruj na stronę weryfikacji z błędem
                 return redirect('/#/verify-email?error=' . urlencode('Nieprawidłowy token weryfikacyjny'));
             }
 
+            // Sprawdź czy token jest ważny
+            if (!$user->isVerificationTokenValid($token)) {
+                return redirect('/#/verify-email?error=' . urlencode('Token weryfikacyjny wygasł. Zaloguj się i poproś o nowy.'));
+            }
+
             if ($user->hasVerifiedEmail()) {
-                // Już zweryfikowany - przekieruj na login
                 return redirect('/#/login?message=' . urlencode('Email jest już zweryfikowany. Możesz się zalogować.') . '&type=info');
             }
 
@@ -320,23 +334,28 @@ class AuthController extends Controller
             ], 400);
         }
 
-        // Rate limiting
+        // ULEPSZONE rate limiting - bardziej restrykcyjne
         $key = 'resend-verification:' . $user->id;
-        if (RateLimiter::tooManyAttempts($key, 3)) {
+        $maxAttempts = 2; // Zmniejszone z 3 do 2
+        $decayMinutes = 60; // Zwiększone z 5 do 60 minut
+
+        if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
             $seconds = RateLimiter::availableIn($key);
+            $minutes = ceil($seconds / 60);
+
             return response()->json([
                 'success' => false,
-                'message' => "Zbyt wiele prób. Spróbuj ponownie za {$seconds} sekund."
+                'message' => "Zbyt wiele prób. Możesz wysłać email ponownie za {$minutes} minut."
             ], 429);
         }
 
         try {
             $this->authService->resendVerificationEmail($user);
-            RateLimiter::hit($key, 300); // 5 minutes
+            RateLimiter::hit($key, $decayMinutes * 60); // 60 minut
 
             return response()->json([
                 'success' => true,
-                'message' => 'Email weryfikacyjny został wysłany ponownie.'
+                'message' => 'Email weryfikacyjny został wysłany ponownie. Sprawdź swoją skrzynkę pocztową.'
             ]);
 
         } catch (\Exception $e) {

@@ -200,6 +200,23 @@ class AuthService
     }
 
     /**
+         * Create role-specific profile
+         */
+        private function createRoleProfile(User $user, array $userData): void
+        {
+            switch ($user->role) {
+                case User::ROLE_STUDENT:
+                    $user->studentProfile()->create([
+                        'learning_languages' => [],
+                        'current_levels' => [],
+                        'learning_goals' => [],
+                        'preferred_schedule' => []
+                    ]);
+                    break;
+            }
+        }
+
+    /**
      * Get token abilities based on user role
      */
     private function getTokenAbilities(User $user): array

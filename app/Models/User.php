@@ -30,7 +30,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_login_at',
         'last_login_ip',
         'email_verified_at',
-        'verification_token'
+        'verification_token',
+        'verification_token_hash',
+        'verification_token_expires_at'
     ];
 
     protected $hidden = [
@@ -39,7 +41,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'two_factor_secret',
         'two_factor_recovery_codes',
         'password_reset_token',
-        'verification_token'
+        'verification_token',
+        'verification_token_hash',
+        'verification_token_expires_at'
     ];
 
     protected $casts = [
@@ -47,6 +51,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'birth_date' => 'date',
         'last_login_at' => 'datetime',
         'password_reset_expires_at' => 'datetime',
+        'verification_token_expires_at' => 'datetime',
         'two_factor_recovery_codes' => 'array'
     ];
 
@@ -181,16 +186,37 @@ class User extends Authenticatable implements MustVerifyEmail
         return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=e91e63&background=f8fafc';
     }
 
-    // POPRAWIONA METODA - generuje i ZAPISUJE token weryfikacyjny
+    // POPRAWIONA METODA - generuje, hashuje i zapisuje token z czasem wygaśnięcia
     public function generateVerificationToken(): string
     {
+        // Generuj bezpieczny token
         $token = bin2hex(random_bytes(32));
 
-        // WAŻNE: Bezpośrednio zapisz token do bazy danych
-        $this->verification_token = $token;
-        $this->save();
+        // Zapisz hash tokenu i czas wygaśnięcia
+        $this->update([
+            'verification_token_hash' => hash('sha256', $token),
+            'verification_token_expires_at' => Carbon::now()->addHours(24) // Token ważny 24h
+        ]);
 
+        // Zwróć plain token (będzie w emailu)
         return $token;
+    }
+
+    // Sprawdza czy token weryfikacyjny jest ważny
+    public function isVerificationTokenValid(string $token): bool
+    {
+        // Sprawdź czy token istnieje i nie wygasł
+        if (!$this->verification_token_hash || !$this->verification_token_expires_at) {
+            return false;
+        }
+
+        // Sprawdź czy token nie wygasł
+        if ($this->verification_token_expires_at->isPast()) {
+            return false;
+        }
+
+        // Sprawdź czy hash się zgadza
+        return hash_equals($this->verification_token_hash, hash('sha256', $token));
     }
 
     // Authentication helper methods
@@ -206,15 +232,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return $token;
     }
 
-    // POPRAWIONA METODA - używamy tylko email_verified_at
     public function markAsVerified(): void
     {
-        // Używamy wbudowanej metody Laravel
-        $this->markEmailAsVerified();
-
-        // Dodatkowo usuwamy token weryfikacyjny
         $this->update([
-            'verification_token' => null
+            'email_verified_at' => Carbon::now(),
+            'verification_token_hash' => null,
+            'verification_token_expires_at' => null
         ]);
     }
 
