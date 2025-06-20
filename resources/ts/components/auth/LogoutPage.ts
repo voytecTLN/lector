@@ -23,7 +23,7 @@ export class LogoutPage implements RouteComponent {
                         <p class="form-subtitle">Trwa wylogowywanie z systemu</p>
                         
                         <div class="loading-spinner-container">
-                            <div class="loading-spinner"></div>
+                            <div class="logout-loading-spinner"></div>
                         </div>
                         
                         <p class="logout-message">Za chwilę zostaniesz przekierowany na stronę główną</p>

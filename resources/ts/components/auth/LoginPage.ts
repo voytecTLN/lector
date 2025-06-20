@@ -23,7 +23,7 @@ export class LoginPage implements RouteComponent {
                         <div class="notification-banner notification-${type}">
                             <i class="bi ${this.getIconForType(type)}"></i>
                             <span>${decodeURIComponent(message)}</span>
-                            <button class="notification-close" aria-label="Zamknij">×</button>
+                            <button class="login-notification-close" aria-label="Zamknij">×</button>
                         </div>
                     ` : ''}
                     
@@ -48,7 +48,7 @@ export class LoginPage implements RouteComponent {
                         </div>
                         <button type="submit" class="login-btn" id="loginButton">
                             <span id="buttonText">Zaloguj się</span>
-                            <div class="loading-spinner" id="loadingSpinner"></div>
+                            <div class="login-loading-spinner" id="loadingSpinner"></div>
                         </button>
                     </form>
                 </div>
@@ -68,7 +68,7 @@ export class LoginPage implements RouteComponent {
         this.form?.addEventListener('submit', this.handleSubmit)
 
         // Handle notification close
-        const closeBtn = container.querySelector('.notification-close')
+        const closeBtn = container.querySelector('.login-notification-close')
         closeBtn?.addEventListener('click', (e) => {
             const notification = (e.target as HTMLElement).closest('.notification-banner')
             notification?.remove()
