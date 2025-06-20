@@ -1,5 +1,5 @@
 <?php
-// database/seeders/DatabaseSeeder.php - Kompletny seeder do testowania aplikacji
+// database/seeders/DatabaseSeeder.php - Poprawiony seeder
 
 namespace Database\Seeders;
 
@@ -55,9 +55,9 @@ class DatabaseSeeder extends Seeder
             'city' => 'Warszawa',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
+            'email_verified_at' => now()->subDays(30),
             'created_at' => now()->subDays(30),
+            'last_login_at' => now()->subDays(1),
         ]);
 
         User::create([
@@ -69,8 +69,7 @@ class DatabaseSeeder extends Seeder
             'city' => 'Kraków',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
+            'email_verified_at' => now()->subDays(25),
             'created_at' => now()->subDays(25),
         ]);
     }
@@ -91,9 +90,9 @@ class DatabaseSeeder extends Seeder
             'city' => 'Gdańsk',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
+            'email_verified_at' => now()->subDays(20),
             'created_at' => now()->subDays(20),
+            'last_login_at' => now()->subHours(3),
         ]);
 
         User::create([
@@ -105,8 +104,7 @@ class DatabaseSeeder extends Seeder
             'city' => 'Wrocław',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
+            'email_verified_at' => now()->subDays(18),
             'created_at' => now()->subDays(18),
         ]);
     }
@@ -129,9 +127,9 @@ class DatabaseSeeder extends Seeder
             'city' => 'Warszawa',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
-            'created_at' => now()->subDays(15),
+            'email_verified_at' => now()->subDays(90),
+            'created_at' => now()->subDays(90),
+            'last_login_at' => now()->subHours(2),
         ]);
 
         TutorProfile::create([
@@ -140,6 +138,24 @@ class DatabaseSeeder extends Seeder
             'specializations' => ['business', 'exam', 'conversation'],
             'hourly_rate' => 80.00,
             'description' => 'Doświadczona lektorka z 8-letnim stażem. Specjalizuję się w języku biznesowym i przygotowaniu do egzaminów międzynarodowych. Posiadam certyfikaty CELTA i TESOL.',
+            'years_experience' => 8,
+            'certifications' => [
+                ['name' => 'CELTA', 'year' => '2016'],
+                ['name' => 'TESOL', 'year' => '2018'],
+                ['name' => 'Cambridge CPE', 'year' => '2014']
+            ],
+            'education' => [
+                ['degree' => 'Magister', 'field' => 'Filologia Angielska', 'university' => 'Uniwersytet Warszawski', 'year' => '2015']
+            ],
+            'average_rating' => 4.8,
+            'total_lessons' => 1250,
+            'total_students' => 89,
+            'is_accepting_students' => true,
+            'max_students_per_week' => 25,
+            'lesson_types' => ['individual', 'group', 'intensive'],
+            'is_verified' => true,
+            'verified_at' => now()->subDays(85),
+            'verification_status' => TutorProfile::VERIFICATION_APPROVED,
             'weekly_availability' => [
                 'monday' => ['09:00-12:00', '14:00-18:00'],
                 'tuesday' => ['09:00-12:00', '14:00-18:00'],
@@ -162,9 +178,8 @@ class DatabaseSeeder extends Seeder
             'city' => 'Kraków',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
-            'created_at' => now()->subDays(12),
+            'email_verified_at' => now()->subDays(60),
+            'created_at' => now()->subDays(60),
         ]);
 
         TutorProfile::create([
@@ -173,6 +188,23 @@ class DatabaseSeeder extends Seeder
             'specializations' => ['conversation', 'grammar', 'pronunciation'],
             'hourly_rate' => 75.00,
             'description' => 'Native speaker języka niemieckiego z francuskim jako drugim językiem ojczystym. 5 lat doświadczenia w nauczaniu online. Specjalizuję się w konwersacjach i poprawie wymowy.',
+            'years_experience' => 5,
+            'certifications' => [
+                ['name' => 'TestDaF', 'year' => '2019'],
+                ['name' => 'DALF C2', 'year' => '2020']
+            ],
+            'education' => [
+                ['degree' => 'Licencjat', 'field' => 'Lingwistyka Stosowana', 'university' => 'Uniwersytet Jagielloński', 'year' => '2018']
+            ],
+            'average_rating' => 4.9,
+            'total_lessons' => 780,
+            'total_students' => 56,
+            'is_accepting_students' => true,
+            'max_students_per_week' => 20,
+            'lesson_types' => ['individual', 'conversation'],
+            'is_verified' => true,
+            'verified_at' => now()->subDays(55),
+            'verification_status' => TutorProfile::VERIFICATION_APPROVED,
             'weekly_availability' => [
                 'monday' => ['16:00-20:00'],
                 'tuesday' => ['16:00-20:00'],
@@ -195,9 +227,9 @@ class DatabaseSeeder extends Seeder
             'city' => 'Gdańsk',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
-            'created_at' => now()->subDays(10),
+            'email_verified_at' => now()->subDays(120),
+            'created_at' => now()->subDays(120),
+            'last_login_at' => now()->subDays(2),
         ]);
 
         TutorProfile::create([
@@ -206,6 +238,26 @@ class DatabaseSeeder extends Seeder
             'specializations' => ['grammar', 'exam', 'academic'],
             'hourly_rate' => 70.00,
             'description' => 'Absolwentka filologii romańskiej z doktoratem z językoznawstwa. 10 lat doświadczenia w nauczaniu języków romańskich. Specjalizuję się w gramatyce i przygotowaniu do egzaminów.',
+            'years_experience' => 10,
+            'certifications' => [
+                ['name' => 'DELE C2', 'year' => '2012'],
+                ['name' => 'CILS C2', 'year' => '2013'],
+                ['name' => 'CELPE-Bras', 'year' => '2014'],
+                ['name' => 'Doktorat', 'year' => '2018']
+            ],
+            'education' => [
+                ['degree' => 'Doktor', 'field' => 'Językoznawstwo Romańskie', 'university' => 'Uniwersytet Gdański', 'year' => '2018'],
+                ['degree' => 'Magister', 'field' => 'Filologia Romańska', 'university' => 'Uniwersytet Gdański', 'year' => '2013']
+            ],
+            'average_rating' => 4.7,
+            'total_lessons' => 2100,
+            'total_students' => 143,
+            'is_accepting_students' => true,
+            'max_students_per_week' => 15,
+            'lesson_types' => ['individual', 'group', 'academic'],
+            'is_verified' => true,
+            'verified_at' => now()->subDays(115),
+            'verification_status' => TutorProfile::VERIFICATION_APPROVED,
             'weekly_availability' => [
                 'monday' => ['08:00-14:00'],
                 'tuesday' => ['08:00-14:00'],
@@ -217,7 +269,7 @@ class DatabaseSeeder extends Seeder
             ]
         ]);
 
-        // Tutor 4 - John Smith
+        // Tutor 4 - John Smith (niezweryfikowany dla testów)
         $tutor4 = User::create([
             'name' => 'John Smith',
             'email' => 'john.smith@test.com',
@@ -228,9 +280,8 @@ class DatabaseSeeder extends Seeder
             'city' => 'Wrocław',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
-            'created_at' => now()->subDays(8),
+            'email_verified_at' => now()->subDays(5),
+            'created_at' => now()->subDays(5),
         ]);
 
         TutorProfile::create([
@@ -239,6 +290,21 @@ class DatabaseSeeder extends Seeder
             'specializations' => ['business', 'conversation', 'pronunciation'],
             'hourly_rate' => 90.00,
             'description' => 'Native speaker z Wielkiej Brytanii z 12-letnim doświadczeniem w nauczaniu Business English. Pracowałem z największymi korporacjami w Polsce. Specjalizuję się w prezentacjach i negocjacjach.',
+            'years_experience' => 12,
+            'certifications' => [],
+            'education' => [
+                ['degree' => 'Master', 'field' => 'Business Administration', 'university' => 'Oxford University', 'year' => '2010']
+            ],
+            'average_rating' => 0,
+            'total_lessons' => 0,
+            'total_students' => 0,
+            'is_accepting_students' => true,
+            'max_students_per_week' => 30,
+            'lesson_types' => ['individual', 'group'],
+            'is_verified' => false,
+            'verified_at' => null,
+            'verification_status' => TutorProfile::VERIFICATION_PENDING,
+            'verification_notes' => 'Nowy lektor - oczekuje na weryfikację dokumentów',
             'weekly_availability' => [
                 'monday' => ['10:00-16:00'],
                 'tuesday' => ['10:00-16:00'],
@@ -269,9 +335,9 @@ class DatabaseSeeder extends Seeder
             'city' => 'Warszawa',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
-            'created_at' => now()->subDays(7),
+            'email_verified_at' => now()->subDays(45),
+            'created_at' => now()->subDays(45),
+            'last_login_at' => now()->subHours(6),
         ]);
 
         StudentProfile::create([
@@ -301,9 +367,8 @@ class DatabaseSeeder extends Seeder
             'city' => 'Kraków',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
-            'created_at' => now()->subDays(5),
+            'email_verified_at' => now()->subDays(30),
+            'created_at' => now()->subDays(30),
         ]);
 
         StudentProfile::create([
@@ -333,9 +398,9 @@ class DatabaseSeeder extends Seeder
             'city' => 'Gdańsk',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
-            'created_at' => now()->subDays(3),
+            'email_verified_at' => now()->subDays(180),
+            'created_at' => now()->subDays(180),
+            'last_login_at' => now()->subDays(7),
         ]);
 
         StudentProfile::create([
@@ -365,9 +430,8 @@ class DatabaseSeeder extends Seeder
             'city' => 'Wrocław',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
-            'created_at' => now()->subDays(2),
+            'email_verified_at' => now()->subDays(14),
+            'created_at' => now()->subDays(14),
         ]);
 
         StudentProfile::create([
@@ -398,9 +462,8 @@ class DatabaseSeeder extends Seeder
             'city' => 'Poznań',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'is_verified' => true,
-            'email_verified_at' => now(),
-            'created_at' => now()->subDays(1),
+            'email_verified_at' => now()->subDays(3),
+            'created_at' => now()->subDays(3),
         ]);
 
         StudentProfile::create([
@@ -418,7 +481,7 @@ class DatabaseSeeder extends Seeder
             ]
         ]);
 
-        // Student 6 - Inactive student for testing
+        // Student 6 - Nieaktywny i niezweryfikowany student dla testów
         $student6 = User::create([
             'name' => 'Testowy Student Nieaktywny',
             'email' => 'inactive.student@test.com',
@@ -429,7 +492,7 @@ class DatabaseSeeder extends Seeder
             'city' => 'Łódź',
             'country' => 'Polska',
             'status' => User::STATUS_INACTIVE,
-            'is_verified' => false,
+            'email_verified_at' => null, // Niezweryfikowany
             'created_at' => now()->subMonths(2),
         ]);
 
