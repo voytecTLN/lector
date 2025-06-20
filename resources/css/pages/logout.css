@@ -1,0 +1,58 @@
+.logout-content {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.logout-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+}
+
+.logout-icon-wrapper i {
+    font-size: 2.5rem;
+    color: white;
+}
+
+.loading-spinner-container {
+    margin: 2rem 0;
+    display: flex;
+    justify-content: center;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e7eb;
+    border-top: 3px solid #e91e63;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.logout-message {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-top: 2rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .logout-icon-wrapper {
+        width: 60px;
+        height: 60px;
+    }
+
+    .logout-icon-wrapper i {
+        font-size: 2rem;
+    }
+}

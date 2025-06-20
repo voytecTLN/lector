@@ -12,7 +12,7 @@ export class Navigation {
             <div class="nav-actions">
                 <span class="nav-user-name">👤 ${user.name}</span>
                 <a href="/${user.role}/dashboard" class="btn btn-primary">Panel</a>
-                <a href="/logout" class="btn btn-secondary logout-btn">Wyloguj</a>
+                <a href="/logout" class="btn btn-secondary logout-btn" id="logout-btn">Wyloguj</a>
             </div>
         ` : `
             <div class="nav-actions">
@@ -38,18 +38,8 @@ export class Navigation {
             </nav>
         `
 
-        // Dodaj event listener dla wylogowania
-        if (isAuthenticated) {
-            setTimeout(() => {
-                const logoutBtn = header.querySelector('#logout-btn')
-                if (logoutBtn) {
-                    logoutBtn.addEventListener('click', async () => {
-                        await authService.logout()
-                        window.location.href = '/'
-                    })
-                }
-            }, 0)
-        }
+        // NIE dodajemy event listenera dla logout - router obsłuży to automatycznie
+        // Usunięto poprzedni kod addEventListener dla logout
 
         return header
     }
