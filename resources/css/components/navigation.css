@@ -91,6 +91,17 @@ nav.navbar {
     background: #c2185b;
 }
 
+/* Active link states */
+.navbar .nav-links a.active {
+    color: #e91e63;
+    font-weight: 600;
+}
+
+.navbar .btn.active {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
 .nowrap {
     white-space: nowrap;
 }

@@ -109,6 +109,9 @@ class Application {
     }
 
     private shouldHandleInternally(link: HTMLAnchorElement): boolean {
+        // Don't handle javascript: links
+        if (link.href.includes('javascript:')) return false
+
         // Don't handle external links
         if (link.hostname !== window.location.hostname) return false
 
