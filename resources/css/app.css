@@ -12,111 +12,12 @@
 @import './pages/forgot-password.css';
 @import './pages/reset-password.css';
 @import './pages/email-verification.css';
+@import './pages/logout.css';
+
 @import './pages/admin-dashboard.css';
 @import './pages/student-dashboard.css';
 @import './pages/not-found.css';
 @import './pages/unauthorized.css';
 
-
-/* Global Notification Container */
-.notification-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    max-width: 400px;
-}
-
-.notification-toast {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    margin-bottom: 1rem;
-    overflow: hidden;
-    animation: slideInRight 0.3s ease-out;
-}
-
-@keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.notification-content {
-    display: flex;
-    align-items: center;
-    padding: 1rem;
-    gap: 0.75rem;
-}
-
-.notification-icon {
-    font-size: 1.25rem;
-    width: 24px;
-    text-align: center;
-}
-
-.notification-message {
-    flex: 1;
-    font-size: 0.95rem;
-}
-
-.notification-toast.success {
-    border-left: 4px solid #10b981;
-}
-
-.notification-toast.success .notification-icon {
-    color: #10b981;
-}
-
-.notification-toast.error {
-    border-left: 4px solid #ef4444;
-}
-
-.notification-toast.error .notification-icon {
-    color: #ef4444;
-}
-
-.notification-toast.warning {
-    border-left: 4px solid #f59e0b;
-}
-
-.notification-toast.warning .notification-icon {
-    color: #f59e0b;
-}
-
-.notification-toast.info {
-    border-left: 4px solid #3b82f6;
-}
-
-.notification-toast.info .notification-icon {
-    color: #3b82f6;
-}
-
-.notification-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    line-height: 1;
-    color: #9ca3af;
-    cursor: pointer;
-    padding: 0.5rem;
-    transition: color 0.2s;
-}
-
-.notification-close:hover {
-    color: #4b5563;
-}
-
-/* Mobile responsive */
-@media (max-width: 576px) {
-    .notification-container {
-        left: 10px;
-        right: 10px;
-        max-width: none;
-    }
-}
+/** Global notification */
+@import './components/notification.css';

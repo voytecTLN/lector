@@ -120,27 +120,11 @@ export const routes: RouteDefinition[] = [
     {
         path: '/logout',
         name: 'logout',
-        component: () => {
-            // Ten komponent może być bardzo prosty - tylko wywołuje logout i przekierowuje
-            return {
-                render: async () => {
-                    const div = document.createElement('div');
-                    div.textContent = 'Wylogowywanie...';
-                    return div;
-                },
-                async mount(container) {
-                    try {
-                        await authService.logout();
-                        window.location.href = '/';
-                    } catch (error) {
-                        console.error('Błąd podczas wylogowywania', error);
-                        window.location.href = '/';
-                    }
-                }
-            };
-        },
+        component: () => import('@/components/auth/LogoutPage').then(m => new m.LogoutPage()),
+        title: 'Wylogowywanie - Platforma Lektorów',
         meta: {
-            requiresAuth: true
+            requiresAuth: true,
+            layout: 'auth'
         }
     },
 
