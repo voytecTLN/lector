@@ -15,13 +15,13 @@
     transition: transform 0.3s;
 }
 
-.logo {
+.logo-dashboard {
     padding: 0 1.5rem 2rem;
     border-bottom: 1px solid #334155;
     margin-bottom: 2rem;
 }
 
-.logo h2 {
+.logo-dashboard h2 {
     color: #e91e63;
     font-size: 1.25rem;
 }
@@ -148,7 +148,7 @@
     font-weight: 600;
 }
 
-.logout-btn {
+.logo-dashboardut-btn {
     background: #ef4444;
     color: white;
     padding: 0.5rem 1rem;
@@ -159,7 +159,7 @@
     transition: background 0.3s;
 }
 
-.logout-btn:hover {
+.logo-dashboardut-btn:hover {
     background: #dc2626;
 }
 

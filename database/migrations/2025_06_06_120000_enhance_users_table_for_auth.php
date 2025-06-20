@@ -29,6 +29,9 @@ return new class extends Migration
             $table->string('two_factor_secret')->nullable();
             $table->text('two_factor_recovery_codes')->nullable();
 
+            $table->string('verification_token_hash')->nullable();
+            $table->timestamp('verification_token_expires_at')->nullable();
+
             // Add indexes for performance
             $table->index(['email', 'status']);
             $table->index('verification_token');

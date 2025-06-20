@@ -16,7 +16,7 @@ export class AdminDashboard implements RouteComponent {
         el.innerHTML = `
             <!-- Sidebar -->
             <nav class="sidebar" id="sidebar">
-                <div class="logo">
+                <div class="logo-dashboard">
                     <h2>🎓 Platforma Lektorów</h2>
                     <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Panel Administratora</p>
                 </div>
