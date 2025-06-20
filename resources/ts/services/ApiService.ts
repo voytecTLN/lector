@@ -99,9 +99,9 @@ export class ApiService {
             detail: { type: 'logout', isAuthenticated: false, user: null }
           }))
 
-          // Redirect tylko jeśli nie jesteśmy już na stronie auth
-          if (!window.location.pathname.includes('/login')) {
-            window.location.href = '/login'
+          // Używamy hash routing - sprawdzamy hash zamiast pathname
+          if (!window.location.hash.includes('/login') && !window.location.hash.includes('/register')) {
+            window.location.href = '/#/login'
           }
         }
 

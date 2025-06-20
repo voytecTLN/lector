@@ -47,12 +47,22 @@ export class ForgotPasswordPage implements RouteComponent {
         if (!this.form) return
         const button = this.form.querySelector('#forgotButton') as HTMLButtonElement
         button.disabled = true
+
         try {
             await authService.forgotPassword((this.form.querySelector('#email') as HTMLInputElement).value)
-            window.location.href = '/login'
+
+            // Przekieruj na login z komunikatem
+            window.location.href = '/#/login?message=' + encodeURIComponent('Link do resetowania hasła został wysłany na podany adres email') + '&type=success'
+
         } catch (err: any) {
-            alert(err.message || 'Błąd podczas wysyłania emaila')
-        } finally {
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: err.message || 'Błąd podczas wysyłania emaila',
+                    duration: 5000
+                }
+            }))
+
             button.disabled = false
         }
     }
