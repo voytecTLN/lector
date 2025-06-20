@@ -41,6 +41,7 @@ Route::get('/reset-password', $spa('/reset-password'))->name('password.reset');
 Route::get('/verify-email', $spa('/verify-email'))->name('verification.notice');
 Route::get('/logout', $spa('/logout'))->name('logout');
 Route::get('/unauthorized', $spa('/unauthorized'))->name('unauthorized');
+Route::get('/contact', $spa('/contact'))->name('contact');
 
 // SPA Route - catch all routes and serve the main app
 Route::get('/{any}', function () {

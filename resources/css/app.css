@@ -7,6 +7,7 @@
 
 /* Page styles */
 @import './pages/home.css';
+@import './pages/contact.css';
 @import './pages/login.css';
 @import './pages/register.css';
 @import './pages/forgot-password.css';
