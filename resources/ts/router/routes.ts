@@ -60,6 +60,15 @@ export const routes: RouteDefinition[] = [
             layout: 'guest'
         }
     },
+    {
+        path: '/contact',
+        name: 'contact',
+        component: () => import('@/components/pages/ContactPage').then(m => new m.ContactPage()),
+        title: 'Kontakt - Platforma Lektorów',
+        meta: {
+            layout: 'guest'
+        }
+    },
 
     // Auth routes (for guests only - redirect if logged in)
     {

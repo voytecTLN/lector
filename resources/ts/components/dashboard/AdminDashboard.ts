@@ -15,91 +15,91 @@ export class AdminDashboard implements RouteComponent {
         el.className = 'admin-container'
         el.innerHTML = `
             <!-- Sidebar -->
-            <nav class="sidebar" id="sidebar">
-                <div class="logo">
+            <nav class="admin-sidebar" id="sidebar">
+                <div class="admin-logo-dashboard">
                     <h2>🎓 Platforma Lektorów</h2>
                     <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Panel Administratora</p>
                 </div>
 
-                <ul class="nav-menu">
-                    <li class="nav-item">
-                        <a href="#dashboard" class="nav-link active" data-section="dashboard">
-                            <span class="nav-icon">📊</span>
+                <ul class="admin-nav-menu">
+                    <li class="admin-nav-item">
+                        <a href="#dashboard" class="admin-nav-link active" data-section="dashboard">
+                            <span class="admin-nav-icon">📊</span>
                             Dashboard
                         </a>
                     </li>
 
-                    <div class="nav-section">Zarządzanie Użytkownikami</div>
+                    <div class="admin-nav-section">Zarządzanie Użytkownikami</div>
 
-                    <li class="nav-item">
-                        <a href="#lektorzy" class="nav-link" data-section="lektorzy">
-                            <span class="nav-icon">👨‍🏫</span>
+                    <li class="admin-nav-item">
+                        <a href="#lektorzy" class="admin-nav-link" data-section="lektorzy">
+                            <span class="admin-nav-icon">👨‍🏫</span>
                             Lektorzy
-                            <span class="nav-badge" id="tutors-count">0</span>
+                            <span class="admin-nav-badge" id="tutors-count">0</span>
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a href="#uczniowie" class="nav-link" data-section="uczniowie">
-                            <span class="nav-icon">👥</span>
+                    <li class="admin-nav-item">
+                        <a href="#uczniowie" class="admin-nav-link" data-section="uczniowie">
+                            <span class="admin-nav-icon">👥</span>
                             Uczniowie
-                            <span class="nav-badge" id="students-count">0</span>
+                            <span class="admin-nav-badge" id="students-count">0</span>
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a href="#moderatorzy" class="nav-link" data-section="moderatorzy">
-                            <span class="nav-icon">👮‍♂️</span>
+                    <li class="admin-nav-item">
+                        <a href="#moderatorzy" class="admin-nav-link" data-section="moderatorzy">
+                            <span class="admin-nav-icon">👮‍♂️</span>
                             Moderatorzy
-                            <span class="nav-badge" id="moderators-count">0</span>
+                            <span class="admin-nav-badge" id="moderators-count">0</span>
                         </a>
                     </li>
 
-                    <div class="nav-section">Lekcje i Harmonogram</div>
+                    <div class="admin-nav-section">Lekcje i Harmonogram</div>
 
-                    <li class="nav-item">
-                        <a href="#lekcje" class="nav-link" data-section="lekcje">
-                            <span class="nav-icon">📚</span>
+                    <li class="admin-nav-item">
+                        <a href="#lekcje" class="admin-nav-link" data-section="lekcje">
+                            <span class="admin-nav-icon">📚</span>
                             Wszystkie lekcje
-                            <span class="nav-badge nav-badge-success" id="active-lessons">0</span>
+                            <span class="admin-nav-badge admin-nav-badge-success" id="active-lessons">0</span>
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a href="#harmonogram" class="nav-link" data-section="harmonogram">
-                            <span class="nav-icon">📅</span>
+                    <li class="admin-nav-item">
+                        <a href="#harmonogram" class="admin-nav-link" data-section="harmonogram">
+                            <span class="admin-nav-icon">📅</span>
                             Harmonogram
                         </a>
                     </li>
 
-                    <div class="nav-section">Monitoring i Logi</div>
+                    <div class="admin-nav-section">Monitoring i Logi</div>
 
-                    <li class="nav-item">
-                        <a href="#aktywnosc" class="nav-link" data-section="aktywnosc">
-                            <span class="nav-icon">👁️</span>
+                    <li class="admin-nav-item">
+                        <a href="#aktywnosc" class="admin-nav-link" data-section="aktywnosc">
+                            <span class="admin-nav-icon">👁️</span>
                             Aktywność użytkowników
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a href="#logi-systemu" class="nav-link" data-section="logi">
-                            <span class="nav-icon">📝</span>
+                    <li class="admin-nav-item">
+                        <a href="#logi-systemu" class="admin-nav-link" data-section="logi">
+                            <span class="admin-nav-icon">📝</span>
                             Logi systemowe
                         </a>
                     </li>
 
-                    <div class="nav-section">System</div>
+                    <div class="admin-nav-section">System</div>
 
-                    <li class="nav-item">
-                        <a href="#ustawienia" class="nav-link" data-section="ustawienia">
-                            <span class="nav-icon">⚙️</span>
+                    <li class="admin-nav-item">
+                        <a href="#ustawienia" class="admin-nav-link" data-section="ustawienia">
+                            <span class="admin-nav-icon">⚙️</span>
                             Ustawienia systemu
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a href="#pomoc" class="nav-link" data-section="pomoc">
-                            <span class="nav-icon">❓</span>
+                    <li class="admin-nav-item">
+                        <a href="#pomoc" class="admin-nav-link" data-section="pomoc">
+                            <span class="admin-nav-icon">❓</span>
                             Pomoc i dokumentacja
                         </a>
                     </li>
@@ -107,14 +107,14 @@ export class AdminDashboard implements RouteComponent {
             </nav>
 
             <!-- Main Content -->
-            <main class="main-content">
-                <header class="header">
+            <main class="admin-main-content">
+                <header class="admin-header">
                     <div>
-                        <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
+                        <button class="admin-mobile-menu-btn" id="mobile-menu-btn">☰</button>
                         <h1 id="page-title">Dashboard</h1>
                     </div>
-                    <div class="user-info">
-                        <div class="user-avatar">${user?.name?.charAt(0).toUpperCase() || 'A'}</div>
+                    <div class="admin-user-info">
+                        <div class="admin-user-avatar">${user?.name?.charAt(0).toUpperCase() || 'A'}</div>
                         <div>
                             <div style="font-weight: 600;">${user?.name || 'Administrator'}</div>
                             <div style="font-size: 0.75rem; color: #64748b;">${user?.email || ''}</div>
@@ -158,7 +158,7 @@ export class AdminDashboard implements RouteComponent {
     }
 
     private setupNavigation(): void {
-        const navLinks = this.container?.querySelectorAll('.nav-link')
+        const navLinks = this.container?.querySelectorAll('.admin-nav-link')
 
         navLinks?.forEach(link => {
             link.addEventListener('click', (e) => {
@@ -230,7 +230,7 @@ export class AdminDashboard implements RouteComponent {
             case 'lektorzy':
                 pageTitle.textContent = 'Zarządzanie Lektorami'
                 // contentArea.innerHTML = this.getTutorsContent()
-                contentArea.innerHTML = '<div class="loading-container"><div class="loading-spinner"></div><p class="loading-text">Ładowanie listy lektorów...</p></div>'
+                contentArea.innerHTML = '<div class="admin-loading-container"><div class="admin-loading-spinner"></div><p class="admin-loading-text">Ładowanie listy lektorów...</p></div>'
 
                 // Symulacja ładowania (w przyszłości zastąp prawdziwym API)
                 setTimeout(() => {
@@ -271,10 +271,10 @@ export class AdminDashboard implements RouteComponent {
 
         if (this.isLoadingStats) {
             return `
-            <div class="content-area">
-                <div class="loading-container">
-                    <div class="loading-spinner"></div>
-                    <p class="loading-text">Ładowanie statystyk...</p>
+            <div class="admin-content-area">
+                <div class="admin-loading-container">
+                    <div class="admin-loading-spinner"></div>
+                    <p class="admin-loading-text">Ładowanie statystyk...</p>
                 </div>
             </div>
         `
@@ -285,38 +285,38 @@ export class AdminDashboard implements RouteComponent {
 
         return `
             <!-- Quick Actions -->
-            <div class="quick-actions">
-                <div class="action-card">
-                    <div class="action-icon">👨‍🏫</div>
+            <div class="admin-quick-actions">
+                <div class="admin-action-card">
+                    <div class="admin-action-icon">👨‍🏫</div>
                     <h3>Dodaj Lektora</h3>
                     <p>Dodaj nowego lektora do systemu</p>
-                    <a href="/admin/tutors/add" class="action-btn">Dodaj</a>
+                    <a href="/admin/tutors/add" class="admin-action-btn">Dodaj</a>
                 </div>
 
-                <div class="action-card">
-                    <div class="action-icon">👥</div>
+                <div class="admin-action-card">
+                    <div class="admin-action-icon">👥</div>
                     <h3>Dodaj Ucznia</h3>
                     <p>Zarejestruj nowego ucznia</p>
-                    <a href="/admin/students/add" class="action-btn">Dodaj</a>
+                    <a href="/admin/students/add" class="admin-action-btn">Dodaj</a>
                 </div>
 
-                <div class="action-card">
-                    <div class="action-icon">📥</div>
+                <div class="admin-action-card">
+                    <div class="admin-action-icon">📥</div>
                     <h3>Import CSV</h3>
                     <p>Importuj dane z pliku CSV</p>
-                    <a href="/admin/import" class="action-btn">Import</a>
+                    <a href="/admin/import" class="admin-action-btn">Import</a>
                 </div>
 
-                <div class="action-card">
-                    <div class="action-icon">📊</div>
+                <div class="admin-action-card">
+                    <div class="admin-action-icon">📊</div>
                     <h3>Raporty</h3>
                     <p>Generuj raporty systemu</p>
-                    <a href="/admin/reports" class="action-btn">Generuj</a>
+                    <a href="/admin/reports" class="admin-action-btn">Generuj</a>
                 </div>
             </div>
 
             <!-- Main Content Area -->
-            <div class="content-area">
+            <div class="admin-content-area">
                 <div class="welcome-section">
                     <h2>Witaj w Panelu Administratora!</h2>
                     <p>Zarządzaj platformą lektorów, dodawaj użytkowników, monitoruj aktywność i generuj raporty.</p>
@@ -346,19 +346,19 @@ export class AdminDashboard implements RouteComponent {
 
     private getTutorsContent(): string {
         return `
-            <div class="content-area">
+            <div class="admin-content-area">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h2>Lista Lektorów</h2>
                     <div style="display: flex; gap: 1rem;">
-                        <a href="/admin/tutors/add" class="action-btn">+ Dodaj Lektora</a>
-                        <a href="/admin/import/tutors" class="action-btn" style="background: #10b981;">📥 Import CSV</a>
+                        <a href="/admin/tutors/add" class="admin-action-btn">+ Dodaj Lektora</a>
+                        <a href="/admin/import/tutors" class="admin-action-btn" style="background: #10b981;">📥 Import CSV</a>
                     </div>
                 </div>
                 <p>Zarządzaj wszystkimi lektorami w systemie, ich statusem i dostępnością.</p>
                 
                 <!-- Tu będzie tabela z lektorami -->
                 <div class="table-container">
-                    <p class="text-muted">Ładowanie listy lektorów...</p>
+                    <p class="admin-text-muted">Ładowanie listy lektorów...</p>
                 </div>
             </div>
         `
@@ -366,19 +366,19 @@ export class AdminDashboard implements RouteComponent {
 
     private getStudentsContent(): string {
         return `
-            <div class="content-area">
+            <div class="admin-content-area">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h2>Lista Uczniów</h2>
                     <div style="display: flex; gap: 1rem;">
-                        <a href="/admin/students/add" class="action-btn">+ Dodaj Ucznia</a>
-                        <a href="/admin/import/students" class="action-btn" style="background: #10b981;">📥 Import CSV</a>
+                        <a href="/admin/students/add" class="admin-action-btn">+ Dodaj Ucznia</a>
+                        <a href="/admin/import/students" class="admin-action-btn" style="background: #10b981;">📥 Import CSV</a>
                     </div>
                 </div>
                 <p>Zarządzaj uczniami, ich pakietami godzin i przypisaniami do lektorów.</p>
                 
                 <!-- Tu będzie tabela z uczniami -->
                 <div class="table-container">
-                    <p class="text-muted">Ładowanie listy uczniów...</p>
+                    <p class="admin-text-muted">Ładowanie listy uczniów...</p>
                 </div>
             </div>
         `
@@ -386,13 +386,13 @@ export class AdminDashboard implements RouteComponent {
 
     private getLessonsContent(): string {
         return `
-            <div class="content-area">
+            <div class="admin-content-area">
                 <h2>Historia Lekcji</h2>
                 <p>Przeglądaj wszystkie przeprowadzone i zaplanowane lekcje w systemie.</p>
                 
                 <!-- Tu będzie kalendarz/lista lekcji -->
                 <div class="lessons-container">
-                    <p class="text-muted">Ładowanie lekcji...</p>
+                    <p class="admin-text-muted">Ładowanie lekcji...</p>
                 </div>
             </div>
         `
@@ -400,13 +400,13 @@ export class AdminDashboard implements RouteComponent {
 
     private getActivityContent(): string {
         return `
-            <div class="content-area">
+            <div class="admin-content-area">
                 <h2>Monitor Aktywności</h2>
                 <p>Śledzenie aktywności użytkowników w czasie rzeczywistym.</p>
                 
                 <!-- Tu będzie lista aktywności -->
                 <div class="activity-log">
-                    <p class="text-muted">Ładowanie logów aktywności...</p>
+                    <p class="admin-text-muted">Ładowanie logów aktywności...</p>
                 </div>
             </div>
         `
@@ -414,13 +414,13 @@ export class AdminDashboard implements RouteComponent {
 
     private getSettingsContent(): string {
         return `
-            <div class="content-area">
+            <div class="admin-content-area">
                 <h2>Konfiguracja Platformy</h2>
                 <p>Globalne ustawienia systemu, integracje i konfiguracja.</p>
                 
                 <!-- Tu będą ustawienia -->
                 <div class="settings-form">
-                    <p class="text-muted">Ładowanie ustawień...</p>
+                    <p class="admin-text-muted">Ładowanie ustawień...</p>
                 </div>
             </div>
         `
