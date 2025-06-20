@@ -30,7 +30,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_login_at',
         'last_login_ip',
         'email_verified_at',
-        'verification_token',
         'verification_token_hash',
         'verification_token_expires_at'
     ];
@@ -41,7 +40,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'two_factor_secret',
         'two_factor_recovery_codes',
         'password_reset_token',
-        'verification_token',
         'verification_token_hash',
         'verification_token_expires_at'
     ];

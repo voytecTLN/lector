@@ -164,7 +164,9 @@ class AuthService
      */
     public function verifyEmail(string $token): void
     {
-        $user = User::where('verification_token', $token)->first();
+        // Wyszukaj użytkownika po hashu tokenu
+        $tokenHash = hash('sha256', $token);
+        $user = User::where('verification_token_hash', $tokenHash)->first();
 
         if (!$user) {
             throw new Exception('Nieprawidłowy token weryfikacyjny');
@@ -172,7 +174,10 @@ class AuthService
 
         if ($user->hasVerifiedEmail()) {
             // Już zweryfikowany - usuń token i kontynuuj
-            $user->update(['verification_token' => null]);
+            $user->update([
+                'verification_token_hash' => null,
+                'verification_token_expires_at' => null
+            ]);
             return;
         }
 
