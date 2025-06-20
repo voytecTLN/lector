@@ -7,6 +7,7 @@ export class AdminDashboard implements RouteComponent {
     private activeSection: string = 'dashboard'
     private container: HTMLElement | null = null
     private statsInterval: number | null = null
+    private isLoadingStats: boolean = false
 
     async render(): Promise<HTMLElement> {
         const user = authService.getUser()
@@ -128,9 +129,6 @@ export class AdminDashboard implements RouteComponent {
             </main>
         `
 
-        // Add styles
-        this.addStyles()
-
         return el
     }
 
@@ -217,12 +215,27 @@ export class AdminDashboard implements RouteComponent {
         switch(section) {
             case 'dashboard':
                 pageTitle.textContent = 'Dashboard'
+                // contentArea.innerHTML = await this.getDashboardContent()
+                // break
+
+                // Ustaw loading state
+                this.isLoadingStats = true
+                contentArea.innerHTML = await this.getDashboardContent()
+
+                // Załaduj prawdziwe dane
+                this.isLoadingStats = false
                 contentArea.innerHTML = await this.getDashboardContent()
                 break
 
             case 'lektorzy':
                 pageTitle.textContent = 'Zarządzanie Lektorami'
-                contentArea.innerHTML = this.getTutorsContent()
+                // contentArea.innerHTML = this.getTutorsContent()
+                contentArea.innerHTML = '<div class="loading-container"><div class="loading-spinner"></div><p class="loading-text">Ładowanie listy lektorów...</p></div>'
+
+                // Symulacja ładowania (w przyszłości zastąp prawdziwym API)
+                setTimeout(() => {
+                    contentArea.innerHTML = this.getTutorsContent()
+                }, 1000)
                 break
 
             case 'uczniowie':
@@ -247,11 +260,26 @@ export class AdminDashboard implements RouteComponent {
 
             default:
                 pageTitle.textContent = 'Dashboard'
+                this.isLoadingStats = true
+                contentArea.innerHTML = await this.getDashboardContent()
+                this.isLoadingStats = false
                 contentArea.innerHTML = await this.getDashboardContent()
         }
     }
 
     private async getDashboardContent(): Promise<string> {
+
+        if (this.isLoadingStats) {
+            return `
+            <div class="content-area">
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">Ładowanie statystyk...</p>
+                </div>
+            </div>
+        `
+        }
+
         // Fetch stats
         const stats = await this.fetchDashboardStats()
 
@@ -446,342 +474,5 @@ export class AdminDashboard implements RouteComponent {
         updateElement('students-count', stats.students || 0)
         updateElement('moderators-count', stats.moderators || 0)
         updateElement('active-lessons', stats.active_lessons || 0)
-    }
-
-    private addStyles(): void {
-        // Check if styles already exist
-        if (document.getElementById('admin-dashboard-styles')) return
-
-        const style = document.createElement('style')
-        style.id = 'admin-dashboard-styles'
-        style.textContent = `
-            .admin-container {
-                display: flex;
-                min-height: 100vh;
-            }
-
-            /* Sidebar */
-            .sidebar {
-                width: 280px;
-                background: #1e293b;
-                color: white;
-                padding: 1.5rem 0;
-                position: fixed;
-                height: 100vh;
-                overflow-y: auto;
-                transition: transform 0.3s;
-            }
-
-            .logo {
-                padding: 0 1.5rem 2rem;
-                border-bottom: 1px solid #334155;
-                margin-bottom: 2rem;
-            }
-
-            .logo h2 {
-                color: #e91e63;
-                font-size: 1.25rem;
-            }
-
-            .nav-menu {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-
-            .nav-item {
-                margin-bottom: 0.5rem;
-            }
-
-            .nav-link {
-                display: flex;
-                align-items: center;
-                padding: 0.75rem 1.5rem;
-                color: #cbd5e1;
-                text-decoration: none;
-                transition: all 0.3s;
-                gap: 0.75rem;
-                position: relative;
-            }
-
-            .nav-link:hover, .nav-link.active {
-                background: #334155;
-                color: white;
-            }
-
-            .nav-link.active::after {
-                content: '';
-                position: absolute;
-                right: 0;
-                top: 0;
-                bottom: 0;
-                width: 3px;
-                background: #e91e63;
-            }
-
-            .nav-icon {
-                font-size: 1.25rem;
-            }
-
-            .nav-badge {
-                margin-left: auto;
-                background: #475569;
-                color: white;
-                font-size: 0.75rem;
-                padding: 0.125rem 0.5rem;
-                border-radius: 10px;
-                min-width: 24px;
-                text-align: center;
-            }
-
-            .nav-badge-success {
-                background: #10b981;
-            }
-
-            .nav-badge-warning {
-                background: #f59e0b;
-            }
-
-            .nav-badge-error {
-                background: #ef4444;
-            }
-
-            .nav-badge-info {
-                background: #3b82f6;
-            }
-
-            .nav-section {
-                padding: 1rem 1.5rem 0.5rem;
-                font-size: 0.75rem;
-                font-weight: 600;
-                color: #64748b;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                margin-top: 1rem;
-            }
-
-            /* Main Content */
-            .main-content {
-                flex: 1;
-                margin-left: 280px;
-                padding: 2rem;
-                background: #f8fafc;
-                min-height: 100vh;
-            }
-
-            .header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 2rem;
-                background: white;
-                padding: 1.5rem;
-                border-radius: 10px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            }
-
-            .header h1 {
-                font-size: 1.875rem;
-                font-weight: 700;
-                color: #1e293b;
-                margin: 0;
-            }
-
-            .user-info {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-            }
-
-            .user-avatar {
-                width: 40px;
-                height: 40px;
-                background: #e91e63;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-weight: 600;
-            }
-
-            .logout-btn {
-                background: #ef4444;
-                color: white;
-                padding: 0.5rem 1rem;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 0.875rem;
-                transition: background 0.3s;
-            }
-
-            .logout-btn:hover {
-                background: #dc2626;
-            }
-
-            /* Quick Actions */
-            .quick-actions {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 1rem;
-                margin-bottom: 2rem;
-            }
-
-            .action-card {
-                background: white;
-                padding: 1.5rem;
-                border-radius: 10px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                text-align: center;
-                transition: transform 0.2s;
-            }
-
-            .action-card:hover {
-                transform: translateY(-2px);
-            }
-
-            .action-icon {
-                width: 60px;
-                height: 60px;
-                background: #e91e63;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0 auto 1rem;
-                font-size: 24px;
-                color: white;
-            }
-
-            .action-card h3 {
-                margin-bottom: 0.5rem;
-                color: #1e293b;
-            }
-
-            .action-card p {
-                color: #64748b;
-                font-size: 0.875rem;
-                margin-bottom: 1rem;
-            }
-
-            .action-btn {
-                background: #e91e63;
-                color: white;
-                padding: 0.5rem 1rem;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                text-decoration: none;
-                display: inline-block;
-                font-size: 0.875rem;
-                transition: background 0.3s;
-            }
-
-            .action-btn:hover {
-                background: #c2185b;
-            }
-
-            /* Content Area */
-            .content-area {
-                background: white;
-                border-radius: 10px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                padding: 2rem;
-            }
-
-            .welcome-section {
-                text-align: center;
-                padding: 3rem 2rem;
-            }
-
-            .welcome-section h2 {
-                font-size: 2rem;
-                margin-bottom: 1rem;
-                color: #1e293b;
-            }
-
-            .welcome-section p {
-                color: #64748b;
-                margin-bottom: 2rem;
-                max-width: 600px;
-                margin-left: auto;
-                margin-right: auto;
-            }
-
-            .system-info {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                gap: 1rem;
-                margin-top: 2rem;
-            }
-
-            .info-item {
-                text-align: center;
-                padding: 1rem;
-                background: #f8fafc;
-                border-radius: 8px;
-            }
-
-            .info-number {
-                font-size: 2rem;
-                font-weight: bold;
-                color: #e91e63;
-                display: block;
-            }
-
-            .info-label {
-                font-size: 0.875rem;
-                color: #64748b;
-                margin-top: 0.25rem;
-            }
-
-            /* Mobile */
-            .mobile-menu-btn {
-                display: none;
-                background: #3b82f6;
-                color: white;
-                border: none;
-                padding: 0.5rem;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 1.25rem;
-            }
-
-            @media (max-width: 768px) {
-                .sidebar {
-                    transform: translateX(-100%);
-                }
-
-                .sidebar.open {
-                    transform: translateX(0);
-                    z-index: 1000;
-                }
-
-                .main-content {
-                    margin-left: 0;
-                    padding: 1rem;
-                }
-
-                .header {
-                    padding: 1rem;
-                    flex-wrap: wrap;
-                    gap: 1rem;
-                }
-
-                .mobile-menu-btn {
-                    display: block;
-                }
-
-                .quick-actions {
-                    grid-template-columns: 1fr;
-                }
-            }
-
-            .text-muted {
-                color: #64748b;
-            }
-        `
-        document.head.appendChild(style)
     }
 }

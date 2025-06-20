@@ -7,6 +7,7 @@ export class StudentDashboard implements RouteComponent {
     private activeSection: string = 'dashboard'
     private container: HTMLElement | null = null
     private refreshInterval: number | null = null
+    private isLoadingStats: boolean = false
 
     async render(): Promise<HTMLElement> {
         const user = authService.getUser()
@@ -235,12 +236,24 @@ export class StudentDashboard implements RouteComponent {
         switch(section) {
             case 'dashboard':
                 pageTitle.textContent = 'Strona główna'
+                // contentArea.innerHTML = await this.getDashboardContent()
+                // Ustaw loading state
+                this.isLoadingStats = true
+                contentArea.innerHTML = await this.getDashboardContent()
+
+                // Załaduj prawdziwe dane
+                this.isLoadingStats = false
                 contentArea.innerHTML = await this.getDashboardContent()
                 break
 
             case 'nadchodzace':
                 pageTitle.textContent = 'Nadchodzące lekcje'
-                contentArea.innerHTML = this.getUpcomingLessonsContent()
+                // contentArea.innerHTML = this.getUpcomingLessonsContent()
+                contentArea.innerHTML = '<div class="loading-container"><div class="loading-spinner"></div><p class="loading-text">Ładowanie nadchodzących lekcji...</p></div>'
+
+                setTimeout(() => {
+                    contentArea.innerHTML = this.getUpcomingLessonsContent()
+                }, 800)
                 break
 
             case 'rezerwuj':
@@ -250,7 +263,12 @@ export class StudentDashboard implements RouteComponent {
 
             case 'historia':
                 pageTitle.textContent = 'Historia lekcji'
-                contentArea.innerHTML = this.getLessonHistoryContent()
+                // contentArea.innerHTML = this.getLessonHistoryContent()
+                contentArea.innerHTML = '<div class="loading-container"><div class="loading-spinner"></div><p class="loading-text">Ładowanie historii lekcji...</p></div>'
+
+                setTimeout(() => {
+                    contentArea.innerHTML = this.getLessonHistoryContent()
+                }, 800)
                 break
 
             case 'postepy':
@@ -270,11 +288,26 @@ export class StudentDashboard implements RouteComponent {
 
             default:
                 pageTitle.textContent = 'Strona główna'
+                // contentArea.innerHTML = await this.getDashboardContent()
+                this.isLoadingStats = true
+                contentArea.innerHTML = await this.getDashboardContent()
+                this.isLoadingStats = false
                 contentArea.innerHTML = await this.getDashboardContent()
         }
     }
 
     private async getDashboardContent(): Promise<string> {
+        if (this.isLoadingStats) {
+            return `
+            <div class="content-area">
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">Ładowanie Twoich statystyk...</p>
+                </div>
+            </div>
+        `
+        }
+
         // Fetch stats
         const stats = await this.fetchStudentStats()
 
@@ -621,582 +654,7 @@ export class StudentDashboard implements RouteComponent {
         const style = document.createElement('style')
         style.id = 'student-dashboard-styles'
         style.textContent = `
-            .student-container {
-                display: flex;
-                min-height: 100vh;
-            }
-
-            /* Reuse admin styles */
-            .sidebar {
-                width: 280px;
-                background: #1e293b;
-                color: white;
-                padding: 1.5rem 0;
-                position: fixed;
-                height: 100vh;
-                overflow-y: auto;
-                transition: transform 0.3s;
-            }
-
-            .logo {
-                padding: 0 1.5rem 2rem;
-                border-bottom: 1px solid #334155;
-                margin-bottom: 2rem;
-            }
-
-            .logo h2 {
-                color: #e91e63;
-                font-size: 1.25rem;
-            }
-
-            .nav-menu {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-
-            .nav-item {
-                margin-bottom: 0.5rem;
-            }
-
-            .nav-link {
-                display: flex;
-                align-items: center;
-                padding: 0.75rem 1.5rem;
-                color: #cbd5e1;
-                text-decoration: none;
-                transition: all 0.3s;
-                gap: 0.75rem;
-                position: relative;
-            }
-
-            .nav-link:hover, .nav-link.active {
-                background: #334155;
-                color: white;
-            }
-
-            .nav-link.active::after {
-                content: '';
-                position: absolute;
-                right: 0;
-                top: 0;
-                bottom: 0;
-                width: 3px;
-                background: #e91e63;
-            }
-
-            .nav-icon {
-                font-size: 1.25rem;
-            }
-
-            .nav-badge {
-                margin-left: auto;
-                background: #475569;
-                color: white;
-                font-size: 0.75rem;
-                padding: 0.125rem 0.5rem;
-                border-radius: 10px;
-                min-width: 24px;
-                text-align: center;
-            }
-
-            .nav-badge-success {
-                background: #10b981;
-            }
-
-            .nav-badge-warning {
-                background: #f59e0b;
-            }
-
-            .nav-section {
-                padding: 1rem 1.5rem 0.5rem;
-                font-size: 0.75rem;
-                font-weight: 600;
-                color: #64748b;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                margin-top: 1rem;
-            }
-
-            /* Main Content */
-            .main-content {
-                flex: 1;
-                margin-left: 280px;
-                padding: 2rem;
-                background: #f8fafc;
-                min-height: 100vh;
-            }
-
-            .header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 2rem;
-                background: white;
-                padding: 1.5rem;
-                border-radius: 10px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            }
-
-            .header h1 {
-                font-size: 1.875rem;
-                font-weight: 700;
-                color: #1e293b;
-                margin: 0;
-            }
-
-            .user-info {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-            }
-
-            .package-info {
-                background: #e91e63;
-                color: white;
-                padding: 0.5rem 1rem;
-                border-radius: 20px;
-                font-size: 0.875rem;
-            }
-
-            .hours-badge {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-
-            .hours-number {
-                font-weight: bold;
-                font-size: 1.125rem;
-            }
-
-            .user-avatar {
-                width: 40px;
-                height: 40px;
-                background: #3b82f6;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-weight: 600;
-            }
-
-            .logout-btn {
-                background: #ef4444;
-                color: white;
-                padding: 0.5rem 1rem;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 0.875rem;
-                transition: background 0.3s;
-            }
-
-            .logout-btn:hover {
-                background: #dc2626;
-            }
-
-            /* Welcome Card */
-            .welcome-card {
-                background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-                color: white;
-                padding: 2rem;
-                border-radius: 10px;
-                margin-bottom: 2rem;
-            }
-
-            .welcome-card h2 {
-                margin: 0 0 0.5rem 0;
-                font-size: 1.75rem;
-            }
-
-            .welcome-card p {
-                margin: 0;
-                opacity: 0.9;
-            }
-
-            /* Stats Grid */
-            .stats-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 1rem;
-                margin-bottom: 2rem;
-            }
-
-            .stat-card {
-                background: white;
-                padding: 1.5rem;
-                border-radius: 10px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-            }
-
-            .stat-icon {
-                width: 50px;
-                height: 50px;
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 24px;
-                color: white;
-            }
-
-            .stat-content {
-                flex: 1;
-            }
-
-            .stat-number {
-                font-size: 1.5rem;
-                font-weight: bold;
-                color: #1e293b;
-            }
-
-            .stat-label {
-                font-size: 0.875rem;
-                color: #64748b;
-            }
-
-            /* Quick Actions */
-            .quick-actions {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 1rem;
-            }
-
-            .action-card {
-                background: white;
-                padding: 1.5rem;
-                border-radius: 10px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                text-align: center;
-                transition: transform 0.2s;
-            }
-
-            .action-card:hover {
-                transform: translateY(-2px);
-            }
-
-            .action-icon {
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0 auto 1rem;
-                font-size: 24px;
-                color: white;
-            }
-
-            .action-card h3 {
-                margin-bottom: 0.5rem;
-                color: #1e293b;
-            }
-
-            .action-card p {
-                color: #64748b;
-                font-size: 0.875rem;
-                margin-bottom: 1rem;
-            }
-
-            .action-btn {
-                background: #e91e63;
-                color: white;
-                padding: 0.5rem 1rem;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                text-decoration: none;
-                display: inline-block;
-                font-size: 0.875rem;
-                transition: background 0.3s;
-            }
-
-            .action-btn:hover {
-                background: #c2185b;
-            }
-
-            /* Content Area */
-            .content-area {
-                background: white;
-                border-radius: 10px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                padding: 2rem;
-            }
-
-            /* Next Lesson Card */
-            .next-lesson-card {
-                background: #f8fafc;
-                border: 2px solid #e5e7eb;
-                border-radius: 10px;
-                padding: 1.5rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: 1rem;
-                flex-wrap: wrap;
-            }
-
-            .lesson-time {
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .lesson-date {
-                font-weight: 600;
-                color: #1e293b;
-            }
-
-            .lesson-hour {
-                color: #64748b;
-            }
-
-            .lesson-details {
-                flex: 1;
-            }
-
-            .lesson-teacher {
-                font-weight: 600;
-                color: #1e293b;
-                margin-bottom: 0.25rem;
-            }
-
-            .lesson-subject {
-                color: #64748b;
-            }
-
-            .lesson-actions {
-                display: flex;
-                gap: 0.5rem;
-            }
-
-            .btn-primary {
-                background: #3b82f6;
-                color: white;
-                padding: 0.5rem 1rem;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 0.875rem;
-                transition: background 0.3s;
-            }
-
-            .btn-primary:hover {
-                background: #2563eb;
-            }
-
-            .btn-secondary {
-                background: transparent;
-                color: #3b82f6;
-                padding: 0.5rem 1rem;
-                border: 1px solid #3b82f6;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 0.875rem;
-                transition: all 0.3s;
-            }
-
-            .btn-secondary:hover {
-                background: #3b82f6;
-                color: white;
-            }
-
-            .no-lessons {
-                padding: 2rem;
-                text-align: center;
-                color: #64748b;
-            }
-
-            .no-lessons a {
-                color: #3b82f6;
-                text-decoration: none;
-            }
-
-            .no-lessons a:hover {
-                text-decoration: underline;
-            }
-
-            /* Forms */
-            .form-group {
-                margin-bottom: 1.5rem;
-            }
-
-            .form-group label {
-                display: block;
-                margin-bottom: 0.5rem;
-                font-weight: 500;
-                color: #374151;
-            }
-
-            .form-control {
-                width: 100%;
-                padding: 0.75rem;
-                border: 1px solid #e5e7eb;
-                border-radius: 5px;
-                font-size: 1rem;
-            }
-
-            .form-control:focus {
-                outline: none;
-                border-color: #3b82f6;
-                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-            }
-
-            .form-control:disabled {
-                background: #f3f4f6;
-                cursor: not-allowed;
-            }
-
-            .checkbox-group {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 1rem;
-            }
-
-            .checkbox-group label {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                font-weight: normal;
-            }
-
-            /* Progress */
-            .progress-bar {
-                background: #e5e7eb;
-                height: 24px;
-                border-radius: 12px;
-                overflow: hidden;
-                margin-top: 0.5rem;
-            }
-
-            .progress-fill {
-                background: #3b82f6;
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-size: 0.75rem;
-                font-weight: 600;
-                transition: width 0.3s;
-            }
-
-            /* Mobile */
-            .mobile-menu-btn {
-                display: none;
-                background: #3b82f6;
-                color: white;
-                border: none;
-                padding: 0.5rem;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 1.25rem;
-            }
-
-            @media (max-width: 768px) {
-                .sidebar {
-                    transform: translateX(-100%);
-                }
-
-                .sidebar.open {
-                    transform: translateX(0);
-                    z-index: 1000;
-                }
-
-                .main-content {
-                    margin-left: 0;
-                    padding: 1rem;
-                }
-
-                .header {
-                    padding: 1rem;
-                    flex-wrap: wrap;
-                    gap: 1rem;
-                }
-
-                .mobile-menu-btn {
-                    display: block;
-                }
-
-                .stats-grid {
-                    grid-template-columns: 1fr 1fr;
-                }
-
-                .quick-actions {
-                    grid-template-columns: 1fr;
-                }
-
-                .next-lesson-card {
-                    flex-direction: column;
-                    text-align: center;
-                }
-
-                .lesson-actions {
-                    width: 100%;
-                }
-
-                .lesson-actions button {
-                    flex: 1;
-                }
-            }
-
-            .text-muted {
-                color: #64748b;
-            }
-
-            /* Package Options */
-            .package-options {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 1rem;
-                margin-top: 1rem;
-            }
-
-            .package-option {
-                border: 2px solid #e5e7eb;
-                border-radius: 10px;
-                padding: 1.5rem;
-                text-align: center;
-                position: relative;
-                transition: all 0.3s;
-            }
-
-            .package-option:hover {
-                border-color: #3b82f6;
-                transform: translateY(-2px);
-            }
-
-            .package-option.recommended {
-                border-color: #e91e63;
-            }
-
-            .package-option .badge {
-                position: absolute;
-                top: -10px;
-                right: 10px;
-                background: #e91e63;
-                color: white;
-                padding: 0.25rem 0.75rem;
-                border-radius: 10px;
-                font-size: 0.75rem;
-                font-weight: 600;
-            }
-
-            .package-option h4 {
-                margin-bottom: 0.5rem;
-            }
-
-            .package-option .price {
-                font-size: 1.5rem;
-                font-weight: bold;
-                color: #1e293b;
-                margin-bottom: 1rem;
-            }
+            
         `
         document.head.appendChild(style)
     }
