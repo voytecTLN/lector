@@ -193,6 +193,19 @@ export const routes: RouteDefinition[] = [
         }
     },
 
+    // Development-only routes
+    {
+        path: '/security-test',
+        name: 'security-test',
+        component: () => import('@/components/dev/SecurityTestPage').then(m => new m.SecurityTestPage()),
+        title: 'Security Test - Platforma Lektorów',
+        meta: {
+            layout: 'app',
+            requiresAuth: true,
+            requiresDevelopment: true // Tylko w trybie development!
+        }
+    },
+
     // 404 - must be LAST (catch-all route)
     {
         path: '/:pathMatch(.*)*',

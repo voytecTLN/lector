@@ -25,7 +25,7 @@ export class ApiService {
     return localStorage.getItem('auth_token')
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}, retryCount: number = 0): Promise<T> {
     // Najpierw pobierz CSRF cookie dla Sanctum (tylko jeśli potrzebne)
     if (!this.csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method?.toUpperCase() || 'GET')) {
       await this.refreshCSRF()
@@ -70,6 +70,17 @@ export class ApiService {
 
       console.log(`📡 API Response: ${response.status} ${response.statusText}`)
 
+      // Obsługa 419 - CSRF token mismatch
+      if (response.status === 419 && retryCount < 2) {
+        console.log('🔄 CSRF token mismatch, refreshing token and retrying...')
+
+        // Odśwież CSRF token
+        await this.refreshCSRF()
+
+        // Powtórz żądanie
+        return this.request<T>(endpoint, options, retryCount + 1)
+      }
+
       // Sprawdź content-type
       const contentType = response.headers.get('content-type')
       if (!contentType || !contentType.includes('application/json')) {
@@ -88,6 +99,11 @@ export class ApiService {
           throw new ValidationError(result.errors, result.message || 'Błąd walidacji')
         }
 
+        // CSRF token error po retry
+        if (response.status === 419) {
+          throw new Error('Błąd weryfikacji CSRF. Odśwież stronę i spróbuj ponownie.')
+        }
+
         // Unauthorized - wyczyść auth data
         if (response.status === 401) {
           localStorage.removeItem('auth_token')
@@ -99,7 +115,7 @@ export class ApiService {
             detail: { type: 'logout', isAuthenticated: false, user: null }
           }))
 
-          // Używamy hash routing - sprawdzamy hash zamiast pathname
+          // Redirect tylko jeśli nie jesteśmy już na stronie auth
           if (!window.location.hash.includes('/login') && !window.location.hash.includes('/register')) {
             window.location.href = '/#/login'
           }
@@ -109,7 +125,6 @@ export class ApiService {
       }
 
       // Laravel zawsze zwraca success/data format
-      // return result.data || result as T
       return result as T
 
     } catch (error) {
@@ -124,46 +139,56 @@ export class ApiService {
   }
 
   async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' })
+    return this.request<T>(endpoint, { method: 'GET' }, 0)
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined
-    })
+    }, 0)
   }
 
   async put<T>(endpoint: string, data: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: JSON.stringify(data)
-    })
+    }, 0)
   }
 
   async patch<T>(endpoint: string, data: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
       body: JSON.stringify(data)
-    })
+    }, 0)
   }
 
   async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' })
+    return this.request<T>(endpoint, { method: 'DELETE' }, 0)
   }
 
   // Metoda do odświeżenia CSRF tokenu dla Sanctum
   async refreshCSRF(): Promise<void> {
     try {
+      console.log('🔐 Refreshing CSRF token...')
+
       await fetch('/sanctum/csrf-cookie', {
         method: 'GET',
-        credentials: 'same-origin'
+        credentials: 'same-origin',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
       })
 
-      // Odczytaj token ponownie
-      this.initCSRF()
+      // Odczytaj token z meta tag
+      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      this.csrfToken = token || ''
+
+      console.log('✅ CSRF token refreshed')
     } catch (error) {
-      console.warn('Failed to refresh CSRF token:', error)
+      console.error('❌ Failed to refresh CSRF token:', error)
+      // Nie rzucaj błędu - pozwól żądaniu kontynuować
     }
   }
 }
