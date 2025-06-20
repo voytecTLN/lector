@@ -27,7 +27,7 @@ export class EmailVerificationPage implements RouteComponent {
                                     <i class="bi bi-house-door me-2"></i>
                                     Przejdź do strony głównej
                                 </a>
-                                <a href="/login" class="btn btn-primary btn-lg px-4 py-3 rounded-pill shadow-sm">
+                                <a href="/login" class="btn email-btn-primary btn-lg px-4 py-3 rounded-pill shadow-sm">
                                     <i class="bi bi-box-arrow-in-right me-2"></i>
                                     Zaloguj się
                                 </a>

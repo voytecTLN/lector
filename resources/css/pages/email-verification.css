@@ -16,13 +16,13 @@
     color: white;
 }
 
-.btn-primary {
+.email-btn-primary {
     background: #e91e63;
     border-color: #e91e63;
     transition: all 0.3s ease;
 }
 
-.btn-primary:hover {
+.email-btn-primary:hover {
     background: #c2185b;
     border-color: #c2185b;
     transform: translateY(-2px);
