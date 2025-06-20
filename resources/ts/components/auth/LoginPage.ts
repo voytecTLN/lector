@@ -76,9 +76,16 @@ export class LoginPage implements RouteComponent {
             // Clean URL
             const url = new URL(window.location.href)
             url.searchParams.delete('message')
+            url.searchParams.delete('error')
             url.searchParams.delete('type')
             window.history.replaceState({}, document.title, url.pathname)
         })
+
+        // Dodatkowo: wyczyść hash jeśli istnieje (dla SPA z hash routing)
+        if (window.location.hash.includes('?')) {
+            const hashPath = window.location.hash.split('?')[0]
+            window.history.replaceState({}, document.title, window.location.pathname + hashPath)
+        }
     }
 
     unmount(): void {
@@ -118,11 +125,51 @@ export class LoginPage implements RouteComponent {
                 password: passwordInput.value,
                 remember: rememberInput.checked
             })
-            window.location.href = '/'
+
+            // Pobierz dane użytkownika po zalogowaniu
+            const user = authService.getUser()
+
+            if (user) {
+                // Określ dashboard na podstawie roli
+                let dashboardUrl = '/'
+
+                switch (user.role) {
+                    case 'admin':
+                        dashboardUrl = '/admin/dashboard'
+                        break
+                    case 'moderator':
+                        dashboardUrl = '/moderator/dashboard'
+                        break
+                    case 'tutor':
+                        dashboardUrl = '/tutor/dashboard'
+                        break
+                    case 'student':
+                        dashboardUrl = '/student/dashboard'
+                        break
+                    default:
+                        dashboardUrl = '/'
+                }
+
+                // Przekieruj na odpowiedni dashboard
+                window.location.href = dashboardUrl
+            } else {
+                // Fallback - jeśli z jakiegoś powodu nie ma użytkownika
+                window.location.href = '/'
+            }
+
         } catch (err: any) {
             const msg = err.message || 'Błąd logowania'
-            alert(msg)
-        } finally {
+
+            // Wyświetl błąd użytkownikowi
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: msg,
+                    duration: 5000
+                }
+            }))
+
+            // Reset przycisku
             button.disabled = false
             spinner.style.display = 'none'
             buttonText.style.display = 'inline'

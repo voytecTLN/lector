@@ -277,7 +277,7 @@ class AuthController extends Controller
         $token = $request->query('token');
 
         if (!$token) {
-            return redirect('/#/verify-email?error=' . urlencode('Brak tokenu weryfikacyjnego'));
+            return redirect('/#/login?error=' . urlencode('Brak tokenu weryfikacyjnego') . '&type=error');
         }
 
         try {
@@ -286,12 +286,12 @@ class AuthController extends Controller
             $user = User::where('verification_token_hash', $tokenHash)->first();
 
             if (!$user) {
-                return redirect('/#/verify-email?error=' . urlencode('Nieprawidłowy token weryfikacyjny'));
+                return redirect('/#/login?error=' . urlencode('Nieprawidłowy token weryfikacyjny') . '&type=error');
             }
 
             // Sprawdź czy token jest ważny
             if (!$user->isVerificationTokenValid($token)) {
-                return redirect('/#/verify-email?error=' . urlencode('Token weryfikacyjny wygasł. Zaloguj się i poproś o nowy.'));
+                return redirect('/#/login?error=' . urlencode('Token weryfikacyjny wygasł. Zaloguj się i poproś o nowy.') . '&type=warning');
             }
 
             if ($user->hasVerifiedEmail()) {
@@ -309,7 +309,7 @@ class AuthController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Email verification error: ' . $e->getMessage());
-            return redirect('/#/verify-email?error=' . urlencode('Błąd podczas weryfikacji emaila'));
+            return redirect('/#/login?error=' . urlencode('Błąd podczas weryfikacji emaila') . '&type=error');
         }
     }
 

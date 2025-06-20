@@ -54,16 +54,26 @@ export class ResetPasswordPage implements RouteComponent {
         if (!this.form) return
         const button = this.form.querySelector('#resetButton') as HTMLButtonElement
         button.disabled = true
+
         try {
             await authService.resetPassword({
                 token: this.token,
                 password: (this.form.querySelector('#password') as HTMLInputElement).value,
                 password_confirmation: (this.form.querySelector('#password_confirmation') as HTMLInputElement).value
             })
-            window.location.href = '/login'
+
+            // Przekieruj na login z komunikatem
+            window.location.href = '/#/login?message=' + encodeURIComponent('Hasło zostało zmienione pomyślnie. Możesz się teraz zalogować.') + '&type=success'
+
         } catch (err: any) {
-            alert(err.message || 'Błąd resetowania hasła')
-        } finally {
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: err.message || 'Błąd resetowania hasła',
+                    duration: 5000
+                }
+            }))
+
             button.disabled = false
         }
     }

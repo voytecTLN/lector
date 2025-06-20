@@ -59,8 +59,9 @@ export class RegisterPage implements RouteComponent {
         if (!this.form) return
         const button = this.form.querySelector('#registerButton') as HTMLButtonElement
         button.disabled = true
+
         try {
-            await authService.register({
+            const response = await authService.register({
                 name: (this.form.querySelector('#name') as HTMLInputElement).value,
                 email: (this.form.querySelector('#email') as HTMLInputElement).value,
                 password: (this.form.querySelector('#password') as HTMLInputElement).value,
@@ -70,10 +71,26 @@ export class RegisterPage implements RouteComponent {
                 city: '',
                 terms_accepted: true
             })
-            window.location.href = '/verify-email'
+
+            // Sprawdź czy użytkownik wymaga weryfikacji
+            if (response.data?.requires_verification) {
+                // Przekieruj na stronę weryfikacji emaila
+                window.location.href = '/#/verify-email'
+            } else {
+                // Jeśli nie wymaga weryfikacji (edge case), przekieruj na login
+                window.location.href = '/#/login'
+            }
+
         } catch (err: any) {
-            alert(err.message || 'Błąd podczas rejestracji')
-        } finally {
+            // Wyświetl błąd jako notyfikację
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: err.message || 'Błąd podczas rejestracji',
+                    duration: 5000
+                }
+            }))
+
             button.disabled = false
         }
     }
