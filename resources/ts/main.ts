@@ -39,6 +39,11 @@ class Application {
             this.appState.setAppReady(true)
             document.body.classList.add('app-ready')
 
+            document.addEventListener('app:logout', async () => {
+                await authService.logout()
+                this.router.navigate('/login')
+            })
+
             console.log('✅ Application initialized successfully')
 
         } catch (error) {
