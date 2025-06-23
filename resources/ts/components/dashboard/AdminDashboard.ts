@@ -144,17 +144,57 @@ export class AdminDashboard implements RouteComponent {
         // Setup logout
         this.setupLogout()
 
+        // NOWE: Odczytaj sekcję z URL
+        const urlParams = new URLSearchParams(window.location.search)
+        const section = urlParams.get('section') || 'dashboard'
+
+        // NOWE: Ustaw aktywną klasę na podstawie URL
+        this.setActiveNavLink(section)
+
         // Load initial content
-        this.loadContent('dashboard')
+        this.loadContent(section)
+
+        // NOWE: Obsługa przycisku wstecz
+        window.addEventListener('popstate', this.handlePopState.bind(this))
 
         // Start auto-refresh stats
         this.startStatsRefresh()
+    }
+
+    private handlePopState = (event: PopStateEvent): void => {
+        const urlParams = new URLSearchParams(window.location.search)
+        const section = urlParams.get('section') || 'dashboard'
+
+        this.setActiveNavLink(section)
+        this.loadContent(section)
+    }
+
+    private setActiveNavLink(section: string): void {
+        const navLinks = this.container?.querySelectorAll('.admin-nav-link')
+        navLinks?.forEach(link => {
+            const linkSection = link.getAttribute('data-section')
+            if (linkSection === section) {
+                link.classList.add('active')
+            } else {
+                link.classList.remove('active')
+            }
+        })
+    }
+
+    private updateURL(section: string): void {
+        const url = new URL(window.location.href)
+        url.searchParams.set('section', section)
+
+        // Używamy pushState zamiast replaceState dla historii
+        window.history.pushState({ section }, '', url.toString())
     }
 
     unmount(): void {
         if (this.statsInterval) {
             clearInterval(this.statsInterval)
         }
+
+        window.removeEventListener('popstate', this.handlePopState)
     }
 
     private setupNavigation(): void {
@@ -164,13 +204,16 @@ export class AdminDashboard implements RouteComponent {
             link.addEventListener('click', (e) => {
                 e.preventDefault()
 
-                // Update active state
-                navLinks.forEach(l => l.classList.remove('active'))
-                link.classList.add('active')
-
-                // Load content
                 const section = link.getAttribute('data-section')
                 if (section) {
+                    // NOWE: Aktualizuj URL
+                    this.updateURL(section)
+
+                    // Update active state
+                    navLinks.forEach(l => l.classList.remove('active'))
+                    link.classList.add('active')
+
+                    // Load content
                     this.loadContent(section)
                 }
             })
