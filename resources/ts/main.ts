@@ -2,17 +2,11 @@
 import '../css/app.css'
 import { Router } from '@/router'
 import { authService } from '@services/AuthService'
-import { AppState } from '@/utils/appState'
-import { EventBus } from '@/utils/eventBus'
 
 class Application {
     private router: Router
-    private appState: AppState
-    private eventBus: EventBus
 
     constructor() {
-        this.eventBus = new EventBus()
-        this.appState = new AppState()
         this.router = new Router()
     }
 
@@ -35,14 +29,8 @@ class Application {
             // Initialize router
             await this.router.init()
 
-            // Set app as ready
-            this.appState.setAppReady(true)
+            // Set app as ready - ZMIANA: bezpośrednio na body
             document.body.classList.add('app-ready')
-
-            document.addEventListener('app:logout', async () => {
-                await authService.logout()
-                this.router.navigate('/login')
-            })
 
             console.log('✅ Application initialized successfully')
 
@@ -78,7 +66,7 @@ class Application {
         // Browser back/forward navigation
         window.addEventListener('popstate', this.handlePopState.bind(this))
 
-        // Auth state changes - use proper typing
+        // Auth state changes
         document.addEventListener('auth:change', this.handleAuthChange.bind(this) as EventListener)
 
         // Global error handler
@@ -90,6 +78,12 @@ class Application {
         // Network status
         window.addEventListener('online', () => this.showNotification('Połączenie przywrócone', 'success'))
         window.addEventListener('offline', () => this.showNotification('Brak połączenia internetowego', 'warning'))
+
+        // Logout event
+        document.addEventListener('app:logout', async () => {
+            await authService.logout()
+            this.router.navigate('/login')
+        })
     }
 
     private initNotifications(): void {
@@ -99,7 +93,7 @@ class Application {
         container.className = 'notification-container'
         document.body.appendChild(container)
 
-        // Listen for notification events - use proper typing
+        // Listen for notification events
         document.addEventListener('notification:show', this.handleNotification.bind(this) as EventListener)
     }
 
@@ -136,8 +130,6 @@ class Application {
     private handleAuthChange(event: Event): void {
         const customEvent = event as CustomEvent
         const { type, isAuthenticated } = customEvent.detail || {}
-
-        this.appState.setAuthState(isAuthenticated)
 
         // Update body classes for CSS targeting
         document.body.classList.toggle('user-authenticated', isAuthenticated)
@@ -240,7 +232,6 @@ class Application {
 declare global {
     interface Window {
         __CSRF_TOKEN__: string
-        __APP_STATE__: any
     }
 }
 

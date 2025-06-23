@@ -1,5 +1,3 @@
-// resources/ts/types/student.ts
-
 export interface User {
   id: number
   name: string
@@ -86,35 +84,4 @@ export class ValidationError extends Error {
     this.name = 'ValidationError'
     this.errors = errors
   }
-
-  // Helper method to get first error for a field
-  getFirstError(field: string): string | null {
-    if (this.errors[field] && this.errors[field].length > 0) {
-      return this.errors[field][0]
-    }
-    return null
-  }
-
-  // Helper method to get all errors as flat array
-  getAllErrors(): string[] {
-    return Object.values(this.errors).flat()
-  }
-
-  // Helper method to check if field has error
-  hasError(field: string): boolean {
-    return !!(this.errors[field] && this.errors[field].length > 0)
-  }
-}
-
-// API Response types
-export interface ApiErrorResponse {
-  success: false
-  message: string
-  errors?: Record<string, string[]>
-}
-
-export interface ApiSuccessResponse<T = any> {
-  success: true
-  data: T
-  message?: string
 }
