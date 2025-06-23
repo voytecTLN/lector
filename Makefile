@@ -1,17 +1,23 @@
-.PHONY: help setup start stop logs shell npm build migrate artisan fix-permissions composer-update
+.PHONY: help setup start stop logs shell npm build migrate artisan fix-permissions composer-update clear-cache test dev prod
 
 help:
-	@echo "Platforma Lektorów - Development Commands"
-	@echo "  make setup         - Complete project setup"
-	@echo "  make start         - Start containers"
-	@echo "  make stop          - Stop containers"
-	@echo "  make logs          - Show logs"
-	@echo "  make shell         - PHP shell"
-	@echo "  make npm           - Node shell"
-	@echo "  make build         - Build assets"
-	@echo "  make migrate       - Run migrations"
-	@echo "  make fix-permissions - Fix file permissions"
-	@echo "  make composer-update - Update composer dependencies"
+	@echo "Language Learning Platform - Development Commands"
+	@echo "  make setup         - Complete project setup (Docker + dependencies)"
+	@echo "  make start         - Start all containers"
+	@echo "  make stop          - Stop all containers"
+	@echo "  make logs          - Show application logs"
+	@echo "  make shell         - Access PHP container shell"
+	@echo "  make npm           - Access Node.js container shell"
+	@echo "  make build         - Build production assets"
+	@echo "  make dev           - Start Vite dev server with HMR"
+	@echo "  make migrate       - Run database migrations"
+	@echo "  make seed          - Seed database with test data"
+	@echo "  make fresh         - Fresh migration with seeders"
+	@echo "  make fix-permissions - Fix storage permissions"
+	@echo "  make composer-update - Update PHP dependencies"
+	@echo "  make clear-cache   - Clear all Laravel caches"
+	@echo "  make test          - Run tests"
+	@echo "  make prod          - Build for production"
 
 setup:
 	docker-compose up -d --build
@@ -22,10 +28,15 @@ setup:
 	docker-compose exec app chmod -R 775 storage bootstrap/cache
 	docker-compose exec app chown -R www:www storage bootstrap/cache
 	docker-compose exec vite npm install
-	@echo "✅ Ready at http://localhost:8000"
+	docker-compose exec app php artisan migrate --seed
+	@echo "✅ Setup complete! Access the app at http://localhost:8000"
+	@echo "📧 Test credentials in README.md"
 
 start:
 	docker-compose up -d
+	@echo "✅ Containers started"
+	@echo "🌐 App: http://localhost:8000"
+	@echo "📧 PHPMyAdmin: http://localhost:8080"
 
 stop:
 	docker-compose down
@@ -39,11 +50,20 @@ shell:
 npm:
 	docker-compose exec vite sh
 
+dev:
+	docker-compose exec vite npm run dev
+
 build:
 	docker-compose exec vite npm run build
 
 migrate:
 	docker-compose exec app php artisan migrate
+
+seed:
+	docker-compose exec app php artisan db:seed
+
+fresh:
+	docker-compose exec app php artisan migrate:fresh --seed
 
 artisan:
 	docker-compose exec app php artisan $(CMD)
@@ -77,3 +97,13 @@ clear-cache:
 	docker-compose exec app chown -R www:www storage bootstrap/cache
 	docker-compose exec app chmod -R 775 storage bootstrap/cache
 	@echo "✅ All caches cleared!"
+
+test:
+	docker-compose exec app php artisan test
+
+prod:
+	docker-compose exec vite npm run build
+	docker-compose exec app php artisan config:cache
+	docker-compose exec app php artisan route:cache
+	docker-compose exec app php artisan view:cache
+	@echo "✅ Production build complete!"
