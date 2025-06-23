@@ -95,6 +95,44 @@ nav.navbar {
     white-space: nowrap;
 }
 
+.navbar .nav-links a.active {
+    color: #e91e63;
+    font-weight: 600;
+    position: relative;
+}
+
+.navbar .nav-links a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e91e63;
+}
+
+/* Style dla przycisku logout */
+.navbar .logout-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.navbar .logout-btn:hover {
+    background: #dc2626;
+}
+
+/* Poprawka dla aktywnego stanu podczas hover */
+.navbar .nav-links a:hover {
+    color: #e91e63;
+}
+
+.navbar .nav-links a.active:hover {
+    color: #c2185b;
+}
+
 @media (max-width: 768px) {
     .navbar .nav-links {
         display: none;

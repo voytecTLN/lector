@@ -108,6 +108,7 @@
     flex: 1;
     margin-left: 280px;
     padding: 2rem;
+    padding-top: 6rem; /* NOWE: Dodatkowy padding na header */
     background: #f8fafc;
     min-height: 100vh;
 }
@@ -121,6 +122,11 @@
     padding: 1.5rem;
     border-radius: 10px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 280px;
+    right: 0;
+    z-index: 100;
 }
 
 .admin-header h1 {
@@ -353,4 +359,14 @@
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .admin-header {
+        left: 0; /* NOWE: Na mobile header na całą szerokość */
+    }
+
+    .admin-main-content {
+        padding-top: 7rem; /* NOWE: Więcej przestrzeni na mobile */
+    }
 }

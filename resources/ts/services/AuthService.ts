@@ -181,10 +181,12 @@ console.log(response.success, response.data);
             this.clearAuthData()
             this.notifyAuthChange('logout')
 
+            // NOWE: Zmień komunikat na bardziej przyjazny
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
-                    type: 'info',
-                    message: 'Wylogowano pomyślnie'
+                    type: 'success',
+                    message: 'Zostałeś bezpiecznie wylogowany.',
+                    duration: 3000
                 }
             }))
         }
@@ -215,6 +217,18 @@ console.log(response.success, response.data);
 
         } catch (error) {
             console.error('❌ Get current user error:', error)
+
+            // NOWE: Dodaj komunikat jeśli to problem z autoryzacją
+            if (error instanceof Error && error.message.includes('401')) {
+                document.dispatchEvent(new CustomEvent('notification:show', {
+                    detail: {
+                        type: 'warning',
+                        message: 'Sesja wygasła. Zaloguj się ponownie.',
+                        duration: 5000
+                    }
+                }))
+            }
+
             this.clearAuthData()
             return null
         }

@@ -99,6 +99,36 @@ export class ApiService {
           throw new ValidationError(result.errors, result.message || 'Błąd walidacji')
         }
 
+        if (response.status === 403) {
+          document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+              type: 'error',
+              message: 'Nie masz uprawnień do tej akcji.',
+              duration: 5000
+            }
+          }))
+        }
+
+        if (response.status === 404) {
+          document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+              type: 'error',
+              message: 'Nie znaleziono żądanego zasobu.',
+              duration: 5000
+            }
+          }))
+        }
+
+        if (response.status >= 500) {
+          document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+              type: 'error',
+              message: 'Błąd serwera. Spróbuj ponownie za chwilę.',
+              duration: 5000
+            }
+          }))
+        }
+
         // CSRF token error po retry
         if (response.status === 419) {
           throw new Error('Błąd weryfikacji CSRF. Odśwież stronę i spróbuj ponownie.')
@@ -110,14 +140,36 @@ export class ApiService {
           localStorage.removeItem('auth_user')
           localStorage.removeItem('auth_permissions')
 
+          // NOWE: Sprawdź czy to wygaśnięcie sesji czy brak autoryzacji
+          const isSessionExpired = !!localStorage.getItem('auth_token') ||
+              window.location.hash.includes('/dashboard') ||
+              window.location.hash.includes('/profile')
+
+          // NOWE: Pokaż odpowiedni komunikat
+          document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+              type: 'warning',
+              message: isSessionExpired
+                  ? 'Twoja sesja wygasła. Zaloguj się ponownie.'
+                  : 'Wymagane logowanie do tej strony.',
+              duration: 6000
+            }
+          }))
+
           // Emit auth change event
           document.dispatchEvent(new CustomEvent('auth:change', {
             detail: { type: 'logout', isAuthenticated: false, user: null }
           }))
 
           // Redirect tylko jeśli nie jesteśmy już na stronie auth
-          if (!window.location.hash.includes('/login') && !window.location.hash.includes('/register')) {
-            window.location.href = '/#/login'
+          if (!window.location.hash.includes('/login') &&
+              !window.location.hash.includes('/register') &&
+              !window.location.hash.includes('/forgot-password')) {
+
+            // NOWE: Małe opóźnienie aby użytkownik zobaczył komunikat
+            setTimeout(() => {
+              window.location.href = '/#/login'
+            }, 500)
           }
         }
 
