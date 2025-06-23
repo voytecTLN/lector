@@ -1,276 +1,298 @@
-# 🎯 Platforma Lektorów
+# 🎓 Language Learning Platform
 
-System zarządzania lekcjami języków obcych z TypeScript + Laravel.
+A modern single-page application (SPA) for managing language lessons, built with Laravel + TypeScript, powered by Docker.
 
-## 📋 Wymagania
+---
 
-- **Docker** & **Docker Compose** - konteneryzacja aplikacji
-- **Git** - wersjonowanie kodu
-- **Make** - automatyzacja poleceń (opcjonalne, ale zalecane)
-- **Terminal/CLI** - do wykonywania poleceń
+## 📋 Requirements
 
-### Sprawdź instalację:
+- **Docker** & **Docker Compose** - containerization
+- **Git** - version control
+- **Make** - command automation (optional but recommended)
+- **Terminal/CLI** - for running commands
+
+### Version Check:
 ```bash
-docker --version          # >= 20.0
-docker-compose --version  # >= 2.0
-git --version            # >= 2.0
-make --version           # dowolna
-```
+docker --version           # >= 20.0
+docker-compose --version   # >= 2.0
+git --version              # >= 2.0
+make --version             # any version
+````
+
+---
 
 ## 🚀 Quick Start
 
 ```bash
-# Clone repository
+# Clone the repository
 git clone <repo-url>
 cd platforma-lektorow
 
-# Setup (first time)
+# First-time setup
 make setup
 
-# Start development
+# Start development environment
 make start
 
-# Access at http://localhost:8000
+# Visit the app
+http://localhost:8000
 ```
 
-### Bez Make:
+### Without Make:
+
 ```bash
-# Setup
 docker-compose up -d --build
-docker-compose exec app php -r "echo 'APP_KEY=base64:' . base64_encode(random_bytes(32)) . PHP_EOL;"
-# Copy output 'APP_KEY=base64:...' and paste to .env file
 docker-compose exec app composer install
+docker-compose exec app cp .env.example .env
+docker-compose exec app php artisan key:generate
 docker-compose exec vite npm install
-
-# Start
-docker-compose up -d
+docker-compose exec app php artisan migrate --seed
 ```
 
-## 🛠️ Commands
+---
 
-- `make setup` - Complete setup (Docker + Composer + NPM)
-- `make start/stop` - Control containers
-- `make logs` - View application logs
-- `make shell` - Access PHP container shell
-- `make npm` - Access Node.js container shell
-- `make build` - Build TypeScript for production
+## 🔐 Test Accounts
 
-## 🌐 Porty
+Available after seeding:
 
-- **8000** - Laravel aplikacja
-- **5173** - Vite dev server (HMR)
-- **3306** - MySQL database
-- **6379** - Redis cache
+| Role      | Email                                                   | Password | Access Level              |
+| --------- | ------------------------------------------------------- | -------- | ------------------------- |
+| Admin     | [admin@test.com](mailto:admin@test.com)                 | password | Full system control       |
+| Moderator | [moderator@test.com](mailto:moderator@test.com)         | password | User & content moderation |
+| Tutor     | [anna.kowalska@test.com](mailto:anna.kowalska@test.com) | password | Teaching tools & calendar |
+| Student   | [jan.nowak@test.com](mailto:jan.nowak@test.com)         | password | Lessons & progress        |
 
-## 📁 Structure
+---
 
-- `resources/ts/` - TypeScript source files
-- `resources/css/` - Stylesheets (SCSS/CSS)
-- `app/` - Laravel backend (Models, Controllers, Services)
-- `docker/` - Docker configuration files
-- `config/` - Laravel configuration
-- `routes/` - API and web routes
+## 🛠️ Development Commands
 
-## 🔧 Development
-
-### Hot Reload
-Vite automatycznie przeładowuje zmiany w TypeScript/CSS.
-
-### Debugging
 ```bash
-# PHP logs
-make logs
-
-# Database access
-docker-compose exec database mysql -u tutoring_user -p tutoring_platform
-
-# Redis CLI
-docker-compose exec redis redis-cli
+make help            # List all commands
+make setup           # Full initial setup
+make start/stop      # Start or stop containers
+make logs            # View application logs
+make shell           # Access PHP container shell
+make npm             # Access Node.js container shell
+make dev             # Start Vite dev server
+make build           # Build frontend for production
+make migrate         # Run database migrations
+make seed            # Seed the database
+make fresh           # Fresh install + seeding
+make clear-cache     # Clear all Laravel caches
+make clear-all       # Full cache wipe (Laravel + Vite)
+make test            # Run tests
+make fix-permissions # Set correct storage permissions
 ```
 
-### Code Quality
-```bash
-# TypeScript check
-docker-compose exec vite npm run type-check
+---
 
-# Laravel code style
-docker-compose exec app ./vendor/bin/pint
+## 🌐 Access Points
+
+* **App**: [http://localhost:8000](http://localhost:8000)
+* **Vite Dev Server**: [http://localhost:5173](http://localhost:5173)
+* **PHPMyAdmin**: [http://localhost:8080](http://localhost:8080) (`root` / `root_secret`)
+* **MySQL**: `localhost:3306`
+* **Redis**: `localhost:6379`
+
+---
+
+## 🔧 Development Features
+
+### 🔁 Hot Reload
+
+```bash
+make dev
 ```
 
-## 🎯 TODO
+Vite automatically reloads changes in TypeScript and CSS.
 
-- [ ] Complete TypeScript services layer
-- [ ] Add authentication system (Laravel Sanctum)
-- [ ] Implement user management (Admin/Tutor/Student)
-- [ ] Add lesson scheduling with calendar
-- [ ] Video integration (Jitsi Meet)
-- [ ] Real-time notifications system
-- [ ] Payment integration
-- [ ] Multi-language support
+### 🔍 Debug Mode Detection (via Vite)
 
-## 🐛 Troubleshooting
+```ts
+if (import.meta.env.DEV) {
+    console.log("Development mode")
+}
 
-### Port conflicts:
-```bash
-# Check what's using ports
-lsof -i :8000
-lsof -i :3306
-
-# Stop conflicting services
-sudo systemctl stop mysql
-sudo systemctl stop apache2
+if (import.meta.env.PROD) {
+    console.log("Production mode")
+}
 ```
 
-### Permissions:
-```bash
-# Fix storage permissions
-docker-compose exec app chmod -R 775 storage bootstrap/cache
+### 🔒 Dev-Only Pages
+
+Example in `routes.ts`:
+
+```ts
+{
+    path: '/dev/api-test',
+    component: () => import('@/components/dev/ApiTestPage'),
+    meta: {
+        requiresDevelopment: true
+    }
+}
 ```
 
-### Clear cache:
-```bash
-docker-compose exec app php artisan cache:clear
-docker-compose exec app php artisan config:clear
+### Development-Only Security Page
 
-# Delete cache files directly
-docker-compose exec app rm -rf storage/framework/cache/*
-docker-compose exec app rm -rf bootstrap/cache/*
+Access: `http://localhost:8000/#/security-test`
+Hidden in production builds automatically.
+
+---
+
+## 📁 Project Structure
+
+```
+├── app/                  # Laravel backend
+│   ├── Http/Controllers/ # API controllers
+│   └── Services/         # Business logic
+├── resources/
+│   ├── ts/               # TypeScript SPA
+│   ├── css/              # SCSS/CSS styles
+│   └── views/            # Blade templates (fallback)
+├── routes/               # Laravel routes
+├── docker/               # Docker configs
 ```
 
+---
 
-# Komendy do czyszczenia cache w Laravel
+## 🧪 Testing & Code Quality
 
-## 1. Podstawowe komendy czyszczenia cache
-
-### Wyczyść cache aplikacji
 ```bash
-docker-compose exec app php artisan cache:clear
+make test                        # Run PHP unit tests
+docker-compose exec vite npm run type-check   # TypeScript type check
+docker-compose exec app ./vendor/bin/pint     # Laravel code style check
 ```
 
-### Wyczyść cache konfiguracji
+---
+
+## 🧼 Cache & Cleanup
+
+### Laravel Cache
+
 ```bash
-docker-compose exec app php artisan config:clear
+make clear-cache  # Clears config, route, view, app cache
 ```
 
-### Wyczyść cache routingu
+### Full Cache Wipe (Laravel + Vite)
+
 ```bash
-docker-compose exec app php artisan route:clear
+make clear-all
 ```
 
-### Wyczyść cache widoków
-```bash
-docker-compose exec app php artisan view:clear
-```
+This clears:
 
-### Wyczyść cache autoloadera Composera
-```bash
-docker-compose exec app composer dump-autoload
-```
+* Laravel caches (config, route, view)
+* Composer autoload
+* Session files
+* Logs
+* Vite cache
 
-## 2. Kompleksowe czyszczenie wszystkich cache'y
+### Manual Commands (Optional)
 
-### Jedna komenda do wyczyszczenia wszystkiego
 ```bash
+# Laravel
 docker-compose exec app php artisan optimize:clear
-```
+docker-compose exec app composer dump-autoload
 
-Ta komenda wykonuje:
-- `config:clear`
-- `cache:clear`
-- `route:clear`
-- `view:clear`
-- `event:clear`
-
-## 3. Dodatkowe komendy
-
-### Wyczyść sesje
-```bash
-docker-compose exec app rm -rf storage/framework/sessions/*
-```
-
-### Wyczyść logi
-```bash
-docker-compose exec app truncate -s 0 storage/logs/laravel.log
-```
-
-### Wyczyść cache Bootstrap
-```bash
+# Delete sessions, logs, cache
+docker-compose exec app rm -rf storage/framework/{cache,views,sessions}/*
 docker-compose exec app rm -rf bootstrap/cache/*
-```
 
-### Wyczyść cache npm/Vite
-```bash
+# Vite
 docker-compose exec vite npm cache clean --force
 docker-compose exec vite rm -rf node_modules/.vite
 ```
 
-## 4. Skrypt do pełnego czyszczenia (dodaj do Makefile)
+### Cache Rebuild
 
-```makefile
-clear-all:
-	docker-compose exec app php artisan optimize:clear
-	docker-compose exec app composer dump-autoload
-	docker-compose exec app rm -rf storage/framework/cache/*
-	docker-compose exec app rm -rf storage/framework/views/*
-	docker-compose exec app rm -rf storage/framework/sessions/*
-	docker-compose exec app rm -rf bootstrap/cache/*
-	docker-compose exec vite rm -rf node_modules/.vite
-	@echo "✅ Wszystkie cache wyczyszczone!"
-```
-
-## 5. Regeneracja cache po czyszczeniu
-
-### Wygeneruj nowy cache konfiguracji
 ```bash
 docker-compose exec app php artisan config:cache
-```
-
-### Wygeneruj nowy cache routingu
-```bash
 docker-compose exec app php artisan route:cache
-```
-
-### Wygeneruj nowy cache widoków
-```bash
 docker-compose exec app php artisan view:cache
 ```
 
-### Optymalizuj aplikację (wszystko naraz)
+---
+
+## 🐞 Troubleshooting
+
+### Port Conflicts
+
 ```bash
-docker-compose exec app php artisan optimize
+lsof -i :8000
+lsof -i :3306
+
+sudo systemctl stop apache2
+sudo systemctl stop mysql
 ```
 
-## 6. Rozwiązywanie problemów
+### File Permissions
 
-### Jeśli cache nie chce się wyczyścić
 ```bash
-# Nadaj uprawnienia
+make fix-permissions
+```
+
+Or manually:
+
+```bash
 docker-compose exec app chmod -R 775 storage bootstrap/cache
 docker-compose exec app chown -R www-data:www-data storage bootstrap/cache
-
-# Wyczyść ręcznie
-docker-compose exec app rm -rf storage/framework/cache/data/*
-docker-compose exec app rm -rf storage/framework/views/*
-docker-compose exec app rm -rf bootstrap/cache/*
 ```
 
-### Restart kontenerów po czyszczeniu
+### Restarting
+
 ```bash
 docker-compose restart app
 docker-compose restart vite
 ```
 
-## 7. Użycie w developmencie
+---
 
-Podczas developmentu najlepiej używać:
+## 🚀 Production Deployment
+
+1. Build frontend:
+
 ```bash
-# Wyczyść wszystko i zrestartuj
-make clear-all && make start
+make prod
 ```
 
-lub ręcznie:
-```bash
-docker-compose exec app php artisan optimize:clear
-docker-compose exec app composer dump-autoload
-docker-compose restart app
+2. Set `.env`:
+
 ```
+APP_ENV=production
+APP_DEBUG=false
+```
+
+3. Optimize:
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+---
+
+## 📝 API Documentation
+
+Follows REST conventions:
+
+* `POST /api/auth/login` - Log in
+* `GET /api/auth/me` - Current user
+* `GET /api/students` - List students
+
+Authentication uses Laravel Sanctum (Bearer tokens).
+
+---
+
+## 🤝 Contributing
+
+1. Fork & create feature branch
+2. Make changes and test
+3. Submit a pull request
+
+---
+
+## 📄 License
+
+[MIT License](LICENSE)
+
