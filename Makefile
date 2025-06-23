@@ -28,7 +28,8 @@ setup:
 	docker-compose exec app chmod -R 775 storage bootstrap/cache
 	docker-compose exec app chown -R www:www storage bootstrap/cache
 	docker-compose exec vite npm install
-	docker-compose exec app php artisan migrate --seed
+	#docker-compose exec app php artisan migrate
+	#docker-compose exec app php artisan migrate --seed
 	@echo "✅ Setup complete! Access the app at http://localhost:8000"
 	@echo "📧 Test credentials in README.md"
 
