@@ -29,6 +29,13 @@ class Application {
             // Initialize router
             await this.router.init()
 
+            window.router = this.router
+
+            // Enable debug mode in development
+            if (import.meta.env.DEV) {
+                this.router.debugRouting(true)
+            }
+
             // Set app as ready - ZMIANA: bezpośrednio na body
             document.body.classList.add('app-ready')
 
@@ -80,10 +87,14 @@ class Application {
         window.addEventListener('offline', () => this.showNotification('Brak połączenia internetowego', 'warning'))
 
         // Logout event
-        document.addEventListener('app:logout', async () => {
-            await authService.logout()
-            this.router.navigate('/login')
-        })
+        document.addEventListener('app:logout', this.handleLogout.bind(this))
+    }
+
+    private async handleLogout(): Promise<void> {
+        console.log('🚪 Handling logout event')
+        await authService.logout()
+        console.log('✅ Logout complete, navigating to login')
+        this.router.navigate('/login')
     }
 
     private initNotifications(): void {
@@ -244,4 +255,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Hot module replacement for development
 if (import.meta.hot) {
     import.meta.hot.accept()
+}
+
+declare global {
+    interface Window {
+        __CSRF_TOKEN__: string
+        router?: Router  // NOWE
+        __ROUTER_DEBUG__?: boolean  // NOWE
+    }
 }

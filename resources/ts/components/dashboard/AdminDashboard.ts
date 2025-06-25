@@ -47,13 +47,13 @@ export class AdminDashboard implements RouteComponent {
                         </a>
                     </li>
 
-                    <li class="admin-nav-item">
-                        <a href="#moderatorzy" class="admin-nav-link" data-section="moderatorzy">
-                            <span class="admin-nav-icon">👮‍♂️</span>
-                            Moderatorzy
-                            <span class="admin-nav-badge" id="moderators-count">0</span>
-                        </a>
-                    </li>
+<!--                    <li class="admin-nav-item">-->
+<!--                        <a href="#moderatorzy" class="admin-nav-link" data-section="moderatorzy">-->
+<!--                            <span class="admin-nav-icon">👮‍♂️</span>-->
+<!--                            Moderatorzy-->
+<!--                            <span class="admin-nav-badge" id="moderators-count">0</span>-->
+<!--                        </a>-->
+<!--                    </li>-->
 
                     <div class="admin-nav-section">Lekcje i Harmonogram</div>
 

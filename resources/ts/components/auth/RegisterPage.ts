@@ -1,4 +1,5 @@
 import { authService } from '@services/AuthService'
+import { redirectWithMessage } from '@/utils/navigation'
 import type { RouteComponent } from '@router/routes'
 
 export class RegisterPage implements RouteComponent {
@@ -75,10 +76,14 @@ export class RegisterPage implements RouteComponent {
             // Sprawdź czy użytkownik wymaga weryfikacji
             if (response.data?.requires_verification) {
                 // Przekieruj na stronę weryfikacji emaila
-                window.location.href = '/#/verify-email'
+                redirectWithMessage(
+                    '/#/verify-email',
+                    'Konto zostało utworzone. Sprawdź email w celu weryfikacji.',
+                    'success'
+                )
             } else {
                 // Jeśli nie wymaga weryfikacji (edge case), przekieruj na login
-                window.location.href = '/#/login'
+                redirectWithMessage('/#/login', 'Konto utworzone. Możesz się zalogować.', 'success')
             }
 
         } catch (err: any) {

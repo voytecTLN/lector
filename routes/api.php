@@ -13,10 +13,21 @@ Route::get('/health', function () {
 
 // Authentication routes (publiczne - bez middleware auth)
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login'])->name('api.auth.login');
-    Route::post('/register', [AuthController::class, 'register'])->name('api.auth.register');
-    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('api.auth.forgot-password');
-    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('api.auth.reset-password');
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:5,1') // 5 attempts per minute
+        ->name('api.auth.login');
+
+    Route::post('/register', [AuthController::class, 'register'])
+        ->middleware('throttle:3,10') // 3 attempts per 10 minutes
+        ->name('api.auth.register');
+
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
+        ->middleware('throttle:3,60') // 3 attempts per hour
+        ->name('api.auth.forgot-password');
+
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+        ->middleware('throttle:5,10') // 5 attempts per 10 minutes
+        ->name('api.auth.reset-password');
 
     // POPRAWIONE - weryfikacja emaila jako POST (dla frontend)
     Route::post('/verify-email', [AuthController::class, 'verifyEmail'])->name('api.auth.verify-email');
@@ -24,6 +35,10 @@ Route::prefix('auth')->group(function () {
     // DODANE - weryfikacja emaila jako GET (dla linków w emailu)
     Route::get('/verify-email', [AuthController::class, 'verifyEmailFromLink'])->name('api.auth.verify-email-link');
 });
+
+Route::post('/auth/resend-verification-public', [AuthController::class, 'resendVerificationPublic'])
+    ->middleware('throttle:2,60') // 2 attempts per hour
+    ->name('api.auth.resend-verification-public');
 
 // Protected routes (wymagają autentykacji Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
@@ -47,21 +62,30 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Student management (admin/moderator)
         Route::middleware('role:admin,moderator')->group(function () {
-            Route::apiResource('students', StudentController::class);
-            Route::put('students/{id}/learning-goals', [StudentController::class, 'updateLearningGoals']);
-            Route::get('students/search', [StudentController::class, 'search']);
-            Route::post('students/bulk-status', [StudentController::class, 'bulkUpdateStatus']);
-            Route::get('students/stats', [StudentController::class, 'getStats']);
+            Route::get('students/search', [StudentController::class, 'search'])
+                ->name('api.students.search');
+            Route::put('students/{id}/learning-goals', [StudentController::class, 'updateLearningGoals'])
+                ->name('api.students.learning-goals.update');
+            Route::post('students/bulk-status', [StudentController::class, 'bulkUpdateStatus'])
+                ->name('api.students.bulk-status');
+            Route::get('students/stats', [StudentController::class, 'getStats'])
+                ->name('api.students.stats');
+            Route::apiResource('students', StudentController::class)
+                ->names('api.students');
         });
 
         // Student self-management (student accessing own data)
         Route::middleware('role:student')->group(function () {
-            Route::get('student/profile', function(\Illuminate\Http\Request $request) {
-                $user = $request->user();
-                $user->load('studentProfile');
-                return response()->json(['success' => true, 'data' => $user]);
+            Route::middleware('role:student')->prefix('student')->group(function () {
+                Route::get('/profile', [StudentController::class, 'getOwnProfile'])
+                    ->name('api.student.profile');
+
+                Route::put('/profile', [StudentController::class, 'updateOwnProfile'])
+                    ->name('api.student.profile.update');
+
+                Route::get('/dashboard-stats', [DashboardController::class, 'studentStats'])
+                    ->name('api.student.dashboard-stats');
             });
-            Route::put('student/profile', [StudentController::class, 'updateOwnProfile']);
 
             // Student dashboard stats
             Route::get('student/dashboard-stats', [DashboardController::class, 'studentStats']);
@@ -126,7 +150,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// CSRF Cookie endpoint for SPA authentication - TAK, to jest potrzebne!
+// CSRF Cookie endpoint for SPA authentication
 Route::get('/sanctum/csrf-cookie', function () {
     return response()->json(['message' => 'CSRF cookie set']);
-})->middleware('web');
+})->middleware(['web', 'throttle:10,1']); // Max 10 requests per minute

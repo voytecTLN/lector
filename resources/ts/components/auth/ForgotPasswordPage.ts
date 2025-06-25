@@ -1,4 +1,5 @@
 import { authService } from '@services/AuthService'
+import { redirectWithMessage } from '@/utils/navigation'
 import type { RouteComponent } from '@router/routes'
 
 export class ForgotPasswordPage implements RouteComponent {
@@ -52,8 +53,11 @@ export class ForgotPasswordPage implements RouteComponent {
             await authService.forgotPassword((this.form.querySelector('#email') as HTMLInputElement).value)
 
             // Przekieruj na login z komunikatem
-            window.location.href = '/#/login?message=' + encodeURIComponent('Link do resetowania hasła został wysłany na podany adres email') + '&type=success'
-
+            redirectWithMessage(
+                '/#/login',
+                'Link do resetowania hasła został wysłany na podany adres email',
+                'success'
+            )
         } catch (err: any) {
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {

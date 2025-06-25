@@ -1,5 +1,6 @@
 // resources/ts/components/auth/LogoutPage.ts
 import { authService } from '@services/AuthService'
+import {navigateTo, redirectWithMessage} from '@/utils/navigation'
 import type { RouteComponent } from '@router/routes'
 
 export class LogoutPage implements RouteComponent {
@@ -64,7 +65,7 @@ export class LogoutPage implements RouteComponent {
 
                 // Przekieruj na stronę główną
                 setTimeout(() => {
-                    window.location.href = '/'
+                    navigateTo('/')
                 }, 500)
 
             } catch (error) {

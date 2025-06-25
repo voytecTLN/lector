@@ -125,8 +125,9 @@
     position: fixed;
     top: 0;
     left: 280px;
-    right: 0;
+    right: 2rem; /* ZMIANA: Dodaj margines z prawej */
     z-index: 100;
+    max-width: calc(100% - 280px - 4rem); /* NOWE: Ogranicz maksymalną szerokość */
 }
 
 .admin-header h1 {
@@ -154,7 +155,8 @@
     font-weight: 600;
 }
 
-.admin-logo-dashboardut-btn {
+.admin-logout-btn,
+.logout-btn {
     background: #ef4444;
     color: white;
     padding: 0.5rem 1rem;
@@ -165,7 +167,8 @@
     transition: background 0.3s;
 }
 
-.admin-logo-dashboardut-btn:hover {
+.admin-logout-btn:hover,
+.logout-btn:hover {
     background: #dc2626;
 }
 
@@ -297,36 +300,6 @@
     font-size: 1.25rem;
 }
 
-@media (max-width: 768px) {
-    .admin-sidebar {
-        transform: translateX(-100%);
-    }
-
-    .admin-sidebar.open {
-        transform: translateX(0);
-        z-index: 1000;
-    }
-
-    .admin-main-content {
-        margin-left: 0;
-        padding: 1rem;
-    }
-
-    .admin-header {
-        padding: 1rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .admin-mobile-menu-btn {
-        display: block;
-    }
-
-    .admin-quick-actions {
-        grid-template-columns: 1fr;
-    }
-}
-
 .admin-text-muted {
     color: #64748b;
 }
@@ -387,8 +360,38 @@
 }
 
 @media (max-width: 768px) {
+    .admin-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .admin-sidebar.open {
+        transform: translateX(0);
+        z-index: 1000;
+    }
+
+    .admin-main-content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+
     .admin-header {
-        left: 0; /* NOWE: Na mobile header na całą szerokość */
+        padding: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .admin-mobile-menu-btn {
+        display: block;
+    }
+
+    .admin-quick-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-header{
+        left: 0; /* Na mobile header na całą szerokość */
+        right: 1rem; /* Mniejszy margines na mobile */
+        max-width: calc(100% - 2rem); /* Dostosuj max-width */
     }
 
     .admin-main-content {

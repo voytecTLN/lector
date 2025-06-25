@@ -130,28 +130,35 @@ export class LoginPage implements RouteComponent {
             const user = authService.getUser()
 
             if (user) {
-                // Określ dashboard na podstawie roli
-                let dashboardUrl = '/'
+                const intendedUrl = (window as any).router?.getIntendedUrl()
 
-                switch (user.role) {
-                    case 'admin':
-                        dashboardUrl = '/admin/dashboard'
-                        break
-                    case 'moderator':
-                        dashboardUrl = '/moderator/dashboard'
-                        break
-                    case 'tutor':
-                        dashboardUrl = '/tutor/dashboard'
-                        break
-                    case 'student':
-                        dashboardUrl = '/student/dashboard'
-                        break
-                    default:
-                        dashboardUrl = '/'
+                if (intendedUrl) {
+                    // Przekieruj do intended URL
+                    window.location.href = intendedUrl
+                } else {
+                    // Określ dashboard na podstawie roli
+                    let dashboardUrl = '/'
+
+                    switch (user.role) {
+                        case 'admin':
+                            dashboardUrl = '/admin/dashboard'
+                            break
+                        case 'moderator':
+                            dashboardUrl = '/moderator/dashboard'
+                            break
+                        case 'tutor':
+                            dashboardUrl = '/tutor/dashboard'
+                            break
+                        case 'student':
+                            dashboardUrl = '/student/dashboard'
+                            break
+                        default:
+                            dashboardUrl = '/'
+                    }
+
+                    // Przekieruj na odpowiedni dashboard
+                    window.location.href = dashboardUrl
                 }
-
-                // Przekieruj na odpowiedni dashboard
-                window.location.href = dashboardUrl
             } else {
                 // Fallback - jeśli z jakiegoś powodu nie ma użytkownika
                 window.location.href = '/'

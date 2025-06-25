@@ -19,13 +19,25 @@ export class BrowserHistory {
     push(path: string, title?: string, data?: any): void {
         const state: HistoryState = { path, title, data }
 
-        window.history.pushState(state, title || '', path)
+        // NOWE: Jeśli używamy hash routing
+        if (path.startsWith('/') && window.location.hash) {
+            window.location.hash = path
+            if (title) {
+                document.title = title
+            }
+            this.notifyListeners(path, state)
+            return
+        }
 
+        window.history.pushState(state, title || '', path)
         if (title) {
             document.title = title
         }
-
         this.notifyListeners(path, state)
+    }
+
+    isHashRouting(): boolean {
+        return window.location.hash.startsWith('#/')
     }
 
     replace(path: string, title?: string, data?: any): void {
@@ -53,6 +65,13 @@ export class BrowserHistory {
     }
 
     getCurrentPath(): string {
+        // NOWE: Jeśli mamy hash routing, użyj hash jako path
+        if (window.location.hash && window.location.hash.startsWith('#/')) {
+            const hashPath = window.location.hash.substring(1) // Usuń tylko #
+            return hashPath + window.location.search
+        }
+
+        // Fallback do normalnego pathname
         return window.location.pathname + window.location.search + window.location.hash
     }
 
@@ -62,6 +81,20 @@ export class BrowserHistory {
 
     parseURL(url: string = window.location.href): URLInfo {
         const urlObj = new URL(url, window.location.origin)
+
+        // NOWE: Dla hash routing
+        if (urlObj.hash && urlObj.hash.startsWith('#/')) {
+            const hashPath = urlObj.hash.substring(1)
+            const [pathname, search] = hashPath.split('?')
+
+            return {
+                pathname: pathname,
+                search: search ? '?' + search : '',
+                hash: '',
+                query: this.parseQuery(search || ''),
+                params: {}
+            }
+        }
 
         return {
             pathname: urlObj.pathname,
