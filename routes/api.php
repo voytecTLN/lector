@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\Admin\DashboardController;
 
 // Health check - publiczny endpoint
 Route::get('/health', function () {
@@ -63,40 +64,27 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::put('student/profile', [StudentController::class, 'updateOwnProfile']);
 
             // Student dashboard stats
-            Route::get('student/dashboard-stats', function () {
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'upcoming_lessons' => 0,
-                        'completed_lessons' => 0,
-                        'learning_progress' => 0,
-                        'favorite_tutors' => 0,
-                        'days_learning' => 0,
-                        'total_hours' => 0,
-                        'streak_days' => 0,
-                        'average_rating' => 0,
-                        'next_lesson' => null
-                    ]
-                ]);
-            });
+            Route::get('student/dashboard-stats', [DashboardController::class, 'studentStats']);
         });
 
         // Admin dashboard stats
         Route::middleware('role:admin')->group(function () {
             Route::prefix('admin')->group(function () {
-                Route::get('/dashboard-stats', function () {
+                Route::get('/dashboard-stats', [DashboardController::class, 'adminStats']);
+
+                // NOWE - podstawowe zarządzanie (przekierowania)
+                Route::get('/students', function() {
                     return response()->json([
                         'success' => true,
-                        'data' => [
-                            'users_count' => \App\Models\User::count(),
-                            'tutors' => \App\Models\User::where('role', 'tutor')->count(),
-                            'students' => \App\Models\User::where('role', 'student')->count(),
-                            'moderators' => \App\Models\User::where('role', 'moderator')->count(),
-                            'active_lessons' => 0, // TODO: Implement lessons
-                            'total_revenue' => 0, // TODO: Implement revenue
-                            'total_lessons' => 0,
-                            'pending_approvals' => 0 // TODO: Implement approvals
-                        ]
+                        'message' => 'Przekierowywanie do zarządzania studentami...',
+                        'redirect' => '/admin/students'
+                    ]);
+                });
+                Route::get('/tutors', function() {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Moduł lektorów w przygotowaniu',
+                        'available' => false
                     ]);
                 });
             });
