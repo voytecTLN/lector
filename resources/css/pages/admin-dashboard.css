@@ -356,6 +356,31 @@
     font-size: 0.95rem;
 }
 
+/* resources/css/pages/admin-dashboard.css - DODAJ na końcu */
+
+.admin-action-btn.coming-soon {
+    background: #94a3b8 !important;
+    cursor: not-allowed;
+}
+
+.admin-action-btn.coming-soon:hover {
+    background: #94a3b8 !important;
+    transform: none !important;
+}
+
+.info-item.placeholder {
+    opacity: 0.6;
+}
+
+.info-item.placeholder .info-number {
+    color: #94a3b8;
+}
+
+.info-item.placeholder .info-label::after {
+    content: " 🔧";
+    font-size: 0.8em;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }

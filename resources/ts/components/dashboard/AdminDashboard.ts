@@ -327,64 +327,92 @@ export class AdminDashboard implements RouteComponent {
         const stats = await this.fetchDashboardStats()
 
         return `
-            <!-- Quick Actions -->
-            <div class="admin-quick-actions">
-                <div class="admin-action-card">
-                    <div class="admin-action-icon">👨‍🏫</div>
-                    <h3>Dodaj Lektora</h3>
-                    <p>Dodaj nowego lektora do systemu</p>
-                    <a href="/admin/tutors/add" class="admin-action-btn">Dodaj</a>
-                </div>
-
-                <div class="admin-action-card">
-                    <div class="admin-action-icon">👥</div>
-                    <h3>Dodaj Ucznia</h3>
-                    <p>Zarejestruj nowego ucznia</p>
-                    <a href="/admin/students/add" class="admin-action-btn">Dodaj</a>
-                </div>
-
-                <div class="admin-action-card">
-                    <div class="admin-action-icon">📥</div>
-                    <h3>Import CSV</h3>
-                    <p>Importuj dane z pliku CSV</p>
-                    <a href="/admin/import" class="admin-action-btn">Import</a>
-                </div>
-
-                <div class="admin-action-card">
-                    <div class="admin-action-icon">📊</div>
-                    <h3>Raporty</h3>
-                    <p>Generuj raporty systemu</p>
-                    <a href="/admin/reports" class="admin-action-btn">Generuj</a>
-                </div>
+        <div class="admin-quick-actions">
+            <div class="admin-action-card">
+                <div class="admin-action-icon">👥</div>
+                <h3>Zarządzaj Studentami</h3>
+                <p>Lista i edycja kont studentów</p>
+                <button class="admin-action-btn" onclick="this.navigate('/admin/students')">
+                    Przejdź
+                </button>
             </div>
 
-            <!-- Main Content Area -->
-            <div class="admin-content-area">
-                <div class="welcome-section">
-                    <h2>Witaj w Panelu Administratora!</h2>
-                    <p>Zarządzaj platformą lektorów, dodawaj użytkowników, monitoruj aktywność i generuj raporty.</p>
+            <div class="admin-action-card">
+                <div class="admin-action-icon">👨‍🏫</div>
+                <h3>Zarządzaj Lektorami</h3>
+                <p>Weryfikacja i zarządzanie lektorami</p>
+                <button class="admin-action-btn coming-soon" onclick="this.showComingSoon('Moduł lektorów')">
+                    Wkrótce
+                </button>
+            </div>
 
-                    <div class="system-info">
-                        <div class="info-item">
-                            <span class="info-number" id="stat-tutors">${stats.tutors || 0}</span>
-                            <div class="info-label">Aktywni lektorzy</div>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-number" id="stat-students">${stats.students || 0}</span>
-                            <div class="info-label">Zarejestrowani uczniowie</div>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-number" id="stat-lessons">${stats.total_lessons || 0}</span>
-                            <div class="info-label">Przeprowadzone lekcje</div>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-number" id="stat-revenue">${stats.total_revenue || 0} zł</span>
-                            <div class="info-label">Przychody (miesiąc)</div>
-                        </div>
+            <div class="admin-action-card">
+                <div class="admin-action-icon">📊</div>
+                <h3>Raporty</h3>
+                <p>Generuj szczegółowe raporty</p>
+                <button class="admin-action-btn coming-soon" onclick="this.showComingSoon('Moduł raportów')">
+                    Wkrótce
+                </button>
+            </div>
+
+            <div class="admin-action-card">
+                <div class="admin-action-icon">⚙️</div>
+                <h3>Ustawienia</h3>
+                <p>Konfiguracja platformy</p>
+                <button class="admin-action-btn coming-soon" onclick="this.showComingSoon('Panel ustawień')">
+                    Wkrótce
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content Area - POPRAWIONE statystyki -->
+        <div class="admin-content-area">
+            <div class="welcome-section">
+                <h2>Panel Administratora</h2>
+                <p>Zarządzaj platformą, monitoruj statystyki i dodawaj nowych użytkowników.</p>
+
+                <div class="system-info">
+                    <div class="info-item">
+                        <span class="info-number">${stats.students || 0}</span>
+                        <div class="info-label">Studentów</div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-number">${stats.tutors || 0}</span>
+                        <div class="info-label">Lektorów</div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-number">${stats.verified_users || 0}</span>
+                        <div class="info-label">Zweryfikowanych</div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-number">${stats.new_users_this_month || 0}</span>
+                        <div class="info-label">Nowych w tym miesiącu</div>
+                    </div>
+                    <div class="info-item ${stats.total_lessons === null ? 'placeholder' : ''}">
+                        <span class="info-number">${stats.total_lessons ?? '—'}</span>
+                        <div class="info-label">Lekcje (wkrótce)</div>
+                    </div>
+                    <div class="info-item ${stats.total_revenue === null ? 'placeholder' : ''}">
+                        <span class="info-number">${stats.total_revenue ? stats.total_revenue + ' zł' : '—'}</span>
+                        <div class="info-label">Przychody (wkrótce)</div>
                     </div>
                 </div>
             </div>
-        `
+        </div>`
+    }
+
+    private navigate(path: string): void {
+        window.location.href = path
+    }
+
+    private showComingSoon(feature: string): void {
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `${feature} będzie dostępny w następnej wersji.`,
+                duration: 4000
+            }
+        }))
     }
 
     private getTutorsContent(): string {
@@ -401,7 +429,7 @@ export class AdminDashboard implements RouteComponent {
                 
                 <!-- Tu będzie tabela z lektorami -->
                 <div class="table-container">
-                    <p class="admin-text-muted">Ładowanie listy lektorów...</p>
+                    <p class="admin-text-muted">Tabela</p>
                 </div>
             </div>
         `
@@ -421,7 +449,7 @@ export class AdminDashboard implements RouteComponent {
                 
                 <!-- Tu będzie tabela z uczniami -->
                 <div class="table-container">
-                    <p class="admin-text-muted">Ładowanie listy uczniów...</p>
+                    <p class="admin-text-muted">Tabela</p>
                 </div>
             </div>
         `

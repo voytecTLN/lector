@@ -354,103 +354,105 @@ export class StudentDashboard implements RouteComponent {
 
         // Fetch stats
         const stats = await this.fetchStudentStats()
+        const user = authService.getUser()
 
         return `
-            <!-- Welcome Section -->
-            <div class="welcome-card">
-                <h2>Witaj z powrotem, ${authService.getUser()?.name || 'Studencie'}! 👋</h2>
-                <p>Twoja przygoda z nauką języków trwa już ${stats.days_learning || 0} dni!</p>
-            </div>
+        <!-- Welcome Section - PRAWDZIWE dane -->
+        <div class="welcome-card">
+            <h2>Witaj z powrotem, ${user?.name || 'Studencie'}! 👋</h2>
+            <p>Jesteś z nami już ${stats.days_learning || 0} dni!</p>
+            ${!stats.is_verified ? '<p class="verification-notice">⚠️ Pamiętaj o weryfikacji adresu email</p>' : ''}
+        </div>
 
-            <!-- Quick Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #10b981;">📚</div>
-                    <div class="stat-content">
-                        <div class="stat-number">${stats.completed_lessons || 0}</div>
-                        <div class="stat-label">Ukończonych lekcji</div>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #3b82f6;">⏱️</div>
-                    <div class="stat-content">
-                        <div class="stat-number">${stats.total_hours || 0}h</div>
-                        <div class="stat-label">Godzin nauki</div>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #f59e0b;">🔥</div>
-                    <div class="stat-content">
-                        <div class="stat-number">${stats.streak_days || 0}</div>
-                        <div class="stat-label">Dni z rzędu</div>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #e91e63;">⭐</div>
-                    <div class="stat-content">
-                        <div class="stat-number">${stats.average_rating || 0}/5</div>
-                        <div class="stat-label">Średnia ocena</div>
-                    </div>
+        <!-- Quick Stats - MIX prawdziwych i placeholder -->
+        <div class="stats-grid">
+            <div class="stat-card ${stats.completed_lessons === null ? 'placeholder' : ''}">
+                <div class="stat-icon" style="background: #10b981;">📚</div>
+                <div class="stat-content">
+                    <div class="stat-number">${stats.completed_lessons ?? '—'}</div>
+                    <div class="stat-label">Ukończonych lekcji</div>
                 </div>
             </div>
 
-            <!-- Next Lesson -->
-            <div class="student-content-area" style="margin-top: 2rem;">
-                <h3>Następna lekcja</h3>
-                ${stats.next_lesson ? `
-                    <div class="next-lesson-card">
-                        <div class="lesson-time">
-                            <div class="lesson-date">📅 ${stats.next_lesson.date}</div>
-                            <div class="lesson-hour">🕐 ${stats.next_lesson.time}</div>
-                        </div>
-                        <div class="lesson-details">
-                            <div class="lesson-teacher">👨‍🏫 ${stats.next_lesson.tutor}</div>
-                            <div class="lesson-subject">📖 ${stats.next_lesson.subject}</div>
-                        </div>
-                        <div class="lesson-actions">
-                            <button class="student-btn-primary">Dołącz do lekcji</button>
-                            <button class="student-btn-secondary">Zobacz szczegóły</button>
-                        </div>
-                    </div>
-                ` : `
-                    <p class="no-lessons">Nie masz zaplanowanych lekcji. <a href="#rezerwuj">Zarezerwuj lekcję</a></p>
-                `}
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="student-quick-actions" style="margin-top: 2rem;">
-                <div class="student-action-card">
-                    <div class="student-action-icon" style="background: #10b981;">📅</div>
-                    <h3>Zarezerwuj lekcję</h3>
-                    <p>Wybierz termin i lektora</p>
-                    <a href="#rezerwuj" class="student-action-btn">Rezerwuj</a>
-                </div>
-
-                <div class="student-action-card">
-                    <div class="student-action-icon" style="background: #3b82f6;">📊</div>
-                    <h3>Sprawdź postępy</h3>
-                    <p>Zobacz swoje osiągnięcia</p>
-                    <a href="#postepy" class="student-action-btn">Zobacz</a>
-                </div>
-
-                <div class="student-action-card">
-                    <div class="student-action-icon" style="background: #f59e0b;">📖</div>
-                    <h3>Materiały</h3>
-                    <p>Pobierz materiały do nauki</p>
-                    <a href="#materialy" class="student-action-btn">Przeglądaj</a>
-                </div>
-
-                <div class="student-action-card">
-                    <div class="student-action-icon" style="background: #e91e63;">💳</div>
-                    <h3>Dokup godziny</h3>
-                    <p>Przedłuż swój pakiet</p>
-                    <a href="#pakiet" class="student-action-btn">Kup</a>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #3b82f6;">📅</div>
+                <div class="stat-content">
+                    <div class="stat-number">${stats.days_learning || 0}</div>
+                    <div class="stat-label">Dni nauki</div>
                 </div>
             </div>
-        `
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #f59e0b;">🌍</div>
+                <div class="stat-content">
+                    <div class="stat-number">${(stats.learning_languages || []).length}</div>
+                    <div class="stat-label">Języków w nauce</div>
+                </div>
+            </div>
+
+            <div class="stat-card ${stats.average_rating === null ? 'placeholder' : ''}">
+                <div class="stat-icon" style="background: #e91e63;">⭐</div>
+                <div class="stat-content">
+                    <div class="stat-number">${stats.average_rating ?? '—'}</div>
+                    <div class="stat-label">Średnia ocena</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Next Lesson - placeholder z info -->
+        <div class="student-content-area" style="margin-top: 2rem;">
+            <h3>Następna lekcja</h3>
+            <div class="next-lesson-placeholder">
+                <p>🔧 Moduł lekcji będzie dostępny wkrótce</p>
+                <p>Na razie możesz zaktualizować swój profil i cele nauki.</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions - działające + coming soon -->
+        <div class="student-quick-actions" style="margin-top: 2rem;">
+            <div class="student-action-card">
+                <div class="student-action-icon" style="background: #3b82f6;">👤</div>
+                <h3>Mój profil</h3>
+                <p>Edytuj dane i preferencje</p>
+                <button class="student-action-btn" onclick="this.loadSection('profil')">Zobacz</button>
+            </div>
+
+            <div class="student-action-card">
+                <div class="student-action-icon" style="background: #10b981;">🎯</div>
+                <h3>Cele nauki</h3>
+                <p>Ustaw swoje cele językowe</p>
+                <button class="student-action-btn" onclick="this.loadSection('cele')">Ustaw</button>
+            </div>
+
+            <div class="student-action-card">
+                <div class="student-action-icon" style="background: #f59e0b;">📅</div>
+                <h3>Zarezerwuj lekcję</h3>
+                <p>Znajdź lektora i ustaw termin</p>
+                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Rezerwacja lekcji')">Wkrótce</button>
+            </div>
+
+            <div class="student-action-card">
+                <div class="student-action-icon" style="background: #e91e63;">📊</div>
+                <h3>Moje postępy</h3>
+                <p>Śledź swój rozwój</p>
+                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Moduł postępów')">Wkrótce</button>
+            </div>
+        </div>`
+    }
+
+    private loadSection(section: string): void {
+        this.updateURL(section)
+        this.loadContent(section)
+    }
+
+    private showComingSoon(feature: string): void {
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `${feature} będzie dostępny w następnej wersji.`,
+                duration: 4000
+            }
+        }))
     }
 
     private getUpcomingLessonsContent(): string {
