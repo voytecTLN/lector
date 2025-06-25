@@ -42,8 +42,8 @@ export class LoginPage implements RouteComponent {
                         </div>
                         <div class="form-options">
                             <div class="remember-me">
-                                <input type="checkbox" id="remember" name="remember">
-                                <label for="remember">Zapamiętaj mnie</label>
+                                <input type="checkbox" id="remember" name="remember" hidden="">
+<!--                                <label for="remember">Zapamiętaj mnie</label>-->
                             </div>
                         </div>
                         <button type="submit" class="login-btn" id="loginButton">

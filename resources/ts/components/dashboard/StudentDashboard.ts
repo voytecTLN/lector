@@ -55,12 +55,12 @@ export class StudentDashboard implements RouteComponent {
 
                     <div class="student-nav-section">Moja Nauka</div>
 
-                    <li class="student-nav-item">
-                        <a href="#postepy" class="student-nav-link" data-section="postepy">
-                            <span class="student-nav-icon">📊</span>
-                            Moje postępy
-                        </a>
-                    </li>
+<!--                    <li class="student-nav-item">-->
+<!--                        <a href="#postepy" class="student-nav-link" data-section="postepy">-->
+<!--                            <span class="student-nav-icon">📊</span>-->
+<!--                            Moje postępy-->
+<!--                        </a>-->
+<!--                    </li>-->
 
                     <li class="student-nav-item">
                         <a href="#materialy" class="student-nav-link" data-section="materialy">
@@ -69,29 +69,29 @@ export class StudentDashboard implements RouteComponent {
                         </a>
                     </li>
 
-                    <li class="student-nav-item">
-                        <a href="#zadania" class="student-nav-link" data-section="zadania">
-                            <span class="student-nav-icon">📝</span>
-                            Zadania domowe
-                            <span class="student-nav-badge student-nav-badge-warning" id="homework-count">0</span>
-                        </a>
-                    </li>
+<!--                    <li class="student-nav-item">-->
+<!--                        <a href="#zadania" class="student-nav-link" data-section="zadania">-->
+<!--                            <span class="student-nav-icon">📝</span>-->
+<!--                            Zadania domowe-->
+<!--                            <span class="student-nav-badge student-nav-badge-warning" id="homework-count">0</span>-->
+<!--                        </a>-->
+<!--                    </li>-->
 
-                    <div class="student-nav-section">Pakiety i Płatności</div>
+<!--                    <div class="student-nav-section">Pakiety i Płatności</div>-->
 
-                    <li class="student-nav-item">
-                        <a href="#pakiet" class="student-nav-link" data-section="pakiet">
-                            <span class="student-nav-icon">💳</span>
-                            Mój pakiet godzin
-                        </a>
-                    </li>
+<!--                    <li class="student-nav-item">-->
+<!--                        <a href="#pakiet" class="student-nav-link" data-section="pakiet">-->
+<!--                            <span class="student-nav-icon">💳</span>-->
+<!--                            Mój pakiet godzin-->
+<!--                        </a>-->
+<!--                    </li>-->
 
-                    <li class="student-nav-item">
-                        <a href="#platnosci" class="student-nav-link" data-section="platnosci">
-                            <span class="student-nav-icon">💰</span>
-                            Historia płatności
-                        </a>
-                    </li>
+<!--                    <li class="student-nav-item">-->
+<!--                        <a href="#platnosci" class="student-nav-link" data-section="platnosci">-->
+<!--                            <span class="student-nav-icon">💰</span>-->
+<!--                            Historia płatności-->
+<!--                        </a>-->
+<!--                    </li>-->
 
                     <div class="student-nav-section">Konto</div>
 
@@ -109,12 +109,12 @@ export class StudentDashboard implements RouteComponent {
                         </a>
                     </li>
 
-                    <li class="student-nav-item">
-                        <a href="#pomoc" class="student-nav-link" data-section="pomoc">
-                            <span class="student-nav-icon">❓</span>
-                            Pomoc
-                        </a>
-                    </li>
+<!--                    <li class="student-nav-item">-->
+<!--                        <a href="#pomoc" class="student-nav-link" data-section="pomoc">-->
+<!--                            <span class="student-nav-icon">❓</span>-->
+<!--                            Pomoc-->
+<!--                        </a>-->
+<!--                    </li>-->
                 </ul>
             </nav>
 
