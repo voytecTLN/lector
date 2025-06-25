@@ -1,4 +1,5 @@
 import { authService } from '@services/AuthService'
+import { redirectWithMessage } from '@/utils/navigation'
 import type { RouteComponent } from '@router/routes'
 
 export class ResetPasswordPage implements RouteComponent {
@@ -63,8 +64,11 @@ export class ResetPasswordPage implements RouteComponent {
             })
 
             // Przekieruj na login z komunikatem
-            window.location.href = '/#/login?message=' + encodeURIComponent('Hasło zostało zmienione pomyślnie. Możesz się teraz zalogować.') + '&type=success'
-
+            redirectWithMessage(
+                '/#/login',
+                'Hasło zostało zmienione pomyślnie. Możesz się teraz zalogować.',
+                'success'
+            )
         } catch (err: any) {
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {

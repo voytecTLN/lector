@@ -35,6 +35,11 @@ export class AuthGuard implements RouteGuard {
 
         // Route requires authentication but user is not logged in
         if (requiresAuth && !isAuthenticated) {
+            // NOWE: Zapisz intended URL
+            if (window.router) {
+                window.router.setIntendedUrl(context.to.path)
+            }
+
             return {
                 allowed: false,
                 redirect: '/login',
@@ -257,8 +262,23 @@ export class SessionGuard implements RouteGuard {
     name = 'session'
 
     async execute(context: GuardContext): Promise<GuardResult> {
+        // Sprawdź czy trasa wymaga autoryzacji
+        const requiresAuth = context.to.route.meta?.requiresAuth
+        const requiresVerification = context.to.route.meta?.requiresVerification
+
+        // Jeśli trasa nie wymaga autoryzacji, pozwól przejść
+        if (!requiresAuth && !requiresVerification) {
+            return { allowed: true }
+        }
+
+        // Teraz sprawdzamy sesję tylko dla chronionych tras
         const token = authService.getToken()
         const user = authService.getUser()
+
+        // Jeśli nie ma tokenu, pozwól innym guardom obsłużyć to
+        if (!token) {
+            return { allowed: true }
+        }
 
         // Jeśli mamy token ale nie mamy użytkownika, spróbuj pobrać dane
         if (token && !user) {
@@ -273,13 +293,11 @@ export class SessionGuard implements RouteGuard {
                 // Wyczyść nieważne dane
                 authService.logout()
 
-                // Przekieruj na login tylko jeśli trasa wymaga autoryzacji
-                if (context.to.route.meta?.requiresAuth) {
-                    return {
-                        allowed: false,
-                        redirect: '/login',
-                        message: 'Sesja wygasła. Zaloguj się ponownie.'
-                    }
+                // Dla chronionych tras zwróć błąd
+                return {
+                    allowed: false,
+                    redirect: '/login',
+                    message: 'Sesja wygasła. Zaloguj się ponownie.'
                 }
             }
         }
@@ -290,13 +308,13 @@ export class SessionGuard implements RouteGuard {
 
 // Default guards that will be applied to all routes
 export const defaultGuards: RouteGuard[] = [
-    new SessionGuard(),
-    new AuthGuard(),
-    new AccountStatusGuard(),
-    new VerificationGuard(),
-    new RoleGuard(),
-    new PermissionGuard(),
-    new DevelopmentGuard()
+    new DevelopmentGuard(),    // Najpierw sprawdź tryb dev
+    new SessionGuard(),        // Potem sesję (tylko dla chronionych tras)
+    new AuthGuard(),          // Potem autoryzację
+    new AccountStatusGuard(), // Status konta
+    new VerificationGuard(),  // Weryfikację
+    new RoleGuard(),          // Role
+    new PermissionGuard()     // Na końcu uprawnienia
 ]
 
 // Helper function to create custom guard

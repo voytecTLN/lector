@@ -313,6 +313,59 @@ class AuthController extends Controller
         }
     }
 
+    public function resendVerificationPublic(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email'
+        ]);
+
+        $email = $request->input('email');
+
+        // Rate limiting per email
+        $key = 'resend-verification-public:' . $email;
+        if (RateLimiter::tooManyAttempts($key, 2)) {
+            $seconds = RateLimiter::availableIn($key);
+            $minutes = ceil($seconds / 60);
+
+            return response()->json([
+                'success' => false,
+                'message' => "Zbyt wiele prób. Możesz wysłać email ponownie za {$minutes} minut."
+            ], 429);
+        }
+
+        try {
+            $user = User::where('email', $email)->first();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nie znaleziono użytkownika z tym adresem email.'
+                ], 404);
+            }
+
+            if ($user->hasVerifiedEmail()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email jest już zweryfikowany.'
+                ], 400);
+            }
+
+            $this->authService->resendVerificationEmail($user);
+            RateLimiter::hit($key, 3600); // 60 minut
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email weryfikacyjny został wysłany ponownie.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Błąd podczas wysyłania emaila.'
+            ], 500);
+        }
+    }
+
     /**
      * Resend email verification
      */

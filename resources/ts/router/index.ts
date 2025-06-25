@@ -10,6 +10,8 @@ export class Router {
     private guards: RouteGuard[] = []
     private isNavigating: boolean = false
     private navigationQueue: Array<() => Promise<void>> = []
+    private intendedUrl: string | null = null
+    private guardExecutions: Map<string, number> = new Map()
 
     constructor() {
         this.history = new BrowserHistory()
@@ -22,11 +24,16 @@ export class Router {
         // Find app container
         this.appContainer = document.getElementById('app')
         if (!this.appContainer) {
-            throw new Error('App container not found. Make sure you have <div id="app"></div> in your HTML.')
+            throw new Error('App container not found')
         }
 
         // Listen to history changes
         this.history.addListener(this.handleRouteChange.bind(this))
+
+        // NOWE: Listen to hash changes
+        window.addEventListener('hashchange', () => {
+            this.handleRouteChange(this.history.getCurrentPath())
+        })
 
         // Handle initial route
         await this.handleRouteChange(this.history.getCurrentPath())
@@ -143,7 +150,13 @@ export class Router {
 
     async handleRouteChange(path: string): Promise<void> {
         if (this.isNavigating) return
-        await this.navigate(path, true)
+
+        let routePath = path
+        if (window.location.hash && window.location.hash.startsWith('#/')) {
+            routePath = window.location.hash.substring(1)
+        }
+
+        await this.navigate(routePath, true)
     }
 
     handlePopState(event: PopStateEvent): void {
@@ -158,13 +171,29 @@ export class Router {
 
         console.log(`🛡️ Running guards for route: ${route.route.name}`)
 
+        // NOWE: Reset guard execution tracking
+        this.guardExecutions.clear()
+
         // Run route-specific guards first (if any)
         if (route.route.guards && route.route.guards.length > 0) {
             console.log(`🔒 Running ${route.route.guards.length} route-specific guards`)
             for (const guard of route.route.guards) {
-                console.log(`🛡️ Executing route guard: ${guard.name}`)
+                // NOWE: Track executions
+                const execCount = (this.guardExecutions.get(guard.name) || 0) + 1
+                this.guardExecutions.set(guard.name, execCount)
+
+                if (execCount > 1) {
+                    console.warn(`⚠️ Guard '${guard.name}' executed ${execCount} times!`)
+                }
+
+                console.log(`🛡️ Executing route guard: ${guard.name} (execution #${execCount})`)
                 try {
+                    const start = performance.now()
                     const result = await guard.execute(context)
+                    const duration = performance.now() - start
+
+                    console.log(`⏱️ Guard '${guard.name}' took ${duration.toFixed(2)}ms`)
+
                     if (!result.allowed) {
                         console.log(`🚫 Route guard '${guard.name}' blocked navigation:`, result)
                         return result
@@ -183,9 +212,22 @@ export class Router {
         // Run global guards
         console.log(`🌍 Running ${this.guards.length} global guards`)
         for (const guard of this.guards) {
-            console.log(`🛡️ Executing global guard: ${guard.name}`)
+            // NOWE: Track executions
+            const execCount = (this.guardExecutions.get(guard.name) || 0) + 1
+            this.guardExecutions.set(guard.name, execCount)
+
+            if (execCount > 1) {
+                console.warn(`⚠️ Guard '${guard.name}' executed ${execCount} times!`)
+            }
+
+            console.log(`🛡️ Executing global guard: ${guard.name} (execution #${execCount})`)
             try {
+                const start = performance.now()
                 const result = await guard.execute(context)
+                const duration = performance.now() - start
+
+                console.log(`⏱️ Guard '${guard.name}' took ${duration.toFixed(2)}ms`)
+
                 if (!result.allowed) {
                     console.log(`🚫 Global guard '${guard.name}' blocked navigation:`, result)
                     return result
@@ -200,7 +242,10 @@ export class Router {
             }
         }
 
+        // NOWE: Log summary
         console.log(`✅ All guards passed for: ${route.route.name}`)
+        console.log(`📊 Guard execution summary:`, Object.fromEntries(this.guardExecutions))
+
         return { allowed: true }
     }
 
@@ -426,6 +471,69 @@ export class Router {
             console.log('🔍 Router Debug Mode Enabled')
             console.log('Current route:', this.currentRoute)
             console.log('Registered guards:', this.guards.map(g => g.name))
+            console.log('Guard execution count:', Object.fromEntries(this.guardExecutions))
+            console.log('Navigation queue length:', this.navigationQueue.length)
+            console.log('Is navigating:', this.isNavigating)
+            console.log('Intended URL:', this.intendedUrl)
+
+            //NOWE: Enable verbose logging
+            window.__ROUTER_DEBUG__ = true
+        } else {
+            (window as any).__ROUTER_DEBUG__ = false
         }
+    }
+
+    // Centralized redirect handling
+    public redirectWithMessage(path: string, message?: string, type: 'success' | 'error' | 'warning' | 'info' = 'info'): void {
+        // NOWE: Obsługa hash routing
+        if (!path.startsWith('http') && !path.includes('#') && this.history.isHashRouting()) {
+            path = '#' + path
+        }
+
+        const url = new URL(path, window.location.origin)
+
+        if (message) {
+            // Dla hash routing, dodaj parametry po hashu
+            if (path.includes('#')) {
+                const [base, hash] = path.split('#')
+                const separator = hash.includes('?') ? '&' : '?'
+                path = `${base}#${hash}${separator}message=${encodeURIComponent(message)}&type=${type}`
+            } else {
+                url.searchParams.set('message', message)
+                url.searchParams.set('type', type)
+                path = url.href
+            }
+        }
+
+        console.log(`🔄 Redirecting with message to: ${path}`)
+        window.location.href = path
+    }
+
+// Save intended URL before redirecting to login
+    public setIntendedUrl(url?: string): void {
+        this.intendedUrl = url || this.history.getCurrentPath()
+        localStorage.setItem('intended_url', this.intendedUrl)
+        console.log(`💾 Saved intended URL: ${this.intendedUrl}`)
+    }
+
+// Get and clear intended URL
+    public getIntendedUrl(): string | null {
+        const url = this.intendedUrl || localStorage.getItem('intended_url')
+        if (url) {
+            this.intendedUrl = null
+            localStorage.removeItem('intended_url')
+            console.log(`📍 Retrieved intended URL: ${url}`)
+        }
+        return url
+    }
+
+// Check if we should redirect to intended URL after login
+    public handlePostLoginRedirect(defaultPath: string): string {
+        const intended = this.getIntendedUrl()
+        if (intended && intended !== '/login' && intended !== '/register') {
+            console.log(`↩️ Redirecting to intended URL: ${intended}`)
+            return intended
+        }
+        return defaultPath
     }
 }

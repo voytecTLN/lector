@@ -1,5 +1,6 @@
 // resources/ts/components/auth/EmailVerificationPage.ts
 import type { RouteComponent } from '@router/routes'
+import { redirectWithMessage } from '@/utils/navigation'
 import { authService } from '@services/AuthService'
 
 export class EmailVerificationPage implements RouteComponent {
@@ -98,56 +99,50 @@ export class EmailVerificationPage implements RouteComponent {
         resendLink?.addEventListener('click', async (e) => {
             e.preventDefault()
 
-            // Sprawdź czy użytkownik jest zalogowany
-            if (!authService.isAuthenticated()) {
-                // Show error message
-                const alertDiv = document.createElement('div')
-                alertDiv.className = 'alert alert-warning alert-dismissible fade show mt-3'
-                alertDiv.innerHTML = `
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    Musisz być zalogowany aby wysłać email ponownie.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `
-                const cardBody = container.querySelector('.card-body')
-                cardBody?.appendChild(alertDiv)
-
-                // Auto-dismiss after 5 seconds
-                setTimeout(() => alertDiv.remove(), 5000)
-                return
-            }
+            // Poproś o email
+            const email = prompt('Podaj adres email użyty podczas rejestracji:')
+            if (!email) return
 
             try {
-                await authService.resendVerification()
+                const response = await fetch('/api/auth/resend-verification-public', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ email })
+                })
 
-                // Show success message
-                const alertDiv = document.createElement('div')
-                alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3'
-                alertDiv.innerHTML = `
-                    <i class="bi bi-check-circle me-2"></i>
-                    Email weryfikacyjny został wysłany ponownie.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `
+                const data = await response.json()
 
-                const cardBody = container.querySelector('.card-body')
-                cardBody?.appendChild(alertDiv)
+                if (data.success) {
+                    // Show success message
+                    const alertDiv = document.createElement('div')
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3'
+                    alertDiv.innerHTML = `
+                <i class="bi bi-check-circle me-2"></i>
+                Email weryfikacyjny został wysłany ponownie.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `
+                    const cardBody = container.querySelector('.card-body')
+                    cardBody?.appendChild(alertDiv)
+                    setTimeout(() => alertDiv.remove(), 5000)
+                } else {
+                    throw new Error(data.message || 'Wystąpił błąd')
+                }
 
-                // Auto-dismiss after 5 seconds
-                setTimeout(() => alertDiv.remove(), 5000)
-            } catch (error) {
-                console.error('Error resending verification email:', error)
-
+            } catch (error: any) {
                 // Show error message
                 const alertDiv = document.createElement('div')
                 alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3'
                 alertDiv.innerHTML = `
-                    <i class="bi bi-exclamation-circle me-2"></i>
-                    Wystąpił błąd podczas wysyłania emaila.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `
+            <i class="bi bi-exclamation-circle me-2"></i>
+            ${error.message || 'Wystąpił błąd podczas wysyłania emaila.'}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `
                 const cardBody = container.querySelector('.card-body')
                 cardBody?.appendChild(alertDiv)
-
-                // Auto-dismiss after 5 seconds
                 setTimeout(() => alertDiv.remove(), 5000)
             }
         })
