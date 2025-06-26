@@ -14,19 +14,19 @@ Route::get('/health', function () {
 // Authentication routes (publiczne - bez middleware auth)
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])
-        ->middleware('throttle:5,1') // 5 attempts per minute
+//         ->middleware('throttle:5,1') // 5 attempts per minute
         ->name('api.auth.login');
 
     Route::post('/register', [AuthController::class, 'register'])
-        ->middleware('throttle:3,10') // 3 attempts per 10 minutes
+//         ->middleware('throttle:3,10') // 3 attempts per 10 minutes
         ->name('api.auth.register');
 
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
-        ->middleware('throttle:3,60') // 3 attempts per hour
+//         ->middleware('throttle:3,60') // 3 attempts per hour
         ->name('api.auth.forgot-password');
 
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])
-        ->middleware('throttle:5,10') // 5 attempts per 10 minutes
+//         ->middleware('throttle:5,10') // 5 attempts per 10 minutes
         ->name('api.auth.reset-password');
 
     // POPRAWIONE - weryfikacja emaila jako POST (dla frontend)

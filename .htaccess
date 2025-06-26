@@ -1,0 +1,41 @@
+# AuthType Basic
+# AuthName "Platforma Lektorow - dostep chroniony"
+# AuthUserFile /home/admin/.htpasswd/tutor
+# Require valid-user
+
+# Wyjatki z Basic Auth
+# SetEnvIf Request_URI "^/api" noauth=1
+# SetEnvIf Request_URI "^/admin" noauth=1
+# SetEnvIf Request_URI "^/student/dashboard" noauth=1
+# SetEnvIf Request_URI "^/favicon.ico$" noauth=1
+
+# <RequireAll>
+#     Require env noauth
+#     Require valid-user
+# </RequireAll>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+    # Bez www
+    RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+    RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<Files ~ "\.(env|json|config|yaml|yml)$">
+    Order allow,deny
+    Deny from all
+</Files>
