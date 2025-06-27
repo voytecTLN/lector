@@ -1,0 +1,20 @@
+User-agent: *
+Disallow: /app/
+Disallow: /bootstrap/
+Disallow: /config/
+Disallow: /database/
+Disallow: /lang/
+Disallow: /resources/
+Disallow: /routes/
+Disallow: /storage/
+Disallow: /tests/
+Disallow: /vendor/
+Disallow: /releases/
+Disallow: /shared/
+Disallow: /.env
+Disallow: /composer.json
+Disallow: /package.json
+Disallow: /*.sql
+Disallow: /*.log
+
+# Sitemap: https://telenauka.pl/sitemap.xml
