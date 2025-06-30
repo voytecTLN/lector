@@ -3,6 +3,9 @@
 /node_modules
 /public/hot
 /public/build
+/build
+index.php
+composer.phar
 
 /bootstrap/cache/*
 !/bootstrap/cache/.gitkeep
