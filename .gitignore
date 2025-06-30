@@ -4,6 +4,7 @@
 /public/hot
 /public/build
 /build
+index.php
 
 /bootstrap/cache/*
 !/bootstrap/cache/.gitkeep
