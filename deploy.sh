@@ -55,8 +55,17 @@ git pull origin $TAG_OR_BRANCH
 echo -e "${GREEN}✅ Repozytorium zaktualizowane${NC}"
 
 # -------------------------------------------
-echo -e "${GREEN}📦 Composer install${NC}"
-composer.phar install --no-dev --optimize-autoloader
+echo -e "${GREEN}📦 Sprawdzam composer.phar${NC}"
+if [ ! -f "composer.phar" ]; then
+    echo -e "${YELLOW}⚠️  composer.phar nie znaleziony – pobieram...${NC}"
+    curl -sS https://getcomposer.org/installer | php
+    echo -e "${GREEN}✅ composer.phar pobrany${NC}"
+else
+    echo -e "${GREEN}✅ composer.phar już istnieje${NC}"
+fi
+
+echo -e "${GREEN}📚 Instaluję composer dependencies${NC}"
+php composer.phar install --no-dev --optimize-autoloader
 
 # -------------------------------------------
 echo -e "${GREEN}📦 NPM install & build${NC}"
