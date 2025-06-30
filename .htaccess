@@ -2,6 +2,11 @@
 # ZABEZPIECZENIA - MUSI BYĆ NA POCZĄTKU
 # ==================================================================
 
+# Blokuj dostęp do plików .sh - szczególnie deploy.sh
+<FilesMatch "\.sh$">
+    Require all denied
+</FilesMatch>
+
 # Wyłącz listowanie katalogów
 Options -Indexes -MultiViews +FollowSymLinks
 
