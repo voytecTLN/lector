@@ -4,6 +4,8 @@
 /public/hot
 /public/build
 /build
+
+# Deployment required
 index.php
 composer.phar
 deploy.sh
