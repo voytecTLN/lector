@@ -56,7 +56,7 @@ echo -e "${GREEN}✅ Repozytorium zaktualizowane${NC}"
 
 # -------------------------------------------
 echo -e "${GREEN}📦 Composer install${NC}"
-~/bin/composer install --no-dev --optimize-autoloader
+composer.phar install --no-dev --optimize-autoloader
 
 # -------------------------------------------
 echo -e "${GREEN}📦 NPM install & build${NC}"
