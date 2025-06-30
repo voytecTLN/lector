@@ -6,6 +6,7 @@
 /build
 index.php
 composer.phar
+deploy.sh
 
 /bootstrap/cache/*
 !/bootstrap/cache/.gitkeep
