@@ -45,7 +45,7 @@ git fetch --all --tags --prune
 
 echo -e "${GREEN}🌀 Resetuję lokalny stan...${NC}"
 git reset --hard
-git clean -fd
+#git clean -fd
 
 echo -e "${GREEN}✅ Checkout branch/tag: $TAG_OR_BRANCH${NC}"
 git checkout $TAG_OR_BRANCH
