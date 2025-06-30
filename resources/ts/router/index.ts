@@ -42,9 +42,17 @@ export class Router {
     }
 
     async navigate(path: string, replace: boolean = false): Promise<boolean> {
+        console.log(`🧭 Router.navigate() called:`, {
+            path,
+            replace,
+            currentPath: this.history.getCurrentPath(),
+            isNavigating: this.isNavigating,
+            queueLength: this.navigationQueue.length
+        })
+
         // Queue navigation if already navigating
         if (this.isNavigating) {
-            console.warn('Navigation already in progress, queueing new navigation')
+            console.warn('⚠️ Navigation already in progress, queueing new navigation:', path)
             return new Promise((resolve) => {
                 this.navigationQueue.push(async () => {
                     const result = await this.navigate(path, replace)
@@ -53,13 +61,19 @@ export class Router {
             })
         }
 
-        console.log(`🧭 Navigating to: ${path}`)
+        console.log(`🧭 Starting navigation to: ${path}`)
 
         try {
             this.isNavigating = true
 
             // Match route
             const matchedRoute = RouteMatcher.match(path, routes)
+            console.log(`🧭 Route matching result:`, {
+                matched: !!matchedRoute,
+                routeName: matchedRoute?.route.name,
+                routePath: matchedRoute?.route.path
+            })
+
             if (!matchedRoute) {
                 console.error(`❌ Route not found: ${path}`)
                 await this.handleNotFound(path)
@@ -67,6 +81,7 @@ export class Router {
             }
 
             console.log(`✅ Route matched: ${matchedRoute.route.name}`)
+            console.log(`📋 Route meta:`, matchedRoute.route.meta)
 
             // Run guards BEFORE loading component
             const guardResult = await this.runGuards(matchedRoute)
@@ -484,29 +499,81 @@ export class Router {
     }
 
     // Centralized redirect handling
+    // Centralized redirect handling
     public redirectWithMessage(path: string, message?: string, type: 'success' | 'error' | 'warning' | 'info' = 'info'): void {
-        // NOWE: Obsługa hash routing
-        if (!path.startsWith('http') && !path.includes('#') && this.history.isHashRouting()) {
-            path = '#' + path
-        }
+        console.log(`🔄 Router.redirectWithMessage called:`, { path, message, type })
 
-        const url = new URL(path, window.location.origin)
+        let finalUrl: string = path
 
-        if (message) {
-            // Dla hash routing, dodaj parametry po hashu
-            if (path.includes('#')) {
-                const [base, hash] = path.split('#')
-                const separator = hash.includes('?') ? '&' : '?'
-                path = `${base}#${hash}${separator}message=${encodeURIComponent(message)}&type=${type}`
+        // Obsługa hash routing
+        if (path.startsWith('/#')) {
+            console.log(`📍 Hash routing detected`)
+
+            if (message) {
+                // Rozdziel base path i hash
+                const hashPart = path.substring(2) // Usuń '/#'
+                const separator = hashPart.includes('?') ? '&' : '?'
+
+                finalUrl = `/#${hashPart}${separator}message=${encodeURIComponent(message)}&type=${type}`
+            }
+
+            console.log(`🔗 Hash routing redirect to: ${finalUrl}`)
+            window.location.href = finalUrl
+
+        } else if (path.startsWith('http')) {
+            // Absolute URL
+            console.log(`📍 Absolute URL detected`)
+
+            try {
+                const url = new URL(path)
+                if (message) {
+                    url.searchParams.set('message', message)
+                    url.searchParams.set('type', type)
+                }
+                finalUrl = url.href
+            } catch (error) {
+                console.error('❌ Invalid URL:', error)
+                finalUrl = path
+            }
+
+            console.log(`🔗 Absolute URL redirect to: ${finalUrl}`)
+            window.location.href = finalUrl
+
+        } else {
+            // Relative path - sprawdź czy jesteśmy w hash routing mode
+            console.log(`📍 Relative path detected`)
+
+            if (this.history.isHashRouting() || window.location.hash.startsWith('#/')) {
+                // Jesteśmy w hash mode
+                finalUrl = `/#${path.startsWith('/') ? path : '/' + path}`
+
+                if (message) {
+                    const separator = path.includes('?') ? '&' : '?'
+                    finalUrl += `${separator}message=${encodeURIComponent(message)}&type=${type}`
+                }
+
+                console.log(`🔗 Hash mode redirect to: ${finalUrl}`)
+                window.location.href = finalUrl
+
             } else {
-                url.searchParams.set('message', message)
-                url.searchParams.set('type', type)
-                path = url.href
+                // Normal routing
+                try {
+                    const url = new URL(path, window.location.origin)
+                    if (message) {
+                        url.searchParams.set('message', message)
+                        url.searchParams.set('type', type)
+                    }
+                    finalUrl = url.href
+
+                    console.log(`🔗 Normal mode redirect to: ${finalUrl}`)
+                    window.location.href = finalUrl
+
+                } catch (error) {
+                    console.error('❌ Failed to build URL:', error)
+                    window.location.href = path
+                }
             }
         }
-
-        console.log(`🔄 Redirecting with message to: ${path}`)
-        window.location.href = path
     }
 
 // Save intended URL before redirecting to login

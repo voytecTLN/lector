@@ -62,6 +62,8 @@ export class RegisterPage implements RouteComponent {
         button.disabled = true
 
         try {
+            console.log('📝 RegisterPage: Starting registration...')
+
             const response = await authService.register({
                 name: (this.form.querySelector('#name') as HTMLInputElement).value,
                 email: (this.form.querySelector('#email') as HTMLInputElement).value,
@@ -73,20 +75,32 @@ export class RegisterPage implements RouteComponent {
                 terms_accepted: true
             })
 
+            console.log('📝 RegisterPage: Registration response:', response)
+            console.log('📝 RegisterPage: requires_verification =', response.data?.requires_verification)
+
             // Sprawdź czy użytkownik wymaga weryfikacji
             if (response.data?.requires_verification) {
+                console.log('📝 RegisterPage: User requires verification, redirecting to /verify-email')
+                console.log('📝 RegisterPage: Current URL before redirect:', window.location.href)
+
                 // Przekieruj na stronę weryfikacji emaila
                 redirectWithMessage(
                     '/#/verify-email',
                     'Konto zostało utworzone. Sprawdź email w celu weryfikacji.',
                     'success'
                 )
+
+                console.log('📝 RegisterPage: redirectWithMessage called, waiting for redirect...')
             } else {
+                console.log('📝 RegisterPage: User does not require verification, redirecting to /login')
+
                 // Jeśli nie wymaga weryfikacji (edge case), przekieruj na login
                 redirectWithMessage('/#/login', 'Konto utworzone. Możesz się zalogować.', 'success')
             }
 
         } catch (err: any) {
+            console.error('❌ RegisterPage: Registration error:', err)
+
             // Wyświetl błąd jako notyfikację
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {

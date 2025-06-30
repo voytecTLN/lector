@@ -23,6 +23,20 @@ export class AuthGuard implements RouteGuard {
     name = 'auth'
 
     execute(context: GuardContext): GuardResult {
+        console.log(`🛡️ AuthGuard: Checking route "${context.to.route.name}"`, {
+            path: context.to.path,
+            requiresAuth: context.to.route.meta?.requiresAuth,
+            requiresGuest: context.to.route.meta?.requiresGuest,
+            isAuthenticated: authService.isAuthenticated()
+        })
+
+        // NOWE: Specjalna obsługa dla stron związanych z weryfikacją
+        const verificationRoutes = ['verify-email', 'resend-verification']
+        if (verificationRoutes.includes(context.to.route.name)) {
+            console.log(`✅ AuthGuard: Allowing access to ${context.to.route.name} (verification route)`)
+            return { allowed: true }
+        }
+
         const isAuthenticated = authService.isAuthenticated()
         const requiresAuth = context.to.route.meta?.requiresAuth
         const requiresGuest = context.to.route.meta?.requiresGuest
@@ -78,6 +92,11 @@ export class VerificationGuard implements RouteGuard {
     name = 'verification'
 
     execute(context: GuardContext): GuardResult {
+        console.log(`✅ VerificationGuard: Checking route "${context.to.route.name}"`, {
+            path: context.to.path,
+            requiresVerification: context.to.route.meta?.requiresVerification
+        })
+
         const requiresVerification = context.to.route.meta?.requiresVerification
 
         console.log(`✅ VerificationGuard: checking verification for ${context.to.route.name}`, {
@@ -122,6 +141,12 @@ export class RoleGuard implements RouteGuard {
     name = 'role'
 
     execute(context: GuardContext): GuardResult {
+        console.log(`🎭 RoleGuard: Checking route "${context.to.route.name}"`, {
+            path: context.to.path,
+            requiredRoles: context.to.route.meta?.roles,
+            userRole: authService.getUser()?.role
+        })
+
         const user = authService.getUser()
         const requiredRoles = context.to.route.meta?.roles
 
@@ -262,6 +287,12 @@ export class SessionGuard implements RouteGuard {
     name = 'session'
 
     async execute(context: GuardContext): Promise<GuardResult> {
+        // NOWE: Specjalna obsługa dla /verify-email
+        if (context.to.route.name === 'verify-email') {
+            console.log('✅ SessionGuard: Skipping session check for verify-email page')
+            return { allowed: true }
+        }
+
         // Sprawdź czy trasa wymaga autoryzacji
         const requiresAuth = context.to.route.meta?.requiresAuth
         const requiresVerification = context.to.route.meta?.requiresVerification
@@ -290,8 +321,12 @@ export class SessionGuard implements RouteGuard {
             } catch (error) {
                 console.log('❌ SessionGuard: Failed to fetch user, session expired')
 
-                // Wyczyść nieważne dane
-                authService.logout()
+                // NOWE: Nie czyść danych dla pewnych ścieżek
+                const safeRoutes = ['verify-email', 'login', 'register', 'forgot-password', 'reset-password']
+                if (!safeRoutes.includes(context.to.route.name)) {
+                    // Wyczyść nieważne dane
+                    authService.logout()
+                }
 
                 // Dla chronionych tras zwróć błąd
                 return {

@@ -73,6 +73,14 @@ class Application {
         // Browser back/forward navigation
         window.addEventListener('popstate', this.handlePopState.bind(this))
 
+        window.addEventListener('hashchange', (event) => {
+            console.log('🔄 Hash changed:', {
+                oldURL: event.oldURL,
+                newURL: event.newURL,
+                newHash: window.location.hash
+            })
+        })
+
         // Auth state changes
         document.addEventListener('auth:change', this.handleAuthChange.bind(this) as EventListener)
 
