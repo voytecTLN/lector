@@ -11,6 +11,24 @@ import type {
     LearningGoal
 } from '@/types/models'
 
+// Dodatkowe interfejsy dla nowych danych
+export interface StudentStats {
+    total_lessons: number;
+    total_hours: number;
+    completed_lessons: number;
+    cancelled_lessons: number;
+}
+
+export interface HourPackage {
+    id: number;
+    name: string;
+    hours: number;
+    remaining_hours: number;
+    status: string;
+    expiry_date?: string;
+    // Inne pola mogą być dodane w przyszłości
+}
+
 // Laravel response formats
 interface LaravelStudentResponse {
     success: boolean
@@ -18,11 +36,23 @@ interface LaravelStudentResponse {
     message?: string
 }
 
+interface LaravelStudentDetailsResponse {
+    success: boolean
+    data: User & {
+        studentProfile: StudentProfile;
+        hour_package: HourPackage;
+        upcoming_lessons: any[]; // można zdefiniować dokładniejszy typ później
+        stats: StudentStats;
+    }
+}
+
 interface LaravelStudentsResponse {
     success: boolean
-    data: User[]
+    data: (User & { hour_package: HourPackage })[]
     meta: {
         total: number
+        per_page: number
+        current_page: number
         filters_applied: Record<string, any>
     }
 }
@@ -86,7 +116,7 @@ export class StudentService {
     /**
      * Get students - zgodny z StudentController::index
      */
-    async getStudents(filters?: StudentFilters): Promise<PaginatedResponse<User[]>> {
+    async getStudents(filters?: StudentFilters): Promise<PaginatedResponse<(User & { hour_package: HourPackage })[]>> {
         try {
             console.log('📋 StudentService: Getting students with filters:', filters)
 
@@ -122,12 +152,22 @@ export class StudentService {
     /**
      * Get student by ID - zgodny z StudentController::show
      */
-    async getStudentById(id: number): Promise<User & { studentProfile: StudentProfile }> {
+    async getStudentById(id: number): Promise<User & {
+        studentProfile: StudentProfile;
+        hour_package: HourPackage;
+        upcoming_lessons: any[];
+        stats: StudentStats;
+    }> {
         try {
             console.log('👤 StudentService: Getting student by ID:', id)
 
-            const response = await api.get<LaravelStudentResponse>(`/students/${id}`)
-            return response.data as User & { studentProfile: StudentProfile }
+            const response = await api.get<LaravelStudentDetailsResponse>(`/students/${id}`)
+
+            if (!response.success || !response.data) {
+                throw new Error('Student nie został znaleziony')
+            }
+
+            return response.data
 
         } catch (error) {
             console.error('❌ Get student error:', error)
@@ -144,6 +184,7 @@ export class StudentService {
 
             const response = await api.put<LaravelStudentResponse>(`/students/${id}`, data)
 
+            // Show success notification
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'success',
@@ -156,190 +197,53 @@ export class StudentService {
         } catch (error) {
             console.error('❌ Update student error:', error)
 
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'error',
-                    message: 'Błąd podczas aktualizacji profilu'
-                }
-            }))
+            if (error instanceof ValidationError) {
+                // Handle validation errors
+                document.dispatchEvent(new CustomEvent('form:validationError', {
+                    detail: { errors: error.errors }
+                }))
+            }
             throw error
         }
     }
 
     /**
-     * Update learning goals - zgodny z StudentController::updateLearningGoals
+     * Delete student - zgodny z StudentController::destroy
      */
-    async updateLearningGoals(studentId: number, goals: LearningGoal[]): Promise<void> {
+    async deleteStudent(id: number): Promise<void> {
         try {
-            console.log('🎯 StudentService: Updating learning goals for:', studentId)
+            console.log('🗑️ StudentService: Deleting student:', id)
 
-            const response = await api.put<LaravelStudentResponse>(`/students/${studentId}/learning-goals`, {
-                goals
-            })
+            const response = await api.delete<{ success: boolean, message: string }>(`/students/${id}`)
 
+            // Show success notification
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'success',
-                    message: response.message || 'Cele nauki zostały zaktualizowane'
+                    message: response.message || 'Student został usunięty'
                 }
             }))
 
         } catch (error) {
-            console.error('❌ Update learning goals error:', error)
-
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'error',
-                    message: 'Błąd podczas aktualizacji celów nauki'
-                }
-            }))
+            console.error('❌ Delete student error:', error)
             throw error
         }
     }
 
     /**
-     * Deactivate student - zgodny z StudentController::destroy
+     * Get student statistics - zgodny z StudentController::getStats
      */
-    async deactivateStudent(id: number): Promise<void> {
+    async getStats(): Promise<LaravelStatsResponse['data']> {
         try {
-            console.log('🗑️ StudentService: Deactivating student:', id)
-
-            const response = await api.delete<{ success: boolean; message: string }>(`/students/${id}`)
-
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'success',
-                    message: response.message || 'Student został dezaktywowany'
-                }
-            }))
-
-            // Trigger students list refresh
-            document.dispatchEvent(new CustomEvent('students:refresh'))
-
-        } catch (error) {
-            console.error('❌ Deactivate student error:', error)
-
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'error',
-                    message: 'Błąd podczas dezaktywacji studenta'
-                }
-            }))
-            throw error
-        }
-    }
-
-    /**
-     * Search students - zgodny z StudentController::search
-     */
-    async searchStudents(query: string): Promise<User[]> {
-        try {
-            console.log('🔍 StudentService: Searching students:', query)
-
-            const response = await api.get<{ success: boolean; data: User[] }>(
-                `/students/search?q=${encodeURIComponent(query)}`
-            )
-
-            return response.data
-
-        } catch (error) {
-            console.error('❌ Search students error:', error)
-            throw error
-        }
-    }
-
-    /**
-     * Bulk update status - zgodny z StudentController::bulkUpdateStatus
-     */
-    async bulkUpdateStatus(studentIds: number[], status: 'active' | 'inactive'): Promise<void> {
-        try {
-            console.log('🔄 StudentService: Bulk updating status:', { studentIds, status })
-
-            const response = await api.post<{ success: boolean; message: string }>('/students/bulk-status', {
-                student_ids: studentIds,
-                status
-            })
-
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'success',
-                    message: response.message || `Status ${studentIds.length} studentów został zaktualizowany`
-                }
-            }))
-
-        } catch (error) {
-            console.error('❌ Bulk update status error:', error)
-            throw error
-        }
-    }
-
-    /**
-     * Get student stats - zgodny z StudentController::getStats
-     */
-    async getStudentStats(): Promise<{
-        total: number
-        active: number
-        new_this_month: number
-        by_language: Record<string, number>
-    }> {
-        try {
-            console.log('📊 StudentService: Getting student stats')
+            console.log('📊 StudentService: Getting stats')
 
             const response = await api.get<LaravelStatsResponse>('/students/stats')
-            return response.data
-
-        } catch (error) {
-            console.error('❌ Get student stats error:', error)
-            throw error
-        }
-    }
-
-    /**
-     * Get own profile (for student accessing their own data)
-     */
-    async getOwnProfile(): Promise<User & { studentProfile: StudentProfile }> {
-        try {
-            console.log('👤 StudentService: Getting own profile')
-
-            const response = await api.get<LaravelStudentResponse>('/student/profile')
-            return response.data as User & { studentProfile: StudentProfile }
-
-        } catch (error) {
-            console.error('❌ Get own profile error:', error)
-            throw error
-        }
-    }
-
-    /**
-     * Update own profile (for student updating their own data)
-     */
-    async updateOwnProfile(data: UpdateStudentRequest): Promise<User> {
-        try {
-            console.log('✏️ StudentService: Updating own profile')
-
-            const response = await api.put<LaravelStudentResponse>('/student/profile', data)
-
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'success',
-                    message: response.message || 'Twój profil został zaktualizowany'
-                }
-            }))
 
             return response.data
 
         } catch (error) {
-            console.error('❌ Update own profile error:', error)
-
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'error',
-                    message: 'Błąd podczas aktualizacji profilu'
-                }
-            }))
+            console.error('❌ Get stats error:', error)
             throw error
         }
     }
 }
-
-export const studentService = new StudentService()
