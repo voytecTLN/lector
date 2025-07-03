@@ -191,6 +191,58 @@ export const routes: RouteDefinition[] = [
         }
     },
 
+    // Dodaj do routes.ts po dashboardach:
+
+// Student management routes (admin/moderator only)
+    {
+        path: '/admin/students',
+        name: 'admin.students',
+        component: () => import('@/components/students/StudentList').then(m => new m.StudentList()),
+        title: 'Zarządzanie Studentami - Platforma Lektorów',
+        meta: {
+            requiresAuth: true,
+            requiresVerification: true,
+            roles: ['admin', 'moderator'],
+            layout: 'app'
+        }
+    },
+    {
+        path: '/admin/students/add',
+        name: 'admin.students.add',
+        component: () => import('@/components/students/StudentForm').then(m => new m.StudentForm()),
+        title: 'Dodaj Studenta - Platforma Lektorów',
+        meta: {
+            requiresAuth: true,
+            requiresVerification: true,
+            roles: ['admin', 'moderator'],
+            layout: 'app'
+        }
+    },
+    {
+        path: '/admin/students/:id',
+        name: 'admin.students.show',
+        component: () => import('@/components/students/StudentDetails').then(m => new m.StudentDetails()),
+        title: 'Profil Studenta - Platforma Lektorów',
+        meta: {
+            requiresAuth: true,
+            requiresVerification: true,
+            roles: ['admin', 'moderator'],
+            layout: 'app'
+        }
+    },
+    {
+        path: '/admin/students/:id/edit',
+        name: 'admin.students.edit',
+        component: () => import('@/components/students/StudentForm').then(m => new m.StudentForm()),
+        title: 'Edytuj Studenta - Platforma Lektorów',
+        meta: {
+            requiresAuth: true,
+            requiresVerification: true,
+            roles: ['admin', 'moderator'],
+            layout: 'app'
+        }
+    },
+
     // Error routes (no guards needed)
     {
         path: '/unauthorized',
