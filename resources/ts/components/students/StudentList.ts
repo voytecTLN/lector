@@ -1,6 +1,7 @@
 // resources/ts/components/students/StudentList.ts
 import { StudentService, HourPackage } from '@services/StudentService'
 import type { StudentFilters, User, PaginatedResponse, StudentProfile } from '@/types/models'
+import type { RouteComponent } from '@router/routes'
 
 // Extend User type to include studentProfile property
 type ExtendedUser = User & {
@@ -8,7 +9,7 @@ type ExtendedUser = User & {
     studentProfile?: StudentProfile;
 }
 
-export class StudentList {
+export class StudentList implements RouteComponent {
     private studentService: StudentService
     private students: ExtendedUser[] = []
     private filters: StudentFilters = {
@@ -17,31 +18,66 @@ export class StudentList {
         per_page: 10
     }
     private pagination: PaginatedResponse<ExtendedUser[]> | null = null
+    private container: HTMLElement | null = null
     private tableElement: HTMLElement | null = null
     private paginationElement: HTMLElement | null = null
     private filterForm: HTMLFormElement | null = null
 
     constructor() {
         this.studentService = new StudentService()
+    }
+
+    async render(): Promise<HTMLElement> {
+        this.container = document.createElement('div')
+        this.container.innerHTML = `
+            <h1>Lista studentów</h1>
+            <form id="student-filters" class="mb-3 d-flex align-items-end" style="gap:0.5rem;">
+                <select name="status" class="form-select" style="width:auto;">
+                    <option value="active">Aktywni</option>
+                    <option value="inactive">Nieaktywni</option>
+                    <option value="blocked">Zablokowani</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Filtruj</button>
+                <button type="button" class="btn btn-secondary reset-filters">Resetuj</button>
+            </form>
+            <table class="table student-table"></table>
+            <div class="pagination-container mt-3"></div>
+        `
+        return this.container
+    }
+
+    mount(): void {
+        this.tableElement = this.container?.querySelector('.student-table') || null
+        this.paginationElement = this.container?.querySelector('.pagination-container') || null
+        this.filterForm = this.container?.querySelector('#student-filters') || null
+
         this.init()
     }
 
-    private async init(): Promise<void> {
-        this.tableElement = document.querySelector('.student-table')
-        this.paginationElement = document.querySelector('.pagination-container')
-        this.filterForm = document.querySelector('#student-filters')
+    unmount(): void {
+        if (this.filterForm) {
+            this.filterForm.removeEventListener('submit', this.handleFilterSubmit.bind(this))
+            const resetButton = this.filterForm.querySelector('.reset-filters')
+            if (resetButton) {
+                resetButton.removeEventListener('click', this.resetFilters.bind(this))
+            }
+        }
 
+        if (this.paginationElement) {
+            this.paginationElement.removeEventListener('click', this.handlePaginationClick.bind(this))
+        }
+    }
+
+    private async init(): Promise<void> {
         if (this.filterForm) {
             this.filterForm.addEventListener('submit', this.handleFilterSubmit.bind(this))
 
-            // Reset filters
             const resetButton = this.filterForm.querySelector('.reset-filters')
             if (resetButton) {
                 resetButton.addEventListener('click', this.resetFilters.bind(this))
             }
         }
 
-        // Handle pagination clicks
         if (this.paginationElement) {
             this.paginationElement.addEventListener('click', this.handlePaginationClick.bind(this))
         }
@@ -277,7 +313,15 @@ export class StudentList {
 
     // Helper method to check if a key is a valid filter key
     private isValidFilterKey(key: string): key is keyof StudentFilters {
-        return ['status', 'city', 'learning_language', 'search', 'per_page', 'page'].includes(key);
+        const validKeys: (keyof StudentFilters)[] = [
+            'status',
+            'city',
+            'learning_language',
+            'search',
+            'per_page',
+            'page'
+        ]
+        return (validKeys as readonly string[]).includes(key)
     }
 
     // Add this method for handling UI translations

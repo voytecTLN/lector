@@ -1,22 +1,83 @@
 // resources/ts/components/students/StudentForm.ts
 import { StudentService } from '@services/StudentService'
 import type { CreateStudentRequest, UpdateStudentRequest, User } from '@/types/models'
+import type { RouteComponent } from '@router/routes'
 
-export class StudentForm {
+export class StudentForm implements RouteComponent {
     private studentService: StudentService
     private form: HTMLFormElement | null = null
     private submitButton: HTMLButtonElement | null = null
     private isEditMode: boolean = false
     private studentId: number | null = null
+    private container: HTMLElement | null = null
+    private validationHandler: EventListener
+    private submitHandler: EventListener
 
     constructor() {
         this.studentService = new StudentService()
+        this.validationHandler = this.handleValidationError.bind(this) as EventListener
+        this.submitHandler = this.handleSubmit.bind(this)
+    }
+
+    async render(): Promise<HTMLElement> {
+        const editMatch = window.location.pathname.match(/admin\/students\/(\d+)\/edit/)
+        if (editMatch) {
+            this.isEditMode = true
+            this.studentId = parseInt(editMatch[1], 10)
+        }
+
+        this.container = document.createElement('div')
+        this.container.innerHTML = `
+            <h1 class="mb-3">${this.isEditMode ? 'Edytuj studenta' : 'Nowy student'}</h1>
+            <form id="student-form">
+                <input type="hidden" name="student_id" value="${this.studentId ?? ''}">
+                <div class="mb-3">
+                    <label class="form-label">Imię i nazwisko</label>
+                    <input name="name" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input name="email" type="email" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Hasło</label>
+                    <input name="password" type="password" class="form-control" ${this.isEditMode ? '' : 'required'} />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Telefon</label>
+                    <input name="phone" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Miasto</label>
+                    <input name="city" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Kraj</label>
+                    <input name="country" class="form-control" value="Polska" />
+                </div>
+                <button id="submit-button" class="btn btn-primary" type="submit">${this.isEditMode ? 'Zapisz zmiany' : 'Utwórz studenta'}</button>
+            </form>
+        `
+
+        return this.container
+    }
+
+    mount(): void {
+        this.form = this.container?.querySelector('#student-form') as HTMLFormElement
+        this.submitButton = this.container?.querySelector('#submit-button') as HTMLButtonElement
         this.init()
     }
 
+    unmount(): void {
+        if (this.form) {
+            this.form.removeEventListener('submit', this.submitHandler)
+        }
+        document.removeEventListener('form:validationError', this.validationHandler)
+    }
+
     private async init(): Promise<void> {
-        this.form = document.querySelector('#student-form')
-        this.submitButton = document.querySelector('#submit-button')
+        this.form = this.container?.querySelector('#student-form') || null
+        this.submitButton = this.container?.querySelector('#submit-button') || null
 
         if (!this.form) return
 
@@ -28,10 +89,10 @@ export class StudentForm {
         }
 
         // Setup form submit handler
-        this.form.addEventListener('submit', this.handleSubmit.bind(this))
+        this.form.addEventListener('submit', this.submitHandler)
 
         // Setup validation listeners
-        document.addEventListener('form:validationError', this.handleValidationError.bind(this) as EventListener)
+        document.addEventListener('form:validationError', this.validationHandler)
 
         // Setup language selection handling
         this.setupLanguageSelectionHandling()
@@ -158,7 +219,7 @@ export class StudentForm {
     }
 
     private showLevelSelector(language: string): void {
-        const levelContainer = document.querySelector(`.level-selector[data-language="${language}"]`)
+        const levelContainer = this.form?.querySelector(`.level-selector[data-language="${language}"]`)
         if (levelContainer) {
             levelContainer.classList.remove('d-none')
 
@@ -171,7 +232,7 @@ export class StudentForm {
     }
 
     private hideLevelSelector(language: string): void {
-        const levelContainer = document.querySelector(`.level-selector[data-language="${language}"]`)
+        const levelContainer = this.form?.querySelector(`.level-selector[data-language="${language}"]`)
         if (levelContainer) {
             levelContainer.classList.add('d-none')
 
@@ -207,13 +268,13 @@ export class StudentForm {
                 await this.studentService.updateStudent(this.studentId, studentData as UpdateStudentRequest)
 
                 // Redirect to student profile
-                window.location.href = `/panel/students/${this.studentId}`
+                window.location.href = `/admin/students/${this.studentId}`
             } else {
                 // Create new student
                 const student = await this.studentService.createStudent(studentData as CreateStudentRequest)
 
                 // Redirect to student profile
-                window.location.href = `/panel/students/${student.id}`
+                window.location.href = `/admin/students/${student.id}`
             }
         } catch (error) {
             console.error('Form submission error:', error)
@@ -316,10 +377,3 @@ export class StudentForm {
     }
 }
 
-// Initialize on document load
-document.addEventListener('DOMContentLoaded', () => {
-    const studentForm = document.querySelector('#student-form')
-    if (studentForm) {
-        new StudentForm()
-    }
-})

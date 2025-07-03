@@ -1,8 +1,9 @@
 // resources/ts/components/students/StudentDetails.ts
 import { StudentService, HourPackage, StudentStats } from '@services/StudentService'
 import type { User, StudentProfile } from '@/types/models'
+import type { RouteComponent } from '@router/routes'
 
-export class StudentDetails {
+export class StudentDetails implements RouteComponent {
     private studentService: StudentService
     private studentId: number | null = null
     private student: (User & {
@@ -17,30 +18,78 @@ export class StudentDetails {
     private deleteButton: HTMLElement | null = null
     private tabElements: NodeListOf<HTMLElement> | null = null
 
+    private container: HTMLElement | null = null
+
     constructor() {
         this.studentService = new StudentService()
+    }
+
+    async render(): Promise<HTMLElement> {
+        const match = window.location.pathname.match(/admin\/students\/(\d+)/)
+        if (match) {
+            this.studentId = parseInt(match[1], 10)
+        }
+
+        this.container = document.createElement('div')
+        this.container.className = 'student-details-container'
+        if (this.studentId) {
+            this.container.dataset.studentId = String(this.studentId)
+        }
+
+        this.container.innerHTML = `
+            <h1 class="student-name mb-3"></h1>
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile-tab-pane" role="tab">Profil</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" data-bs-target="#package-tab-pane" role="tab">Pakiet</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" data-bs-target="#lessons-tab-pane" role="tab">Lekcje</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" data-bs-target="#stats-tab-pane" role="tab">Statystyki</a></li>
+            </ul>
+            <div class="tab-content mt-3">
+                <div class="tab-pane fade show active" id="profile-tab-pane"></div>
+                <div class="tab-pane fade" id="package-tab-pane"></div>
+                <div class="tab-pane fade" id="lessons-tab-pane"></div>
+                <div class="tab-pane fade" id="stats-tab-pane"></div>
+            </div>
+            <button class="btn btn-danger mt-3 student-delete-btn">Usuń studenta</button>
+        `
+
+        return this.container
+    }
+
+    mount(): void {
         this.init()
     }
 
+    unmount(): void {
+        if (this.deleteButton) {
+            this.deleteButton.removeEventListener('click', this.handleDeleteClick.bind(this))
+        }
+        if (this.tabElements) {
+            this.tabElements.forEach(tab => {
+                tab.removeEventListener('shown.bs.tab', this.handleTabChange.bind(this))
+            })
+        }
+    }
+
     private async init(): Promise<void> {
-        this.studentContainer = document.querySelector('.student-details-container')
+        this.studentContainer = this.container
 
         if (!this.studentContainer) return
 
         // Get student ID from data attribute
         const studentIdAttr = this.studentContainer.dataset.studentId
-        if (!studentIdAttr) return
-
-        this.studentId = parseInt(studentIdAttr, 10)
+        if (studentIdAttr) {
+            this.studentId = parseInt(studentIdAttr, 10)
+        }
 
         // Initialize delete button
-        this.deleteButton = document.querySelector('.student-delete-btn')
+        this.deleteButton = this.studentContainer.querySelector('.student-delete-btn')
         if (this.deleteButton) {
             this.deleteButton.addEventListener('click', this.handleDeleteClick.bind(this))
         }
 
         // Initialize tabs
-        this.tabElements = document.querySelectorAll('[data-bs-toggle="tab"]')
+        this.tabElements = this.studentContainer.querySelectorAll('[data-bs-toggle="tab"]')
         this.tabElements.forEach(tab => {
             tab.addEventListener('shown.bs.tab', this.handleTabChange.bind(this))
         })
@@ -91,7 +140,7 @@ export class StudentDetails {
             <div class="alert alert-danger">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 Wystąpił błąd podczas ładowania danych studenta.
-                <a href="/panel/students" class="alert-link">Wróć do listy studentów</a>
+                <a href="/admin/students" class="alert-link">Wróć do listy studentów</a>
             </div>
         `
     }
@@ -103,31 +152,31 @@ export class StudentDetails {
         document.title = `${this.student.name} - Profil studenta`
 
         // Update student name in header
-        const nameElement = document.querySelector('.student-name')
+        const nameElement = this.studentContainer.querySelector('.student-name')
         if (nameElement) {
             nameElement.textContent = this.student.name
         }
 
         // Render profile information
-        const profileTab = document.querySelector('#profile-tab-pane')
+        const profileTab = this.studentContainer.querySelector('#profile-tab-pane')
         if (profileTab) {
             profileTab.innerHTML = this.generateProfileHTML()
         }
 
         // Render hour package information
-        const packageTab = document.querySelector('#package-tab-pane')
+        const packageTab = this.studentContainer.querySelector('#package-tab-pane')
         if (packageTab) {
             packageTab.innerHTML = this.generatePackageHTML()
         }
 
         // Render upcoming lessons (if any)
-        const lessonsTab = document.querySelector('#lessons-tab-pane')
+        const lessonsTab = this.studentContainer.querySelector('#lessons-tab-pane')
         if (lessonsTab) {
             lessonsTab.innerHTML = this.generateLessonsHTML()
         }
 
         // Render statistics
-        const statsTab = document.querySelector('#stats-tab-pane')
+        const statsTab = this.studentContainer.querySelector('#stats-tab-pane')
         if (statsTab) {
             statsTab.innerHTML = this.generateStatsHTML()
         }
@@ -180,7 +229,7 @@ export class StudentDetails {
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Dane osobowe</h5>
-                    <a href="/panel/students/${this.student.id}/edit" class="btn btn-sm btn-outline-primary">
+                    <a href="/admin/students/${this.student.id}/edit" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-pencil me-1"></i> Edytuj
                     </a>
                 </div>
@@ -426,7 +475,7 @@ export class StudentDetails {
             await this.studentService.deleteStudent(this.studentId)
 
             // Redirect to students list
-            window.location.href = '/panel/students'
+            window.location.href = '/admin/students'
         } catch (error) {
             console.error('Failed to delete student:', error)
 
@@ -455,9 +504,3 @@ export class StudentDetails {
 }
 
 // Initialize on document load
-document.addEventListener('DOMContentLoaded', () => {
-    const studentDetailsContainer = document.querySelector('.student-details-container')
-    if (studentDetailsContainer) {
-        new StudentDetails()
-    }
-})
