@@ -2,21 +2,15 @@
 import { StudentService, HourPackage } from '@services/StudentService'
 import type { StudentFilters, User, PaginatedResponse, StudentProfile } from '@/types/models'
 
-// Extend User type to include studentProfile property
-type ExtendedUser = User & {
-    hour_package: HourPackage;
-    studentProfile?: StudentProfile;
-}
-
 export class StudentList {
     private studentService: StudentService
-    private students: ExtendedUser[] = []
+    private students: (User & { hour_package: HourPackage })[] = []
     private filters: StudentFilters = {
         status: 'active',
         page: 1,
         per_page: 10
     }
-    private pagination: PaginatedResponse<ExtendedUser[]> | null = null
+    private pagination: PaginatedResponse<(User & { hour_package: HourPackage })[]> | null = null
     private tableElement: HTMLElement | null = null
     private paginationElement: HTMLElement | null = null
     private filterForm: HTMLFormElement | null = null
