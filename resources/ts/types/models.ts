@@ -41,6 +41,7 @@ export interface CreateStudentRequest {
   current_levels?: Record<string, string>
   learning_goals?: string[]
   preferred_schedule?: Record<string, any>
+  status?: 'active' | 'inactive' | 'blocked'
 }
 
 export interface UpdateStudentRequest {
@@ -54,6 +55,7 @@ export interface UpdateStudentRequest {
   current_levels?: Record<string, string>
   learning_goals?: string[]
   preferred_schedule?: Record<string, any>
+  status?: 'active' | 'inactive' | 'blocked'
 }
 
 export interface StudentFilters {

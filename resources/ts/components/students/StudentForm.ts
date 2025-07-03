@@ -55,6 +55,14 @@ export class StudentForm implements RouteComponent {
                     <label class="form-label">Kraj</label>
                     <input name="country" class="form-control" value="Polska" />
                 </div>
+                <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="active">Aktywny</option>
+                        <option value="inactive">Nieaktywny</option>
+                        <option value="blocked">Zablokowany</option>
+                    </select>
+                </div>
                 <button id="submit-button" class="btn btn-primary" type="submit">${this.isEditMode ? 'Zapisz zmiany' : 'Utwórz studenta'}</button>
             </form>
         `
@@ -128,7 +136,13 @@ export class StudentForm implements RouteComponent {
 
         // Set basic fields
         const fieldsToSet = [
-            'name', 'email', 'phone', 'birth_date', 'city', 'country'
+            'name',
+            'email',
+            'phone',
+            'birth_date',
+            'city',
+            'country',
+            'status'
         ]
 
         fieldsToSet.forEach(field => {
@@ -137,6 +151,11 @@ export class StudentForm implements RouteComponent {
                 input.value = student[field as keyof User] as string
             }
         })
+
+        const statusSelect = this.form!.querySelector('[name="status"]') as HTMLSelectElement
+        if (statusSelect && (student as any).status) {
+            statusSelect.value = (student as any).status
+        }
 
         // Set learning languages and levels
         if (student.studentProfile?.learning_languages) {
@@ -300,7 +319,7 @@ export class StudentForm implements RouteComponent {
         const data: any = {}
 
         // Basic fields
-        const basicFields = ['name', 'email', 'password', 'phone', 'birth_date', 'city', 'country']
+        const basicFields = ['name', 'email', 'password', 'phone', 'birth_date', 'city', 'country', 'status']
         basicFields.forEach(field => {
             const value = formData.get(field)
             if (value !== null && value !== '') {

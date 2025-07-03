@@ -87,7 +87,8 @@ export class StudentService {
                 learning_languages: data.learning_languages || [],
                 current_levels: data.current_levels || {},
                 learning_goals: data.learning_goals || [],
-                preferred_schedule: data.preferred_schedule || {}
+                preferred_schedule: data.preferred_schedule || {},
+                status: data.status || 'active'
             })
 
             // Show success notification

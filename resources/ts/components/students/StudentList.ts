@@ -14,6 +14,7 @@ export class StudentList implements RouteComponent {
     private students: ExtendedUser[] = []
     private filters: StudentFilters = {
         status: 'active',
+        search: '',
         page: 1,
         per_page: 10
     }
@@ -32,6 +33,7 @@ export class StudentList implements RouteComponent {
         this.container.innerHTML = `
             <h1>Lista studentów</h1>
             <form id="student-filters" class="mb-3 d-flex align-items-end" style="gap:0.5rem;">
+                <input name="search" class="form-control" placeholder="Szukaj..." style="width:auto;" />
                 <select name="status" class="form-select" style="width:auto;">
                     <option value="active">Aktywni</option>
                     <option value="inactive">Nieaktywni</option>
@@ -141,9 +143,11 @@ export class StudentList implements RouteComponent {
                     <td>${student.phone || '-'}</td>
                     <td>${packageInfo}</td>
                     <td>
-                        <span class="badge ${this.getStatusBadgeClass(student.status || 'inactive')}">
-                            ${this.getStatusLabel(student.status || 'inactive')}
-                        </span>
+                        <select class="form-select form-select-sm change-status" data-id="${student.id}">
+                            <option value="active" ${student.status === 'active' ? 'selected' : ''}>Aktywny</option>
+                            <option value="inactive" ${student.status === 'inactive' ? 'selected' : ''}>Nieaktywny</option>
+                            <option value="blocked" ${student.status === 'blocked' ? 'selected' : ''}>Zablokowany</option>
+                        </select>
                     </td>
                     <td>
                         <div class="dropdown">
@@ -162,6 +166,12 @@ export class StudentList implements RouteComponent {
         }).join('')
 
         this.tableElement.innerHTML = rows
+
+        // Attach status change handlers
+        const statusSelects = this.tableElement.querySelectorAll<HTMLSelectElement>('select.change-status')
+        statusSelects.forEach(select => {
+            select.addEventListener('change', this.handleStatusChange.bind(this))
+        })
     }
 
     private renderPagination(): void {
@@ -264,6 +274,7 @@ export class StudentList implements RouteComponent {
         // Reset to default filters
         this.filters = {
             status: 'active',
+            search: '',
             page: 1,
             per_page: 10
         }
@@ -309,6 +320,32 @@ export class StudentList implements RouteComponent {
         }
 
         return statusLabels[status] || 'Nieznany'
+    }
+
+    private async handleStatusChange(e: Event): Promise<void> {
+        const select = e.target as HTMLSelectElement
+        const studentId = parseInt(select.dataset.id || '0', 10)
+        const newStatus = select.value as 'active' | 'inactive' | 'blocked'
+
+        if (!studentId) return
+
+        try {
+            await this.studentService.bulkUpdateStatus([studentId], newStatus)
+
+            // update local data
+            const student = this.students.find(s => s.id === studentId)
+            if (student) {
+                (student as any).status = newStatus
+            }
+        } catch (error) {
+            console.error('Failed to update status', error)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Nie udało się zmienić statusu'
+                }
+            }))
+        }
     }
 
     // Helper method to check if a key is a valid filter key
