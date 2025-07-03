@@ -116,6 +116,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Moderator dashboard stats
         Route::middleware('role:moderator,admin')->group(function () {
+
             Route::prefix('moderator')->group(function () {
                 Route::get('/dashboard-stats', function () {
                     return response()->json([
@@ -129,6 +130,23 @@ Route::middleware('auth:sanctum')->group(function () {
                     ]);
                 });
             });
+
+            // Student CRUD
+            Route::apiResource('students', StudentController::class)
+                ->names('api.students');
+
+            // Additional student endpoints
+            Route::prefix('students')->group(function () {
+                Route::get('search', [StudentController::class, 'search'])
+                    ->name('api.students.search');
+                Route::get('stats', [StudentController::class, 'getStats'])
+                    ->name('api.students.stats');
+                Route::put('{id}/learning-goals', [StudentController::class, 'updateLearningGoals'])
+                    ->name('api.students.learning-goals.update');
+                Route::post('bulk-status', [StudentController::class, 'bulkUpdateStatus'])
+                    ->name('api.students.bulk-status');
+            });
+
         });
 
         // Tutor dashboard stats

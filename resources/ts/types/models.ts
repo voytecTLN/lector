@@ -11,6 +11,10 @@ export interface User {
   avatar?: string
   created_at?: string
   updated_at?: string
+  email_verified_at?: string
+  last_login_at?: string
+  last_login_ip?: string
+  studentProfile?: StudentProfile
 }
 
 // Add missing interfaces
