@@ -54,6 +54,7 @@ export interface UpdateStudentRequest {
   current_levels?: Record<string, string>
   learning_goals?: string[]
   preferred_schedule?: Record<string, any>
+  status?: string
 }
 
 export interface StudentFilters {

@@ -1,83 +1,333 @@
 // resources/ts/components/students/StudentForm.ts
+import type { RouteComponent } from '@router/routes'
 import { StudentService } from '@services/StudentService'
 import type { CreateStudentRequest, UpdateStudentRequest, User } from '@/types/models'
 
-export class StudentForm {
+export class StudentForm implements RouteComponent {
     private studentService: StudentService
     private form: HTMLFormElement | null = null
-    private submitButton: HTMLButtonElement | null = null
+    private container: HTMLElement | null = null
     private isEditMode: boolean = false
     private studentId: number | null = null
+    private student: User | null = null
 
     constructor() {
         this.studentService = new StudentService()
-        this.init()
     }
 
-    private async init(): Promise<void> {
-        this.form = document.querySelector('#student-form')
-        this.submitButton = document.querySelector('#submit-button')
+    async render(): Promise<HTMLElement> {
+        const el = document.createElement('div')
+        el.className = 'student-form-page'
 
-        if (!this.form) return
+        // Determine if edit mode from URL
+        const pathMatch = window.location.pathname.match(/\/students\/(\d+)\/edit/)
+        const hashMatch = window.location.hash.match(/\/students\/(\d+)\/edit/)
 
-        // Check if in edit mode
-        const studentIdField = this.form.querySelector('input[name="student_id"]') as HTMLInputElement
-        if (studentIdField && studentIdField.value) {
+        if (pathMatch || hashMatch) {
             this.isEditMode = true
-            this.studentId = parseInt(studentIdField.value, 10)
+            this.studentId = parseInt(pathMatch?.[1] || hashMatch?.[1] || '0', 10)
         }
 
-        // Setup form submit handler
-        this.form.addEventListener('submit', this.handleSubmit.bind(this))
+        el.innerHTML = `
+            <div class="container mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <!-- Header -->
+                        <div class="mb-4">
+                            <a href="/#/admin/students" class="text-muted text-decoration-none mb-2 d-inline-block">
+                                <i class="bi bi-arrow-left me-1"></i> Powrót do listy
+                            </a>
+                            <h1>${this.isEditMode ? 'Edytuj studenta' : 'Dodaj nowego studenta'}</h1>
+                        </div>
 
-        // Setup validation listeners
-        document.addEventListener('form:validationError', this.handleValidationError.bind(this) as EventListener)
+                        <!-- Loading state -->
+                        <div id="form-loading" class="text-center py-5 ${!this.isEditMode ? 'd-none' : ''}">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Ładowanie...</span>
+                            </div>
+                        </div>
 
-        // Setup language selection handling
-        this.setupLanguageSelectionHandling()
+                        <!-- Form -->
+                        <form id="student-form" class="${this.isEditMode ? 'd-none' : ''}">
+                            ${this.generateFormHTML()}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `
 
-        // Setup goal selection handling
-        this.setupGoalSelectionHandling()
+        return el
+    }
 
-        // Initialize form data if in edit mode
-        if (this.isEditMode && this.studentId) {
-            await this.initializeFormData()
+    private handleValidationError(event: CustomEvent): void {
+        const { errors } = event.detail
+
+        // Resetuj poprzednie błędy
+        this.form?.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid')
+        })
+        this.form?.querySelectorAll('.invalid-feedback').forEach(el => el.remove())
+
+        // Wyświetl nowe błędy
+        for (const [field, messages] of Object.entries(errors)) {
+            const input = this.form?.querySelector(`[name="${field}"]`)
+            if (input) {
+                input.classList.add('is-invalid')
+
+                const feedback = document.createElement('div')
+                feedback.className = 'invalid-feedback'
+                feedback.textContent = Array.isArray(messages) ? messages[0] : String(messages)
+
+                input.parentElement?.appendChild(feedback)
+            }
         }
     }
 
-    private async initializeFormData(): Promise<void> {
+    async mount(container: HTMLElement): Promise<void> {
+        document.addEventListener('form:validationError', this.handleValidationError.bind(this) as EventListener)
+        this.container = container
+        this.form = container.querySelector('#student-form')
+
+        if (this.isEditMode && this.studentId) {
+            await this.loadStudentData()
+        } else {
+            this.setupForm()
+        }
+    }
+
+    unmount(): void {
+        document.removeEventListener('form:validationError', this.handleValidationError.bind(this) as EventListener)
+        this.container = null
+        this.form = null
+        this.student = null
+    }
+
+    private generateFormHTML(): string {
+        return `
+            <!-- Dane podstawowe -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Dane podstawowe</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Imię i nazwisko <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        
+                        ${!this.isEditMode ? `
+                            <div class="col-md-6">
+                                <label class="form-label">Hasło <span class="text-danger">*</span></label>
+                                <input type="password" name="password" class="form-control" required minlength="8">
+                                <div class="form-text">Minimum 8 znaków</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Potwierdź hasło <span class="text-danger">*</span></label>
+                                <input type="password" name="password_confirmation" class="form-control" required>
+                            </div>
+                        ` : `
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Zostaw pola hasła puste, jeśli nie chcesz zmieniać hasła
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nowe hasło</label>
+                                <input type="password" name="password" class="form-control" minlength="8">
+                                <div class="form-text">Minimum 8 znaków (opcjonalne)</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Potwierdź nowe hasło</label>
+                                <input type="password" name="password_confirmation" class="form-control">
+                            </div>
+                        `}
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Telefon</label>
+                            <input type="tel" name="phone" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Data urodzenia</label>
+                            <input type="date" name="birth_date" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Miasto</label>
+                            <input type="text" name="city" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="active">Aktywny</option>
+                                <option value="inactive">Nieaktywny</option>
+                                <option value="blocked">Zablokowany</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Języki i poziomy -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Języki i poziomy</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Języki do nauki</label>
+                        <div class="row g-2">
+                            ${this.generateLanguageCheckboxes()}
+                        </div>
+                    </div>
+                    
+                    <div id="level-selectors">
+                        ${this.generateLevelSelectors()}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cele nauki -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Cele nauki</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        ${this.generateGoalCheckboxes()}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Przyciski -->
+            <div class="d-flex justify-content-between mb-5">
+                <a href="/#/admin/students" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i> Anuluj
+                </a>
+                <button type="submit" class="btn btn-primary" id="submit-button">
+                    <i class="bi bi-check-circle me-1"></i> 
+                    ${this.isEditMode ? 'Zapisz zmiany' : 'Utwórz studenta'}
+                </button>
+            </div>
+
+            <input type="hidden" name="student_id" value="${this.studentId || ''}">
+        `
+    }
+
+    private generateLanguageCheckboxes(): string {
+        const languages = [
+            { value: 'english', label: 'Angielski' },
+            { value: 'german', label: 'Niemiecki' },
+            { value: 'french', label: 'Francuski' },
+            { value: 'spanish', label: 'Hiszpański' },
+            { value: 'italian', label: 'Włoski' },
+            { value: 'portuguese', label: 'Portugalski' },
+            { value: 'russian', label: 'Rosyjski' },
+            { value: 'chinese', label: 'Chiński' },
+            { value: 'japanese', label: 'Japoński' }
+        ]
+
+        return languages.map(lang => `
+            <div class="col-md-4">
+                <div class="form-check">
+                    <input class="form-check-input language-checkbox" type="checkbox" 
+                           name="learning_languages[]" value="${lang.value}" 
+                           id="lang-${lang.value}">
+                    <label class="form-check-label" for="lang-${lang.value}">
+                        ${lang.label}
+                    </label>
+                </div>
+            </div>
+        `).join('')
+    }
+
+    private generateLevelSelectors(): string {
+        const languages = ['english', 'german', 'french', 'spanish', 'italian', 'portuguese', 'russian', 'chinese', 'japanese']
+        const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+
+        return languages.map(lang => `
+            <div class="row g-3 mb-3 level-selector d-none" data-language="${lang}">
+                <div class="col-md-6">
+                    <label class="form-label">Poziom ${this.getLanguageLabel(lang)}</label>
+                    <select name="current_levels[${lang}]" class="form-select">
+                        <option value="">Wybierz poziom</option>
+                        ${levels.map(level => `<option value="${level}">${level}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+        `).join('')
+    }
+
+    private generateGoalCheckboxes(): string {
+        const goals = [
+            { value: 'conversation', label: 'Konwersacje' },
+            { value: 'business', label: 'Język biznesowy' },
+            { value: 'exam', label: 'Przygotowanie do egzaminów' },
+            { value: 'travel', label: 'Podróże' },
+            { value: 'academic', label: 'Język akademicki' },
+            { value: 'hobby', label: 'Hobby' },
+            { value: 'culture', label: 'Kultura' }
+        ]
+
+        return goals.map(goal => `
+            <div class="col-md-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" 
+                           name="learning_goals[]" value="${goal.value}" 
+                           id="goal-${goal.value}">
+                    <label class="form-check-label" for="goal-${goal.value}">
+                        ${goal.label}
+                    </label>
+                </div>
+            </div>
+        `).join('')
+    }
+
+    private async loadStudentData(): Promise<void> {
         if (!this.studentId) return
 
         try {
-            const student = await this.studentService.getStudentById(this.studentId)
-            this.fillFormWithStudentData(student)
+            const loadingDiv = this.container?.querySelector('#form-loading')
+            const form = this.container?.querySelector('#student-form')
+
+            this.student = await this.studentService.getStudentById(this.studentId)
+
+            // Hide loading, show form
+            loadingDiv?.classList.add('d-none')
+            form?.classList.remove('d-none')
+
+            this.fillFormWithStudentData(this.student)
+            this.setupForm()
+
         } catch (error) {
-            console.error('Failed to load student data:', error)
+            console.error('Failed to load student:', error)
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'error',
                     message: 'Nie udało się załadować danych studenta'
                 }
             }))
+            window.location.href = '/#/admin/students'
         }
     }
 
     private fillFormWithStudentData(student: User): void {
         if (!this.form) return
 
-        // Set basic fields
-        const fieldsToSet = [
-            'name', 'email', 'phone', 'birth_date', 'city', 'country'
-        ]
-
-        fieldsToSet.forEach(field => {
+        // Basic fields
+        const fields = ['name', 'email', 'phone', 'birth_date', 'city', 'status']
+        fields.forEach(field => {
             const input = this.form!.querySelector(`[name="${field}"]`) as HTMLInputElement
             if (input && student[field as keyof User]) {
-                input.value = student[field as keyof User] as string
+                input.value = String(student[field as keyof User])
             }
         })
 
-        // Set learning languages and levels
+        // Languages and levels
         if (student.studentProfile?.learning_languages) {
             student.studentProfile.learning_languages.forEach(lang => {
                 const checkbox = this.form!.querySelector(`[name="learning_languages[]"][value="${lang}"]`) as HTMLInputElement
@@ -86,8 +336,7 @@ export class StudentForm {
                     this.showLevelSelector(lang)
                 }
 
-                // Set level if available
-                if (student.studentProfile?.current_levels && student.studentProfile.current_levels[lang]) {
+                if (student.studentProfile?.current_levels?.[lang]) {
                     const levelSelect = this.form!.querySelector(`[name="current_levels[${lang}]"]`) as HTMLSelectElement
                     if (levelSelect) {
                         levelSelect.value = student.studentProfile.current_levels[lang]
@@ -96,7 +345,7 @@ export class StudentForm {
             })
         }
 
-        // Set learning goals
+        // Goals
         if (student.studentProfile?.learning_goals) {
             student.studentProfile.learning_goals.forEach(goal => {
                 const checkbox = this.form!.querySelector(`[name="learning_goals[]"][value="${goal}"]`) as HTMLInputElement
@@ -105,49 +354,20 @@ export class StudentForm {
                 }
             })
         }
-
-        // Set preferred schedule
-        if (student.studentProfile?.preferred_schedule) {
-            const schedule = student.studentProfile.preferred_schedule
-
-            if (schedule.days) {
-                schedule.days.forEach((day: string) => {
-                    const checkbox = this.form!.querySelector(`[name="preferred_schedule[days][]"][value="${day}"]`) as HTMLInputElement
-                    if (checkbox) {
-                        checkbox.checked = true
-                    }
-                })
-            }
-
-            if (schedule.times) {
-                schedule.times.forEach((time: string) => {
-                    const checkbox = this.form!.querySelector(`[name="preferred_schedule[times][]"][value="${time}"]`) as HTMLInputElement
-                    if (checkbox) {
-                        checkbox.checked = true
-                    }
-                })
-            }
-
-            // Set frequency
-            if (schedule.frequency) {
-                const frequencySelect = this.form!.querySelector('[name="preferred_schedule[frequency]"]') as HTMLSelectElement
-                if (frequencySelect) {
-                    frequencySelect.value = schedule.frequency
-                }
-            }
-        }
     }
 
-    private setupLanguageSelectionHandling(): void {
+    private setupForm(): void {
         if (!this.form) return
 
-        const languageCheckboxes = this.form.querySelectorAll('input[name="learning_languages[]"]')
+        // Form submit
+        this.form.addEventListener('submit', this.handleSubmit.bind(this))
 
+        // Language checkbox handlers
+        const languageCheckboxes = this.form.querySelectorAll('.language-checkbox')
         languageCheckboxes.forEach(checkbox => {
             checkbox.addEventListener('change', (e) => {
                 const target = e.target as HTMLInputElement
                 const language = target.value
-
                 if (target.checked) {
                     this.showLevelSelector(language)
                 } else {
@@ -155,72 +375,73 @@ export class StudentForm {
                 }
             })
         })
+
+        // Password validation for edit mode
+        if (this.isEditMode) {
+            const passwordInput = this.form.querySelector('[name="password"]') as HTMLInputElement
+            const confirmInput = this.form.querySelector('[name="password_confirmation"]') as HTMLInputElement
+
+            const validatePasswords = () => {
+                if (passwordInput.value && !confirmInput.value) {
+                    confirmInput.setCustomValidity('Potwierdź hasło')
+                } else if (passwordInput.value !== confirmInput.value) {
+                    confirmInput.setCustomValidity('Hasła muszą być identyczne')
+                } else {
+                    confirmInput.setCustomValidity('')
+                }
+            }
+
+            passwordInput?.addEventListener('input', validatePasswords)
+            confirmInput?.addEventListener('input', validatePasswords)
+        }
     }
 
     private showLevelSelector(language: string): void {
-        const levelContainer = document.querySelector(`.level-selector[data-language="${language}"]`)
-        if (levelContainer) {
-            levelContainer.classList.remove('d-none')
+        const selector = this.container?.querySelector(`.level-selector[data-language="${language}"]`)
+        selector?.classList.remove('d-none')
 
-            // Make the select required
-            const select = levelContainer.querySelector('select')
-            if (select) {
-                select.setAttribute('required', 'required')
-            }
+        const select = selector?.querySelector('select')
+        if (select && !this.isEditMode) {
+            select.setAttribute('required', 'required')
         }
     }
 
     private hideLevelSelector(language: string): void {
-        const levelContainer = document.querySelector(`.level-selector[data-language="${language}"]`)
-        if (levelContainer) {
-            levelContainer.classList.add('d-none')
+        const selector = this.container?.querySelector(`.level-selector[data-language="${language}"]`)
+        selector?.classList.add('d-none')
 
-            // Remove required attribute
-            const select = levelContainer.querySelector('select')
-            if (select) {
-                select.removeAttribute('required')
-                select.value = '' // Reset value
-            }
+        const select = selector?.querySelector('select') as HTMLSelectElement
+        if (select) {
+            select.removeAttribute('required')
+            select.value = ''
         }
-    }
-
-    private setupGoalSelectionHandling(): void {
-        // For simplicity, no additional handling is needed for goals
-        // We just collect the checked goals during form submission
     }
 
     private async handleSubmit(e: Event): Promise<void> {
         e.preventDefault()
 
-        if (!this.form || !this.submitButton) return
+        if (!this.form) return
 
-        // Disable submit button to prevent double submission
-        this.submitButton.disabled = true
-        this.submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Przetwarzanie...'
+        const submitButton = this.form.querySelector('#submit-button') as HTMLButtonElement
+        submitButton.disabled = true
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Przetwarzanie...'
 
         try {
             const formData = new FormData(this.form)
             const studentData = this.parseFormData(formData)
 
             if (this.isEditMode && this.studentId) {
-                // Update existing student
                 await this.studentService.updateStudent(this.studentId, studentData as UpdateStudentRequest)
-
-                // Redirect to student profile
-                window.location.href = `/panel/students/${this.studentId}`
+                window.location.href = `/#/admin/students/${this.studentId}`
             } else {
-                // Create new student
                 const student = await this.studentService.createStudent(studentData as CreateStudentRequest)
-
-                // Redirect to student profile
-                window.location.href = `/panel/students/${student.id}`
+                window.location.href = `/#/admin/students/${student.id}`
             }
-        } catch (error) {
+
+        } catch (error: any) {
             console.error('Form submission error:', error)
 
-            // Error is handled by validation error event listener
-            // or shown as a general error notification
-            if (!(error instanceof Error && error.name === 'ValidationError')) {
+            if (error.name !== 'ValidationError') {
                 document.dispatchEvent(new CustomEvent('notification:show', {
                     detail: {
                         type: 'error',
@@ -229,9 +450,8 @@ export class StudentForm {
                 }))
             }
         } finally {
-            // Re-enable submit button
-            this.submitButton.disabled = false
-            this.submitButton.innerHTML = this.isEditMode ? 'Zapisz zmiany' : 'Utwórz studenta'
+            submitButton.disabled = false
+            submitButton.innerHTML = `<i class="bi bi-check-circle me-1"></i> ${this.isEditMode ? 'Zapisz zmiany' : 'Utwórz studenta'}`
         }
     }
 
@@ -239,87 +459,60 @@ export class StudentForm {
         const data: any = {}
 
         // Basic fields
-        const basicFields = ['name', 'email', 'password', 'phone', 'birth_date', 'city', 'country']
-        basicFields.forEach(field => {
+        const fields = ['name', 'email', 'password', 'phone', 'birth_date', 'city', 'status']
+        fields.forEach(field => {
             const value = formData.get(field)
             if (value !== null && value !== '') {
                 data[field] = value
             }
         })
 
-        // Learning languages (array)
+        // For edit mode, only include password if provided
+        if (this.isEditMode && !data.password) {
+            delete data.password
+        }
+
+        // Languages and levels
         const languages = formData.getAll('learning_languages[]')
         if (languages.length > 0) {
             data.learning_languages = languages
-
-            // Current levels (object)
             data.current_levels = {}
-            languages.forEach(langValue => {
-                // Upewnij się, że lang jest stringiem
-                const lang = String(langValue)
+
+            languages.forEach(lang => {
                 const level = formData.get(`current_levels[${lang}]`)
                 if (level) {
-                    data.current_levels[lang] = level
+                    data.current_levels[String(lang)] = level
                 }
             })
         }
 
-        // Learning goals (array)
+        // Goals
         const goals = formData.getAll('learning_goals[]')
         if (goals.length > 0) {
             data.learning_goals = goals
         }
 
-        // Preferred schedule (object)
-        data.preferred_schedule = {
-            days: formData.getAll('preferred_schedule[days][]'),
-            times: formData.getAll('preferred_schedule[times][]'),
-            frequency: formData.get('preferred_schedule[frequency]') || 'weekly'
+        // Password confirmation
+        const passwordConfirmation = formData.get('password_confirmation')
+        if (passwordConfirmation) {
+            data.password_confirmation = passwordConfirmation
         }
 
         return data
     }
 
-    private handleValidationError(event: CustomEvent): void {
-        const { errors } = event.detail
-
-        // Reset previous errors
-        this.resetValidationErrors()
-
-        // Display new errors
-        for (const [field, messages] of Object.entries(errors)) {
-            const input = this.form?.querySelector(`[name="${field}"]`)
-            const fieldContainer = input?.closest('.form-group') || input?.closest('.mb-3')
-
-            if (fieldContainer) {
-                fieldContainer.classList.add('is-invalid')
-
-                const feedbackElement = document.createElement('div')
-                feedbackElement.className = 'invalid-feedback'
-                feedbackElement.textContent = Array.isArray(messages) ? messages[0] : messages
-
-                fieldContainer.appendChild(feedbackElement)
-            }
+    private getLanguageLabel(language: string): string {
+        const labels: Record<string, string> = {
+            english: 'angielskiego',
+            german: 'niemieckiego',
+            french: 'francuskiego',
+            spanish: 'hiszpańskiego',
+            italian: 'włoskiego',
+            portuguese: 'portugalskiego',
+            russian: 'rosyjskiego',
+            chinese: 'chińskiego',
+            japanese: 'japońskiego'
         }
-    }
-
-    private resetValidationErrors(): void {
-        if (!this.form) return
-
-        // Remove is-invalid class
-        const invalidFields = this.form.querySelectorAll('.is-invalid')
-        invalidFields.forEach(field => field.classList.remove('is-invalid'))
-
-        // Remove feedback messages
-        const feedbackElements = this.form.querySelectorAll('.invalid-feedback')
-        feedbackElements.forEach(el => el.remove())
+        return labels[language] || language
     }
 }
-
-// Initialize on document load
-document.addEventListener('DOMContentLoaded', () => {
-    const studentForm = document.querySelector('#student-form')
-    if (studentForm) {
-        new StudentForm()
-    }
-})

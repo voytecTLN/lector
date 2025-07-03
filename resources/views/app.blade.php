@@ -11,6 +11,8 @@
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
     <!-- SEO Meta Tags -->
     <meta name="description" content="Platforma do nauki języków obcych z wykwalifikowanymi lektorami. Dołącz do tysięcy zadowolonych uczniów!">

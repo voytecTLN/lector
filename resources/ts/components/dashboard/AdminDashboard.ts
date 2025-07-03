@@ -284,6 +284,21 @@ export class AdminDashboard implements RouteComponent {
             case 'uczniowie':
                 pageTitle.textContent = 'Zarządzanie Uczniami'
                 contentArea.innerHTML = this.getStudentsContent()
+
+                // Mount StudentList component
+                import('@/components/students/StudentList').then(async (module) => {
+                    const studentList = new module.StudentList()
+                    const container = contentArea.querySelector('#students-list-container')
+
+                    // Type guard to ensure it's HTMLElement
+                    if (container && container instanceof HTMLElement) {
+                        const element = await studentList.render()
+                        container.appendChild(element)
+                        studentList.mount(container)
+                    } else {
+                        console.error('Students list container not found or not HTMLElement')
+                    }
+                })
                 break
 
             case 'lekcje':
@@ -338,11 +353,11 @@ export class AdminDashboard implements RouteComponent {
             </div>
 
             <div class="admin-action-card">
-                <div class="admin-action-icon">👨‍🏫</div>
-                <h3>Zarządzaj Lektorami</h3>
-                <p>Weryfikacja i zarządzanie lektorami</p>
-                <button class="admin-action-btn coming-soon" onclick="this.showComingSoon('Moduł lektorów')">
-                    Wkrótce
+                <div class="admin-action-icon">👥</div>
+                <h3>Zarządzaj Studentami</h3>
+                <p>Lista i edycja kont studentów</p>
+                <button class="admin-action-btn" onclick="window.location.href='/#/admin/dashboard?section=uczniowie'">
+                    Przejdź
                 </button>
             </div>
 
@@ -437,22 +452,12 @@ export class AdminDashboard implements RouteComponent {
 
     private getStudentsContent(): string {
         return `
-            <div class="admin-content-area">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h2>Lista Uczniów</h2>
-                    <div style="display: flex; gap: 1rem;">
-                        <a href="/admin/students/add" class="admin-action-btn">+ Dodaj Ucznia</a>
-                        <a href="/admin/import/students" class="admin-action-btn" style="background: #10b981;">📥 Import CSV</a>
-                    </div>
-                </div>
-                <p>Zarządzaj uczniami, ich pakietami godzin i przypisaniami do lektorów.</p>
-                
-                <!-- Tu będzie tabela z uczniami -->
-                <div class="table-container">
-                    <p class="admin-text-muted">Tabela</p>
-                </div>
+        <div class="admin-content-area">
+            <div id="students-list-container">
+                <!-- StudentList component will be mounted here -->
             </div>
-        `
+        </div>
+    `
     }
 
     private getLessonsContent(): string {

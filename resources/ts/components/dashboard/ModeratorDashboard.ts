@@ -57,11 +57,17 @@ export class ModeratorDashboard implements RouteComponent {
                         <a href="/admin/students" class="list-group-item list-group-item-action">
                             📋 Zarządzaj studentami
                         </a>
-                        <a href="/admin/tutors" class="list-group-item list-group-item-action">
+                        <a href="/admin/tutors" class="list-group-item list-group-item-action disabled">
                             👩‍🏫 Zarządzaj lektorami
+                            <span class="badge bg-secondary float-end">Wkrótce</span>
                         </a>
-                        <a href="/reports" class="list-group-item list-group-item-action">
+                        <a href="/reports" class="list-group-item list-group-item-action disabled">
                             📊 Przeglądaj zgłoszenia
+                            <span class="badge bg-secondary float-end">Wkrótce</span>
+                        </a>
+                        <a href="/content/moderation" class="list-group-item list-group-item-action disabled">
+                            🛡️ Moderacja treści
+                            <span class="badge bg-secondary float-end">Wkrótce</span>
                         </a>
                     </div>
                 </div>

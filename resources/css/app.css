@@ -4,6 +4,7 @@
 /* Component styles */
 @import './components/navigation.css';
 @import './components/footer.css';
+@import './components/students.css';
 
 /* Page styles */
 @import './pages/home.css';
