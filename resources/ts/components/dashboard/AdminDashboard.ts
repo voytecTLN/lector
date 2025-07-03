@@ -2,6 +2,7 @@
 import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
 import { api } from '@services/ApiService'
+import { navigateTo } from '@utils/navigation'
 
 export class AdminDashboard implements RouteComponent {
     private activeSection: string = 'dashboard'
@@ -402,7 +403,7 @@ export class AdminDashboard implements RouteComponent {
     }
 
     private navigate(path: string): void {
-        window.location.href = path
+        navigateTo(path)
     }
 
     private showComingSoon(feature: string): void {

@@ -1,6 +1,7 @@
 // resources/ts/components/students/StudentList.ts
 import { StudentService, HourPackage } from '@services/StudentService'
 import type { StudentFilters, User, PaginatedResponse, StudentProfile } from '@/types/models'
+import type { RouteComponent } from '@router/routes'
 
 // Extend User type to include studentProfile property
 type ExtendedUser = User & {
@@ -8,40 +9,77 @@ type ExtendedUser = User & {
     studentProfile?: StudentProfile;
 }
 
-export class StudentList {
+export class StudentList implements RouteComponent {
     private studentService: StudentService
     private students: ExtendedUser[] = []
     private filters: StudentFilters = {
         status: 'active',
+        search: '',
         page: 1,
         per_page: 10
     }
     private pagination: PaginatedResponse<ExtendedUser[]> | null = null
+    private container: HTMLElement | null = null
     private tableElement: HTMLElement | null = null
     private paginationElement: HTMLElement | null = null
     private filterForm: HTMLFormElement | null = null
 
     constructor() {
         this.studentService = new StudentService()
+    }
+
+    async render(): Promise<HTMLElement> {
+        this.container = document.createElement('div')
+        this.container.innerHTML = `
+            <h1>Lista studentów</h1>
+            <form id="student-filters" class="mb-3 d-flex align-items-end" style="gap:0.5rem;">
+                <input name="search" class="form-control" placeholder="Szukaj..." style="width:auto;" />
+                <select name="status" class="form-select" style="width:auto;">
+                    <option value="active">Aktywni</option>
+                    <option value="inactive">Nieaktywni</option>
+                    <option value="blocked">Zablokowani</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Filtruj</button>
+                <button type="button" class="btn btn-secondary reset-filters">Resetuj</button>
+            </form>
+            <table class="table student-table"></table>
+            <div class="pagination-container mt-3"></div>
+        `
+        return this.container
+    }
+
+    mount(): void {
+        this.tableElement = this.container?.querySelector('.student-table') || null
+        this.paginationElement = this.container?.querySelector('.pagination-container') || null
+        this.filterForm = this.container?.querySelector('#student-filters') || null
+
         this.init()
     }
 
-    private async init(): Promise<void> {
-        this.tableElement = document.querySelector('.student-table')
-        this.paginationElement = document.querySelector('.pagination-container')
-        this.filterForm = document.querySelector('#student-filters')
+    unmount(): void {
+        if (this.filterForm) {
+            this.filterForm.removeEventListener('submit', this.handleFilterSubmit.bind(this))
+            const resetButton = this.filterForm.querySelector('.reset-filters')
+            if (resetButton) {
+                resetButton.removeEventListener('click', this.resetFilters.bind(this))
+            }
+        }
 
+        if (this.paginationElement) {
+            this.paginationElement.removeEventListener('click', this.handlePaginationClick.bind(this))
+        }
+    }
+
+    private async init(): Promise<void> {
         if (this.filterForm) {
             this.filterForm.addEventListener('submit', this.handleFilterSubmit.bind(this))
 
-            // Reset filters
             const resetButton = this.filterForm.querySelector('.reset-filters')
             if (resetButton) {
                 resetButton.addEventListener('click', this.resetFilters.bind(this))
             }
         }
 
-        // Handle pagination clicks
         if (this.paginationElement) {
             this.paginationElement.addEventListener('click', this.handlePaginationClick.bind(this))
         }
@@ -105,9 +143,11 @@ export class StudentList {
                     <td>${student.phone || '-'}</td>
                     <td>${packageInfo}</td>
                     <td>
-                        <span class="badge ${this.getStatusBadgeClass(student.status || 'inactive')}">
-                            ${this.getStatusLabel(student.status || 'inactive')}
-                        </span>
+                        <select class="form-select form-select-sm change-status" data-id="${student.id}">
+                            <option value="active" ${student.status === 'active' ? 'selected' : ''}>Aktywny</option>
+                            <option value="inactive" ${student.status === 'inactive' ? 'selected' : ''}>Nieaktywny</option>
+                            <option value="blocked" ${student.status === 'blocked' ? 'selected' : ''}>Zablokowany</option>
+                        </select>
                     </td>
                     <td>
                         <div class="dropdown">
@@ -126,6 +166,12 @@ export class StudentList {
         }).join('')
 
         this.tableElement.innerHTML = rows
+
+        // Attach status change handlers
+        const statusSelects = this.tableElement.querySelectorAll<HTMLSelectElement>('select.change-status')
+        statusSelects.forEach(select => {
+            select.addEventListener('change', this.handleStatusChange.bind(this))
+        })
     }
 
     private renderPagination(): void {
@@ -228,6 +274,7 @@ export class StudentList {
         // Reset to default filters
         this.filters = {
             status: 'active',
+            search: '',
             page: 1,
             per_page: 10
         }
@@ -275,9 +322,43 @@ export class StudentList {
         return statusLabels[status] || 'Nieznany'
     }
 
+    private async handleStatusChange(e: Event): Promise<void> {
+        const select = e.target as HTMLSelectElement
+        const studentId = parseInt(select.dataset.id || '0', 10)
+        const newStatus = select.value as 'active' | 'inactive' | 'blocked'
+
+        if (!studentId) return
+
+        try {
+            await this.studentService.bulkUpdateStatus([studentId], newStatus)
+
+            // update local data
+            const student = this.students.find(s => s.id === studentId)
+            if (student) {
+                (student as any).status = newStatus
+            }
+        } catch (error) {
+            console.error('Failed to update status', error)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Nie udało się zmienić statusu'
+                }
+            }))
+        }
+    }
+
     // Helper method to check if a key is a valid filter key
     private isValidFilterKey(key: string): key is keyof StudentFilters {
-        return ['status', 'city', 'learning_language', 'search', 'per_page', 'page'].includes(key);
+        const validKeys: (keyof StudentFilters)[] = [
+            'status',
+            'city',
+            'learning_language',
+            'search',
+            'per_page',
+            'page'
+        ]
+        return (validKeys as readonly string[]).includes(key)
     }
 
     // Add this method for handling UI translations
