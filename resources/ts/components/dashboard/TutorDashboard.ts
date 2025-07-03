@@ -57,22 +57,26 @@ export class TutorDashboard implements RouteComponent {
                         Brak zaplanowanych lekcji na dziś.
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <h2>Szybkie akcje</h2>
-                    <div class="list-group">
-                        <a href="/lessons/calendar" class="list-group-item list-group-item-action">
-                            📅 Mój kalendarz
-                        </a>
-                        <a href="/students/my" class="list-group-item list-group-item-action">
-                            👥 Moi studenci
-                        </a>
-                        <a href="/profile" class="list-group-item list-group-item-action">
-                            ⚙️ Edytuj profil
-                        </a>
-                        <a href="/availability" class="list-group-item list-group-item-action">
-                            🕐 Ustaw dostępność
-                        </a>
-                    </div>
+                <div class="list-group">
+                    <a href="/lessons/calendar" class="list-group-item list-group-item-action disabled">
+                        📅 Mój kalendarz
+                        <span class="badge bg-secondary float-end">Wkrótce</span>
+                    </a>
+                    <a href="/students/my" class="list-group-item list-group-item-action disabled">
+                        👥 Moi studenci
+                        <span class="badge bg-secondary float-end">Wkrótce</span>
+                    </a>
+                    <a href="/profile" class="list-group-item list-group-item-action">
+                        ⚙️ Edytuj profil
+                    </a>
+                    <a href="/availability" class="list-group-item list-group-item-action disabled">
+                        🕐 Ustaw dostępność
+                        <span class="badge bg-secondary float-end">Wkrótce</span>
+                    </a>
+                    <a href="/earnings" class="list-group-item list-group-item-action disabled">
+                        💰 Moje zarobki
+                        <span class="badge bg-secondary float-end">Wkrótce</span>
+                    </a>
                 </div>
             </div>
         `

@@ -1,8 +1,9 @@
 // resources/ts/components/students/StudentDetails.ts
+import type { RouteComponent } from '@router/routes'
 import { StudentService, HourPackage, StudentStats } from '@services/StudentService'
 import type { User, StudentProfile } from '@/types/models'
 
-export class StudentDetails {
+export class StudentDetails implements RouteComponent {
     private studentService: StudentService
     private studentId: number | null = null
     private student: (User & {
@@ -11,42 +12,53 @@ export class StudentDetails {
         upcoming_lessons: any[];
         stats: StudentStats;
     }) | null = null
-
-    // UI Elements
-    private studentContainer: HTMLElement | null = null
-    private deleteButton: HTMLElement | null = null
-    private tabElements: NodeListOf<HTMLElement> | null = null
+    private container: HTMLElement | null = null
 
     constructor() {
         this.studentService = new StudentService()
-        this.init()
     }
 
-    private async init(): Promise<void> {
-        this.studentContainer = document.querySelector('.student-details-container')
+    async render(): Promise<HTMLElement> {
+        const el = document.createElement('div')
+        el.className = 'student-details-page'
 
-        if (!this.studentContainer) return
+        // Get student ID from URL path
+        const pathMatch = window.location.pathname.match(/\/students\/(\d+)/)
+        const hashMatch = window.location.hash.match(/\/students\/(\d+)/)
+        this.studentId = parseInt(pathMatch?.[1] || hashMatch?.[1] || '0', 10)
 
-        // Get student ID from data attribute
-        const studentIdAttr = this.studentContainer.dataset.studentId
-        if (!studentIdAttr) return
+        el.innerHTML = `
+            <div class="container mt-4">
+                <div class="student-details-container" data-student-id="${this.studentId}">
+                    <!-- Loading state -->
+                    <div class="d-flex justify-content-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Ładowanie...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `
 
-        this.studentId = parseInt(studentIdAttr, 10)
+        return el
+    }
 
-        // Initialize delete button
-        this.deleteButton = document.querySelector('.student-delete-btn')
-        if (this.deleteButton) {
-            this.deleteButton.addEventListener('click', this.handleDeleteClick.bind(this))
+    async mount(container: HTMLElement): Promise<void> {
+        this.container = container
+
+        if (!this.studentId || this.studentId === 0) {
+            this.showError('Nieprawidłowy identyfikator studenta')
+            return
         }
 
-        // Initialize tabs
-        this.tabElements = document.querySelectorAll('[data-bs-toggle="tab"]')
-        this.tabElements.forEach(tab => {
-            tab.addEventListener('shown.bs.tab', this.handleTabChange.bind(this))
-        })
-
-        // Load student data
         await this.loadStudentData()
+    }
+
+    unmount(): void {
+        // Cleanup if needed
+        this.container = null
+        this.student = null
+        this.studentId = null
     }
 
     private async loadStudentData(): Promise<void> {
@@ -54,22 +66,19 @@ export class StudentDetails {
 
         try {
             this.showLoading()
-
             this.student = await this.studentService.getStudentById(this.studentId)
-
             this.renderStudentData()
-            this.hideLoading()
         } catch (error) {
             console.error('Failed to load student data:', error)
-            this.showError()
+            this.showError('Wystąpił błąd podczas ładowania danych studenta')
         }
     }
 
     private showLoading(): void {
-        if (!this.studentContainer) return
+        const detailsContainer = this.container?.querySelector('.student-details-container')
+        if (!detailsContainer) return
 
-        this.studentContainer.classList.add('loading')
-        this.studentContainer.innerHTML = `
+        detailsContainer.innerHTML = `
             <div class="d-flex justify-content-center py-5">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Ładowanie...</span>
@@ -78,59 +87,103 @@ export class StudentDetails {
         `
     }
 
-    private hideLoading(): void {
-        if (!this.studentContainer) return
+    private showError(message: string = 'Wystąpił błąd'): void {
+        const detailsContainer = this.container?.querySelector('.student-details-container')
+        if (!detailsContainer) return
 
-        this.studentContainer.classList.remove('loading')
-    }
-
-    private showError(): void {
-        if (!this.studentContainer) return
-
-        this.studentContainer.innerHTML = `
+        detailsContainer.innerHTML = `
             <div class="alert alert-danger">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                Wystąpił błąd podczas ładowania danych studenta.
-                <a href="/panel/students" class="alert-link">Wróć do listy studentów</a>
+                ${message}
+                <a href="/#/admin/students" class="alert-link ms-2">Wróć do listy studentów</a>
             </div>
         `
     }
 
     private renderStudentData(): void {
-        if (!this.studentContainer || !this.student) return
+        const detailsContainer = this.container?.querySelector('.student-details-container')
+        if (!detailsContainer || !this.student) return
 
         // Update page title
         document.title = `${this.student.name} - Profil studenta`
 
-        // Update student name in header
-        const nameElement = document.querySelector('.student-name')
-        if (nameElement) {
-            nameElement.textContent = this.student.name
-        }
+        detailsContainer.innerHTML = `
+            <!-- Header -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="/#/admin/students" class="text-muted text-decoration-none mb-2 d-inline-block">
+                            <i class="bi bi-arrow-left me-1"></i> Powrót do listy
+                        </a>
+                        <h1 class="student-name">${this.student.name}</h1>
+                        <p class="text-muted mb-0">${this.student.email}</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/#/admin/students/${this.student.id}/edit" class="btn btn-primary">
+                            <i class="bi bi-pencil me-1"></i> Edytuj
+                        </a>
+                        <button class="btn btn-danger student-delete-btn">
+                            <i class="bi bi-trash me-1"></i> Usuń
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-        // Render profile information
-        const profileTab = document.querySelector('#profile-tab-pane')
-        if (profileTab) {
-            profileTab.innerHTML = this.generateProfileHTML()
-        }
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-4" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile-tab-pane">
+                        <i class="bi bi-person me-1"></i> Profil
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#package-tab-pane">
+                        <i class="bi bi-clock me-1"></i> Pakiet godzin
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#lessons-tab-pane">
+                        <i class="bi bi-calendar me-1"></i> Lekcje
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#stats-tab-pane">
+                        <i class="bi bi-graph-up me-1"></i> Statystyki
+                    </button>
+                </li>
+            </ul>
 
-        // Render hour package information
-        const packageTab = document.querySelector('#package-tab-pane')
-        if (packageTab) {
-            packageTab.innerHTML = this.generatePackageHTML()
-        }
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="profile-tab-pane" role="tabpanel">
+                    ${this.generateProfileHTML()}
+                </div>
+                <div class="tab-pane fade" id="package-tab-pane" role="tabpanel">
+                    ${this.generatePackageHTML()}
+                </div>
+                <div class="tab-pane fade" id="lessons-tab-pane" role="tabpanel">
+                    ${this.generateLessonsHTML()}
+                </div>
+                <div class="tab-pane fade" id="stats-tab-pane" role="tabpanel">
+                    ${this.generateStatsHTML()}
+                </div>
+            </div>
+        `
 
-        // Render upcoming lessons (if any)
-        const lessonsTab = document.querySelector('#lessons-tab-pane')
-        if (lessonsTab) {
-            lessonsTab.innerHTML = this.generateLessonsHTML()
-        }
+        // Setup event listeners
+        this.setupEventListeners()
+    }
 
-        // Render statistics
-        const statsTab = document.querySelector('#stats-tab-pane')
-        if (statsTab) {
-            statsTab.innerHTML = this.generateStatsHTML()
-        }
+    private setupEventListeners(): void {
+        // Delete button
+        const deleteBtn = this.container?.querySelector('.student-delete-btn')
+        deleteBtn?.addEventListener('click', this.handleDeleteClick.bind(this))
+
+        // Tab change events
+        const tabElements = this.container?.querySelectorAll('[data-bs-toggle="tab"]')
+        tabElements?.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', this.handleTabChange.bind(this))
+        })
     }
 
     private generateProfileHTML(): string {
@@ -144,43 +197,14 @@ export class StudentDetails {
         }).join('')
 
         const learningGoalsHTML = profile.learning_goals.map(goal => {
-            return `<li class="mb-1">${goal}</li>`
+            return `<li class="mb-1">${this.getGoalLabel(goal)}</li>`
         }).join('')
-
-        // Format preferred schedule
-        const schedule = profile.preferred_schedule
-        const daysMapping: Record<string, string> = {
-            'monday': 'Poniedziałek',
-            'tuesday': 'Wtorek',
-            'wednesday': 'Środa',
-            'thursday': 'Czwartek',
-            'friday': 'Piątek',
-            'saturday': 'Sobota',
-            'sunday': 'Niedziela'
-        }
-
-        const timesMapping: Record<string, string> = {
-            'morning': 'Rano (8-12)',
-            'afternoon': 'Popołudnie (12-17)',
-            'evening': 'Wieczór (17-21)'
-        }
-
-        const frequencyMapping: Record<string, string> = {
-            'once_weekly': 'Raz w tygodniu',
-            'twice_weekly': 'Dwa razy w tygodniu',
-            'three_times_weekly': 'Trzy razy w tygodniu',
-            'intensive': 'Intensywnie (codziennie)'
-        }
-
-        const preferredDays = schedule.days.map((day: string) => daysMapping[day] || day).join(', ')
-        const preferredTimes = schedule.times.map((time: string) => timesMapping[time] || time).join(', ')
-        const preferredFrequency = frequencyMapping[schedule.frequency] || schedule.frequency
 
         return `
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Dane osobowe</h5>
-                    <a href="/panel/students/${this.student.id}/edit" class="btn btn-sm btn-outline-primary">
+                    <a href="/#/admin/students/${this.student.id}/edit" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-pencil me-1"></i> Edytuj
                     </a>
                 </div>
@@ -203,15 +227,19 @@ export class StudentDetails {
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label text-muted">Data urodzenia</label>
-                                <p class="mb-0">${this.student.birth_date || '-'}</p>
+                                <p class="mb-0">${this.formatDate(this.student.birth_date) || '-'}</p>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label text-muted">Miasto</label>
                                 <p class="mb-0">${this.student.city || '-'}</p>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label text-muted">Kraj</label>
-                                <p class="mb-0">${this.student.country || 'Polska'}</p>
+                                <label class="form-label text-muted">Status</label>
+                                <p class="mb-0">
+                                    <span class="badge ${this.getStatusBadgeClass(this.student.status || 'inactive')}">
+                                        ${this.getStatusLabel(this.student.status || 'inactive')}
+                                    </span>
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -225,23 +253,17 @@ export class StudentDetails {
                 <div class="card-body">
                     <div class="mb-4">
                         <label class="form-label text-muted">Języki do nauki i poziomy</label>
-                        <div>${learningLanguagesHTML || '-'}</div>
+                        <div>${learningLanguagesHTML || '<span class="text-muted">Brak wybranych języków</span>'}</div>
                     </div>
                     
                     <div class="mb-4">
                         <label class="form-label text-muted">Cele nauki</label>
-                        <ul class="mb-0">
-                            ${learningGoalsHTML || '<li>Brak określonych celów</li>'}
-                        </ul>
+                        ${learningGoalsHTML ? `<ul class="mb-0">${learningGoalsHTML}</ul>` : '<p class="text-muted mb-0">Brak określonych celów</p>'}
                     </div>
                     
                     <div>
                         <label class="form-label text-muted">Preferowany harmonogram</label>
-                        <ul class="mb-0">
-                            <li>Dni: ${preferredDays || 'Brak preferencji'}</li>
-                            <li>Pory dnia: ${preferredTimes || 'Brak preferencji'}</li>
-                            <li>Częstotliwość: ${preferredFrequency || 'Brak preferencji'}</li>
-                        </ul>
+                        <p class="text-muted mb-0">🔧 Funkcja harmonogramu będzie dostępna wkrótce</p>
                     </div>
                 </div>
             </div>
@@ -253,110 +275,76 @@ export class StudentDetails {
 
         const packageInfo = this.student.hour_package
 
-        if (!packageInfo || !packageInfo.id) {
+        if (!packageInfo || packageInfo.is_placeholder) {
             return `
                 <div class="text-center py-5">
                     <div class="mb-3">
                         <i class="bi bi-box text-muted" style="font-size: 3rem;"></i>
                     </div>
-                    <h5>Brak aktywnego pakietu godzin</h5>
-                    <p class="text-muted">Student nie posiada aktualnie żadnego pakietu godzin.</p>
-                    <button class="btn btn-primary mt-3" id="add-package-btn">
+                    <h5>Pakiet godzin (wkrótce)</h5>
+                    <p class="text-muted">System pakietów godzinowych będzie dostępny w następnej wersji.</p>
+                    <button class="btn btn-primary mt-3" disabled>
                         <i class="bi bi-plus-circle me-1"></i> Dodaj pakiet godzin
                     </button>
+                    <p class="text-muted mt-2"><small>🔧 Funkcja w przygotowaniu</small></p>
                 </div>
             `
         }
 
-        // Format expiry date
-        const expiryDate = packageInfo.expiry_date
-            ? new Date(packageInfo.expiry_date).toLocaleDateString('pl-PL')
-            : 'Brak daty wygaśnięcia'
-
-        // Calculate progress percentage
-        const progressPercentage = Math.round((packageInfo.remaining_hours / packageInfo.hours) * 100)
-
         return `
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Pakiet godzin</h5>
-                    <div>
-                        <button class="btn btn-sm btn-outline-primary me-2" id="edit-package-btn">
-                            <i class="bi bi-pencil me-1"></i> Edytuj
-                        </button>
-                        <button class="btn btn-sm btn-outline-success" id="add-hours-btn">
-                            <i class="bi bi-plus-circle me-1"></i> Dodaj godziny
-                        </button>
-                    </div>
+                    <h5 class="mb-0">Aktualny pakiet (demo)</h5>
+                    <span class="badge bg-info">Dane demonstracyjne</span>
                 </div>
                 <div class="card-body">
                     <div class="row align-items-center mb-4">
                         <div class="col-md-6">
-                            <h6>${packageInfo.name}</h6>
-                            <p class="text-muted mb-0">Data wygaśnięcia: ${expiryDate}</p>
+                            <h6>Pakiet ${packageInfo.total_hours} godzin</h6>
+                            <p class="text-muted mb-0">Ważny do: ${this.formatDate(packageInfo.expires_at)}</p>
                         </div>
                         <div class="col-md-6 text-md-end">
                             <h3 class="mb-0">
                                 <span class="text-primary">${packageInfo.remaining_hours}</span>
-                                <small class="text-muted">/ ${packageInfo.hours} godzin</small>
+                                <small class="text-muted">/ ${packageInfo.total_hours} h</small>
                             </h3>
                         </div>
                     </div>
                     
                     <div class="progress" style="height: 10px;">
                         <div class="progress-bar bg-primary" role="progressbar" 
-                            style="width: ${progressPercentage}%;" 
-                            aria-valuenow="${progressPercentage}" 
-                            aria-valuemin="0" 
-                            aria-valuemax="100">
+                            style="width: ${packageInfo.percentage}%;">
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Historia pakietów</h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted text-center py-3">Historia pakietów będzie dostępna w przyszłych wersjach.</p>
+                    
+                    <div class="mt-3 d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary" disabled>
+                            <i class="bi bi-pencil me-1"></i> Edytuj
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" disabled>
+                            <i class="bi bi-plus-circle me-1"></i> Dodaj godziny
+                        </button>
+                        <span class="text-muted ms-2">
+                            <small>🔧 Funkcje będą dostępne wkrótce</small>
+                        </span>
+                    </div>
                 </div>
             </div>
         `
     }
 
     private generateLessonsHTML(): string {
-        if (!this.student) return ''
-
-        const upcomingLessons = this.student.upcoming_lessons
-
-        if (!upcomingLessons || upcomingLessons.length === 0) {
-            return `
-                <div class="text-center py-5">
-                    <div class="mb-3">
-                        <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
-                    </div>
-                    <h5>Brak nadchodzących lekcji</h5>
-                    <p class="text-muted">Student nie ma zaplanowanych żadnych lekcji.</p>
-                    <button class="btn btn-primary mt-3" id="schedule-lesson-btn">
-                        <i class="bi bi-calendar-plus me-1"></i> Zaplanuj lekcję
-                    </button>
-                </div>
-            `
-        }
-
-        // This will be implemented when lessons functionality is available
         return `
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Nadchodzące lekcje</h5>
-                    <button class="btn btn-sm btn-outline-primary" id="schedule-lesson-btn">
-                        <i class="bi bi-calendar-plus me-1"></i> Zaplanuj lekcję
-                    </button>
+            <div class="text-center py-5">
+                <div class="mb-3">
+                    <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
                 </div>
-                <div class="card-body">
-                    <p class="text-muted text-center py-3">Lista nadchodzących lekcji będzie dostępna w przyszłych wersjach.</p>
-                </div>
+                <h5>System lekcji (wkrótce)</h5>
+                <p class="text-muted">Moduł zarządzania lekcjami będzie dostępny w następnej wersji.</p>
+                <button class="btn btn-primary mt-3" disabled>
+                    <i class="bi bi-calendar-plus me-1"></i> Zaplanuj lekcję
+                </button>
+                <p class="text-muted mt-2"><small>🔧 Funkcja w przygotowaniu</small></p>
             </div>
         `
     }
@@ -404,10 +392,12 @@ export class StudentDetails {
             
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Historia lekcji</h5>
+                    <h5 class="mb-0">Wykresy i analizy (wkrótce)</h5>
                 </div>
-                <div class="card-body">
-                    <p class="text-muted text-center py-3">Historia lekcji będzie dostępna w przyszłych wersjach.</p>
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-graph-up text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3">Szczegółowe analizy postępów będą dostępne w przyszłej wersji</p>
+                    <p class="text-muted"><small>🔧 Funkcja w przygotowaniu</small></p>
                 </div>
             </div>
         `
@@ -416,17 +406,25 @@ export class StudentDetails {
     private async handleDeleteClick(e: Event): Promise<void> {
         e.preventDefault()
 
-        if (!this.studentId) return
+        if (!this.studentId || !this.student) return
 
-        if (!confirm('Czy na pewno chcesz usunąć tego studenta? Tej operacji nie można cofnąć.')) {
+        if (!confirm(`Czy na pewno chcesz usunąć studenta ${this.student.name}? Tej operacji nie można cofnąć.`)) {
             return
         }
 
         try {
             await this.studentService.deleteStudent(this.studentId)
 
+            // Show success notification
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'success',
+                    message: 'Student został usunięty'
+                }
+            }))
+
             // Redirect to students list
-            window.location.href = '/panel/students'
+            window.location.href = '/#/admin/students'
         } catch (error) {
             console.error('Failed to delete student:', error)
 
@@ -440,24 +438,45 @@ export class StudentDetails {
     }
 
     private handleTabChange(e: Event): void {
-        // This can be used to load additional data when switching tabs
         const target = e.target as HTMLElement
         const tabId = target.getAttribute('data-bs-target')
+        console.log('Tab changed to:', tabId)
+    }
 
-        if (tabId === '#lessons-tab-pane') {
-            // Load lessons data if needed
-            console.log('Lessons tab activated')
-        } else if (tabId === '#stats-tab-pane') {
-            // Load stats data if needed
-            console.log('Stats tab activated')
+    // Helper methods
+    private formatDate(date: string | null | undefined): string {
+        if (!date) return ''
+        return new Date(date).toLocaleDateString('pl-PL')
+    }
+
+    private getStatusBadgeClass(status: string): string {
+        const classes: Record<string, string> = {
+            active: 'bg-success',
+            inactive: 'bg-warning',
+            blocked: 'bg-danger'
         }
+        return classes[status] || 'bg-secondary'
+    }
+
+    private getStatusLabel(status: string): string {
+        const labels: Record<string, string> = {
+            active: 'Aktywny',
+            inactive: 'Nieaktywny',
+            blocked: 'Zablokowany'
+        }
+        return labels[status] || 'Nieznany'
+    }
+
+    private getGoalLabel(goal: string): string {
+        const labels: Record<string, string> = {
+            conversation: 'Konwersacje',
+            business: 'Język biznesowy',
+            exam: 'Przygotowanie do egzaminów',
+            travel: 'Podróże',
+            academic: 'Język akademicki',
+            hobby: 'Hobby',
+            culture: 'Kultura'
+        }
+        return labels[goal] || goal
     }
 }
-
-// Initialize on document load
-document.addEventListener('DOMContentLoaded', () => {
-    const studentDetailsContainer = document.querySelector('.student-details-container')
-    if (studentDetailsContainer) {
-        new StudentDetails()
-    }
-})

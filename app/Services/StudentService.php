@@ -124,9 +124,15 @@ class StudentService
             });
         }
 
+        $paginator = $query->paginate($filters['per_page'] ?? 15);
+
         return [
-            'data' => $query->paginate($filters['per_page'] ?? 15),
-            'total' => $query->count(),
+            'data' => $paginator->items(),             // <-- kluczowa poprawka
+            'total' => $paginator->total(),
+            'per_page' => $paginator->perPage(),
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'has_more_pages' => $paginator->hasMorePages(),
             'filters_applied' => array_filter($filters)
         ];
     }

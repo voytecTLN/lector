@@ -26,6 +26,12 @@ export interface HourPackage {
     remaining_hours: number;
     status: string;
     expiry_date?: string;
+    is_placeholder?: boolean;
+    total_hours?: number;
+    expires_at?: string;
+    percentage?: number;
+    active?: boolean;
+    display?: boolean;
     // Inne pola mogą być dodane w przyszłości
 }
 
@@ -64,6 +70,13 @@ interface LaravelStatsResponse {
         active: number
         new_this_month: number
         by_language: Record<string, number>
+        packages?: {  // Dodaj to jako obiekt, nie tablicę
+            active: number
+            expiring_soon: number
+            expired: number
+            total_hours: number
+            used_hours: number
+        }
     }
 }
 

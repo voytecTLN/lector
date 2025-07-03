@@ -190,14 +190,13 @@ export const routes: RouteDefinition[] = [
             permissions: ['can_learn', 'book_lessons']
         }
     },
-
-    // Dodaj do routes.ts po dashboardach:
-
-// Student management routes (admin/moderator only)
     {
         path: '/admin/students',
         name: 'admin.students',
-        component: () => import('@/components/students/StudentList').then(m => new m.StudentList()),
+        component: async () => {
+            const module = await import('@/components/students/StudentList')
+            return new module.StudentList()
+        },
         title: 'Zarządzanie Studentami - Platforma Lektorów',
         meta: {
             requiresAuth: true,
@@ -209,7 +208,10 @@ export const routes: RouteDefinition[] = [
     {
         path: '/admin/students/add',
         name: 'admin.students.add',
-        component: () => import('@/components/students/StudentForm').then(m => new m.StudentForm()),
+        component: async () => {
+            const module = await import('@/components/students/StudentForm')
+            return new module.StudentForm()
+        },
         title: 'Dodaj Studenta - Platforma Lektorów',
         meta: {
             requiresAuth: true,
@@ -221,7 +223,10 @@ export const routes: RouteDefinition[] = [
     {
         path: '/admin/students/:id',
         name: 'admin.students.show',
-        component: () => import('@/components/students/StudentDetails').then(m => new m.StudentDetails()),
+        component: async () => {
+            const module = await import('@/components/students/StudentDetails')
+            return new module.StudentDetails()
+        },
         title: 'Profil Studenta - Platforma Lektorów',
         meta: {
             requiresAuth: true,
@@ -233,7 +238,10 @@ export const routes: RouteDefinition[] = [
     {
         path: '/admin/students/:id/edit',
         name: 'admin.students.edit',
-        component: () => import('@/components/students/StudentForm').then(m => new m.StudentForm()),
+        component: async () => {
+            const module = await import('@/components/students/StudentForm')
+            return new module.StudentForm()
+        },
         title: 'Edytuj Studenta - Platforma Lektorów',
         meta: {
             requiresAuth: true,
