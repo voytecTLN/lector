@@ -22,6 +22,7 @@ export class StudentDetails implements RouteComponent {
 
     constructor() {
         this.studentService = new StudentService()
+        this.init()
     }
 
     async render(): Promise<HTMLElement> {
@@ -100,18 +101,7 @@ export class StudentDetails implements RouteComponent {
 
     private async loadStudentData(): Promise<void> {
         if (!this.studentId) return
-
-        try {
-            this.showLoading()
-
-            this.student = await this.studentService.getStudentById(this.studentId)
-
-            this.renderStudentData()
-            this.hideLoading()
-        } catch (error) {
-            console.error('Failed to load student data:', error)
-            this.showError()
-        }
+        this.student = await this.studentService.getStudentById(this.studentId)
     }
 
     private showLoading(): void {
