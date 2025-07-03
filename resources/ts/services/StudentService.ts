@@ -246,4 +246,69 @@ export class StudentService {
             throw error
         }
     }
+
+    // Dodaj do StudentService.ts:
+
+    /**
+     * Update learning goals - zgodny z StudentController::updateLearningGoals
+     */
+    async updateLearningGoals(id: number, goals: string[]): Promise<User> {
+        try {
+            console.log('🎯 StudentService: Updating learning goals:', id)
+
+            const response = await api.put<LaravelStudentResponse>(`/students/${id}/learning-goals`, { goals })
+
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'success',
+                    message: response.message || 'Cele nauki zostały zaktualizowane'
+                }
+            }))
+
+            return response.data
+        } catch (error) {
+            console.error('❌ Update learning goals error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Search students - zgodny z StudentController::search
+     */
+    async searchStudents(query: string): Promise<User[]> {
+        try {
+            console.log('🔍 StudentService: Searching students:', query)
+
+            const response = await api.get<LaravelStudentsResponse>(`/students/search?q=${encodeURIComponent(query)}`)
+
+            return response.data || []
+        } catch (error) {
+            console.error('❌ Search students error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Bulk update status - zgodny z StudentController::bulkUpdateStatus
+     */
+    async bulkUpdateStatus(studentIds: number[], status: string): Promise<void> {
+        try {
+            console.log('📋 StudentService: Bulk updating status')
+
+            const response = await api.post<{ success: boolean, message: string }>('/students/bulk-status', {
+                student_ids: studentIds,
+                status
+            })
+
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'success',
+                    message: response.message
+                }
+            }))
+        } catch (error) {
+            console.error('❌ Bulk update error:', error)
+            throw error
+        }
+    }
 }
