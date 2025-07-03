@@ -46,6 +46,10 @@ export class StudentList {
             this.paginationElement.addEventListener('click', this.handlePaginationClick.bind(this))
         }
 
+        if (this.tableElement) {
+            this.tableElement.addEventListener('change', this.handleStatusChange.bind(this))
+        }
+
         // Load initial data
         await this.loadStudents()
     }
@@ -105,9 +109,11 @@ export class StudentList {
                     <td>${student.phone || '-'}</td>
                     <td>${packageInfo}</td>
                     <td>
-                        <span class="badge ${this.getStatusBadgeClass(student.status || 'inactive')}">
-                            ${this.getStatusLabel(student.status || 'inactive')}
-                        </span>
+                        <select class="form-select form-select-sm student-status-select" data-id="${student.id}">
+                            <option value="active" ${student.status === 'active' ? 'selected' : ''}>Aktywny</option>
+                            <option value="inactive" ${student.status === 'inactive' ? 'selected' : ''}>Nieaktywny</option>
+                            <option value="blocked" ${student.status === 'blocked' ? 'selected' : ''}>Zablokowany</option>
+                        </select>
                     </td>
                     <td>
                         <div class="dropdown">
@@ -116,8 +122,8 @@ export class StudentList {
                             </button>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="${profileUrl}">Profil studenta</a></li>
-                                <li><a class="dropdown-item" href="${profileUrl}/schedule">Harmonogram zajęć</a></li>
-                                <li><a class="dropdown-item" href="${profileUrl}/payments">Płatności</a></li>
+                                <li><span class="dropdown-item disabled">Harmonogram zajęć (wkrótce)</span></li>
+                                <li><span class="dropdown-item disabled">Płatności (wkrótce)</span></li>
                             </ul>
                         </div>
                     </td>
@@ -244,6 +250,23 @@ export class StudentList {
         }
 
         this.loadStudents()
+    }
+
+    private async handleStatusChange(event: Event): Promise<void> {
+        const target = event.target as HTMLSelectElement
+        if (!target.classList.contains('student-status-select')) return
+
+        const studentId = parseInt(target.dataset.id || '', 10)
+        if (!studentId) return
+
+        try {
+            await this.studentService.updateStudent(studentId, { status: target.value as any })
+        } catch (error) {
+            console.error('Failed to update status:', error)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: { type: 'error', message: 'Nie udało się zmienić statusu' }
+            }))
+        }
     }
 
     private getInitials(name: string): string {

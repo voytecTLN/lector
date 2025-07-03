@@ -1,22 +1,77 @@
 // resources/ts/components/students/StudentForm.ts
 import { StudentService } from '@services/StudentService'
 import type { CreateStudentRequest, UpdateStudentRequest, User } from '@/types/models'
+import type { RouteComponent } from '@router/routes'
 
-export class StudentForm {
+export class StudentForm implements RouteComponent {
     private studentService: StudentService
     private form: HTMLFormElement | null = null
     private submitButton: HTMLButtonElement | null = null
     private isEditMode: boolean = false
     private studentId: number | null = null
+    private container: HTMLElement | null = null
 
     constructor() {
         this.studentService = new StudentService()
+
+        const match = window.location.pathname.match(/\/(\d+)\/edit$/)
+        if (match) {
+            this.isEditMode = true
+            this.studentId = parseInt(match[1], 10)
+        }
+    }
+
+    async render(): Promise<HTMLElement> {
+        const el = document.createElement('div')
+        el.innerHTML = this.getFormHTML()
+        return el
+    }
+
+    mount(container: HTMLElement): void {
+        this.container = container
         this.init()
     }
 
+    private getFormHTML(): string {
+        return `
+            <form id="student-form">
+                <input type="hidden" name="student_id" value="${this.studentId || ''}">
+                <div class="form-group">
+                    <label>Imię i nazwisko</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" ${this.isEditMode ? 'disabled' : 'required'}>
+                </div>
+                <div class="form-group">
+                    <label>Telefon</label>
+                    <input type="tel" name="phone">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="active">Aktywny</option>
+                        <option value="inactive">Nieaktywny</option>
+                        <option value="blocked">Zablokowany</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Hasło ${this.isEditMode ? '(opcjonalnie)' : ''}</label>
+                    <input type="password" name="password" ${this.isEditMode ? '' : 'required'}>
+                </div>
+                <div class="form-group">
+                    <label>Potwierdź hasło</label>
+                    <input type="password" name="password_confirmation" ${this.isEditMode ? '' : 'required'}>
+                </div>
+                <button id="submit-button" type="submit">${this.isEditMode ? 'Zapisz zmiany' : 'Utwórz studenta'}</button>
+            </form>
+        `
+    }
+
     private async init(): Promise<void> {
-        this.form = document.querySelector('#student-form')
-        this.submitButton = document.querySelector('#submit-button')
+        this.form = this.container?.querySelector('#student-form') as HTMLFormElement
+        this.submitButton = this.container?.querySelector('#submit-button') as HTMLButtonElement
 
         if (!this.form) return
 
@@ -67,7 +122,7 @@ export class StudentForm {
 
         // Set basic fields
         const fieldsToSet = [
-            'name', 'email', 'phone', 'birth_date', 'city', 'country'
+            'name', 'email', 'phone', 'birth_date', 'city', 'country', 'status'
         ]
 
         fieldsToSet.forEach(field => {
@@ -76,6 +131,11 @@ export class StudentForm {
                 input.value = student[field as keyof User] as string
             }
         })
+
+        const statusSelect = this.form!.querySelector('select[name="status"]') as HTMLSelectElement
+        if (statusSelect && student.status) {
+            statusSelect.value = student.status
+        }
 
         // Set learning languages and levels
         if (student.studentProfile?.learning_languages) {
@@ -200,6 +260,16 @@ export class StudentForm {
 
         try {
             const formData = new FormData(this.form)
+            const password = formData.get('password') as string | null
+            const confirm = formData.get('password_confirmation') as string | null
+
+            if ((!this.isEditMode || password) && password !== confirm) {
+                document.dispatchEvent(new CustomEvent('notification:show', {
+                    detail: { type: 'error', message: 'Hasła nie są takie same' }
+                }))
+                return
+            }
+
             const studentData = this.parseFormData(formData)
 
             if (this.isEditMode && this.studentId) {
@@ -239,7 +309,7 @@ export class StudentForm {
         const data: any = {}
 
         // Basic fields
-        const basicFields = ['name', 'email', 'password', 'phone', 'birth_date', 'city', 'country']
+        const basicFields = ['name', 'email', 'password', 'phone', 'birth_date', 'city', 'country', 'status']
         basicFields.forEach(field => {
             const value = formData.get(field)
             if (value !== null && value !== '') {
@@ -317,9 +387,3 @@ export class StudentForm {
 }
 
 // Initialize on document load
-document.addEventListener('DOMContentLoaded', () => {
-    const studentForm = document.querySelector('#student-form')
-    if (studentForm) {
-        new StudentForm()
-    }
-})

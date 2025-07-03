@@ -33,6 +33,7 @@ export interface CreateStudentRequest {
   name: string
   email: string
   password?: string
+  status?: 'active' | 'inactive' | 'blocked'
   phone?: string
   birth_date?: string
   city?: string
@@ -50,6 +51,7 @@ export interface UpdateStudentRequest {
   birth_date?: string
   city?: string
   country?: string
+  status?: 'active' | 'inactive' | 'blocked'
   learning_languages?: string[]
   current_levels?: Record<string, string>
   learning_goals?: string[]

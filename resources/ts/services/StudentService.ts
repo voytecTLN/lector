@@ -80,6 +80,7 @@ export class StudentService {
                 name: data.name,
                 email: data.email,
                 password: data.password,
+                status: data.status || 'active',
                 phone: data.phone,
                 birth_date: data.birth_date,
                 city: data.city,

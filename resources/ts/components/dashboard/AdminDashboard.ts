@@ -2,6 +2,7 @@
 import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
 import { api } from '@services/ApiService'
+import { StudentList } from '@components/students/StudentList'
 
 export class AdminDashboard implements RouteComponent {
     private activeSection: string = 'dashboard'
@@ -284,6 +285,7 @@ export class AdminDashboard implements RouteComponent {
             case 'uczniowie':
                 pageTitle.textContent = 'Zarządzanie Uczniami'
                 contentArea.innerHTML = this.getStudentsContent()
+                new StudentList()
                 break
 
             case 'lekcje':
@@ -438,19 +440,40 @@ export class AdminDashboard implements RouteComponent {
     private getStudentsContent(): string {
         return `
             <div class="admin-content-area">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
                     <h2>Lista Uczniów</h2>
-                    <div style="display: flex; gap: 1rem;">
+                    <div style="display:flex;gap:1rem;">
                         <a href="/admin/students/add" class="admin-action-btn">+ Dodaj Ucznia</a>
-                        <a href="/admin/import/students" class="admin-action-btn" style="background: #10b981;">📥 Import CSV</a>
+                        <a href="#" class="admin-action-btn coming-soon">Eksport (wkrótce)</a>
                     </div>
                 </div>
-                <p>Zarządzaj uczniami, ich pakietami godzin i przypisaniami do lektorów.</p>
-                
-                <!-- Tu będzie tabela z uczniami -->
-                <div class="table-container">
-                    <p class="admin-text-muted">Tabela</p>
+
+                <form id="student-filters" class="admin-filters" style="margin-bottom:1rem;display:flex;gap:1rem;">
+                    <input type="text" name="search" placeholder="Szukaj..." />
+                    <select name="status">
+                        <option value="active">Aktywny</option>
+                        <option value="inactive">Nieaktywny</option>
+                        <option value="blocked">Zablokowany</option>
+                    </select>
+                    <button type="submit" class="admin-action-btn">Filtruj</button>
+                    <button type="button" class="admin-action-btn reset-filters">Resetuj</button>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Telefon</th>
+                                <th>Pakiet godzin</th>
+                                <th>Status</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody class="student-table"></tbody>
+                    </table>
                 </div>
+                <div class="pagination-container" style="margin-top:1rem;"></div>
             </div>
         `
     }

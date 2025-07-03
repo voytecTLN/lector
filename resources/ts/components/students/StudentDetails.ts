@@ -245,6 +245,24 @@ export class StudentDetails {
                     </div>
                 </div>
             </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Płatności</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted text-center">Moduł płatności będzie dostępny wkrótce.</p>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Postępy</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted text-center">Sekcja postępów będzie dostępna w przyszłych wersjach.</p>
+                </div>
+            </div>
         `
     }
 
