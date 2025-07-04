@@ -102,6 +102,7 @@ Route::middleware('auth:sanctum')->group(function () {
                         'success' => true,
                         'message' => 'Przekierowywanie do zarządzania studentami...',
                         'redirect' => '/admin/students'
+//                         'redirect' => 'admin/dashboard?section=uczniowie'
                     ]);
                 });
                 Route::get('/tutors', function() {

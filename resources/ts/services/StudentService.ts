@@ -93,6 +93,7 @@ export class StudentService {
                 name: data.name,
                 email: data.email,
                 password: data.password,
+                password_confirmation: data.password_confirmation,
                 phone: data.phone,
                 birth_date: data.birth_date,
                 city: data.city,
@@ -100,8 +101,11 @@ export class StudentService {
                 learning_languages: data.learning_languages || [],
                 current_levels: data.current_levels || {},
                 learning_goals: data.learning_goals || [],
-                preferred_schedule: data.preferred_schedule || {}
+                preferred_schedule: data.preferred_schedule || {},
+                status: data.status
             })
+
+            // const response = await api.post<LaravelStudentResponse>('/students', {data})
 
             // Show success notification
             document.dispatchEvent(new CustomEvent('notification:show', {
@@ -192,6 +196,7 @@ export class StudentService {
      * Update student - zgodny z StudentController::update
      */
     async updateStudent(id: number, data: UpdateStudentRequest): Promise<User> {
+        console.log('updateStudent dada', data)
         try {
             console.log('✏️ StudentService: Updating student:', id)
 

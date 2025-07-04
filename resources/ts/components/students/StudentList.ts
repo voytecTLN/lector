@@ -3,11 +3,18 @@ import type { RouteComponent } from '@router/routes'
 import { StudentService, HourPackage } from '@services/StudentService'
 import type { StudentFilters, User, PaginatedResponse, StudentProfile } from '@/types/models'
 
+declare global {
+    interface Window {
+        bootstrap: any
+        studentList: StudentList
+    }
+}
+
 export class StudentList implements RouteComponent {
     private studentService: StudentService
     private students: (User & { hour_package: HourPackage })[] = []
     private filters: StudentFilters = {
-        status: 'active',
+        status: undefined,
         page: 1,
         per_page: 10
     }
@@ -30,12 +37,12 @@ export class StudentList implements RouteComponent {
                         <p class="text-muted">Lista wszystkich studentów w systemie</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="/#/admin/students/import" class="btn btn-primary">
-                            <i class="bi bi-plus-circle me-1"></i> Import CSV (Wkrótce)
-                        </a>
-                        <a href="/#/admin/students/add" class="btn btn-primary">
+                        <button id="import-students-btn" class="btn btn-primary">
+                            <i class="bi bi-upload me-1"></i> Import CSV (Wkrótce)
+                        </button>
+                        <button id="add-student-btn" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-1"></i> Dodaj studenta
-                        </a>
+                        </button>
                     </div>
                 </div>
 
@@ -46,8 +53,8 @@ export class StudentList implements RouteComponent {
                             <div class="col-md-3">
                                 <label class="form-label">Status</label>
                                 <select name="status" class="form-select">
-                                    <option value="">Wszystkie</option>
-                                    <option value="active" selected>Aktywni</option>
+                                    <option value="" selected>Wszystkie</option>
+                                    <option value="active">Aktywni</option>
                                     <option value="inactive">Nieaktywni</option>
                                     <option value="blocked">Zablokowani</option>
                                 </select>
@@ -145,12 +152,23 @@ export class StudentList implements RouteComponent {
         this.setupEventListeners()
         await this.loadStudents()
         await this.loadStats()
+        this.initializeDropdowns()
     }
 
     unmount(): void {
         this.container = null
         this.students = []
         this.pagination = null
+    }
+
+    private initializeDropdowns(): void {
+        // Inicjalizuj wszystkie dropdowns na stronie
+        const dropdownElementList = this.container?.querySelectorAll('[data-bs-toggle="dropdown"]')
+        if (dropdownElementList && window.bootstrap) {
+            dropdownElementList.forEach(dropdownEl => {
+                new window.bootstrap.Dropdown(dropdownEl)
+            })
+        }
     }
 
     private setupEventListeners(): void {
@@ -161,6 +179,11 @@ export class StudentList implements RouteComponent {
         // Reset filters
         const resetButton = this.container?.querySelector('.reset-filters')
         resetButton?.addEventListener('click', this.resetFilters.bind(this))
+
+        const addStudentBtn = this.container?.querySelector('#add-student-btn')
+        addStudentBtn?.addEventListener('click', () => {
+            window.location.href = '/#/admin/students/add'
+        })
 
         // Import button
         const importBtn = this.container?.querySelector('#import-students-btn')
@@ -270,23 +293,31 @@ export class StudentList implements RouteComponent {
                 <td>${regDate}</td>
                 <td>
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-three-dots-vertical"></i>
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="${profileUrl}">
-                                <i class="bi bi-eye me-2"></i>Zobacz profil
-                            </a></li>
-                            <li><a class="dropdown-item" href="${profileUrl}/edit">
-                                <i class="bi bi-pencil me-2"></i>Edytuj
-                            </a></li>
+                            <li>
+                                <a class="dropdown-item" href="${profileUrl}">
+                                    <i class="bi bi-eye me-2"></i>Zobacz profil
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="${profileUrl}/edit">
+                                    <i class="bi bi-pencil me-2"></i>Edytuj
+                                </a>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-warning" href="#" data-student-id="${student.id}" data-status="${student.status}" onclick="event.preventDefault(); window.studentList.changeStatus(${student.id}, '${student.status || 'active'}')">
-                                <i class="bi bi-toggle-on me-2"></i>Zmień status
-                            </a></li>
-                            <li><a class="dropdown-item text-danger coming-soon-link" href="#" data-feature="Usuwanie">
-                                <i class="bi bi-trash me-2"></i>Usuń
-                            </a></li>
+                            <li>
+                                <a class="dropdown-item text-warning" href="#" onclick="event.preventDefault(); window.studentList.changeStatus(${student.id}, '${student.status || 'active'}')">
+                                    <i class="bi bi-toggle-on me-2"></i>Zmień status
+                                </a>
+                            </li>
+                            <li>
+                                <button class="dropdown-item text-danger coming-soon-link" data-feature="Usuwanie">
+                                    <i class="bi bi-trash me-2"></i>Usuń
+                                </button>
+                            </li>
                         </ul>
                     </div>
                 </td>
@@ -295,6 +326,9 @@ export class StudentList implements RouteComponent {
         }).join('')  // Ważne - join() zamienia tablicę na string
 
         tableBody.innerHTML = rows  // Teraz rows jest stringiem
+
+        this.initializeDropdowns()
+        this.setupActionListeners()
 
         // Dodaj event listeners dla "coming soon" linków
         const comingSoonLinks = tableBody.querySelectorAll('.coming-soon-link')
@@ -362,6 +396,27 @@ export class StudentList implements RouteComponent {
         paginationContainer.innerHTML = paginationHtml
     }
 
+    private setupActionListeners(): void {
+        const statusButtons = this.container?.querySelectorAll('[data-action="change-status"]')
+        statusButtons?.forEach(button => {
+            button.addEventListener('click', async (e) => {
+                e.preventDefault()
+                const studentId = parseInt(button.getAttribute('data-student-id') || '0')
+
+                if (studentId) {
+                    // Znajdź aktualny status z tablicy students
+                    const student = this.students.find(s => s.id === studentId)
+                    const currentStatus = student?.status || 'active'
+
+                    console.log('Found student:', student)
+                    console.log('Current status from data:', currentStatus)
+
+                    await this.changeStudentStatus(studentId, currentStatus)
+                }
+            })
+        })
+    }
+
     private handleFilterSubmit(event: Event): void {
         event.preventDefault()
 
@@ -386,7 +441,7 @@ export class StudentList implements RouteComponent {
         event.preventDefault()
 
         this.filters = {
-            status: 'active',
+            status: undefined,
             page: 1,
             per_page: 10
         }
@@ -403,12 +458,17 @@ export class StudentList implements RouteComponent {
         this.loadStudents()
     }
 
-    private handlePaginationClick(event: Event): void {  // Zmienione z MouseEvent na Event
-        event.preventDefault()
+    private handlePaginationClick(event: Event): void {
         const target = event.target as HTMLElement
         const pageLink = target.closest('.page-link') as HTMLAnchorElement
 
-        if (!pageLink || pageLink.parentElement?.classList.contains('disabled')) return
+        if (!pageLink) return
+
+        event.preventDefault()
+        event.stopPropagation()
+
+        const pageItem = pageLink.closest('.page-item')
+        if (pageItem?.classList.contains('disabled')) return
 
         const page = pageLink.dataset.page
         if (!page) return
@@ -480,10 +540,10 @@ export class StudentList implements RouteComponent {
                         <p>Wybierz nowy status:</p>
                         <select class="form-select" id="newStatus">
                             ${statuses.map(status =>
-            `<option value="${status.value}" ${status.value === currentStatus ? 'selected' : ''}>
+                                `<option value="${status.value}" ${status.value === currentStatus ? 'selected' : ''}>
                                     ${status.label}
                                 </option>`
-        ).join('')}
+                            ).join('')}
                         </select>
                     </div>
                     <div class="modal-footer">
@@ -508,21 +568,22 @@ export class StudentList implements RouteComponent {
         const confirmBtn = document.getElementById('confirmStatusChange')
         confirmBtn?.addEventListener('click', async () => {
             const newStatus = (document.getElementById('newStatus') as HTMLSelectElement).value
-
             try {
-                await this.studentService.updateStudent(studentId, { status: newStatus })
+                if (this.isValidStatus(newStatus)) {
+                    await this.studentService.updateStudent(studentId, { status: newStatus })
 
-                modal.hide()
+                    modal.hide()
 
-                document.dispatchEvent(new CustomEvent('notification:show', {
-                    detail: {
-                        type: 'success',
-                        message: 'Status studenta został zmieniony'
-                    }
-                }))
+                    document.dispatchEvent(new CustomEvent('notification:show', {
+                        detail: {
+                            type: 'success',
+                            message: 'Status studenta został zmieniony'
+                        }
+                    }))
 
-                // Odśwież listę
-                await this.loadStudents()
+                    // Odśwież listę
+                    await this.loadStudents()
+                }
 
             } catch (error) {
                 document.dispatchEvent(new CustomEvent('notification:show', {
@@ -538,5 +599,19 @@ export class StudentList implements RouteComponent {
         document.getElementById('changeStatusModal')?.addEventListener('hidden.bs.modal', () => {
             modalDiv.remove()
         })
+    }
+
+    private isValidStatus(status: string): status is 'active' | 'inactive' | 'blocked' {
+        return ['active', 'inactive', 'blocked'].includes(status);
+    }
+
+
+    public changeStatus(studentId: number, currentStatus: string): void {
+        console.log('=== changeStatus Debug ===')
+        console.log('studentId:', studentId)
+        console.log('currentStatus:', currentStatus)
+        console.log('window.bootstrap exists:', !!window.bootstrap)
+        console.log('this.studentService exists:', !!this.studentService)
+        this.changeStudentStatus(studentId, currentStatus)
     }
 }

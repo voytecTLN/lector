@@ -505,7 +505,7 @@ export class AdminDashboard implements RouteComponent {
                 
                 <!-- Tu będzie kalendarz/lista lekcji -->
                 <div class="lessons-container">
-                    <p class="admin-text-muted">Ładowanie lekcji...</p>
+                    <p class="admin-text-muted">Wkrótce</p>
                 </div>
             </div>
         `

@@ -7,14 +7,15 @@ export interface User {
   birth_date?: string
   city?: string
   country?: string
-  status?: 'active' | 'inactive' | 'blocked'
+  // status?: 'active' | 'inactive' | 'blocked'
+  status?: string
   avatar?: string
   created_at?: string
   updated_at?: string
   email_verified_at?: string
   last_login_at?: string
   last_login_ip?: string
-  studentProfile?: StudentProfile
+  student_profile: StudentProfile
 }
 
 // Add missing interfaces
@@ -33,6 +34,7 @@ export interface CreateStudentRequest {
   name: string
   email: string
   password?: string
+  password_confirmation?: string
   phone?: string
   birth_date?: string
   city?: string
@@ -41,6 +43,7 @@ export interface CreateStudentRequest {
   current_levels?: Record<string, string>
   learning_goals?: string[]
   preferred_schedule?: Record<string, any>
+  status: 'active' | 'inactive' | 'blocked'
 }
 
 export interface UpdateStudentRequest {
@@ -54,7 +57,7 @@ export interface UpdateStudentRequest {
   current_levels?: Record<string, string>
   learning_goals?: string[]
   preferred_schedule?: Record<string, any>
-  status?: string
+  status: 'active' | 'inactive' | 'blocked'
 }
 
 export interface StudentFilters {
