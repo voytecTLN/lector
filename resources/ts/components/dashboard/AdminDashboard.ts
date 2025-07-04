@@ -65,21 +65,21 @@ export class AdminDashboard implements RouteComponent {
                         </a>
                     </li>
 
-                    <li class="admin-nav-item">
-                        <a href="#harmonogram" class="admin-nav-link" data-section="harmonogram">
-                            <span class="admin-nav-icon">📅</span>
-                            Harmonogram
-                        </a>
-                    </li>
+<!--                    <li class="admin-nav-item">-->
+<!--                        <a href="#harmonogram" class="admin-nav-link" data-section="harmonogram">-->
+<!--                            <span class="admin-nav-icon">📅</span>-->
+<!--                            Harmonogram-->
+<!--                        </a>-->
+<!--                    </li>-->
 
                     <div class="admin-nav-section">Monitoring i Logi</div>
 
-                    <li class="admin-nav-item">
-                        <a href="#aktywnosc" class="admin-nav-link" data-section="aktywnosc">
-                            <span class="admin-nav-icon">👁️</span>
-                            Aktywność użytkowników
-                        </a>
-                    </li>
+<!--                    <li class="admin-nav-item">-->
+<!--                        <a href="#aktywnosc" class="admin-nav-link" data-section="aktywnosc">-->
+<!--                            <span class="admin-nav-icon">👁️</span>-->
+<!--                            Aktywność użytkowników-->
+<!--                        </a>-->
+<!--                    </li>-->
 
                     <li class="admin-nav-item">
                         <a href="#logi-systemu" class="admin-nav-link" data-section="logi">
@@ -91,18 +91,25 @@ export class AdminDashboard implements RouteComponent {
                     <div class="admin-nav-section">System</div>
 
                     <li class="admin-nav-item">
+                        <a href="#raporty" class="admin-nav-link" data-section="raporty">
+                            <span class="admin-nav-icon">👁</span>
+                            Raporty
+                        </a>
+                    </li>
+                    
+                    <li class="admin-nav-item">
                         <a href="#ustawienia" class="admin-nav-link" data-section="ustawienia">
                             <span class="admin-nav-icon">⚙️</span>
                             Ustawienia systemu
                         </a>
                     </li>
-
-                    <li class="admin-nav-item">
-                        <a href="#pomoc" class="admin-nav-link" data-section="pomoc">
-                            <span class="admin-nav-icon">❓</span>
-                            Pomoc i dokumentacja
-                        </a>
-                    </li>
+             
+<!--                    <li class="admin-nav-item">-->
+<!--                        <a href="#pomoc" class="admin-nav-link" data-section="pomoc">-->
+<!--                            <span class="admin-nav-icon">❓</span>-->
+<!--                            Pomoc i dokumentacja-->
+<!--                        </a>-->
+<!--                    </li>-->
                 </ul>
             </nav>
 
@@ -316,6 +323,16 @@ export class AdminDashboard implements RouteComponent {
                 contentArea.innerHTML = this.getSettingsContent()
                 break
 
+            case 'logi':
+                pageTitle.textContent = 'Logi'
+                contentArea.innerHTML = this.getLogsContent()
+                break
+
+            case 'raporty':
+                pageTitle.textContent = 'Raporty'
+                contentArea.innerHTML = this.getReportsContent()
+                break
+
             default:
                 pageTitle.textContent = 'Dashboard'
                 this.isLoadingStats = true
@@ -345,10 +362,10 @@ export class AdminDashboard implements RouteComponent {
         <div class="admin-quick-actions">
             <div class="admin-action-card">
                 <div class="admin-action-icon">👥</div>
-                <h3>Zarządzaj Studentami</h3>
+                <h3>Zarządzaj Lektorami</h3>
                 <p>Lista i edycja kont studentów</p>
-                <button class="admin-action-btn" onclick="this.navigate('/admin/students')">
-                    Przejdź
+                <button class="admin-action-btn coming-soon" onclick="this.showComingSoon('Moduł lektorów')">
+                    Wkrótce
                 </button>
             </div>
 
@@ -395,21 +412,9 @@ export class AdminDashboard implements RouteComponent {
                         <span class="info-number">${stats.tutors || 0}</span>
                         <div class="info-label">Lektorów</div>
                     </div>
-                    <div class="info-item">
-                        <span class="info-number">${stats.verified_users || 0}</span>
-                        <div class="info-label">Zweryfikowanych</div>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-number">${stats.new_users_this_month || 0}</span>
-                        <div class="info-label">Nowych w tym miesiącu</div>
-                    </div>
                     <div class="info-item ${stats.total_lessons === null ? 'placeholder' : ''}">
                         <span class="info-number">${stats.total_lessons ?? '—'}</span>
                         <div class="info-label">Lekcje (wkrótce)</div>
-                    </div>
-                    <div class="info-item ${stats.total_revenue === null ? 'placeholder' : ''}">
-                        <span class="info-number">${stats.total_revenue ? stats.total_revenue + ' zł' : '—'}</span>
-                        <div class="info-label">Przychody (wkrótce)</div>
                     </div>
                 </div>
             </div>
@@ -445,6 +450,38 @@ export class AdminDashboard implements RouteComponent {
                 <!-- Tu będzie tabela z lektorami -->
                 <div class="table-container">
                     <p class="admin-text-muted">Tabela</p>
+                </div>
+            </div>
+        `
+    }
+
+    private getLogsContent(): string {
+        return `
+            <div class="admin-content-area">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2>Logi</h2>
+                </div>
+                <p>Logi dostępne wkrótce.</p>
+                
+                <!-- Tu będzie tabela z logami -->
+                <div class="table-container">
+                    <p class="admin-text-muted">Logi</p>
+                </div>
+            </div>
+        `
+    }
+
+    private getReportsContent(): string {
+        return `
+            <div class="admin-content-area">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2>Raporty</h2>
+                </div>
+                <p>Raporty dostępne wkrótce.</p>
+                
+                <!-- Tu będzie tabela z raportami -->
+                <div class="table-container">
+                    <p class="admin-text-muted">Raporty</p>
                 </div>
             </div>
         `

@@ -30,9 +30,9 @@ export class StudentList implements RouteComponent {
                         <p class="text-muted">Lista wszystkich studentów w systemie</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-secondary" id="import-students-btn">
-                            <i class="bi bi-upload me-1"></i> Import CSV
-                        </button>
+                        <a href="/#/admin/students/import" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i> Import CSV (Wkrótce)
+                        </a>
                         <a href="/#/admin/students/add" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-1"></i> Dodaj studenta
                         </a>
@@ -97,22 +97,6 @@ export class StudentList implements RouteComponent {
                             <div class="card-body">
                                 <h6 class="text-muted mb-2">Aktywni</h6>
                                 <h3 class="mb-0 text-success" id="active-students">0</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <h6 class="text-muted mb-2">Z pakietami</h6>
-                                <h3 class="mb-0 text-primary" id="with-packages">0</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <h6 class="text-muted mb-2">Nowi (30 dni)</h6>
-                                <h3 class="mb-0 text-info" id="new-students">0</h3>
                             </div>
                         </div>
                     </div>
