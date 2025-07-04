@@ -92,7 +92,8 @@ class StudentService
 
     public function getStudentById(int $studentId): User
     {
-        return User::with(['studentProfile', 'lessons'])
+//         return User::with(['studentProfile', 'lessons'])
+        return User::with(['studentProfile'])
             ->where('role', 'student')
             ->findOrFail($studentId);
     }
@@ -143,7 +144,7 @@ class StudentService
         $user->update(['status' => 'inactive']);
 
         // Cancel active lessons
-        $user->lessons()->where('status', 'scheduled')->update(['status' => 'cancelled']);
+        //$user->lessons()->where('status', 'scheduled')->update(['status' => 'cancelled']);
 
         return $user;
     }

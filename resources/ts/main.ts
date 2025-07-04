@@ -116,13 +116,32 @@ class Application {
         document.addEventListener('notification:show', this.handleNotification.bind(this) as EventListener)
     }
 
+    // private handleGlobalClick(event: Event): void {
+    //     const target = event.target as HTMLElement
+    //     const link = target.closest('a[href]') as HTMLAnchorElement
+    //
+    //     if (link && this.shouldHandleInternally(link)) {
+    //         event.preventDefault()
+    //         this.router.navigate(link.pathname + link.search + link.hash)
+    //     }
+    // }
+
     private handleGlobalClick(event: Event): void {
         const target = event.target as HTMLElement
         const link = target.closest('a[href]') as HTMLAnchorElement
 
         if (link && this.shouldHandleInternally(link)) {
             event.preventDefault()
-            this.router.navigate(link.pathname + link.search + link.hash)
+
+            // NOWE: Obsługa hash links
+            if (link.href.includes('#/')) {
+                const hashIndex = link.href.indexOf('#/')
+                const hashPath = link.href.substring(hashIndex + 1) // Pobierz część po #
+                console.log('🔗 Navigating to hash path:', hashPath)
+                this.router.navigate(hashPath)
+            } else {
+                this.router.navigate(link.pathname + link.search + link.hash)
+            }
         }
     }
 
@@ -138,6 +157,9 @@ class Application {
 
         // Don't handle API or asset links
         if (link.pathname.startsWith('/api/') || link.pathname.startsWith('/storage/')) return false
+
+        // NOWE: Handle hash links
+        if (link.href.includes('#/')) return true
 
         return true
     }

@@ -102,12 +102,12 @@ export class StudentDashboard implements RouteComponent {
                         </a>
                     </li>
 
-                    <li class="student-nav-item">
-                        <a href="#ustawienia" class="student-nav-link" data-section="ustawienia">
-                            <span class="student-nav-icon">⚙️</span>
-                            Ustawienia
-                        </a>
-                    </li>
+<!--                    <li class="student-nav-item">-->
+<!--                        <a href="#ustawienia" class="student-nav-link" data-section="ustawienia">-->
+<!--                            <span class="student-nav-icon">⚙️</span>-->
+<!--                            Ustawienia-->
+<!--                        </a>-->
+<!--                    </li>-->
 
 <!--                    <li class="student-nav-item">-->
 <!--                        <a href="#pomoc" class="student-nav-link" data-section="pomoc">-->
@@ -330,6 +330,11 @@ export class StudentDashboard implements RouteComponent {
                 contentArea.innerHTML = this.getProfileContent()
                 break
 
+            case 'materialy':
+                pageTitle.textContent = 'Materiały'
+                contentArea.innerHTML = this.getMaterialsContent()
+                break
+
             default:
                 pageTitle.textContent = 'Strona główna'
                 // contentArea.innerHTML = await this.getDashboardContent()
@@ -389,14 +394,6 @@ export class StudentDashboard implements RouteComponent {
                     <div class="stat-label">Języków w nauce</div>
                 </div>
             </div>
-
-            <div class="stat-card ${stats.average_rating === null ? 'placeholder' : ''}">
-                <div class="stat-icon" style="background: #e91e63;">⭐</div>
-                <div class="stat-content">
-                    <div class="stat-number">${stats.average_rating ?? '—'}</div>
-                    <div class="stat-label">Średnia ocena</div>
-                </div>
-            </div>
         </div>
 
         <!-- Next Lesson - placeholder z info -->
@@ -416,14 +413,7 @@ export class StudentDashboard implements RouteComponent {
                 <p>Edytuj dane i preferencje</p>
                 <button class="student-action-btn" onclick="this.loadSection('profil')">Zobacz</button>
             </div>
-
-            <div class="student-action-card">
-                <div class="student-action-icon" style="background: #10b981;">🎯</div>
-                <h3>Cele nauki</h3>
-                <p>Ustaw swoje cele językowe</p>
-                <button class="student-action-btn" onclick="this.loadSection('cele')">Ustaw</button>
-            </div>
-
+            
             <div class="student-action-card">
                 <div class="student-action-icon" style="background: #f59e0b;">📅</div>
                 <h3>Zarezerwuj lekcję</h3>
@@ -432,10 +422,17 @@ export class StudentDashboard implements RouteComponent {
             </div>
 
             <div class="student-action-card">
+                <div class="student-action-icon" style="background: #10b981;">🎯</div>
+                <h3>Historia lekcji</h3>
+                <p>Sprawdź odbyte lekcje</p>
+                <button class="student-action-btn" onclick="this.showComingSoon('Historia lekcji')">Wkrótce</button>
+            </div>
+
+            <div class="student-action-card">
                 <div class="student-action-icon" style="background: #e91e63;">📊</div>
-                <h3>Moje postępy</h3>
-                <p>Śledź swój rozwój</p>
-                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Moduł postępów')">Wkrótce</button>
+                <h3>Materiały</h3>
+                <p>Sprawdź materiały do nauki</p>
+                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Materiały')">Wkrótce</button>
             </div>
         </div>`
     }
@@ -462,7 +459,20 @@ export class StudentDashboard implements RouteComponent {
                 <p>Twoje zaplanowane lekcje na najbliższe dni.</p>
                 
                 <div class="lessons-list">
-                    <p class="student-text-muted">Ładowanie lekcji...</p>
+                    <p class="student-text-muted">Wkrótce</p>
+                </div>
+            </div>
+        `
+    }
+
+    private getMaterialsContent(): string {
+        return `
+            <div class="student-content-area">
+                <h2>Materiały</h2>
+                <p>Twoje materiały do nauki.</p>
+                
+                <div class="lessons-list">
+                    <p class="student-text-muted">Wkrótce</p>
                 </div>
             </div>
         `

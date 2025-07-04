@@ -3,14 +3,20 @@ import type { RouteComponent } from '@router/routes'
 import { StudentService, HourPackage, StudentStats } from '@services/StudentService'
 import type { User, StudentProfile } from '@/types/models'
 
+declare global {
+    interface Window {
+        bootstrap: any
+    }
+}
+
 export class StudentDetails implements RouteComponent {
     private studentService: StudentService
     private studentId: number | null = null
     private student: (User & {
-        studentProfile: StudentProfile;
-        hour_package: HourPackage;
-        upcoming_lessons: any[];
-        stats: StudentStats;
+        studentProfile?: StudentProfile;
+        hour_package?: HourPackage;
+        upcoming_lessons?: any[];
+        stats?: StudentStats;
     }) | null = null
     private container: HTMLElement | null = null
 
@@ -112,7 +118,7 @@ export class StudentDetails implements RouteComponent {
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <a href="/#/admin/students" class="text-muted text-decoration-none mb-2 d-inline-block">
+                        <a href="/admin/dashboard?section=uczniowie" class="text-muted text-decoration-none mb-2 d-inline-block">
                             <i class="bi bi-arrow-left me-1"></i> Powrót do listy
                         </a>
                         <h1 class="student-name">${this.student.name}</h1>
@@ -179,6 +185,13 @@ export class StudentDetails implements RouteComponent {
         const deleteBtn = this.container?.querySelector('.student-delete-btn')
         deleteBtn?.addEventListener('click', this.handleDeleteClick.bind(this))
 
+        if (window.bootstrap) {
+            const tabElements = this.container?.querySelectorAll('[data-bs-toggle="tab"]')
+            tabElements?.forEach(tabEl => {
+                new window.bootstrap.Tab(tabEl)
+            })
+        }
+
         // Tab change events
         const tabElements = this.container?.querySelectorAll('[data-bs-toggle="tab"]')
         tabElements?.forEach(tab => {
@@ -187,87 +200,106 @@ export class StudentDetails implements RouteComponent {
     }
 
     private generateProfileHTML(): string {
-        if (!this.student) return ''
+        if (!this.student) {
+            return `
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Profil studenta nie został jeszcze utworzony.
+                </div>
+            `
+        }
 
-        const profile = this.student.studentProfile
+        const profile = this.student.student_profile
 
-        const learningLanguagesHTML = profile.learning_languages.map(lang => {
-            const level = profile.current_levels?.[lang] || 'A1'
-            return `<span class="badge bg-primary me-2">${lang.toUpperCase()} ${level}</span>`
-        }).join('')
+        // Teraz bezpiecznie używamy z wartościami domyślnymi
+        const learningLanguages = profile?.learning_languages || []
+        const currentLevels = profile?.current_levels || {}
+        const learningGoals = profile?.learning_goals || []
 
-        const learningGoalsHTML = profile.learning_goals.map(goal => {
-            return `<li class="mb-1">${this.getGoalLabel(goal)}</li>`
-        }).join('')
+        const learningLanguagesHTML = learningLanguages.length > 0
+            ? learningLanguages.map(lang => {
+                const level = currentLevels[lang] || 'A1'
+                return `<span class="badge bg-primary me-2">${lang.toUpperCase()} ${level}</span>`
+            }).join('')
+            : '<span class="text-muted">Brak wybranych języków</span>'
+
+        const learningGoalsHTML = learningGoals.length > 0
+            ? learningGoals.map(goal => {
+                return `<li class="mb-1">${this.getGoalLabel(goal)}</li>`
+            }).join('')
+            : ''
 
         return `
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Dane osobowe</h5>
-                    <a href="/#/admin/students/${this.student.id}/edit" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-pencil me-1"></i> Edytuj
-                    </a>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label text-muted">Imię i nazwisko</label>
-                                <p class="mb-0">${this.student.name}</p>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label text-muted">E-mail</label>
-                                <p class="mb-0">${this.student.email}</p>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label text-muted">Telefon</label>
-                                <p class="mb-0">${this.student.phone || '-'}</p>
-                            </div>
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Dane osobowe</h5>
+                <a href="/#/admin/students/${this.student.id}/edit" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i> Edytuj
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Imię i nazwisko</label>
+                            <p class="mb-0">${this.student.name}</p>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label text-muted">Data urodzenia</label>
-                                <p class="mb-0">${this.formatDate(this.student.birth_date) || '-'}</p>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label text-muted">Miasto</label>
-                                <p class="mb-0">${this.student.city || '-'}</p>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label text-muted">Status</label>
-                                <p class="mb-0">
-                                    <span class="badge ${this.getStatusBadgeClass(this.student.status || 'inactive')}">
-                                        ${this.getStatusLabel(this.student.status || 'inactive')}
-                                    </span>
-                                </p>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">E-mail</label>
+                            <p class="mb-0">${this.student.email}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Telefon</label>
+                            <p class="mb-0">${this.student.phone || '-'}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Data urodzenia</label>
+                            <p class="mb-0">${this.formatDate(this.student.birth_date) || '-'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Miasto</label>
+                            <p class="mb-0">${this.student.city || '-'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Status</label>
+                            <p class="mb-0">
+                                <span class="badge ${this.getStatusBadgeClass(this.student.status || 'inactive')}">
+                                    ${this.getStatusLabel(this.student.status || 'inactive')}
+                                </span>
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Języki i cele</h5>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Języki i cele</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <label class="form-label text-muted">Języki do nauki i poziomy</label>
+                    <div>${learningLanguagesHTML}</div>
                 </div>
-                <div class="card-body">
-                    <div class="mb-4">
-                        <label class="form-label text-muted">Języki do nauki i poziomy</label>
-                        <div>${learningLanguagesHTML || '<span class="text-muted">Brak wybranych języków</span>'}</div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="form-label text-muted">Cele nauki</label>
-                        ${learningGoalsHTML ? `<ul class="mb-0">${learningGoalsHTML}</ul>` : '<p class="text-muted mb-0">Brak określonych celów</p>'}
-                    </div>
-                    
-                    <div>
-                        <label class="form-label text-muted">Preferowany harmonogram</label>
-                        <p class="text-muted mb-0">🔧 Funkcja harmonogramu będzie dostępna wkrótce</p>
-                    </div>
+                
+                <div class="mb-4">
+                    <label class="form-label text-muted">Cele nauki</label>
+                    ${learningGoals.length > 0
+            ? `<ul class="mb-0">${learningGoalsHTML}</ul>`
+            : '<p class="text-muted mb-0">Brak określonych celów</p>'
+        }
+                </div>
+                
+                <div>
+                    <label class="form-label text-muted">Preferowany harmonogram</label>
+                    <p class="text-muted mb-0">🔧 Funkcja harmonogramu będzie dostępna wkrótce</p>
                 </div>
             </div>
-        `
+        </div>
+    `
     }
 
     private generatePackageHTML(): string {
@@ -359,7 +391,7 @@ export class StudentDetails implements RouteComponent {
                 <div class="col-md-6 col-lg-3 mb-4">
                     <div class="card h-100">
                         <div class="card-body text-center">
-                            <h2 class="mb-1">${stats.total_lessons}</h2>
+                            <h2 class="mb-1">${stats?.total_lessons}</h2>
                             <p class="text-muted mb-0">Wszystkie lekcje</p>
                         </div>
                     </div>
@@ -367,7 +399,7 @@ export class StudentDetails implements RouteComponent {
                 <div class="col-md-6 col-lg-3 mb-4">
                     <div class="card h-100">
                         <div class="card-body text-center">
-                            <h2 class="mb-1">${stats.total_hours}</h2>
+                            <h2 class="mb-1">${stats?.total_hours}</h2>
                             <p class="text-muted mb-0">Godziny łącznie</p>
                         </div>
                     </div>
@@ -375,7 +407,7 @@ export class StudentDetails implements RouteComponent {
                 <div class="col-md-6 col-lg-3 mb-4">
                     <div class="card h-100">
                         <div class="card-body text-center">
-                            <h2 class="mb-1">${stats.completed_lessons}</h2>
+                            <h2 class="mb-1">${stats?.completed_lessons}</h2>
                             <p class="text-muted mb-0">Ukończone lekcje</p>
                         </div>
                     </div>
@@ -383,7 +415,7 @@ export class StudentDetails implements RouteComponent {
                 <div class="col-md-6 col-lg-3 mb-4">
                     <div class="card h-100">
                         <div class="card-body text-center">
-                            <h2 class="mb-1">${stats.cancelled_lessons}</h2>
+                            <h2 class="mb-1">${stats?.cancelled_lessons}</h2>
                             <p class="text-muted mb-0">Anulowane lekcje</p>
                         </div>
                     </div>

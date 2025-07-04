@@ -34,7 +34,8 @@ export class StudentForm implements RouteComponent {
                     <div class="col-lg-8">
                         <!-- Header -->
                         <div class="mb-4">
-                            <a href="/#/admin/students" class="text-muted text-decoration-none mb-2 d-inline-block">
+<!--                            <a href="/#/admin/students" class="text-muted text-decoration-none mb-2 d-inline-block">-->
+                            <a href="/admin/dashboard?section=uczniowie" class="text-muted text-decoration-none mb-2 d-inline-block">
                                 <i class="bi bi-arrow-left me-1"></i> Powrót do listy
                             </a>
                             <h1>${this.isEditMode ? 'Edytuj studenta' : 'Dodaj nowego studenta'}</h1>
@@ -311,7 +312,8 @@ export class StudentForm implements RouteComponent {
                     message: 'Nie udało się załadować danych studenta'
                 }
             }))
-            window.location.href = '/#/admin/students'
+            // window.location.href = '/#/admin/students'
+            window.location.href = 'admin/dashboard?section=uczniowie'
         }
     }
 
@@ -328,26 +330,26 @@ export class StudentForm implements RouteComponent {
         })
 
         // Languages and levels
-        if (student.studentProfile?.learning_languages) {
-            student.studentProfile.learning_languages.forEach(lang => {
+        if (student.student_profile?.learning_languages) {
+            student.student_profile.learning_languages.forEach(lang => {
                 const checkbox = this.form!.querySelector(`[name="learning_languages[]"][value="${lang}"]`) as HTMLInputElement
                 if (checkbox) {
                     checkbox.checked = true
                     this.showLevelSelector(lang)
                 }
 
-                if (student.studentProfile?.current_levels?.[lang]) {
+                if (student.student_profile?.current_levels?.[lang]) {
                     const levelSelect = this.form!.querySelector(`[name="current_levels[${lang}]"]`) as HTMLSelectElement
                     if (levelSelect) {
-                        levelSelect.value = student.studentProfile.current_levels[lang]
+                        levelSelect.value = student.student_profile.current_levels[lang]
                     }
                 }
             })
         }
 
         // Goals
-        if (student.studentProfile?.learning_goals) {
-            student.studentProfile.learning_goals.forEach(goal => {
+        if (student.student_profile?.learning_goals) {
+            student.student_profile.learning_goals.forEach(goal => {
                 const checkbox = this.form!.querySelector(`[name="learning_goals[]"][value="${goal}"]`) as HTMLInputElement
                 if (checkbox) {
                     checkbox.checked = true
@@ -417,6 +419,44 @@ export class StudentForm implements RouteComponent {
         }
     }
 
+    // private async handleSubmit(e: Event): Promise<void> {
+    //     e.preventDefault()
+    //
+    //     if (!this.form) return
+    //
+    //     const submitButton = this.form.querySelector('#submit-button') as HTMLButtonElement
+    //     submitButton.disabled = true
+    //     submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Przetwarzanie...'
+    //
+    //     try {
+    //         const formData = new FormData(this.form)
+    //         const studentData = this.parseFormData(formData)
+    //
+    //         if (this.isEditMode && this.studentId) {
+    //             await this.studentService.updateStudent(this.studentId, studentData as UpdateStudentRequest)
+    //             window.location.href = `/#/admin/students/${this.studentId}`
+    //         } else {
+    //             const student = await this.studentService.createStudent(studentData as CreateStudentRequest)
+    //             window.location.href = `/#/admin/students/${student.id}`
+    //         }
+    //
+    //     } catch (error: any) {
+    //         console.error('Form submission error:', error)
+    //
+    //         if (error.name !== 'ValidationError') {
+    //             document.dispatchEvent(new CustomEvent('notification:show', {
+    //                 detail: {
+    //                     type: 'error',
+    //                     message: 'Wystąpił błąd podczas zapisywania danych'
+    //                 }
+    //             }))
+    //         }
+    //     } finally {
+    //         submitButton.disabled = false
+    //         submitButton.innerHTML = `<i class="bi bi-check-circle me-1"></i> ${this.isEditMode ? 'Zapisz zmiany' : 'Utwórz studenta'}`
+    //     }
+    // }
+
     private async handleSubmit(e: Event): Promise<void> {
         e.preventDefault()
 
@@ -428,7 +468,21 @@ export class StudentForm implements RouteComponent {
 
         try {
             const formData = new FormData(this.form)
+
+            // DODAJ TO DO DEBUGOWANIA
+            console.log('=== Form Debug ===')
+            console.log('Password:', formData.get('password'))
+            console.log('Password Confirmation:', formData.get('password_confirmation'))
+            console.log('All form data:')
+            formData.forEach((value, key) => {
+                console.log(`${key}: ${value}`)
+            })
+            console.log('=================')
+
             const studentData = this.parseFormData(formData)
+
+            // DODAJ TO TEŻ
+            console.log('Parsed data:', studentData)
 
             if (this.isEditMode && this.studentId) {
                 await this.studentService.updateStudent(this.studentId, studentData as UpdateStudentRequest)
@@ -467,9 +521,21 @@ export class StudentForm implements RouteComponent {
             }
         })
 
-        // For edit mode, only include password if provided
-        if (this.isEditMode && !data.password) {
-            delete data.password
+        // For edit mode, handle password properly
+        if (this.isEditMode) {
+            if (!data.password) {
+                // Jeśli nie ma hasła, usuń oba pola
+                delete data.password
+                delete data.password_confirmation
+            } else {
+                // Jeśli jest hasło, zawsze dodaj password_confirmation
+                data.password_confirmation = formData.get('password_confirmation') || ''
+            }
+        } else {
+            // For create mode, always include password_confirmation if password exists
+            if (data.password) {
+                data.password_confirmation = formData.get('password_confirmation') || ''
+            }
         }
 
         // Languages and levels
@@ -490,12 +556,6 @@ export class StudentForm implements RouteComponent {
         const goals = formData.getAll('learning_goals[]')
         if (goals.length > 0) {
             data.learning_goals = goals
-        }
-
-        // Password confirmation
-        const passwordConfirmation = formData.get('password_confirmation')
-        if (passwordConfirmation) {
-            data.password_confirmation = passwordConfirmation
         }
 
         return data
