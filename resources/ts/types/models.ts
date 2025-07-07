@@ -7,8 +7,7 @@ export interface User {
   birth_date?: string
   city?: string
   country?: string
-  // status?: 'active' | 'inactive' | 'blocked'
-  status?: string
+  status?: 'active' | 'inactive' | 'blocked'
   avatar?: string
   created_at?: string
   updated_at?: string

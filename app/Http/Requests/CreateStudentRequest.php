@@ -46,6 +46,12 @@ class CreateStudentRequest extends FormRequest
                     ->uncompromised()
             ],
             'password_confirmation' => 'required|string|same:password',
+
+            'status' => [
+                'nullable',
+                'string',
+                'in:active,inactive,blocked'
+            ],
             
             // Dane kontaktowe - OPCJONALNE
             'phone' => [

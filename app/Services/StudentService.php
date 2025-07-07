@@ -31,7 +31,7 @@ class StudentService
                 'birth_date' => $data['birth_date'] ?? null,
                 'city' => $data['city'] ?? null,
                 'country' => $data['country'] ?? 'Polska',
-                'status' => 'active'
+                'status' => $data['status'] ?? 'active'
             ]);
 
             // 2. Create student profile
@@ -69,6 +69,7 @@ class StudentService
                 'birth_date' => $data['birth_date'] ?? $user->birth_date,
                 'city' => $data['city'] ?? $user->city,
                 'country' => $data['country'] ?? $user->country,
+                'status' => $data['status'] ?? $user->status,
             ]);
 
             // 2. Update student profile
