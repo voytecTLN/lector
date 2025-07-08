@@ -1,5 +1,6 @@
 // resources/ts/services/ApiService.ts - Zgodny z Laravel Sanctum
 import { ValidationError } from "@/types/models"
+import { navigateTo } from '@/utils/navigation'
 
 interface LaravelResponse<T = any> {
   success: boolean
@@ -168,7 +169,7 @@ export class ApiService {
 
             // NOWE: Małe opóźnienie aby użytkownik zobaczył komunikat
             setTimeout(() => {
-              window.location.href = '/#/login'
+              navigateTo('/login');
             }, 500)
           }
         }

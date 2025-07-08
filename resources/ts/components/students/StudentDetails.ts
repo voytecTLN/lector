@@ -2,6 +2,7 @@
 import type { RouteComponent } from '@router/routes'
 import { StudentService, HourPackage, StudentStats } from '@services/StudentService'
 import type { User, StudentProfile } from '@/types/models'
+import { navigateTo } from '@/utils/navigation'
 
 declare global {
     interface Window {
@@ -118,7 +119,7 @@ export class StudentDetails implements RouteComponent {
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <a href="/admin/dashboard?section=uczniowie" class="text-muted text-decoration-none mb-2 d-inline-block">
+                        <a href="/#/admin/dashboard?section=uczniowie" class="text-muted text-decoration-none mb-2 d-inline-block">
                             <i class="bi bi-arrow-left me-1"></i> Powrót do listy
                         </a>
                         <h1 class="student-name">${this.student.name}</h1>
@@ -456,7 +457,8 @@ export class StudentDetails implements RouteComponent {
             }))
 
             // Redirect to students list
-            window.location.href = '/#/admin/students'
+            // window.location.href = '/#/admin/students'
+            navigateTo('/admin/students')
         } catch (error) {
             console.error('Failed to delete student:', error)
 

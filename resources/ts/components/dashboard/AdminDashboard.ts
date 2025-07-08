@@ -2,6 +2,7 @@
 import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
 import { api } from '@services/ApiService'
+import {navigateTo} from "@utils/navigation";
 
 export class AdminDashboard implements RouteComponent {
     private activeSection: string = 'dashboard'
@@ -250,7 +251,8 @@ export class AdminDashboard implements RouteComponent {
         const logoutBtn = this.container?.querySelector('#logout-btn')
         logoutBtn?.addEventListener('click', async () => {
             await authService.logout()
-            window.location.href = '/'
+            navigateTo('/')
+            //TODO
         })
     }
 
@@ -373,9 +375,9 @@ export class AdminDashboard implements RouteComponent {
                 <div class="admin-action-icon">👥</div>
                 <h3>Zarządzaj Studentami</h3>
                 <p>Lista i edycja kont studentów</p>
-                <button class="admin-action-btn" onclick="window.location.href='/#/admin/dashboard?section=uczniowie'">
+                <a href="/#/admin/dashboard?section=uczniowie" class="admin-action-btn">
                     Przejdź
-                </button>
+                </a>
             </div>
 
             <div class="admin-action-card">
@@ -421,28 +423,14 @@ export class AdminDashboard implements RouteComponent {
         </div>`
     }
 
-    private navigate(path: string): void {
-        window.location.href = path
-    }
-
-    private showComingSoon(feature: string): void {
-        document.dispatchEvent(new CustomEvent('notification:show', {
-            detail: {
-                type: 'info',
-                message: `${feature} będzie dostępny w następnej wersji.`,
-                duration: 4000
-            }
-        }))
-    }
-
     private getTutorsContent(): string {
         return `
             <div class="admin-content-area">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h2>Lista Lektorów</h2>
                     <div style="display: flex; gap: 1rem;">
-                        <a href="/admin/tutors/add" class="admin-action-btn">+ Dodaj Lektora</a>
-                        <a href="/admin/import/tutors" class="admin-action-btn" style="background: #10b981;">📥 Import CSV</a>
+                        <a href="/#/admin/tutors/add" class="admin-action-btn">+ Dodaj Lektora</a>
+                        <a href="/#/admin/import/tutors" class="admin-action-btn" style="background: #10b981;">📥 Import CSV</a>
                     </div>
                 </div>
                 <p>Zarządzaj wszystkimi lektorami w systemie, ich statusem i dostępnością.</p>

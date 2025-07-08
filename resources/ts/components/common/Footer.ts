@@ -14,9 +14,9 @@ export class Footer {
                 </div>
                 <div class="footer-section">
                     <h3>Informacje</h3>
-                    <a href="#regulamin">Regulamin</a><br>
-                    <a href="#polityka">Polityka prywatności</a><br>
-                    <a href="#faq">FAQ</a>
+                    <a href="/#/regulamin">Regulamin</a><br>
+                    <a href="/#/polityka">Polityka prywatności</a><br>
+                    <a href="/#/faq">FAQ</a>
                 </div>
             </div>
             <div class="footer-bottom">

@@ -2,6 +2,7 @@
 import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
 import { api } from '@services/ApiService'
+import {navigateTo, redirectWithMessage} from "@utils/navigation";
 
 export class StudentDashboard implements RouteComponent {
     private activeSection: string = 'dashboard'
@@ -265,7 +266,8 @@ export class StudentDashboard implements RouteComponent {
         const logoutBtn = this.container?.querySelector('#logout-btn')
         logoutBtn?.addEventListener('click', async () => {
             await authService.logout()
-            window.location.href = '/'
+            navigateTo('/')
+            //TODO
         })
     }
 
@@ -411,28 +413,31 @@ export class StudentDashboard implements RouteComponent {
                 <div class="student-action-icon" style="background: #3b82f6;">👤</div>
                 <h3>Mój profil</h3>
                 <p>Edytuj dane i preferencje</p>
-                <button class="student-action-btn" onclick="this.loadSection('profil')">Zobacz</button>
+                <a href="/#/student/dashboard?section=profil" class="student-action-btn">Zobacz</a>
             </div>
             
             <div class="student-action-card">
                 <div class="student-action-icon" style="background: #f59e0b;">📅</div>
                 <h3>Zarezerwuj lekcję</h3>
                 <p>Znajdź lektora i ustaw termin</p>
-                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Rezerwacja lekcji')">Wkrótce</button>
+<!--                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Rezerwacja lekcji')">Wkrótce</button>-->
+                <a href="#" class="student-action-btn coming-soon" onclick="event.preventDefault(); this.showComingSoon('Rezerwacja lekcji')">Wkrótce</a>
             </div>
 
             <div class="student-action-card">
                 <div class="student-action-icon" style="background: #10b981;">🎯</div>
                 <h3>Historia lekcji</h3>
                 <p>Sprawdź odbyte lekcje</p>
-                <button class="student-action-btn" onclick="this.showComingSoon('Historia lekcji')">Wkrótce</button>
+<!--                <button class="student-action-btn" onclick="this.showComingSoon('Historia lekcji')">Wkrótce</button>-->
+                <a href="#" class="student-action-btn coming-soon" onclick="event.preventDefault(); this.showComingSoon('Historia lekcji')">Wkrótce</a>
             </div>
 
             <div class="student-action-card">
                 <div class="student-action-icon" style="background: #e91e63;">📊</div>
                 <h3>Materiały</h3>
                 <p>Sprawdź materiały do nauki</p>
-                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Materiały')">Wkrótce</button>
+<!--                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Materiały')">Wkrótce</button>-->
+                <a href="#" class="student-action-btn coming-soon" onclick="event.preventDefault(); this.showComingSoon('Materiały')">Wkrótce</a>
             </div>
         </div>`
     }

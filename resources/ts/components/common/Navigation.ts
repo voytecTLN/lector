@@ -1,5 +1,6 @@
 // resources/ts/components/common/Navigation.ts
 import { authService } from '@services/AuthService'
+import {navigateTo, redirectWithMessage} from "@utils/navigation";
 
 export class Navigation {
     render(): HTMLElement {
@@ -31,8 +32,8 @@ export class Navigation {
             </div>
         ` : `
             <div class="nav-actions">
-                <a href="/register" class="btn btn-secondary join-btn nowrap">Dołącz do nas</a>
-                <a href="/login" class="btn btn-primary login-btn">Zaloguj się</a>
+                <a href="/#/register" class="btn btn-secondary join-btn nowrap">Dołącz do nas</a>
+                <a href="/#/login" class="btn btn-primary login-btn">Zaloguj się</a>
             </div>
         `
 
@@ -54,17 +55,13 @@ export class Navigation {
         `
 
         // NOWE: Dodaj event listener dla logout
-        setTimeout(() => {
             const logoutBtn = header.querySelector('#logout-btn')
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', async (e) => {
-                    e.preventDefault()
-
-                    // Dispatch custom event zamiast bezpośredniego router.navigate
-                    document.dispatchEvent(new CustomEvent('app:logout'))
+                logoutBtn?.addEventListener('click', async (e) => {
+                    // e.preventDefault()
+                    // Dispatch custom event zamiast bezpośredniego router.navigate ???
+                    await authService.logout()
+                    navigateTo('/')
                 })
-            }
-        }, 0)
 
         return header
     }

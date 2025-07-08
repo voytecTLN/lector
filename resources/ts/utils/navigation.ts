@@ -32,7 +32,8 @@ export function redirectWithMessage(
             }
 
             console.log(`🔗 Hash routing redirect to: ${fullUrl}`)
-            window.location.href = fullUrl
+            navigateTo(fullUrl)
+            //TODO
 
         } else {
             // Normalne URL routing
@@ -45,12 +46,13 @@ export function redirectWithMessage(
                 }
 
                 console.log(`🔗 Normal redirect to: ${url.href}`)
-                window.location.href = url.href
-
+                // window.location.href = url.href
+                navigateTo(url.href)
             } catch (error) {
                 console.error('❌ Failed to build URL:', error)
                 // Ostatnia deska ratunku - przekieruj bez parametrów
-                window.location.href = path
+                navigateTo(path)
+                //TODO
             }
         }
     }

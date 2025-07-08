@@ -1,6 +1,7 @@
 // resources/ts/components/auth/LoginPage.ts
 import { authService } from '@services/AuthService'
 import type { RouteComponent } from '@router/routes'
+import { navigateTo } from '@/utils/navigation'
 
 export class LoginPage implements RouteComponent {
     private form: HTMLFormElement | null = null
@@ -134,7 +135,7 @@ export class LoginPage implements RouteComponent {
 
                 if (intendedUrl) {
                     // Przekieruj do intended URL
-                    window.location.href = intendedUrl
+                    navigateTo(intendedUrl)
                 } else {
                     // Określ dashboard na podstawie roli
                     let dashboardUrl = '/'
@@ -157,11 +158,11 @@ export class LoginPage implements RouteComponent {
                     }
 
                     // Przekieruj na odpowiedni dashboard
-                    window.location.href = dashboardUrl
+                    navigateTo(dashboardUrl)
                 }
             } else {
                 // Fallback - jeśli z jakiegoś powodu nie ma użytkownika
-                window.location.href = '/'
+                navigateTo('/')
             }
 
         } catch (err: any) {

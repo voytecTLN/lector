@@ -70,9 +70,8 @@ export class LogoutPage implements RouteComponent {
 
             } catch (error) {
                 console.error('Logout error:', error)
-
                 // W przypadku błędu też przekieruj (logout po stronie frontu już wykonany)
-                window.location.href = '/'
+                navigateTo('/')
             }
         }, 1500) // 1.5 sekundy opóźnienia
     }

@@ -1,3 +1,4 @@
+// HomePage.ts
 import { Navigation } from '../common/Navigation'
 import { Footer } from '../common/Footer'
 import type { RouteComponent } from '@router/routes'
@@ -7,8 +8,23 @@ export class HomePage implements RouteComponent {
         const container = document.createElement('div')
         const nav = new Navigation()
         const footer = new Footer()
+
+        // 1. Header
         container.appendChild(nav.render())
-        container.innerHTML += `
+
+        // 2. Middle content
+        const middleSection = this.renderContent()
+        container.appendChild(middleSection)
+
+        // 3. Footer
+        container.appendChild(footer.render())
+
+        return container
+    }
+
+    private renderContent(): HTMLElement {
+        const section = document.createElement('div')
+        section.innerHTML = `
             <section class="hero" id="home">
                 <div class="container">
                     <h1>Nauka języków online z najlepszymi lektorami</h1>
@@ -88,7 +104,6 @@ export class HomePage implements RouteComponent {
                     </div>
                 </div>
             </section>
-            
             <section class="about" id="about">
                 <div class="container">
                     <h2>O naszej platformie</h2>
@@ -123,8 +138,7 @@ export class HomePage implements RouteComponent {
                     </div>
                 </div>
             </section>
-             `
-        container.appendChild(footer.render())
-        return container
+        `
+        return section
     }
 }

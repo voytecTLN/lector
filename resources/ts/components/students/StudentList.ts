@@ -40,9 +40,9 @@ export class StudentList implements RouteComponent {
                         <button id="import-students-btn" class="btn btn-primary">
                             <i class="bi bi-upload me-1"></i> Import CSV (Wkrótce)
                         </button>
-                        <button id="add-student-btn" class="btn btn-primary">
+                        <a href="/#/admin/students/add" id="add-student-btn" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-1"></i> Dodaj studenta
-                        </button>
+                        </a>
                     </div>
                 </div>
 
@@ -179,11 +179,6 @@ export class StudentList implements RouteComponent {
         // Reset filters
         const resetButton = this.container?.querySelector('.reset-filters')
         resetButton?.addEventListener('click', this.resetFilters.bind(this))
-
-        const addStudentBtn = this.container?.querySelector('#add-student-btn')
-        addStudentBtn?.addEventListener('click', () => {
-            window.location.href = '/#/admin/students/add'
-        })
 
         // Import button
         const importBtn = this.container?.querySelector('#import-students-btn')

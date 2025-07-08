@@ -2,6 +2,7 @@
 import type { RouteComponent } from '@router/routes'
 import { StudentService } from '@services/StudentService'
 import type { CreateStudentRequest, UpdateStudentRequest, User } from '@/types/models'
+import { navigateTo } from '@/utils/navigation'
 
 export class StudentForm implements RouteComponent {
     private studentService: StudentService
@@ -35,7 +36,7 @@ export class StudentForm implements RouteComponent {
                         <!-- Header -->
                         <div class="mb-4">
 <!--                            <a href="/#/admin/students" class="text-muted text-decoration-none mb-2 d-inline-block">-->
-                            <a href="/admin/dashboard?section=uczniowie" class="text-muted text-decoration-none mb-2 d-inline-block">
+                            <a href="/#/admin/dashboard?section=uczniowie" class="text-muted text-decoration-none mb-2 d-inline-block">
                                 <i class="bi bi-arrow-left me-1"></i> Powrót do listy
                             </a>
                             <h1>${this.isEditMode ? 'Edytuj studenta' : 'Dodaj nowego studenta'}</h1>
@@ -312,8 +313,8 @@ export class StudentForm implements RouteComponent {
                     message: 'Nie udało się załadować danych studenta'
                 }
             }))
-            // window.location.href = '/#/admin/students'
             window.location.href = 'admin/dashboard?section=uczniowie'
+            // navigateTo(`admin/dashboard?section=uczniowie`)
         }
     }
 
@@ -419,44 +420,6 @@ export class StudentForm implements RouteComponent {
         }
     }
 
-    // private async handleSubmit(e: Event): Promise<void> {
-    //     e.preventDefault()
-    //
-    //     if (!this.form) return
-    //
-    //     const submitButton = this.form.querySelector('#submit-button') as HTMLButtonElement
-    //     submitButton.disabled = true
-    //     submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Przetwarzanie...'
-    //
-    //     try {
-    //         const formData = new FormData(this.form)
-    //         const studentData = this.parseFormData(formData)
-    //
-    //         if (this.isEditMode && this.studentId) {
-    //             await this.studentService.updateStudent(this.studentId, studentData as UpdateStudentRequest)
-    //             window.location.href = `/#/admin/students/${this.studentId}`
-    //         } else {
-    //             const student = await this.studentService.createStudent(studentData as CreateStudentRequest)
-    //             window.location.href = `/#/admin/students/${student.id}`
-    //         }
-    //
-    //     } catch (error: any) {
-    //         console.error('Form submission error:', error)
-    //
-    //         if (error.name !== 'ValidationError') {
-    //             document.dispatchEvent(new CustomEvent('notification:show', {
-    //                 detail: {
-    //                     type: 'error',
-    //                     message: 'Wystąpił błąd podczas zapisywania danych'
-    //                 }
-    //             }))
-    //         }
-    //     } finally {
-    //         submitButton.disabled = false
-    //         submitButton.innerHTML = `<i class="bi bi-check-circle me-1"></i> ${this.isEditMode ? 'Zapisz zmiany' : 'Utwórz studenta'}`
-    //     }
-    // }
-
     private async handleSubmit(e: Event): Promise<void> {
         e.preventDefault()
 
@@ -486,10 +449,10 @@ export class StudentForm implements RouteComponent {
 
             if (this.isEditMode && this.studentId) {
                 await this.studentService.updateStudent(this.studentId, studentData as UpdateStudentRequest)
-                window.location.href = `/#/admin/students/${this.studentId}`
+                navigateTo(`/admin/students/${this.studentId}`)
             } else {
                 const student = await this.studentService.createStudent(studentData as CreateStudentRequest)
-                window.location.href = `/#/admin/students/${student.id}`
+                navigateTo(`/admin/students/${student.id}`)
             }
 
         } catch (error: any) {

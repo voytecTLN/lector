@@ -2,6 +2,7 @@
 import { BrowserHistory } from './history'
 import { routes, RouteMatcher, type RouteDefinition, type MatchedRoute } from './routes'
 import { defaultGuards, type RouteGuard, type GuardResult } from './guards'
+import {navigateTo} from "@utils/navigation";
 
 export class Router {
     private history: BrowserHistory
@@ -518,7 +519,8 @@ export class Router {
             }
 
             console.log(`🔗 Hash routing redirect to: ${finalUrl}`)
-            window.location.href = finalUrl
+            navigateTo(finalUrl)
+            //TODO
 
         } else if (path.startsWith('http')) {
             // Absolute URL
@@ -537,7 +539,8 @@ export class Router {
             }
 
             console.log(`🔗 Absolute URL redirect to: ${finalUrl}`)
-            window.location.href = finalUrl
+            navigateTo(finalUrl)
+            //TODO
 
         } else {
             // Relative path - sprawdź czy jesteśmy w hash routing mode
@@ -553,7 +556,8 @@ export class Router {
                 }
 
                 console.log(`🔗 Hash mode redirect to: ${finalUrl}`)
-                window.location.href = finalUrl
+                navigateTo(finalUrl)
+                //TODO
 
             } else {
                 // Normal routing
@@ -566,11 +570,13 @@ export class Router {
                     finalUrl = url.href
 
                     console.log(`🔗 Normal mode redirect to: ${finalUrl}`)
-                    window.location.href = finalUrl
+                    navigateTo(finalUrl)
+                    //TODO
 
                 } catch (error) {
                     console.error('❌ Failed to build URL:', error)
-                    window.location.href = path
+                    navigateTo(path)
+                    //TODO
                 }
             }
         }

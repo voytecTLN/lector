@@ -85,7 +85,7 @@ export class RegisterPage implements RouteComponent {
 
                 // Przekieruj na stronę weryfikacji emaila
                 redirectWithMessage(
-                    '/#/verify-email',
+                    '/verify-email',
                     'Konto zostało utworzone. Sprawdź email w celu weryfikacji.',
                     'success'
                 )
