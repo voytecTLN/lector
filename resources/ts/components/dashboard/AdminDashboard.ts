@@ -36,7 +36,7 @@ export class AdminDashboard implements RouteComponent {
                         <a href="#lektorzy" class="admin-nav-link" data-section="lektorzy">
                             <span class="admin-nav-icon">👨‍🏫</span>
                             Lektorzy
-                            <span class="admin-nav-badge" id="tutors-count">0</span>
+<!--                            <span class="admin-nav-badge" id="tutors-count">0</span>-->
                         </a>
                     </li>
 
@@ -44,7 +44,7 @@ export class AdminDashboard implements RouteComponent {
                         <a href="#uczniowie" class="admin-nav-link" data-section="uczniowie">
                             <span class="admin-nav-icon">👥</span>
                             Uczniowie
-                            <span class="admin-nav-badge" id="students-count">0</span>
+<!--                            <span class="admin-nav-badge" id="students-count">0</span>-->
                         </a>
                     </li>
 
@@ -62,7 +62,7 @@ export class AdminDashboard implements RouteComponent {
                         <a href="#lekcje" class="admin-nav-link" data-section="lekcje">
                             <span class="admin-nav-icon">📚</span>
                             Wszystkie lekcje
-                            <span class="admin-nav-badge admin-nav-badge-success" id="active-lessons">0</span>
+<!--                            <span class="admin-nav-badge admin-nav-badge-success" id="active-lessons">0</span>-->
                         </a>
                     </li>
 
@@ -556,6 +556,16 @@ export class AdminDashboard implements RouteComponent {
                 })
             }
         }, 30000)
+    }
+
+    private showComingSoon(feature: string): void {
+        document.dispatchEvent(new CustomEvent('notification:show', {
+            detail: {
+                type: 'info',
+                message: `${feature} będzie dostępny w następnej wersji.`,
+                duration: 4000
+            }
+        }))
     }
 
     private updateStats(stats: any): void {

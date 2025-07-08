@@ -309,9 +309,9 @@ export class StudentList implements RouteComponent {
                                 </a>
                             </li>
                             <li>
-                                <button class="dropdown-item text-danger coming-soon-link" data-feature="Usuwanie">
+                                <a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); window.studentList.deleteStudent(${student.id}, '${student.name}')">
                                     <i class="bi bi-trash me-2"></i>Usuń
-                                </button>
+                                </a>
                             </li>
                         </ul>
                     </div>
@@ -410,6 +410,8 @@ export class StudentList implements RouteComponent {
                 }
             })
         })
+
+
     }
 
     private handleFilterSubmit(event: Event): void {
@@ -592,6 +594,90 @@ export class StudentList implements RouteComponent {
 
         // Cleanup po zamknięciu
         document.getElementById('changeStatusModal')?.addEventListener('hidden.bs.modal', () => {
+            modalDiv.remove()
+        })
+    }
+
+    public async deleteStudent(studentId: number, studentName: string): Promise<void> {
+        // Modal potwierdzenia - aktualnie deaktywacja
+        const modalHtml = `
+        <div class="modal fade" id="deactivateStudentModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Dezaktywacja studenta</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Czy na pewno chcesz dezaktywować studenta?</p>
+                        <p class="fw-bold">${studentName}</p>
+                        <p class="text-muted small">Student zostanie oznaczony jako nieaktywny, ale jego dane pozostaną w systemie.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                        <button type="button" class="btn btn-warning" id="confirmDeactivate">
+                            <i class="bi bi-person-slash me-1"></i> Dezaktywuj
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `
+
+        // Dodaj modal do body
+        const modalDiv = document.createElement('div')
+        modalDiv.innerHTML = modalHtml
+        document.body.appendChild(modalDiv)
+
+        // Pokaż modal
+        const modal = new (window as any).bootstrap.Modal(document.getElementById('deleteStudentModal'))
+        modal.show()
+
+        // Obsługa przycisku potwierdzenia
+        const confirmBtn = document.getElementById('confirmDelete')
+        confirmBtn?.addEventListener('click', async () => {
+            try {
+                // Zablokuj przycisk podczas usuwania
+                confirmBtn.setAttribute('disabled', 'true')
+                confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Usuwanie...'
+
+                // Wywołaj API
+                await this.studentService.deleteStudent(studentId)
+
+                // Zamknij modal
+                modal.hide()
+
+                // Pokaż sukces
+                document.dispatchEvent(new CustomEvent('notification:show', {
+                    detail: {
+                        type: 'success',
+                        message: `Student ${studentName} został usunięty`
+                    }
+                }))
+
+                // Odśwież listę
+                await this.loadStudents()
+                await this.loadStats() // Odśwież też statystyki
+
+            } catch (error) {
+                console.error('Failed to delete student:', error)
+
+                // Pokaż błąd
+                document.dispatchEvent(new CustomEvent('notification:show', {
+                    detail: {
+                        type: 'error',
+                        message: 'Nie udało się usunąć studenta. Spróbuj ponownie.'
+                    }
+                }))
+
+                // Odblokuj przycisk
+                confirmBtn.removeAttribute('disabled')
+                confirmBtn.innerHTML = '<i class="bi bi-trash me-1"></i> Usuń studenta'
+            }
+        })
+
+        // Cleanup po zamknięciu modala
+        document.getElementById('deleteStudentModal')?.addEventListener('hidden.bs.modal', () => {
             modalDiv.remove()
         })
     }

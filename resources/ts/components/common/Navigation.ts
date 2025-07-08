@@ -46,9 +46,9 @@ export class Navigation {
                 </div>
                 <ul class="nav-links">
                     <li><a href="/" class="${isActive('/')}">Start</a></li>
-                    <li><a href="/#lecturers" class="${isActive('/#lecturers')}">Lektorzy</a></li>
-                    <li><a href="/#about" class="${isActive('/#about')}">O nas</a></li>
-                    <li><a href="/contact" class="${isActive('/contact')}">Kontakt</a></li>
+                    <li><a href="/#/#lecturers" class="${isActive('/#lecturers')}">Lektorzy</a></li>
+                    <li><a href="/#/#about" class="${isActive('/#about')}">O nas</a></li>
+                    <li><a href="/#/contact" class="${isActive('/contact')}">Kontakt</a></li>
                 </ul>
                 ${navActions}
             </nav>

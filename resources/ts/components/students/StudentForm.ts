@@ -313,8 +313,7 @@ export class StudentForm implements RouteComponent {
                     message: 'Nie udało się załadować danych studenta'
                 }
             }))
-            window.location.href = 'admin/dashboard?section=uczniowie'
-            // navigateTo(`admin/dashboard?section=uczniowie`)
+            navigateTo(`admin/dashboard?section=uczniowie`)
         }
     }
 

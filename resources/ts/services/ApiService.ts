@@ -169,7 +169,7 @@ export class ApiService {
 
             // NOWE: Małe opóźnienie aby użytkownik zobaczył komunikat
             setTimeout(() => {
-              navigateTo('/login');
+              navigateTo('/#/login');
             }, 500)
           }
         }

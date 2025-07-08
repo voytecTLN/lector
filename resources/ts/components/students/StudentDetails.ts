@@ -441,7 +441,7 @@ export class StudentDetails implements RouteComponent {
 
         if (!this.studentId || !this.student) return
 
-        if (!confirm(`Czy na pewno chcesz usunąć studenta ${this.student.name}? Tej operacji nie można cofnąć.`)) {
+        if (!confirm(`Czy na pewno chcesz usunąć (dev - deaktywować) studenta ${this.student.name}? Tej operacji nie można cofnąć. - można`)) {
             return
         }
 
@@ -457,8 +457,7 @@ export class StudentDetails implements RouteComponent {
             }))
 
             // Redirect to students list
-            // window.location.href = '/#/admin/students'
-            navigateTo('/admin/students')
+            navigateTo(`admin/dashboard?section=uczniowie`)
         } catch (error) {
             console.error('Failed to delete student:', error)
 

@@ -46,13 +46,11 @@ export function redirectWithMessage(
                 }
 
                 console.log(`🔗 Normal redirect to: ${url.href}`)
-                // window.location.href = url.href
                 navigateTo(url.href)
             } catch (error) {
                 console.error('❌ Failed to build URL:', error)
                 // Ostatnia deska ratunku - przekieruj bez parametrów
                 navigateTo(path)
-                //TODO
             }
         }
     }
@@ -64,10 +62,10 @@ export function navigateTo(path: string): void {
     const router = (window as any).router as Router | undefined
 
     if (router && router.navigate) {
-        console.log(`📍 Using router.navigate`)
         router.navigate(path)
     } else {
-        console.log(`📍 Using direct navigation (no router)`)
-        window.location.href = path
+        // Czekaj na router lub wyświetl błąd
+        console.error('Router not available yet')
+        setTimeout(() => navigateTo(path), 100)
     }
 }

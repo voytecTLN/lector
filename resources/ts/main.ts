@@ -146,21 +146,20 @@ class Application {
     }
 
     private shouldHandleInternally(link: HTMLAnchorElement): boolean {
-        // Don't handle external links
+        // Zewnętrzne linki
         if (link.hostname !== window.location.hostname) return false
 
-        // Don't handle download links
+        // Pliki do pobrania
         if (link.hasAttribute('download')) return false
 
-        // Don't handle target="_blank" links
+        // Nowe okno
         if (link.target === '_blank') return false
 
-        // Don't handle API or asset links
-        if (link.pathname.startsWith('/api/') || link.pathname.startsWith('/storage/')) return false
+        // API i zasoby
+        if (link.pathname.startsWith('/api/') ||
+            link.pathname.startsWith('/storage/')) return false
 
-        // NOWE: Handle hash links
-        if (link.href.includes('#/')) return true
-
+        // Wszystkie wewnętrzne linki powinny być obsługiwane
         return true
     }
 

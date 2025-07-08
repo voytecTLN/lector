@@ -36,7 +36,7 @@ export class StudentDashboard implements RouteComponent {
                         <a href="#nadchodzace" class="student-nav-link" data-section="nadchodzace">
                             <span class="student-nav-icon">📅</span>
                             Nadchodzące lekcje
-                            <span class="student-nav-badge student-nav-badge-success" id="upcoming-count">0</span>
+<!--                            <span class="student-nav-badge student-nav-badge-success" id="upcoming-count">0</span>-->
                         </a>
                     </li>
 
@@ -267,7 +267,6 @@ export class StudentDashboard implements RouteComponent {
         logoutBtn?.addEventListener('click', async () => {
             await authService.logout()
             navigateTo('/')
-            //TODO
         })
     }
 
@@ -420,24 +419,24 @@ export class StudentDashboard implements RouteComponent {
                 <div class="student-action-icon" style="background: #f59e0b;">📅</div>
                 <h3>Zarezerwuj lekcję</h3>
                 <p>Znajdź lektora i ustaw termin</p>
-<!--                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Rezerwacja lekcji')">Wkrótce</button>-->
-                <a href="#" class="student-action-btn coming-soon" onclick="event.preventDefault(); this.showComingSoon('Rezerwacja lekcji')">Wkrótce</a>
+                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Rezerwacja lekcji')">Wkrótce</button>
+<!--                <a href="#" class="student-action-btn coming-soon" onclick="event.preventDefault(); this.showComingSoon('Rezerwacja lekcji')">Wkrótce</a>-->
             </div>
 
             <div class="student-action-card">
                 <div class="student-action-icon" style="background: #10b981;">🎯</div>
                 <h3>Historia lekcji</h3>
                 <p>Sprawdź odbyte lekcje</p>
-<!--                <button class="student-action-btn" onclick="this.showComingSoon('Historia lekcji')">Wkrótce</button>-->
-                <a href="#" class="student-action-btn coming-soon" onclick="event.preventDefault(); this.showComingSoon('Historia lekcji')">Wkrótce</a>
+                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Historia lekcji')">Wkrótce</button>
+<!--                <a href="#" class="student-action-btn coming-soon" onclick="event.preventDefault(); this.showComingSoon('Historia lekcji')">Wkrótce</a>-->
             </div>
 
             <div class="student-action-card">
                 <div class="student-action-icon" style="background: #e91e63;">📊</div>
                 <h3>Materiały</h3>
                 <p>Sprawdź materiały do nauki</p>
-<!--                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Materiały')">Wkrótce</button>-->
-                <a href="#" class="student-action-btn coming-soon" onclick="event.preventDefault(); this.showComingSoon('Materiały')">Wkrótce</a>
+                <button class="student-action-btn coming-soon" onclick="this.showComingSoon('Materiały')">Wkrótce</button>
+<!--                <a href="#" class="student-action-btn coming-soon" onclick="event.preventDefault(); this.showComingSoon('Materiały')">Wkrótce</a>-->
             </div>
         </div>`
     }
