@@ -49,9 +49,12 @@ export class ApiService {
       headers['Authorization'] = `Bearer ${authToken}`
     }
 
-    // Dodaj Content-Type dla żądań z body
+    // Dodaj Content-Type dla żądań z body (ale nie dla FormData)
     if (options.method && ['POST', 'PUT', 'PATCH'].includes(options.method) && options.body) {
-      headers['Content-Type'] = 'application/json'
+      // Nie ustawiaj Content-Type dla FormData - przeglądarka ustawi automatycznie
+      if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json'
+      }
     }
 
     // Połącz z przekazanymi nagłówkami
@@ -198,7 +201,7 @@ export class ApiService {
   async post<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined
+      body: data ? (data instanceof FormData ? data : JSON.stringify(data)) : undefined
     }, 0)
   }
 

@@ -21,13 +21,14 @@ export class StudentForm implements RouteComponent {
         const el = document.createElement('div')
         el.className = 'student-form-page'
 
-        // Determine if edit mode from URL
-        const currentPath = routeChecker.getCurrentPath()
-        const pathMatch = currentPath.match(/\/students\/(\d+)\/edit/)
+        // Determine if edit mode from URL params (dashboard integration)
+        const urlParams = new URLSearchParams(window.location.search)
+        const section = urlParams.get('section')
+        const studentId = urlParams.get('student_id')
 
-        if (pathMatch) {
+        if (section === 'edytuj-studenta' && studentId) {
             this.isEditMode = true
-            this.studentId = parseInt(pathMatch[1] || '0', 10)
+            this.studentId = parseInt(studentId, 10)
         }
 
         el.innerHTML = `
@@ -37,7 +38,7 @@ export class StudentForm implements RouteComponent {
                         <!-- Header -->
                         <div class="mb-4">
 <!--                            <a href="/#/admin/students" class="text-muted text-decoration-none mb-2 d-inline-block">-->
-                            <a href="${urlBuilder.dashboard('admin', 'uczniowie')}" class="text-muted text-decoration-none mb-2 d-inline-block">
+                            <a href="/admin/dashboard?section=uczniowie" class="text-muted text-decoration-none mb-2 d-inline-block">
                                 <i class="bi bi-arrow-left me-1"></i> Powrót do listy
                             </a>
                             <h1>${this.isEditMode ? 'Edytuj studenta' : 'Dodaj nowego studenta'}</h1>
@@ -208,7 +209,7 @@ export class StudentForm implements RouteComponent {
 
             <!-- Przyciski -->
             <div class="d-flex justify-content-between mb-5">
-                <a href="${urlBuilder.dashboard('admin', 'uczniowie')}" class="btn btn-outline-secondary">
+                <a href="/admin/dashboard?section=uczniowie" class="btn btn-outline-secondary">
                     <i class="bi bi-x-circle me-1"></i> Anuluj
                 </a>
                 <button type="submit" class="btn btn-primary" id="submit-button">
@@ -314,7 +315,7 @@ export class StudentForm implements RouteComponent {
                     message: 'Nie udało się załadować danych studenta'
                 }
             }))
-            navigate.to(urlBuilder.dashboard('admin', 'uczniowie'))
+            navigate.to('/admin/dashboard?section=uczniowie')
         }
     }
 
@@ -449,10 +450,10 @@ export class StudentForm implements RouteComponent {
 
             if (this.isEditMode && this.studentId) {
                 await this.studentService.updateStudent(this.studentId, studentData as UpdateStudentRequest)
-                navigate.to(urlBuilder.adminStudent.show(this.studentId))
+                navigate.to(`/admin/dashboard?section=student-details&student_id=${this.studentId}`)
             } else {
                 const student = await this.studentService.createStudent(studentData as CreateStudentRequest)
-                navigate.to(urlBuilder.adminStudent.show(student.id))
+                navigate.to(`/admin/dashboard?section=student-details&student_id=${student.id}`)
             }
 
         } catch (error: any) {

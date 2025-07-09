@@ -40,11 +40,11 @@ export class StudentList implements RouteComponent {
                     </div>
                     <div class="d-flex gap-2">
                         <button id="import-students-btn" class="btn btn-primary">
-                            <i class="bi bi-upload me-1"></i> Import CSV (Wkrótce)
+                            <i class="bi bi-upload me-1"></i> Import CSV
                         </button>
-                        <a href="${urlBuilder.adminStudent.add()}" id="add-student-btn" class="btn btn-primary">
+                        <button id="add-student-btn" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-1"></i> Dodaj studenta
-                        </a>
+                        </button>
                     </div>
                 </div>
 
@@ -186,12 +186,13 @@ export class StudentList implements RouteComponent {
         // Import button
         const importBtn = this.container?.querySelector('#import-students-btn')
         importBtn?.addEventListener('click', () => {
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'info',
-                    message: 'Import CSV będzie dostępny wkrótce 🔧'
-                }
-            }))
+            navigate.to('/admin/dashboard?section=import-csv')
+        })
+
+        // Add student button
+        const addBtn = this.container?.querySelector('#add-student-btn')
+        addBtn?.addEventListener('click', () => {
+            navigate.to('/admin/dashboard?section=dodaj-studenta')
         })
 
         // Pagination
@@ -274,7 +275,7 @@ export class StudentList implements RouteComponent {
         }
 
         const rows = this.students.map(student => {
-            const profileUrl = urlBuilder.adminStudent.show(student.id)
+            const profileUrl = `/admin/dashboard?section=student-details&student_id=${student.id}`
 
             // Package badge
             const packageBadge = this.getPackageBadge(student.hour_package)
@@ -319,7 +320,7 @@ export class StudentList implements RouteComponent {
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="${urlBuilder.adminStudent.edit(student.id)}">
+                                <a class="dropdown-item" href="/admin/dashboard?section=edytuj-studenta&student_id=${student.id}">
                                     <i class="bi bi-pencil me-2"></i>Edytuj
                                 </a>
                             </li>

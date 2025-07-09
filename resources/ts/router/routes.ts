@@ -189,66 +189,6 @@ export const routes: RouteDefinition[] = [
             layout: 'app'
         }
     },
-    {
-        path: '/admin/students',
-        name: 'admin.students',
-        component: async () => {
-            const module = await import('@/components/students/StudentList')
-            return new module.StudentList()
-        },
-        title: 'Zarządzanie Studentami - Platforma Lektorów',
-        meta: {
-            requiresAuth: true,
-            requiresVerification: true,
-            roles: ['admin', 'moderator'],
-            layout: 'app'
-        }
-    },
-    {
-        path: '/admin/students/add',
-        name: 'admin.students.add',
-        component: async () => {
-            const module = await import('@/components/students/StudentForm')
-            return new module.StudentForm()
-        },
-        title: 'Dodaj Studenta - Platforma Lektorów',
-        meta: {
-            requiresAuth: true,
-            requiresVerification: true,
-            roles: ['admin', 'moderator'],
-            layout: 'app'
-        }
-    },
-    {
-        path: '/admin/students/:id',
-        name: 'admin.students.show',
-        component: async () => {
-            const module = await import('@/components/students/StudentDetails')
-            return new module.StudentDetails()
-        },
-        title: 'Profil Studenta - Platforma Lektorów',
-        meta: {
-            requiresAuth: true,
-            requiresVerification: true,
-            roles: ['admin', 'moderator'],
-            layout: 'app'
-        }
-    },
-    {
-        path: '/admin/students/:id/edit',
-        name: 'admin.students.edit',
-        component: async () => {
-            const module = await import('@/components/students/StudentForm')
-            return new module.StudentForm()
-        },
-        title: 'Edytuj Studenta - Platforma Lektorów',
-        meta: {
-            requiresAuth: true,
-            requiresVerification: true,
-            roles: ['admin', 'moderator'],
-            layout: 'app'
-        }
-    },
 
     // Error routes (no guards needed)
     {

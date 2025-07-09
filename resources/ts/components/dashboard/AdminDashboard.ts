@@ -2,7 +2,7 @@
 import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
 import { api } from '@services/ApiService'
-import {navigateTo} from "@utils/navigation";
+import { navigate } from "@utils/navigation";
 
 export class AdminDashboard implements RouteComponent {
     private activeSection: string = 'dashboard'
@@ -251,7 +251,7 @@ export class AdminDashboard implements RouteComponent {
         const logoutBtn = this.container?.querySelector('#logout-btn')
         logoutBtn?.addEventListener('click', async () => {
             await authService.logout()
-            navigateTo('/')
+            navigate.to('/')
             //TODO
         })
     }
@@ -333,6 +333,94 @@ export class AdminDashboard implements RouteComponent {
             case 'raporty':
                 pageTitle.textContent = 'Raporty'
                 contentArea.innerHTML = this.getReportsContent()
+                break
+
+            case 'import-csv':
+                pageTitle.textContent = 'Import Studentów z CSV'
+                contentArea.innerHTML = this.getImportCsvContent()
+                
+                // Mount StudentImportView component
+                import('@/components/students/StudentImportView').then(async (module) => {
+                    const importView = new module.StudentImportView()
+                    const container = contentArea.querySelector('#import-csv-container')
+
+                    if (container && container instanceof HTMLElement) {
+                        const element = await importView.render()
+                        container.appendChild(element)
+                        importView.mount(container)
+                    } else {
+                        console.error('Import CSV container not found or not HTMLElement')
+                    }
+                })
+                break
+
+            case 'dodaj-studenta':
+                pageTitle.textContent = 'Dodaj Studenta'
+                contentArea.innerHTML = this.getAddStudentContent()
+                
+                // Mount StudentForm component
+                import('@/components/students/StudentForm').then(async (module) => {
+                    const studentForm = new module.StudentForm()
+                    const container = contentArea.querySelector('#add-student-container')
+
+                    if (container && container instanceof HTMLElement) {
+                        const element = await studentForm.render()
+                        container.appendChild(element)
+                        studentForm.mount(container)
+                    } else {
+                        console.error('Add student container not found or not HTMLElement')
+                    }
+                })
+                break
+
+            case 'student-details':
+                const studentId = this.getStudentIdFromUrl()
+                if (studentId) {
+                    pageTitle.textContent = 'Profil Studenta'
+                    contentArea.innerHTML = this.getStudentDetailsContent()
+                    
+                    // Mount StudentDetails component
+                    import('@/components/students/StudentDetails').then(async (module) => {
+                        const studentDetails = new module.StudentDetails()
+                        const container = contentArea.querySelector('#student-details-container')
+
+                        if (container && container instanceof HTMLElement) {
+                            const element = await studentDetails.render()
+                            container.appendChild(element)
+                            studentDetails.mount(container)
+                        } else {
+                            console.error('Student details container not found or not HTMLElement')
+                        }
+                    })
+                } else {
+                    // Redirect back to students list if no ID
+                    navigate.to('/admin/dashboard?section=uczniowie')
+                }
+                break
+
+            case 'edytuj-studenta':
+                const editStudentId = this.getStudentIdFromUrl()
+                if (editStudentId) {
+                    pageTitle.textContent = 'Edytuj Studenta'
+                    contentArea.innerHTML = this.getEditStudentContent()
+                    
+                    // Mount StudentForm component in edit mode
+                    import('@/components/students/StudentForm').then(async (module) => {
+                        const studentForm = new module.StudentForm()
+                        const container = contentArea.querySelector('#edit-student-container')
+
+                        if (container && container instanceof HTMLElement) {
+                            const element = await studentForm.render()
+                            container.appendChild(element)
+                            studentForm.mount(container)
+                        } else {
+                            console.error('Edit student container not found or not HTMLElement')
+                        }
+                    })
+                } else {
+                    // Redirect back to students list if no ID
+                    navigate.to('/admin/dashboard?section=uczniowie')
+                }
                 break
 
             default:
@@ -483,6 +571,61 @@ export class AdminDashboard implements RouteComponent {
             </div>
         </div>
     `
+    }
+
+    private getImportCsvContent(): string {
+        return `
+        <div class="admin-content-area">
+            <div id="import-csv-container">
+                <!-- StudentImportView component will be mounted here -->
+            </div>
+        </div>
+    `
+    }
+
+    private getAddStudentContent(): string {
+        return `
+        <div class="admin-content-area">
+            <div id="add-student-container">
+                <!-- StudentForm component will be mounted here -->
+            </div>
+        </div>
+    `
+    }
+
+    private getStudentDetailsContent(): string {
+        return `
+        <div class="admin-content-area">
+            <div id="student-details-container">
+                <!-- StudentDetails component will be mounted here -->
+            </div>
+        </div>
+    `
+    }
+
+    private getEditStudentContent(): string {
+        return `
+        <div class="admin-content-area">
+            <div id="edit-student-container">
+                <!-- StudentForm component will be mounted here -->
+            </div>
+        </div>
+    `
+    }
+
+    private getStudentIdFromUrl(): string | null {
+        const urlParams = new URLSearchParams(window.location.search)
+        const hash = window.location.hash
+        
+        // Check for student_id in URL params
+        const studentId = urlParams.get('student_id')
+        if (studentId) {
+            return studentId
+        }
+        
+        // Check for student_id in hash fragment
+        const hashParams = new URLSearchParams(hash.split('?')[1] || '')
+        return hashParams.get('student_id')
     }
 
     private getLessonsContent(): string {
