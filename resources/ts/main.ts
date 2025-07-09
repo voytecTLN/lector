@@ -2,6 +2,7 @@
 import '../css/app.css'
 import { Router } from '@/router'
 import { authService } from '@services/AuthService'
+import { NavigationUtils } from '@/utils/navigation'
 
 class Application {
     private router: Router
@@ -28,6 +29,9 @@ class Application {
 
             // Initialize router
             await this.router.init()
+
+            // Initialize unified navigation system
+            NavigationUtils.init(this.router)
 
             window.router = this.router
 
@@ -59,10 +63,21 @@ class Application {
         try {
             // Try to get current user if token exists
             if (authService.getToken()) {
+                console.log('🔑 Token found, verifying with server...')
                 await authService.getCurrentUser()
+                console.log('✅ User authenticated successfully')
+            } else {
+                console.log('👤 No token found, user is not authenticated')
             }
-        } catch (error) {
-            console.warn('Auth initialization failed, user will need to login')
+        } catch (error: any) {
+            console.warn('⚠️ Auth initialization failed:', error.message)
+            // Only clear auth data if it's actually invalid, not if it's a network error
+            if (error.message?.includes('401') || error.message?.includes('403')) {
+                console.log('🧹 Clearing invalid auth data')
+                authService.logout()
+            } else {
+                console.log('🌐 Network error during auth check, keeping existing auth data')
+            }
         }
     }
 

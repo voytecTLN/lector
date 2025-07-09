@@ -2,7 +2,8 @@
 import type { RouteComponent } from '@router/routes'
 import { StudentService } from '@services/StudentService'
 import type { CreateStudentRequest, UpdateStudentRequest, User } from '@/types/models'
-import { navigateTo } from '@/utils/navigation'
+import { navigate, routeChecker, urlBuilder } from '@/utils/navigation'
+import { ROUTES } from '@/config/routing'
 
 export class StudentForm implements RouteComponent {
     private studentService: StudentService
@@ -21,12 +22,12 @@ export class StudentForm implements RouteComponent {
         el.className = 'student-form-page'
 
         // Determine if edit mode from URL
-        const pathMatch = window.location.pathname.match(/\/students\/(\d+)\/edit/)
-        const hashMatch = window.location.hash.match(/\/students\/(\d+)\/edit/)
+        const currentPath = routeChecker.getCurrentPath()
+        const pathMatch = currentPath.match(/\/students\/(\d+)\/edit/)
 
-        if (pathMatch || hashMatch) {
+        if (pathMatch) {
             this.isEditMode = true
-            this.studentId = parseInt(pathMatch?.[1] || hashMatch?.[1] || '0', 10)
+            this.studentId = parseInt(pathMatch[1] || '0', 10)
         }
 
         el.innerHTML = `
@@ -36,7 +37,7 @@ export class StudentForm implements RouteComponent {
                         <!-- Header -->
                         <div class="mb-4">
 <!--                            <a href="/#/admin/students" class="text-muted text-decoration-none mb-2 d-inline-block">-->
-                            <a href="/#/admin/dashboard?section=uczniowie" class="text-muted text-decoration-none mb-2 d-inline-block">
+                            <a href="${urlBuilder.dashboard('admin', 'uczniowie')}" class="text-muted text-decoration-none mb-2 d-inline-block">
                                 <i class="bi bi-arrow-left me-1"></i> Powrót do listy
                             </a>
                             <h1>${this.isEditMode ? 'Edytuj studenta' : 'Dodaj nowego studenta'}</h1>
@@ -207,7 +208,7 @@ export class StudentForm implements RouteComponent {
 
             <!-- Przyciski -->
             <div class="d-flex justify-content-between mb-5">
-                <a href="/#/admin/students" class="btn btn-outline-secondary">
+                <a href="${urlBuilder.dashboard('admin', 'uczniowie')}" class="btn btn-outline-secondary">
                     <i class="bi bi-x-circle me-1"></i> Anuluj
                 </a>
                 <button type="submit" class="btn btn-primary" id="submit-button">
@@ -313,7 +314,7 @@ export class StudentForm implements RouteComponent {
                     message: 'Nie udało się załadować danych studenta'
                 }
             }))
-            navigateTo(`admin/dashboard?section=uczniowie`)
+            navigate.to(urlBuilder.dashboard('admin', 'uczniowie'))
         }
     }
 
@@ -448,10 +449,10 @@ export class StudentForm implements RouteComponent {
 
             if (this.isEditMode && this.studentId) {
                 await this.studentService.updateStudent(this.studentId, studentData as UpdateStudentRequest)
-                navigateTo(`/admin/students/${this.studentId}`)
+                navigate.to(urlBuilder.adminStudent.show(this.studentId))
             } else {
                 const student = await this.studentService.createStudent(studentData as CreateStudentRequest)
-                navigateTo(`/admin/students/${student.id}`)
+                navigate.to(urlBuilder.adminStudent.show(student.id))
             }
 
         } catch (error: any) {

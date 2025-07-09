@@ -194,7 +194,7 @@ export class AuthService {
         }
 
         try {
-            console.log('👤 AuthService: Getting current user')
+            console.log('👤 AuthService: Getting current user with token:', this.token?.substring(0, 20) + '...')
 
             const response = await api.get<LaravelUserResponse>('/auth/me')
 
@@ -202,16 +202,28 @@ export class AuthService {
                 this.user = response.data.user
                 this.permissions = response.data.permissions
                 this.saveToStorage()
+                console.log('✅ User data updated:', { 
+                    name: this.user.name, 
+                    role: this.user.role,
+                    email: this.user.email,
+                    permissions: this.permissions 
+                })
                 return this.user
             }
 
             throw new Error('Invalid response format')
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('❌ Get current user error:', error)
+            console.error('❌ Error details:', {
+                message: error.message,
+                status: error.status,
+                response: error.response
+            })
 
             // NOWE: Dodaj komunikat jeśli to problem z autoryzacją
-            if (error instanceof Error && error.message.includes('401')) {
+            if (error.message?.includes('401')) {
+                console.log('🔑 Token expired or invalid, clearing auth data')
                 document.dispatchEvent(new CustomEvent('notification:show', {
                     detail: {
                         type: 'warning',
@@ -219,10 +231,12 @@ export class AuthService {
                         duration: 5000
                     }
                 }))
+                this.clearAuthData()
+            } else {
+                console.log('🌐 Network or other error, not clearing auth data')
             }
 
-            this.clearAuthData()
-            return null
+            throw error
         }
     }
 

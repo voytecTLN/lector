@@ -2,7 +2,9 @@
 import type { RouteComponent } from '@router/routes'
 import { StudentService, HourPackage, StudentStats } from '@services/StudentService'
 import type { User, StudentProfile } from '@/types/models'
-import { navigateTo } from '@/utils/navigation'
+import { navigate, routeChecker, urlBuilder } from '@/utils/navigation'
+import { ROUTES } from '@/config/routing'
+import { LinkTemplates } from '@/components/common/Link'
 
 declare global {
     interface Window {
@@ -29,10 +31,10 @@ export class StudentDetails implements RouteComponent {
         const el = document.createElement('div')
         el.className = 'student-details-page'
 
-        // Get student ID from URL path
-        const pathMatch = window.location.pathname.match(/\/students\/(\d+)/)
-        const hashMatch = window.location.hash.match(/\/students\/(\d+)/)
-        this.studentId = parseInt(pathMatch?.[1] || hashMatch?.[1] || '0', 10)
+        // Get student ID from current route
+        const currentPath = routeChecker.getCurrentPath()
+        const pathMatch = currentPath.match(/\/students\/(\d+)/)
+        this.studentId = parseInt(pathMatch?.[1] || '0', 10)
 
         el.innerHTML = `
             <div class="container mt-4">
@@ -102,7 +104,7 @@ export class StudentDetails implements RouteComponent {
             <div class="alert alert-danger">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 ${message}
-                <a href="/#/admin/students" class="alert-link ms-2">Wróć do listy studentów</a>
+                <a href="${urlBuilder.adminStudent.list()}" class="alert-link ms-2">Wróć do listy studentów</a>
             </div>
         `
     }
@@ -119,14 +121,14 @@ export class StudentDetails implements RouteComponent {
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <a href="/#/admin/dashboard?section=uczniowie" class="text-muted text-decoration-none mb-2 d-inline-block">
+                        <a href="${urlBuilder.dashboard('admin', 'uczniowie')}" class="text-muted text-decoration-none mb-2 d-inline-block">
                             <i class="bi bi-arrow-left me-1"></i> Powrót do listy
                         </a>
                         <h1 class="student-name">${this.student.name}</h1>
                         <p class="text-muted mb-0">${this.student.email}</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="/#/admin/students/${this.student.id}/edit" class="btn btn-primary">
+                        <a href="${urlBuilder.adminStudent.edit(this.student.id)}" class="btn btn-primary">
                             <i class="bi bi-pencil me-1"></i> Edytuj
                         </a>
                         <button class="btn btn-danger student-delete-btn">
@@ -234,7 +236,7 @@ export class StudentDetails implements RouteComponent {
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Dane osobowe</h5>
-                <a href="/#/admin/students/${this.student.id}/edit" class="btn btn-sm btn-outline-primary">
+                <a href="${urlBuilder.adminStudent.edit(this.student.id)}" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-pencil me-1"></i> Edytuj
                 </a>
             </div>
@@ -266,8 +268,8 @@ export class StudentDetails implements RouteComponent {
                         <div class="mb-3">
                             <label class="form-label text-muted">Status</label>
                             <p class="mb-0">
-                                <span class="badge ${this.getStatusBadgeClass(this.student.status || 'inactive')}">
-                                    ${this.getStatusLabel(this.student.status || 'inactive')}
+                                <span class="badge ${this.getStatusBadgeClass(this.getActualStatus(this.student))}">
+                                    ${this.getStatusLabel(this.getActualStatus(this.student))}
                                 </span>
                             </p>
                         </div>
@@ -457,7 +459,7 @@ export class StudentDetails implements RouteComponent {
             }))
 
             // Redirect to students list
-            navigateTo(`admin/dashboard?section=uczniowie`)
+            navigate.to(urlBuilder.dashboard('admin', 'uczniowie'))
         } catch (error) {
             console.error('Failed to delete student:', error)
 
@@ -486,7 +488,8 @@ export class StudentDetails implements RouteComponent {
         const classes: Record<string, string> = {
             active: 'bg-success',
             inactive: 'bg-warning',
-            blocked: 'bg-danger'
+            blocked: 'bg-danger',
+            unverified: 'bg-info'
         }
         return classes[status] || 'bg-secondary'
     }
@@ -495,9 +498,22 @@ export class StudentDetails implements RouteComponent {
         const labels: Record<string, string> = {
             active: 'Aktywny',
             inactive: 'Nieaktywny',
-            blocked: 'Zablokowany'
+            blocked: 'Zablokowany',
+            unverified: 'Niezweryfikowany'
         }
         return labels[status] || 'Nieznany'
+    }
+
+    private getActualStatus(student: User & {
+        studentProfile?: StudentProfile;
+        hour_package?: HourPackage;
+        upcoming_lessons?: any[];
+        stats?: StudentStats;
+    }): string {
+        if (!student.email_verified_at) {
+            return 'unverified'
+        }
+        return student.status || 'inactive'
     }
 
     private getGoalLabel(goal: string): string {

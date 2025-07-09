@@ -186,8 +186,7 @@ export const routes: RouteDefinition[] = [
             requiresAuth: true,
             requiresVerification: true,
             roles: ['student', 'admin'],
-            layout: 'app',
-            permissions: ['can_learn', 'book_lessons']
+            layout: 'app'
         }
     },
     {

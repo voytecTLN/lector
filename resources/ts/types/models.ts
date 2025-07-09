@@ -7,7 +7,7 @@ export interface User {
   birth_date?: string
   city?: string
   country?: string
-  status?: 'active' | 'inactive' | 'blocked'
+  status?: 'active' | 'inactive' | 'blocked' | 'unverified'
   avatar?: string
   created_at?: string
   updated_at?: string
@@ -42,7 +42,7 @@ export interface CreateStudentRequest {
   current_levels?: Record<string, string>
   learning_goals?: string[]
   preferred_schedule?: Record<string, any>
-  status: 'active' | 'inactive' | 'blocked'
+  status: 'active' | 'inactive' | 'blocked' | 'unverified'
 }
 
 export interface UpdateStudentRequest {
@@ -56,11 +56,11 @@ export interface UpdateStudentRequest {
   current_levels?: Record<string, string>
   learning_goals?: string[]
   preferred_schedule?: Record<string, any>
-  status: 'active' | 'inactive' | 'blocked'
+  status: 'active' | 'inactive' | 'blocked' | 'unverified'
 }
 
 export interface StudentFilters {
-  status?: 'active' | 'inactive' | 'blocked'
+  status?: 'active' | 'inactive' | 'blocked' | 'unverified'
   city?: string
   learning_language?: string
   search?: string

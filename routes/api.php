@@ -75,20 +75,15 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // Student self-management (student accessing own data)
-        Route::middleware('role:student')->group(function () {
-            Route::middleware('role:student')->prefix('student')->group(function () {
-                Route::get('/profile', [StudentController::class, 'getOwnProfile'])
-                    ->name('api.student.profile');
+        Route::middleware('role:student')->prefix('student')->group(function () {
+            Route::get('/profile', [StudentController::class, 'getOwnProfile'])
+                ->name('api.student.profile');
 
-                Route::put('/profile', [StudentController::class, 'updateOwnProfile'])
-                    ->name('api.student.profile.update');
+            Route::put('/profile', [StudentController::class, 'updateOwnProfile'])
+                ->name('api.student.profile.update');
 
-                Route::get('/dashboard-stats', [DashboardController::class, 'studentStats'])
-                    ->name('api.student.dashboard-stats');
-            });
-
-            // Student dashboard stats
-            Route::get('student/dashboard-stats', [DashboardController::class, 'studentStats']);
+            Route::get('/dashboard-stats', [DashboardController::class, 'studentStats'])
+                ->name('api.student.dashboard-stats');
         });
 
         // Admin dashboard stats

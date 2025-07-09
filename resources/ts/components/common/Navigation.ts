@@ -1,6 +1,7 @@
 // resources/ts/components/common/Navigation.ts
 import { authService } from '@services/AuthService'
-import {navigateTo, redirectWithMessage} from "@utils/navigation";
+import { navigate, routeChecker, urlBuilder } from '@/utils/navigation'
+import { ROUTES } from '@/config/routing'
 
 export class Navigation {
     render(): HTMLElement {
@@ -9,59 +10,49 @@ export class Navigation {
 
         const header = document.createElement('header')
 
-        // NOWE: Pobierz aktualną ścieżkę
-        const currentPath = window.location.pathname
-        const currentHash = window.location.hash
-
-        // NOWE: Funkcja pomocnicza do sprawdzania aktywnego linku
-        const isActive = (href: string): string => {
-            // Dla hash linków
-            if (href.includes('#')) {
-                return currentHash === href.substring(href.indexOf('#')) ? 'active' : ''
-            }
-            // Dla normalnych linków
-            return currentPath === href ? 'active' : ''
+        // Helper function to check if link is active
+        const isActive = (path: string): string => {
+            return routeChecker.isCurrent(path) ? 'active' : ''
         }
 
-        // Dynamiczna zawartość w zależności od stanu autoryzacji
+        // Dynamic content based on authentication state
         const navActions = isAuthenticated && user ? `
             <div class="nav-actions">
                 <span class="nav-user-name">👤 ${user.name}</span>
-                <a href="/${user.role}/dashboard" class="btn btn-primary">Panel</a>
+                <a href="${urlBuilder.dashboard(user.role)}" class="btn btn-primary">Panel</a>
                 <button class="btn btn-secondary logout-btn" id="logout-btn">Wyloguj</button>
             </div>
         ` : `
             <div class="nav-actions">
-                <a href="/#/register" class="btn btn-secondary join-btn nowrap">Dołącz do nas</a>
-                <a href="/#/login" class="btn btn-primary login-btn">Zaloguj się</a>
+                <a href="${urlBuilder.hash(ROUTES.REGISTER)}" class="btn btn-secondary join-btn nowrap">Dołącz do nas</a>
+                <a href="${urlBuilder.hash(ROUTES.LOGIN)}" class="btn btn-primary login-btn">Zaloguj się</a>
             </div>
         `
 
         header.innerHTML = `
             <nav class="navbar">
                 <div class="logo">
-                    <a href="/" style="text-decoration: none; color: inherit;">
+                    <a href="${urlBuilder.hash(ROUTES.HOME)}" style="text-decoration: none; color: inherit;">
                         Platforma Lektorów
                     </a>
                 </div>
                 <ul class="nav-links">
-                    <li><a href="/" class="${isActive('/')}">Start</a></li>
-                    <li><a href="/#/#lecturers" class="${isActive('/#lecturers')}">Lektorzy</a></li>
-                    <li><a href="/#/#about" class="${isActive('/#about')}">O nas</a></li>
-                    <li><a href="/#/contact" class="${isActive('/contact')}">Kontakt</a></li>
+                    <li><a href="${urlBuilder.hash(ROUTES.HOME)}" class="${isActive(ROUTES.HOME)}">Start</a></li>
+                    <li><a href="${urlBuilder.hash(ROUTES.HOME)}#lecturers" class="${isActive('/#lecturers')}">Lektorzy</a></li>
+                    <li><a href="${urlBuilder.hash(ROUTES.HOME)}#about" class="${isActive('/#about')}">O nas</a></li>
+                    <li><a href="${urlBuilder.hash(ROUTES.CONTACT)}" class="${isActive(ROUTES.CONTACT)}">Kontakt</a></li>
                 </ul>
                 ${navActions}
             </nav>
         `
 
-        // NOWE: Dodaj event listener dla logout
-            const logoutBtn = header.querySelector('#logout-btn')
-                logoutBtn?.addEventListener('click', async (e) => {
-                    // e.preventDefault()
-                    // Dispatch custom event zamiast bezpośredniego router.navigate ???
-                    await authService.logout()
-                    navigateTo('/')
-                })
+        // Add event listener for logout
+        const logoutBtn = header.querySelector('#logout-btn')
+        logoutBtn?.addEventListener('click', async (e) => {
+            e.preventDefault()
+            await authService.logout()
+            navigate.to(ROUTES.HOME)
+        })
 
         return header
     }

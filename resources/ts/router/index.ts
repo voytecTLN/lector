@@ -1,8 +1,8 @@
-// resources/ts/router/index.ts - POPRAWIONA INTEGRACJA Z GUARDS
+// resources/ts/router/index.ts
 import { BrowserHistory } from './history'
 import { routes, RouteMatcher, type RouteDefinition, type MatchedRoute } from './routes'
 import { defaultGuards, type RouteGuard, type GuardResult } from './guards'
-import {navigateTo} from "@utils/navigation";
+import { RouteUtils } from '@/config/routing'
 
 export class Router {
     private history: BrowserHistory
@@ -43,8 +43,12 @@ export class Router {
     }
 
     async navigate(path: string, replace: boolean = false): Promise<boolean> {
+        // Normalize path using RouteUtils
+        const normalizedPath = RouteUtils.normalize(path)
+        
         console.log(`🧭 Router.navigate() called:`, {
-            path,
+            originalPath: path,
+            normalizedPath,
             replace,
             currentPath: this.history.getCurrentPath(),
             isNavigating: this.isNavigating,
@@ -53,22 +57,22 @@ export class Router {
 
         // Queue navigation if already navigating
         if (this.isNavigating) {
-            console.warn('⚠️ Navigation already in progress, queueing new navigation:', path)
+            console.warn('⚠️ Navigation already in progress, queueing new navigation:', normalizedPath)
             return new Promise((resolve) => {
                 this.navigationQueue.push(async () => {
-                    const result = await this.navigate(path, replace)
+                    const result = await this.navigate(normalizedPath, replace)
                     resolve(result)
                 })
             })
         }
 
-        console.log(`🧭 Starting navigation to: ${path}`)
+        console.log(`🧭 Starting navigation to: ${normalizedPath}`)
 
         try {
             this.isNavigating = true
 
             // Match route
-            const matchedRoute = RouteMatcher.match(path, routes)
+            const matchedRoute = RouteMatcher.match(normalizedPath, routes)
             console.log(`🧭 Route matching result:`, {
                 matched: !!matchedRoute,
                 routeName: matchedRoute?.route.name,
@@ -76,8 +80,8 @@ export class Router {
             })
 
             if (!matchedRoute) {
-                console.error(`❌ Route not found: ${path}`)
-                await this.handleNotFound(path)
+                console.error(`❌ Route not found: ${normalizedPath}`)
+                await this.handleNotFound(normalizedPath)
                 return false
             }
 
@@ -138,9 +142,9 @@ export class Router {
 
             // Update browser history
             if (replace) {
-                this.history.replace(path, matchedRoute.route.title)
+                this.history.replace(normalizedPath, matchedRoute.route.title)
             } else {
-                this.history.push(path, matchedRoute.route.title)
+                this.history.push(normalizedPath, matchedRoute.route.title)
             }
 
             // Render route
@@ -446,88 +450,6 @@ export class Router {
         }
     }
 
-    // Centralized redirect handling
-    public redirectWithMessage(path: string, message?: string, type: 'success' | 'error' | 'warning' | 'info' = 'info'): void {
-        console.log(`🔄 Router.redirectWithMessage called:`, { path, message, type })
-
-        let finalUrl: string = path
-
-        // Obsługa hash routing
-        if (path.startsWith('/#')) {
-            console.log(`📍 Hash routing detected`)
-
-            if (message) {
-                // Rozdziel base path i hash
-                const hashPart = path.substring(2) // Usuń '/#'
-                const separator = hashPart.includes('?') ? '&' : '?'
-
-                finalUrl = `/#${hashPart}${separator}message=${encodeURIComponent(message)}&type=${type}`
-            }
-
-            console.log(`🔗 Hash routing redirect to: ${finalUrl}`)
-            navigateTo(finalUrl)
-            //TODO
-
-        } else if (path.startsWith('http')) {
-            // Absolute URL
-            console.log(`📍 Absolute URL detected`)
-
-            try {
-                const url = new URL(path)
-                if (message) {
-                    url.searchParams.set('message', message)
-                    url.searchParams.set('type', type)
-                }
-                finalUrl = url.href
-            } catch (error) {
-                console.error('❌ Invalid URL:', error)
-                finalUrl = path
-            }
-
-            console.log(`🔗 Absolute URL redirect to: ${finalUrl}`)
-            navigateTo(finalUrl)
-            //TODO
-
-        } else {
-            // Relative path - sprawdź czy jesteśmy w hash routing mode
-            console.log(`📍 Relative path detected`)
-
-            if (this.history.isHashRouting() || window.location.hash.startsWith('#/')) {
-                // Jesteśmy w hash mode
-                finalUrl = `/#${path.startsWith('/') ? path : '/' + path}`
-
-                if (message) {
-                    const separator = path.includes('?') ? '&' : '?'
-                    finalUrl += `${separator}message=${encodeURIComponent(message)}&type=${type}`
-                }
-
-                console.log(`🔗 Hash mode redirect to: ${finalUrl}`)
-                navigateTo(finalUrl)
-                //TODO
-
-            } else {
-                // Normal routing
-                try {
-                    const url = new URL(path, window.location.origin)
-                    if (message) {
-                        url.searchParams.set('message', message)
-                        url.searchParams.set('type', type)
-                    }
-                    finalUrl = url.href
-
-                    console.log(`🔗 Normal mode redirect to: ${finalUrl}`)
-                    navigateTo(finalUrl)
-                    //TODO
-
-                } catch (error) {
-                    console.error('❌ Failed to build URL:', error)
-                    navigateTo(path)
-                    //TODO
-                }
-            }
-        }
-    }
-
 // Save intended URL before redirecting to login
     public setIntendedUrl(url?: string): void {
         this.intendedUrl = url || this.history.getCurrentPath()
@@ -535,7 +457,7 @@ export class Router {
         console.log(`💾 Saved intended URL: ${this.intendedUrl}`)
     }
 
-// Get and clear intended URL
+    // Get and clear intended URL
     public getIntendedUrl(): string | null {
         const url = this.intendedUrl || localStorage.getItem('intended_url')
         if (url) {

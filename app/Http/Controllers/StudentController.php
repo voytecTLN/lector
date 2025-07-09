@@ -264,6 +264,96 @@ class StudentController extends Controller
     }
 
     /**
+     * Get own profile for authenticated student
+     */
+    public function getOwnProfile(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            
+            if (!$user || $user->role !== 'student') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access'
+                ], 403);
+            }
+
+            // Get student with profile
+            $student = $this->studentService->getStudentById($user->id);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $student,
+                'message' => 'Profile loaded successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load profile: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update own profile for authenticated student
+     */
+    public function updateOwnProfile(UpdateStudentRequest $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            
+            \Log::info('StudentController::updateOwnProfile - User info:', [
+                'user_id' => $user?->id,
+                'user_role' => $user?->role,
+                'user_email' => $user?->email,
+                'user_status' => $user?->status,
+                'user_verified' => $user?->email_verified_at,
+                'is_active' => $user?->isActive(),
+                'request_data' => $request->all()
+            ]);
+            
+            if (!$user || $user->role !== 'student') {
+                \Log::warning('StudentController::updateOwnProfile - Unauthorized access', [
+                    'user_id' => $user?->id,
+                    'user_role' => $user?->role,
+                    'expected_role' => 'student'
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access'
+                ], 403);
+            }
+
+            // Update student profile
+            $updatedStudent = $this->studentService->updateStudent($user->id, $request->validated());
+            
+            \Log::info('StudentController::updateOwnProfile - Profile updated successfully', [
+                'user_id' => $user->id,
+                'updated_data' => $updatedStudent
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $updatedStudent,
+                'message' => 'Profile updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('StudentController::updateOwnProfile - Error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update profile: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Generate package placeholder data for MVP
      * TODO: Remove when real package system is implemented
      */

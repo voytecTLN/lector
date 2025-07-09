@@ -21,6 +21,11 @@ class UpdateStudentRequest extends FormRequest
 
         // Student może edytować tylko siebie
         if ($this->user()->hasRole('student')) {
+            // Dla route /student/profile nie ma parametru id, więc student może edytować swój profil
+            if ($this->routeIs('api.student.profile.update')) {
+                return true;
+            }
+            // Dla route /students/{id} sprawdzamy czy id = user id
             return $this->route('id') == $this->user()->id;
         }
 

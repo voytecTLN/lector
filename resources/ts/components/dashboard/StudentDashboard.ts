@@ -2,13 +2,15 @@
 import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
 import { api } from '@services/ApiService'
-import {navigateTo} from "@utils/navigation";
+import { navigate } from "@utils/navigation";
+import { StudentProfileEdit } from '@components/students/StudentProfileEdit'
 
 export class StudentDashboard implements RouteComponent {
     private activeSection: string = 'dashboard'
     private container: HTMLElement | null = null
     private refreshInterval: number | null = null
     private isLoadingStats: boolean = false
+    private profileEditComponent: StudentProfileEdit | null = null
 
     async render(): Promise<HTMLElement> {
         const user = authService.getUser()
@@ -184,6 +186,12 @@ export class StudentDashboard implements RouteComponent {
     }
 
     private handlePopState = (event: PopStateEvent): void => {
+        // Make sure container is ready
+        if (!this.container) {
+            console.warn('Dashboard container not ready for popstate event')
+            return
+        }
+
         const urlParams = new URLSearchParams(window.location.search)
         const section = urlParams.get('section') || 'dashboard'
 
@@ -214,6 +222,12 @@ export class StudentDashboard implements RouteComponent {
     unmount(): void {
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval)
+        }
+
+        // Cleanup profile edit component
+        if (this.profileEditComponent) {
+            this.profileEditComponent.unmount()
+            this.profileEditComponent = null
         }
 
         // NOWE: Cleanup event listener
@@ -266,15 +280,29 @@ export class StudentDashboard implements RouteComponent {
         const logoutBtn = this.container?.querySelector('#logout-btn')
         logoutBtn?.addEventListener('click', async () => {
             await authService.logout()
-            navigateTo('/')
+            navigate.to('/')
         })
     }
 
     private async loadContent(section: string): Promise<void> {
-        const contentArea = this.container?.querySelector('#content-area')
-        const pageTitle = this.container?.querySelector('#page-title')
+        if (!this.container) {
+            console.warn('Dashboard container not ready for loadContent')
+            return
+        }
 
-        if (!contentArea || !pageTitle) return
+        const contentArea = this.container.querySelector('#content-area')
+        const pageTitle = this.container.querySelector('#page-title')
+
+        if (!contentArea || !pageTitle) {
+            console.warn('Dashboard content area or page title not found')
+            return
+        }
+
+        // Cleanup previous components
+        if (this.profileEditComponent) {
+            this.profileEditComponent.unmount()
+            this.profileEditComponent = null
+        }
 
         this.activeSection = section
 
@@ -328,7 +356,31 @@ export class StudentDashboard implements RouteComponent {
 
             case 'profil':
                 pageTitle.textContent = 'Mój profil'
-                contentArea.innerHTML = this.getProfileContent()
+                contentArea.innerHTML = '<div class="student-loading-container"><div class="student-loading-spinner"></div><p class="student-loading-text">Ładowanie profilu...</p></div>'
+                
+                try {
+                    // Initialize profile edit component
+                    this.profileEditComponent = new StudentProfileEdit()
+                    
+                    if (!this.profileEditComponent) {
+                        throw new Error('Failed to create StudentProfileEdit component')
+                    }
+                    
+                    const profileHTML = await this.profileEditComponent.render()
+                    contentArea.innerHTML = `<div class="student-content-area">${profileHTML}</div>`
+                    
+                    // Mount the component
+                    const profileContainer = contentArea.querySelector('.student-profile-edit')
+                    if (profileContainer && this.profileEditComponent) {
+                        await this.profileEditComponent.mount(profileContainer as HTMLElement)
+                    } else {
+                        console.error('Profile container not found or component is null')
+                        contentArea.innerHTML = '<div class="alert alert-danger">Błąd podczas ładowania profilu</div>'
+                    }
+                } catch (error) {
+                    console.error('Error loading profile component:', error)
+                    contentArea.innerHTML = '<div class="alert alert-danger">Błąd podczas ładowania profilu</div>'
+                }
                 break
 
             case 'materialy':
@@ -616,48 +668,6 @@ export class StudentDashboard implements RouteComponent {
         `
     }
 
-    private getProfileContent(): string {
-        const user = authService.getUser()
-        return `
-            <div class="student-content-area">
-                <h2>Mój profil</h2>
-                
-                <div class="profile-form">
-                    <div class="student-form-group">
-                        <label>Imię i nazwisko</label>
-                        <input type="text" value="${user?.name || ''}" class="student-form-control">
-                    </div>
-                    
-                    <div class="student-form-group">
-                        <label>Email</label>
-                        <input type="email" value="${user?.email || ''}" class="student-form-control" disabled>
-                    </div>
-                    
-                    <div class="student-form-group">
-                        <label>Telefon</label>
-                        <input type="tel" value="${user?.phone || ''}" class="student-form-control">
-                    </div>
-                    
-                    <div class="student-form-group">
-                        <label>Miasto</label>
-                        <input type="text" value="${user?.city || ''}" class="student-form-control">
-                    </div>
-                    
-                    <div class="student-form-group">
-                        <label>Języki, których się uczę</label>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" checked> Angielski</label>
-                            <label><input type="checkbox" checked> Niemiecki</label>
-                            <label><input type="checkbox"> Francuski</label>
-                            <label><input type="checkbox"> Hiszpański</label>
-                        </div>
-                    </div>
-                    
-                    <button class="student-btn-primary">Zapisz zmiany</button>
-                </div>
-            </div>
-        `
-    }
 
     private async fetchStudentStats(): Promise<any> {
         try {
@@ -670,12 +680,36 @@ export class StudentDashboard implements RouteComponent {
             // dodaj inne pola według API
             *}
              */
-            const response = await api.get('/student/dashboard-stats')
-            // return response.data || {}
-            return (response as any).data || {}
-        } catch (error) {
-            console.error('Failed to fetch student stats:', error)
-            return {}
+            
+            // Make a direct fetch call to avoid API service notifications
+            const response = await fetch('/api/student/dashboard-stats', {
+                headers: {
+                    'Authorization': `Bearer ${authService.getToken()}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            
+            if (response.ok) {
+                const result = await response.json()
+                return result.data || {}
+            } else {
+                // Silently handle errors without showing notifications
+                console.log('Student stats endpoint returned:', response.status)
+                throw new Error(`HTTP ${response.status}`)
+            }
+        } catch (error: any) {
+            console.log('Student stats not available, using defaults:', error.message)
+            
+            // Return default stats to prevent dashboard errors
+            return {
+                days_learning: 0,
+                completed_lessons: null,
+                learning_languages: [],
+                is_verified: authService.isVerified(),
+                upcoming_lessons: 0,
+                pending_homework: 0
+            }
         }
     }
 

@@ -2,6 +2,8 @@
 import type { RouteComponent } from '@router/routes'
 import { StudentService, HourPackage } from '@services/StudentService'
 import type { StudentFilters, User, PaginatedResponse, StudentProfile } from '@/types/models'
+import { navigate, urlBuilder } from '@/utils/navigation'
+import { LinkTemplates } from '@/components/common/Link'
 
 declare global {
     interface Window {
@@ -40,7 +42,7 @@ export class StudentList implements RouteComponent {
                         <button id="import-students-btn" class="btn btn-primary">
                             <i class="bi bi-upload me-1"></i> Import CSV (Wkrótce)
                         </button>
-                        <a href="/#/admin/students/add" id="add-student-btn" class="btn btn-primary">
+                        <a href="${urlBuilder.adminStudent.add()}" id="add-student-btn" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-1"></i> Dodaj studenta
                         </a>
                     </div>
@@ -57,6 +59,7 @@ export class StudentList implements RouteComponent {
                                     <option value="active">Aktywni</option>
                                     <option value="inactive">Nieaktywni</option>
                                     <option value="blocked">Zablokowani</option>
+                                    <option value="unverified">Niezweryfikowani</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -208,11 +211,28 @@ export class StudentList implements RouteComponent {
 
             this.renderStudents()
             this.renderPagination()
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to load students:', error)
+            console.error('Error details:', {
+                message: error.message,
+                status: error.status,
+                response: error.response
+            })
+            
             const tableBody = this.container?.querySelector('.student-table')
             if (tableBody) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Wystąpił błąd podczas ładowania danych</td></tr>'
+                let errorMessage = 'Wystąpił błąd podczas ładowania danych'
+                
+                // Provide more specific error messages
+                if (error.message?.includes('403')) {
+                    errorMessage = 'Brak uprawnień do przeglądania listy studentów'
+                } else if (error.message?.includes('404')) {
+                    errorMessage = 'Endpoint nie został znaleziony'
+                } else if (error.message?.includes('500')) {
+                    errorMessage = 'Błąd serwera - spróbuj ponownie później'
+                }
+                
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger">${errorMessage}</td></tr>`
             }
         }
     }
@@ -254,13 +274,14 @@ export class StudentList implements RouteComponent {
         }
 
         const rows = this.students.map(student => {
-            const profileUrl = `/#/admin/students/${student.id}`
+            const profileUrl = urlBuilder.adminStudent.show(student.id)
 
             // Package badge
             const packageBadge = this.getPackageBadge(student.hour_package)
 
             // Status badge
-            const statusBadge = `<span class="badge ${this.getStatusBadgeClass(student.status || 'inactive')}">${this.getStatusLabel(student.status || 'inactive')}</span>`
+            const actualStatus = this.getActualStatus(student)
+            const statusBadge = `<span class="badge ${this.getStatusBadgeClass(actualStatus)}">${this.getStatusLabel(actualStatus)}</span>`
 
             // Registration date
             const regDate = student.created_at ? new Date(student.created_at).toLocaleDateString('pl-PL') : '-'
@@ -298,7 +319,7 @@ export class StudentList implements RouteComponent {
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="${profileUrl}/edit">
+                                <a class="dropdown-item" href="${urlBuilder.adminStudent.edit(student.id)}">
                                     <i class="bi bi-pencil me-2"></i>Edytuj
                                 </a>
                             </li>
@@ -499,7 +520,8 @@ export class StudentList implements RouteComponent {
         const statusClasses: Record<string, string> = {
             active: 'bg-success',
             inactive: 'bg-warning',
-            blocked: 'bg-danger'
+            blocked: 'bg-danger',
+            unverified: 'bg-info'
         }
         return statusClasses[status] || 'bg-secondary'
     }
@@ -508,9 +530,17 @@ export class StudentList implements RouteComponent {
         const statusLabels: Record<string, string> = {
             active: 'Aktywny',
             inactive: 'Nieaktywny',
-            blocked: 'Zablokowany'
+            blocked: 'Zablokowany',
+            unverified: 'Niezweryfikowany'
         }
         return statusLabels[status] || 'Nieznany'
+    }
+
+    private getActualStatus(student: User & { hour_package: HourPackage }): string {
+        if (!student.email_verified_at) {
+            return 'unverified'
+        }
+        return student.status || 'inactive'
     }
 
     private isValidFilterKey(key: string): key is keyof StudentFilters {
@@ -521,7 +551,8 @@ export class StudentList implements RouteComponent {
         const statuses = [
             { value: 'active', label: 'Aktywny', class: 'success' },
             { value: 'inactive', label: 'Nieaktywny', class: 'warning' },
-            { value: 'blocked', label: 'Zablokowany', class: 'danger' }
+            { value: 'blocked', label: 'Zablokowany', class: 'danger' },
+            { value: 'unverified', label: 'Niezweryfikowany', class: 'info' }
         ]
 
         // Stwórz modal HTML
@@ -682,8 +713,8 @@ export class StudentList implements RouteComponent {
         })
     }
 
-    private isValidStatus(status: string): status is 'active' | 'inactive' | 'blocked' {
-        return ['active', 'inactive', 'blocked'].includes(status);
+    private isValidStatus(status: string): status is 'active' | 'inactive' | 'blocked' | 'unverified' {
+        return ['active', 'inactive', 'blocked', 'unverified'].includes(status);
     }
 
 
