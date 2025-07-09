@@ -31,10 +31,9 @@ export class StudentDetails implements RouteComponent {
         const el = document.createElement('div')
         el.className = 'student-details-page'
 
-        // Get student ID from current route
-        const currentPath = routeChecker.getCurrentPath()
-        const pathMatch = currentPath.match(/\/students\/(\d+)/)
-        this.studentId = parseInt(pathMatch?.[1] || '0', 10)
+        // Get student ID from URL params (dashboard integration)
+        const urlParams = new URLSearchParams(window.location.search)
+        this.studentId = parseInt(urlParams.get('student_id') || '0', 10)
 
         el.innerHTML = `
             <div class="container mt-4">
@@ -104,7 +103,7 @@ export class StudentDetails implements RouteComponent {
             <div class="alert alert-danger">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 ${message}
-                <a href="${urlBuilder.adminStudent.list()}" class="alert-link ms-2">Wróć do listy studentów</a>
+                <a href="/admin/dashboard?section=uczniowie" class="alert-link ms-2">Wróć do listy studentów</a>
             </div>
         `
     }
@@ -121,14 +120,14 @@ export class StudentDetails implements RouteComponent {
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <a href="${urlBuilder.dashboard('admin', 'uczniowie')}" class="text-muted text-decoration-none mb-2 d-inline-block">
+                        <a href="/admin/dashboard?section=uczniowie" class="text-muted text-decoration-none mb-2 d-inline-block">
                             <i class="bi bi-arrow-left me-1"></i> Powrót do listy
                         </a>
                         <h1 class="student-name">${this.student.name}</h1>
                         <p class="text-muted mb-0">${this.student.email}</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="${urlBuilder.adminStudent.edit(this.student.id)}" class="btn btn-primary">
+                        <a href="/admin/dashboard?section=edytuj-studenta&student_id=${this.student.id}" class="btn btn-primary">
                             <i class="bi bi-pencil me-1"></i> Edytuj
                         </a>
                         <button class="btn btn-danger student-delete-btn">
@@ -236,7 +235,7 @@ export class StudentDetails implements RouteComponent {
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Dane osobowe</h5>
-                <a href="${urlBuilder.adminStudent.edit(this.student.id)}" class="btn btn-sm btn-outline-primary">
+                <a href="/admin/dashboard?section=edytuj-studenta&student_id=${this.student.id}" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-pencil me-1"></i> Edytuj
                 </a>
             </div>

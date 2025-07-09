@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\Admin\DashboardController;
 
 // Health check - publiczny endpoint
@@ -141,6 +142,14 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.students.learning-goals.update');
                 Route::post('bulk-status', [StudentController::class, 'bulkUpdateStatus'])
                     ->name('api.students.bulk-status');
+                
+                // CSV Import routes
+                Route::get('import/template', [StudentImportController::class, 'downloadTemplate'])
+                    ->name('api.students.import.template');
+                Route::post('import/preview', [StudentImportController::class, 'preview'])
+                    ->name('api.students.import.preview');
+                Route::post('import', [StudentImportController::class, 'import'])
+                    ->name('api.students.import');
             });
 
         });
