@@ -141,7 +141,7 @@ class StudentService
 
     public function deactivateStudent(int $studentId): User
     {
-        $user = User::findOrFail($studentId);
+        $user = User::with('studentProfile')->findOrFail($studentId);
         $user->update(['status' => 'inactive']);
 
         // Cancel active lessons
@@ -168,6 +168,7 @@ class StudentService
     public function searchStudents(string $query)
     {
         return User::students()
+            ->with('studentProfile')
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', '%' . $query . '%')
                     ->orWhere('email', 'like', '%' . $query . '%');
@@ -197,12 +198,9 @@ class StudentService
             ->where('created_at', '>=', now()->subMonth())
             ->count();
 
-        $byLanguage = [];
-        foreach (StudentProfile::all('learning_languages') as $profile) {
-            foreach ($profile->learning_languages as $lang) {
-                $byLanguage[$lang] = ($byLanguage[$lang] ?? 0) + 1;
-            }
-        }
+        // Optimized: Get all learning languages in one query
+        $allLanguages = StudentProfile::pluck('learning_languages')->flatten()->toArray();
+        $byLanguage = array_count_values($allLanguages);
 
         return [
             'total' => $total,

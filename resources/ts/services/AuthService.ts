@@ -451,17 +451,31 @@ export class AuthService {
 
     private loadFromStorage(): void {
         try {
-            const user = localStorage.getItem('auth_user')
-            const token = localStorage.getItem('auth_token')
-            const permissions = localStorage.getItem('auth_permissions')
+            const userData = localStorage.getItem('auth_user')
+            const tokenData = localStorage.getItem('auth_token')
+            const permissionsData = localStorage.getItem('auth_permissions')
 
-            if (user && token) {
-                this.user = JSON.parse(user)
-                this.token = token
-                this.permissions = permissions ? JSON.parse(permissions) : []
+            // Validate token format first
+            if (tokenData && this.isValidToken(tokenData)) {
+                this.token = tokenData
+            }
+
+            // Validate and parse user data
+            if (userData && this.isValidUserData(userData)) {
+                this.user = JSON.parse(userData)
+            }
+
+            // Validate and parse permissions
+            if (permissionsData && this.isValidPermissionsData(permissionsData)) {
+                this.permissions = JSON.parse(permissionsData)
+            }
+
+            // Clear invalid data if token or user is missing
+            if (!this.token || !this.user) {
+                this.clearStorage()
             }
         } catch (error) {
-            console.error('Error loading auth data from storage:', error)
+            console.warn('Invalid auth data in storage, clearing...', error)
             this.clearStorage()
         }
     }
@@ -470,6 +484,34 @@ export class AuthService {
         localStorage.removeItem('auth_user')
         localStorage.removeItem('auth_token')
         localStorage.removeItem('auth_permissions')
+    }
+
+    private isValidToken(token: string): boolean {
+        // Sanctum tokens have format: id|hash
+        return token.length > 10 && token.includes('|') && token.split('|').length === 2
+    }
+
+    private isValidUserData(userData: string): boolean {
+        try {
+            const parsed = JSON.parse(userData)
+            return parsed && 
+                   typeof parsed.id === 'number' && 
+                   typeof parsed.email === 'string' && 
+                   typeof parsed.role === 'string' &&
+                   parsed.email.includes('@')
+        } catch {
+            return false
+        }
+    }
+
+    private isValidPermissionsData(permissionsData: string): boolean {
+        try {
+            const parsed = JSON.parse(permissionsData)
+            return Array.isArray(parsed) && 
+                   parsed.every(item => typeof item === 'string')
+        } catch {
+            return false
+        }
     }
 
     private notifyAuthChange(type: 'login' | 'logout' | 'register'): void {

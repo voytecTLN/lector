@@ -9,7 +9,7 @@ use App\Services\StudentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class StudentController extends Controller
+class StudentController extends BaseController
 {
     public function __construct(
         private StudentService $studentService
@@ -23,16 +23,9 @@ class StudentController extends Controller
         $filters = $request->only(['status', 'city', 'learning_language', 'search', 'per_page', 'page']);
         $result = $this->studentService->getStudents($filters);
 
-        // MVP: Dodaj placeholder dla pakietów godzin
-        $studentsWithPackages = collect($result['data'])->map(function ($student) {
-            // TODO: Implement when packages module is ready
-            $student->hour_package = $this->generatePackagePlaceholder($student->id);
-            return $student;
-        });
-
         return response()->json([
             'success' => true,
-            'data' => $studentsWithPackages,
+            'data' => $result['data'],
             'meta' => [
                 'total' => $result['total'],
                 'per_page' => $result['per_page'] ?? 15,
@@ -49,22 +42,9 @@ class StudentController extends Controller
     {
         try {
             $student = $this->studentService->createStudent($request->validated());
-
-            // MVP: Dodaj placeholder dla pakietu
-            $student->hour_package = $this->generatePackagePlaceholder($student->id);
-
-            return response()->json([
-                'success' => true,
-                'data' => $student,
-                'message' => 'Student został utworzony pomyślnie'
-            ], 201);
-
+            return $this->successResponse($student, 'Student został utworzony pomyślnie', 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Błąd podczas tworzenia studenta',
-                'error' => config('app.debug') ? $e->getMessage() : 'Wystąpił błąd'
-            ], 500);
+            return $this->handleServiceException($e, 'tworzenia studenta');
         }
     }
 
@@ -75,27 +55,9 @@ class StudentController extends Controller
     {
         try {
             $student = $this->studentService->getStudentById($id);
-
-            // MVP: Dodaj placeholdery dla szczegółów
-            $student->hour_package = $this->generatePackagePlaceholder($id);
-            $student->upcoming_lessons = []; // TODO: Implement when lessons module is ready
-            $student->stats = [
-                'total_lessons' => 0,
-                'total_hours' => 0,
-                'completed_lessons' => 0,
-                'cancelled_lessons' => 0
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $student
-            ]);
-
+            return $this->successResponse($student);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Student nie został znaleziony'
-            ], 404);
+            return $this->handleServiceException($e, 'pobierania danych studenta');
         }
     }
 
@@ -106,22 +68,9 @@ class StudentController extends Controller
     {
         try {
             $student = $this->studentService->updateStudent($id, $request->validated());
-
-            // MVP: Dodaj placeholder dla pakietu
-            $student->hour_package = $this->generatePackagePlaceholder($id);
-
-            return response()->json([
-                'success' => true,
-                'data' => $student,
-                'message' => 'Profil studenta został zaktualizowany'
-            ]);
-
+            return $this->successResponse($student, 'Profil studenta został zaktualizowany');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Błąd podczas aktualizacji',
-                'error' => config('app.debug') ? $e->getMessage() : 'Wystąpił błąd'
-            ], 500);
+            return $this->handleServiceException($e, 'aktualizacji profilu studenta');
         }
     }
 
@@ -132,17 +81,9 @@ class StudentController extends Controller
     {
         try {
             $this->studentService->deactivateStudent($id);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Student został dezaktywowany'
-            ]);
-
+            return $this->successResponse(null, 'Student został dezaktywowany');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Błąd podczas dezaktywacji'
-            ], 500);
+            return $this->handleServiceException($e, 'dezaktywacji studenta');
         }
     }
 
@@ -158,18 +99,9 @@ class StudentController extends Controller
 
         try {
             $student = $this->studentService->updateLearningGoals($id, $data['goals']);
-
-            return response()->json([
-                'success' => true,
-                'data' => $student,
-                'message' => 'Cele nauki zostały zaktualizowane',
-            ]);
-
+            return $this->successResponse($student, 'Cele nauki zostały zaktualizowane');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Błąd podczas aktualizacji celów nauki',
-            ], 500);
+            return $this->handleServiceException($e, 'aktualizacji celów nauki');
         }
     }
 
@@ -181,25 +113,15 @@ class StudentController extends Controller
         $query = $request->input('q', '');
 
         if (strlen($query) < 2) {
-            return response()->json([
-                'success' => true,
-                'data' => [],
-                'message' => 'Wpisz co najmniej 2 znaki'
-            ]);
+            return $this->successResponse([], 'Wpisz co najmniej 2 znaki');
         }
 
-        $students = $this->studentService->searchStudents($query);
-
-        // MVP: Dodaj placeholdery
-        $studentsWithPackages = $students->map(function ($student) {
-            $student->hour_package = $this->generatePackagePlaceholder($student->id);
-            return $student;
-        });
-
-        return response()->json([
-            'success' => true,
-            'data' => $studentsWithPackages,
-        ]);
+        try {
+            $students = $this->studentService->searchStudents($query);
+            return $this->successResponse($students);
+        } catch (\Exception $e) {
+            return $this->handleServiceException($e, 'wyszukiwania studentów');
+        }
     }
 
     /**
@@ -215,21 +137,15 @@ class StudentController extends Controller
 
         try {
             $this->studentService->bulkUpdateStatus($data['student_ids'], $data['status']);
-
-            return response()->json([
-                'success' => true,
-                'message' => sprintf(
-                    'Status został zaktualizowany dla %d studentów',
-                    count($data['student_ids'])
-                ),
-            ]);
-
+            
+            $message = sprintf(
+                'Status został zaktualizowany dla %d studentów',
+                count($data['student_ids'])
+            );
+            
+            return $this->successResponse(null, $message);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Błąd podczas aktualizacji statusu',
-                'error' => config('app.debug') ? $e->getMessage() : 'Wystąpił błąd'
-            ], 500);
+            return $this->handleServiceException($e, 'aktualizacji statusu studentów');
         }
     }
 
@@ -240,26 +156,9 @@ class StudentController extends Controller
     {
         try {
             $stats = $this->studentService->getStudentStats();
-
-            // MVP: Dodaj placeholder statystyki pakietów
-            $stats['packages'] = [
-                'active' => rand(50, 100),
-                'expiring_soon' => rand(5, 15),
-                'expired' => rand(10, 30),
-                'total_hours' => rand(500, 1500),
-                'used_hours' => rand(200, 800)
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $stats,
-            ]);
-
+            return $this->successResponse($stats);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Błąd podczas pobierania statystyk',
-            ], 500);
+            return $this->handleServiceException($e, 'pobierania statystyk studentów');
         }
     }
 
@@ -278,20 +177,10 @@ class StudentController extends Controller
                 ], 403);
             }
 
-            // Get student with profile
             $student = $this->studentService->getStudentById($user->id);
-            
-            return response()->json([
-                'success' => true,
-                'data' => $student,
-                'message' => 'Profile loaded successfully'
-            ]);
-
+            return $this->successResponse($student, 'Profile loaded successfully');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to load profile: ' . $e->getMessage()
-            ], 500);
+            return $this->handleServiceException($e, 'pobierania profilu studenta');
         }
     }
 
@@ -303,86 +192,33 @@ class StudentController extends Controller
         try {
             $user = $request->user();
             
-            \Log::info('StudentController::updateOwnProfile - User info:', [
-                'user_id' => $user?->id,
-                'user_role' => $user?->role,
-                'user_email' => $user?->email,
-                'user_status' => $user?->status,
-                'user_verified' => $user?->email_verified_at,
-                'is_active' => $user?->isActive(),
-                'request_data' => $request->all()
-            ]);
-            
-            if (!$user || $user->role !== 'student') {
-                \Log::warning('StudentController::updateOwnProfile - Unauthorized access', [
+            if (app()->environment(['local', 'testing'])) {
+                \Log::info('StudentController::updateOwnProfile - Debug info:', [
                     'user_id' => $user?->id,
                     'user_role' => $user?->role,
-                    'expected_role' => 'student'
+                    'request_data' => $request->validated()
                 ]);
-                
+            }
+            
+            if (!$user || $user->role !== 'student') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized access'
                 ], 403);
             }
 
-            // Update student profile
             $updatedStudent = $this->studentService->updateStudent($user->id, $request->validated());
             
-            \Log::info('StudentController::updateOwnProfile - Profile updated successfully', [
-                'user_id' => $user->id,
-                'updated_data' => $updatedStudent
-            ]);
+            if (app()->environment(['local', 'testing'])) {
+                \Log::info('StudentController::updateOwnProfile - Profile updated successfully', [
+                    'user_id' => $user->id
+                ]);
+            }
             
-            return response()->json([
-                'success' => true,
-                'data' => $updatedStudent,
-                'message' => 'Profile updated successfully'
-            ]);
-
+            return $this->successResponse($updatedStudent, 'Profile updated successfully');
         } catch (\Exception $e) {
-            \Log::error('StudentController::updateOwnProfile - Error:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update profile: ' . $e->getMessage()
-            ], 500);
+            return $this->handleServiceException($e, 'aktualizacji profilu studenta');
         }
     }
 
-    /**
-     * Generate package placeholder data for MVP
-     * TODO: Remove when real package system is implemented
-     */
-    private function generatePackagePlaceholder(int $studentId): array
-    {
-        // Generate consistent but varied data based on student ID
-        $seed = $studentId % 10;
-        $totalHours = [10, 20, 30, 40, 50][$seed % 5];
-        $usedHours = rand(0, $totalHours);
-        $remainingHours = $totalHours - $usedHours;
-
-        // Calculate status based on remaining hours
-        $percentage = ($remainingHours / $totalHours) * 100;
-        $status = match(true) {
-            $percentage > 50 => 'active',
-            $percentage > 20 => 'warning',
-            default => 'critical'
-        };
-
-        return [
-            'id' => null, // Placeholder
-            'total_hours' => $totalHours,
-            'used_hours' => $usedHours,
-            'remaining_hours' => $remainingHours,
-            'expires_at' => now()->addMonths(rand(1, 6))->format('Y-m-d'),
-            'status' => $status,
-            'percentage' => round($percentage),
-            'display' => "{$remainingHours}/{$totalHours}h",
-            'is_placeholder' => true // Flag for frontend
-        ];
-    }
 }

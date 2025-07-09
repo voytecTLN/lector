@@ -6,7 +6,12 @@
       "Bash(grep:*)",
       "Bash(find:*)",
       "Bash(php artisan:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(composer:*)",
+      "Bash(docker-compose exec app composer:*)",
+      "Bash(docker-compose exec:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }

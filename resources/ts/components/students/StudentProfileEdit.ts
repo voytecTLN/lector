@@ -447,80 +447,230 @@ export class StudentProfileEdit {
     private async handleSubmit(event: Event): Promise<void> {
         event.preventDefault()
         
-        if (!this.form || this.isSaving) return
+        if (!this.validateSubmission()) return
 
-        this.isSaving = true
-        this.updateSaveButton(true)
+        this.setLoadingState(true)
 
         try {
-            const formData = new FormData(this.form)
+            const formData = new FormData(this.form!)
             const data = this.prepareSubmissionData(formData)
             
-            console.log('💾 Submitting profile data:', data)
-            console.log('👤 Current user:', authService.getUser())
-            console.log('🔑 Current token:', authService.getToken()?.substring(0, 20) + '...')
-            console.log('🔒 User authenticated:', authService.isAuthenticated())
-            console.log('✅ User verified:', authService.isVerified())
-
-            // Determine the correct endpoint based on user role
-            const currentUser = authService.getUser()
-            let endpoint = '/student/profile'
-            
-            console.log('🔍 Debug info:', {
-                currentUserRole: currentUser?.role,
-                currentUserId: currentUser?.id,
-                studentId: this.student?.id,
-                studentRole: this.student?.role
-            })
-            
-            if (currentUser?.role === 'admin' || currentUser?.role === 'moderator') {
-                // Admin/moderator editing a student profile
-                endpoint = `/students/${this.student?.id}`
-                console.log('🔧 Using admin endpoint:', endpoint)
-            } else if (currentUser?.role === 'student') {
-                // Student editing their own profile
-                console.log('👤 Using student endpoint:', endpoint)
-            } else {
-                console.error('❌ Unknown user role:', currentUser?.role)
-            }
-
-            const response = await api.put(endpoint, data)
-            
-            console.log('✅ Profile update response:', response)
-
-            if (response) {
-                // Refresh user data from getCurrentUser
-                await authService.getCurrentUser()
-                this.student = authService.getUser()
-
-                this.showNotification('success', 'Profil został zaktualizowany pomyślnie')
-                
-                // Clear password fields
-                const passwordFields = this.form.querySelectorAll('input[type="password"]')
-                passwordFields.forEach(field => (field as HTMLInputElement).value = '')
-            }
+            await this.submitProfileData(data)
+            this.handleSuccessResponse()
         } catch (error: any) {
-            console.error('❌ Failed to update profile:', error)
-            console.error('❌ Update error details:', {
-                message: error.message,
-                status: error.status,
-                response: error.response
-            })
-            
-            if (error.response?.status === 422) {
-                console.log('🔍 Validation errors:', error.response.data.errors)
-                this.handleValidationErrors(error.response.data.errors)
-            } else if (error.message?.includes('404')) {
-                this.showNotification('error', 'Endpoint do aktualizacji profilu nie istnieje')
-            } else if (error.message?.includes('403')) {
-                this.showNotification('error', 'Brak uprawnień do aktualizacji profilu')
-            } else {
-                this.showNotification('error', 'Wystąpił błąd podczas aktualizacji profilu')
-            }
+            this.handleSubmissionError(error)
         } finally {
-            this.isSaving = false
-            this.updateSaveButton(false)
+            this.setLoadingState(false)
         }
+    }
+
+    private validateSubmission(): boolean {
+        if (!this.form || this.isSaving) return false
+        
+        // Clear previous validation errors
+        this.clearValidationErrors()
+        
+        let isValid = true
+        
+        // Validate required fields
+        isValid = this.validateRequiredFields() && isValid
+        
+        // Validate email format
+        isValid = this.validateEmailFormat() && isValid
+        
+        // Validate password confirmation
+        isValid = this.validatePasswordConfirmation() && isValid
+        
+        // Validate phone format
+        isValid = this.validatePhoneFormat() && isValid
+        
+        return isValid
+    }
+
+    private clearValidationErrors(): void {
+        if (!this.form) return
+        
+        this.form.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid')
+        })
+        this.form.querySelectorAll('.invalid-feedback').forEach(el => el.remove())
+    }
+
+    private validateRequiredFields(): boolean {
+        if (!this.form) return false
+        
+        const nameInput = this.form.querySelector('#name') as HTMLInputElement
+        if (!nameInput?.value.trim()) {
+            this.showFieldError(nameInput, 'Imię i nazwisko jest wymagane')
+            return false
+        }
+        
+        return true
+    }
+
+    private validateEmailFormat(): boolean {
+        if (!this.form) return false
+        
+        const emailInput = this.form.querySelector('#email') as HTMLInputElement
+        const emailValue = emailInput?.value.trim()
+        
+        if (emailValue && !this.isValidEmail(emailValue)) {
+            this.showFieldError(emailInput, 'Nieprawidłowy format adresu email')
+            return false
+        }
+        
+        return true
+    }
+
+    private validatePasswordConfirmation(): boolean {
+        if (!this.form) return false
+        
+        const passwordInput = this.form.querySelector('#password') as HTMLInputElement
+        const confirmInput = this.form.querySelector('#password_confirmation') as HTMLInputElement
+        
+        const password = passwordInput?.value
+        const confirmation = confirmInput?.value
+        
+        if (password && password !== confirmation) {
+            this.showFieldError(confirmInput, 'Hasła muszą być identyczne')
+            return false
+        }
+        
+        if (password && password.length < 8) {
+            this.showFieldError(passwordInput, 'Hasło musi mieć minimum 8 znaków')
+            return false
+        }
+        
+        return true
+    }
+
+    private validatePhoneFormat(): boolean {
+        if (!this.form) return false
+        
+        const phoneInput = this.form.querySelector('#phone') as HTMLInputElement
+        const phoneValue = phoneInput?.value.trim()
+        
+        if (phoneValue && !this.isValidPhone(phoneValue)) {
+            this.showFieldError(phoneInput, 'Nieprawidłowy format numeru telefonu')
+            return false
+        }
+        
+        return true
+    }
+
+    private isValidEmail(email: string): boolean {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        return emailRegex.test(email)
+    }
+
+    private isValidPhone(phone: string): boolean {
+        const phoneRegex = /^[\+]?[0-9\s\-\(\)]+$/
+        return phoneRegex.test(phone) && phone.length >= 9
+    }
+
+    private showFieldError(input: HTMLInputElement, message: string): void {
+        if (!input) return
+        
+        input.classList.add('is-invalid')
+        
+        const feedback = document.createElement('div')
+        feedback.className = 'invalid-feedback'
+        feedback.textContent = message
+        
+        input.parentElement?.appendChild(feedback)
+    }
+
+    private setLoadingState(loading: boolean): void {
+        this.isSaving = loading
+        this.updateSaveButton(loading)
+    }
+
+    private async submitProfileData(data: UpdateStudentRequest): Promise<any> {
+        const endpoint = this.determineEndpoint()
+        this.logSubmissionDebug(data, endpoint)
+        
+        const response = await api.put(endpoint, data)
+        console.log('✅ Profile update response:', response)
+        
+        return response
+    }
+
+    private determineEndpoint(): string {
+        const currentUser = authService.getUser()
+        
+        if (currentUser?.role === 'admin' || currentUser?.role === 'moderator') {
+            const endpoint = `/students/${this.student?.id}`
+            console.log('🔧 Using admin endpoint:', endpoint)
+            return endpoint
+        } else if (currentUser?.role === 'student') {
+            const endpoint = '/student/profile'
+            console.log('👤 Using student endpoint:', endpoint)
+            return endpoint
+        } else {
+            console.error('❌ Unknown user role:', currentUser?.role)
+            return '/student/profile'
+        }
+    }
+
+    private logSubmissionDebug(data: UpdateStudentRequest, endpoint: string): void {
+        console.log('💾 Submitting profile data:', data)
+        console.log('👤 Current user:', authService.getUser())
+        console.log('🔑 Current token:', authService.getToken()?.substring(0, 20) + '...')
+        console.log('🔒 User authenticated:', authService.isAuthenticated())
+        console.log('✅ User verified:', authService.isVerified())
+        
+        const currentUser = authService.getUser()
+        console.log('🔍 Debug info:', {
+            currentUserRole: currentUser?.role,
+            currentUserId: currentUser?.id,
+            studentId: this.student?.id,
+            studentRole: this.student?.role,
+            endpoint: endpoint
+        })
+    }
+
+    private async handleSuccessResponse(): Promise<void> {
+        // Refresh user data from getCurrentUser
+        await authService.getCurrentUser()
+        this.student = authService.getUser()
+
+        this.showNotification('success', 'Profil został zaktualizowany pomyślnie')
+        this.clearPasswordFields()
+    }
+
+    private clearPasswordFields(): void {
+        if (!this.form) return
+        
+        const passwordFields = this.form.querySelectorAll('input[type="password"]')
+        passwordFields.forEach(field => (field as HTMLInputElement).value = '')
+    }
+
+    private handleSubmissionError(error: any): void {
+        console.error('❌ Failed to update profile:', error)
+        console.error('❌ Update error details:', {
+            message: error.message,
+            status: error.status,
+            response: error.response
+        })
+        
+        if (error.response?.status === 422) {
+            console.log('🔍 Validation errors:', error.response.data.errors)
+            this.handleValidationErrors(error.response.data.errors)
+        } else {
+            this.showErrorNotification(error)
+        }
+    }
+
+    private showErrorNotification(error: any): void {
+        let message = 'Wystąpił błąd podczas aktualizacji profilu'
+        
+        if (error.message?.includes('404')) {
+            message = 'Endpoint do aktualizacji profilu nie istnieje'
+        } else if (error.message?.includes('403')) {
+            message = 'Brak uprawnień do aktualizacji profilu'
+        }
+        
+        this.showNotification('error', message)
     }
 
     private prepareSubmissionData(formData: FormData): UpdateStudentRequest {

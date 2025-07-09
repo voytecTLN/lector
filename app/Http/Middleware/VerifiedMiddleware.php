@@ -16,17 +16,20 @@ class VerifiedMiddleware
     {
         $user = $request->user();
 
-        \Log::info('VerifiedMiddleware - Request info:', [
-            'url' => $request->url(),
-            'method' => $request->method(),
-            'user_id' => $user?->id,
-            'user_email' => $user?->email,
-            'user_verified' => $user?->email_verified_at,
-            'is_verified' => !!$user?->email_verified_at
-        ]);
+        // Only log in development environments
+        if (app()->environment(['local', 'testing'])) {
+            \Log::info('VerifiedMiddleware - Debug info:', [
+                'url' => $request->url(),
+                'method' => $request->method(),
+                'user_id' => $user?->id,
+                'is_verified' => !!$user?->email_verified_at
+            ]);
+        }
 
         if (!$user) {
-            \Log::warning('VerifiedMiddleware - No user found');
+            if (app()->environment(['local', 'testing'])) {
+                \Log::warning('VerifiedMiddleware - No user found');
+            }
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -37,11 +40,12 @@ class VerifiedMiddleware
         }
 
         if (!$user->email_verified_at) {
-            \Log::warning('VerifiedMiddleware - User not verified', [
-                'user_id' => $user->id,
-                'user_email' => $user->email,
-                'verified_at' => $user->email_verified_at
-            ]);
+            if (app()->environment(['local', 'testing'])) {
+                \Log::warning('VerifiedMiddleware - User not verified', [
+                    'user_id' => $user->id,
+                    'verified_at' => $user->email_verified_at
+                ]);
+            }
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -55,10 +59,11 @@ class VerifiedMiddleware
             return redirect()->to('/#/verify-email');
         }
 
-        \Log::info('VerifiedMiddleware - User verified, proceeding', [
-            'user_id' => $user->id,
-            'user_email' => $user->email
-        ]);
+        if (app()->environment(['local', 'testing'])) {
+            \Log::info('VerifiedMiddleware - User verified, proceeding', [
+                'user_id' => $user->id
+            ]);
+        }
 
         return $next($request);
     }
