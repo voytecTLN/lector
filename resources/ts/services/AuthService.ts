@@ -65,8 +65,7 @@ export class AuthService {
                 password: credentials.password,
                 remember: credentials.remember || false
             })
-console.log('response.success && response.data');
-console.log(response.success, response.data);
+
             if (response.success && response.data) {
                 console.log('response.data.user, response.data.token, response.data.permissions');
                 console.log(response.data.user, response.data.token, response.data.permissions);
@@ -122,11 +121,6 @@ console.log(response.success, response.data);
                 if (response.data.requires_verification) {
                     console.log('✉️ User requires email verification')
 
-                    // NIE zapisujemy danych autoryzacji!
-                    // this.setAuthData() - USUNIĘTE
-                    // this.saveToStorage() - USUNIĘTE
-                    // this.notifyAuthChange() - USUNIĘTE
-
                     // Tylko pokazujemy komunikat
                     document.dispatchEvent(new CustomEvent('notification:show', {
                         detail: {
@@ -137,8 +131,6 @@ console.log(response.success, response.data);
                 } else {
                     // Tylko jeśli użytkownik jest już zweryfikowany (edge case)
                     console.log('✅ User already verified, logging in')
-                    console.log('response.data.user, response.data.token, response.data.permissions')
-                    console.log(response.data.user, response.data.token, response.data.permissions)
 
                     // Tylko jeśli mamy token
                     if (response.data.token) {

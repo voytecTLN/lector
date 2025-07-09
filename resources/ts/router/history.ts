@@ -52,18 +52,6 @@ export class BrowserHistory {
         this.notifyListeners(path, state)
     }
 
-    back(): void {
-        window.history.back()
-    }
-
-    forward(): void {
-        window.history.forward()
-    }
-
-    go(delta: number): void {
-        window.history.go(delta)
-    }
-
     getCurrentPath(): string {
         // NOWE: Jeśli mamy hash routing, użyj hash jako path
         if (window.location.hash && window.location.hash.startsWith('#/')) {
@@ -73,67 +61,6 @@ export class BrowserHistory {
 
         // Fallback do normalnego pathname
         return window.location.pathname + window.location.search + window.location.hash
-    }
-
-    getCurrentState(): HistoryState | null {
-        return window.history.state as HistoryState | null
-    }
-
-    parseURL(url: string = window.location.href): URLInfo {
-        const urlObj = new URL(url, window.location.origin)
-
-        // NOWE: Dla hash routing
-        if (urlObj.hash && urlObj.hash.startsWith('#/')) {
-            const hashPath = urlObj.hash.substring(1)
-            const [pathname, search] = hashPath.split('?')
-
-            return {
-                pathname: pathname,
-                search: search ? '?' + search : '',
-                hash: '',
-                query: this.parseQuery(search || ''),
-                params: {}
-            }
-        }
-
-        return {
-            pathname: urlObj.pathname,
-            search: urlObj.search,
-            hash: urlObj.hash,
-            query: this.parseQuery(urlObj.search),
-            params: {}
-        }
-    }
-
-    parseQuery(search: string): Record<string, string> {
-        const params = new URLSearchParams(search)
-        const query: Record<string, string> = {}
-
-        params.forEach((value, key) => {
-            query[key] = value
-        })
-
-        return query
-    }
-
-    buildURL(path: string, query?: Record<string, string>, hash?: string): string {
-        let url = path
-
-        if (query && Object.keys(query).length > 0) {
-            const searchParams = new URLSearchParams()
-            Object.entries(query).forEach(([key, value]) => {
-                if (value !== undefined && value !== null) {
-                    searchParams.append(key, String(value))
-                }
-            })
-            url += '?' + searchParams.toString()
-        }
-
-        if (hash) {
-            url += hash.startsWith('#') ? hash : '#' + hash
-        }
-
-        return url
     }
 
     addListener(listener: (path: string, state?: HistoryState) => void): () => void {
@@ -163,12 +90,4 @@ export class BrowserHistory {
             }
         })
     }
-}
-
-export interface URLInfo {
-    pathname: string
-    search: string
-    hash: string
-    query: Record<string, string>
-    params: Record<string, string>
 }

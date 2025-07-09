@@ -116,16 +116,6 @@ class Application {
         document.addEventListener('notification:show', this.handleNotification.bind(this) as EventListener)
     }
 
-    // private handleGlobalClick(event: Event): void {
-    //     const target = event.target as HTMLElement
-    //     const link = target.closest('a[href]') as HTMLAnchorElement
-    //
-    //     if (link && this.shouldHandleInternally(link)) {
-    //         event.preventDefault()
-    //         this.router.navigate(link.pathname + link.search + link.hash)
-    //     }
-    // }
-
     private handleGlobalClick(event: Event): void {
         const target = event.target as HTMLElement
         const link = target.closest('a[href]') as HTMLAnchorElement

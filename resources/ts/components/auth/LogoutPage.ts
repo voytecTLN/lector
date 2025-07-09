@@ -8,7 +8,7 @@ export class LogoutPage implements RouteComponent {
 
     async render(): Promise<HTMLElement> {
         const container = document.createElement('div')
-        document.body.classList.add('login-page') // Używamy tej samej klasy dla spójnego tła
+        document.body.classList.add('login-page')
 
         container.innerHTML = `
             <div class="login-container">

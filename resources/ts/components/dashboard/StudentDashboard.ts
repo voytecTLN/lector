@@ -2,7 +2,7 @@
 import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
 import { api } from '@services/ApiService'
-import {navigateTo, redirectWithMessage} from "@utils/navigation";
+import {navigateTo} from "@utils/navigation";
 
 export class StudentDashboard implements RouteComponent {
     private activeSection: string = 'dashboard'

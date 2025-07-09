@@ -1,7 +1,5 @@
 // resources/ts/components/auth/EmailVerificationPage.ts
 import type { RouteComponent } from '@router/routes'
-import { redirectWithMessage } from '@/utils/navigation'
-import { authService } from '@services/AuthService'
 
 export class EmailVerificationPage implements RouteComponent {
     async render(): Promise<HTMLElement> {

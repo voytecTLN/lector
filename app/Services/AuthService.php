@@ -83,7 +83,6 @@ class AuthService
             $this->notificationService->sendEmailVerification($user, $verificationToken);
 
             // NIE TWORZYMY TOKENU AUTORYZACJI DLA NIEZWERYFIKOWANEGO UŻYTKOWNIKA!
-            // Usunięto: $token = $user->createToken(...)
 
             DB::commit();
 

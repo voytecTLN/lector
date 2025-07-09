@@ -387,10 +387,10 @@ class AuthController extends Controller
             ], 400);
         }
 
-        // ULEPSZONE rate limiting - bardziej restrykcyjne
+        // rate limiting - restrykcyjne
         $key = 'resend-verification:' . $user->id;
-        $maxAttempts = 2; // Zmniejszone z 3 do 2
-        $decayMinutes = 60; // Zwiększone z 5 do 60 minut
+        $maxAttempts = 2;
+        $decayMinutes = 60;
 
         if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
             $seconds = RateLimiter::availableIn($key);

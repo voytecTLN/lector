@@ -49,7 +49,6 @@ export class AuthGuard implements RouteGuard {
 
         // Route requires authentication but user is not logged in
         if (requiresAuth && !isAuthenticated) {
-            // NOWE: Zapisz intended URL
             if (window.router) {
                 window.router.setIntendedUrl(context.to.path)
             }
@@ -351,53 +350,3 @@ export const defaultGuards: RouteGuard[] = [
     new RoleGuard(),          // Role
     new PermissionGuard()     // Na końcu uprawnienia
 ]
-
-// Helper function to create custom guard
-export function createCustomGuard(
-    name: string,
-    guardFunction: (context: GuardContext) => GuardResult | Promise<GuardResult>
-): RouteGuard {
-    return {
-        name,
-        execute: guardFunction
-    }
-}
-
-// Guard result helpers
-export const GuardResults = {
-    allow(): GuardResult {
-        return { allowed: true }
-    },
-
-    deny(message: string, redirect?: string): GuardResult {
-        return {
-            allowed: false,
-            message,
-            redirect
-        }
-    },
-
-    redirectToLogin(message: string = 'Wymagane uwierzytelnienie'): GuardResult {
-        return {
-            allowed: false,
-            redirect: '/login',
-            message
-        }
-    },
-
-    redirectToUnauthorized(message: string = 'Brak uprawnień'): GuardResult {
-        return {
-            allowed: false,
-            redirect: '/unauthorized',
-            message
-        }
-    },
-
-    redirectToVerification(message: string = 'Wymagana weryfikacja email'): GuardResult {
-        return {
-            allowed: false,
-            redirect: '/verify-email',
-            message
-        }
-    }
-}

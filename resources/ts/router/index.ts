@@ -428,59 +428,6 @@ export class Router {
         }))
     }
 
-    // Public API methods
-    getCurrentRoute(): MatchedRoute | null {
-        return this.currentRoute
-    }
-
-    addGuard(guard: RouteGuard): void {
-        this.guards.push(guard)
-        console.log(`➕ Added guard: ${guard.name}`)
-    }
-
-    removeGuard(guardName: string): void {
-        const initialLength = this.guards.length
-        this.guards = this.guards.filter(guard => guard.name !== guardName)
-        if (this.guards.length < initialLength) {
-            console.log(`➖ Removed guard: ${guardName}`)
-        }
-    }
-
-    // Helper methods for navigation
-    async goBack(): Promise<void> {
-        this.history.back()
-    }
-
-    async goForward(): Promise<void> {
-        this.history.forward()
-    }
-
-    async reload(): Promise<void> {
-        if (this.currentRoute) {
-            await this.navigate(this.history.getCurrentPath(), true)
-        }
-    }
-
-    // Route building helpers
-    buildPath(routeName: string, params?: Record<string, string>, query?: Record<string, string>): string {
-        return RouteMatcher.buildPath(routeName, params, query)
-    }
-
-    // Check if route is active
-    isRouteActive(routeName: string, params?: Record<string, string>): boolean {
-        if (!this.currentRoute) return false
-
-        if (this.currentRoute.route.name !== routeName) return false
-
-        if (params) {
-            return Object.entries(params).every(([key, value]) =>
-                this.currentRoute?.params[key] === value
-            )
-        }
-
-        return true
-    }
-
     // Debug method
     debugRouting(enabled: boolean = true): void {
         if (enabled) {
@@ -499,7 +446,6 @@ export class Router {
         }
     }
 
-    // Centralized redirect handling
     // Centralized redirect handling
     public redirectWithMessage(path: string, message?: string, type: 'success' | 'error' | 'warning' | 'info' = 'info'): void {
         console.log(`🔄 Router.redirectWithMessage called:`, { path, message, type })
@@ -598,15 +544,5 @@ export class Router {
             console.log(`📍 Retrieved intended URL: ${url}`)
         }
         return url
-    }
-
-// Check if we should redirect to intended URL after login
-    public handlePostLoginRedirect(defaultPath: string): string {
-        const intended = this.getIntendedUrl()
-        if (intended && intended !== '/login' && intended !== '/register') {
-            console.log(`↩️ Redirecting to intended URL: ${intended}`)
-            return intended
-        }
-        return defaultPath
     }
 }

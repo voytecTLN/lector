@@ -129,7 +129,7 @@ class StudentService
         $paginator = $query->paginate($filters['per_page'] ?? 15);
 
         return [
-            'data' => $paginator->items(),             // <-- kluczowa poprawka
+            'data' => $paginator->items(),
             'total' => $paginator->total(),
             'per_page' => $paginator->perPage(),
             'current_page' => $paginator->currentPage(),
