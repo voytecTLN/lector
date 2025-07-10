@@ -43,14 +43,20 @@ class StudentService
                 'preferred_schedule' => $data['preferred_schedule'] ?? []
             ]);
 
-            // 3. Send welcome email (skip for imports)
+            // 3. Assign package if provided
+            if (!empty($data['package_id'])) {
+                $packageService = app(\App\Services\PackageService::class);
+                $packageService->assignPackageToStudent($user->id, $data['package_id']);
+            }
+
+            // 4. Send welcome email (skip for imports)
             $isImport = $data['is_import'] ?? false;
             if (!$isImport) {
                 $this->notificationService->sendWelcomeEmail($user);
             }
 
             DB::commit();
-            return $user->load('studentProfile');
+            return $user->load(['studentProfile', 'packageAssignments.package']);
 
         } catch (Exception $e) {
             DB::rollBack();
@@ -86,8 +92,18 @@ class StudentService
                 ]);
             }
 
+            // 3. Handle package assignment if provided
+            if (isset($data['package_id'])) {
+                if (!empty($data['package_id'])) {
+                    $packageService = app(\App\Services\PackageService::class);
+                    $packageService->assignPackageToStudent($user->id, $data['package_id']);
+                }
+                // Note: If package_id is empty, we don't remove existing packages
+                // That would need to be a separate action
+            }
+
             DB::commit();
-            return $user->fresh('studentProfile');
+            return $user->fresh(['studentProfile', 'packageAssignments.package']);
 
         } catch (Exception $e) {
             DB::rollBack();
@@ -105,7 +121,7 @@ class StudentService
 
     public function getStudents(array $filters = []): array
     {
-        $query = User::with('studentProfile')
+        $query = User::with(['studentProfile', 'activePackageAssignments.package'])
             ->where('role', 'student');
 
         // Apply filters

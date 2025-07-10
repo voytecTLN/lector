@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentImportController;
+use App\Http\Controllers\PackageController;
 use App\Http\Controllers\Admin\DashboardController;
 
 // Health check - publiczny endpoint
@@ -150,6 +151,30 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.students.import.preview');
                 Route::post('import', [StudentImportController::class, 'import'])
                     ->name('api.students.import');
+            });
+
+            // Package management routes
+            Route::prefix('packages')->group(function () {
+                Route::get('/', [PackageController::class, 'index'])
+                    ->name('api.packages.index');
+                Route::get('/active', [PackageController::class, 'active'])
+                    ->name('api.packages.active');
+                Route::get('/stats', [PackageController::class, 'stats'])
+                    ->name('api.packages.stats');
+                Route::get('/{id}', [PackageController::class, 'show'])
+                    ->name('api.packages.show');
+                Route::post('/', [PackageController::class, 'store'])
+                    ->name('api.packages.store');
+                Route::put('/{id}', [PackageController::class, 'update'])
+                    ->name('api.packages.update');
+                Route::delete('/{id}', [PackageController::class, 'destroy'])
+                    ->name('api.packages.destroy');
+                Route::post('/assign', [PackageController::class, 'assign'])
+                    ->name('api.packages.assign');
+                Route::get('/student/{studentId}', [PackageController::class, 'studentPackages'])
+                    ->name('api.packages.student');
+                Route::post('/deactivate-expired', [PackageController::class, 'deactivateExpired'])
+                    ->name('api.packages.deactivate-expired');
             });
 
         });

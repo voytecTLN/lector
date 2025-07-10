@@ -73,6 +73,15 @@ export class AdminDashboard implements RouteComponent {
 <!--                        </a>-->
 <!--                    </li>-->
 
+                    <div class="admin-nav-section">Pakiety i Płatności</div>
+
+                    <li class="admin-nav-item">
+                        <a href="#pakiety" class="admin-nav-link" data-section="pakiety">
+                            <span class="admin-nav-icon">📦</span>
+                            Pakiety
+                        </a>
+                    </li>
+
                     <div class="admin-nav-section">Monitoring i Logi</div>
 
 <!--                    <li class="admin-nav-item">-->
@@ -306,6 +315,83 @@ export class AdminDashboard implements RouteComponent {
                         studentList.mount(container)
                     } else {
                         console.error('Students list container not found or not HTMLElement')
+                    }
+                })
+                break
+
+            case 'pakiety':
+                pageTitle.textContent = 'Zarządzanie Pakietami'
+                contentArea.innerHTML = this.getPackagesContent()
+
+                // Mount PackageList component
+                import('@/components/packages/PackageList').then(async (module) => {
+                    const packageList = new module.PackageList()
+                    const container = contentArea.querySelector('#packages-list-container')
+
+                    // Type guard to ensure it's HTMLElement
+                    if (container && container instanceof HTMLElement) {
+                        const element = await packageList.render()
+                        container.appendChild(element)
+                        packageList.mount(container)
+                    } else {
+                        console.error('Packages list container not found or not HTMLElement')
+                    }
+                })
+                break
+
+            case 'dodaj-pakiet':
+                pageTitle.textContent = 'Dodaj Pakiet'
+                contentArea.innerHTML = this.getAddPackageContent()
+                
+                // Mount PackageForm component
+                import('@/components/packages/PackageForm').then(async (module) => {
+                    const packageForm = new module.PackageForm()
+                    const container = contentArea.querySelector('#add-package-container')
+
+                    if (container && container instanceof HTMLElement) {
+                        const element = await packageForm.render()
+                        container.appendChild(element)
+                        packageForm.mount && packageForm.mount(container)
+                    } else {
+                        console.error('Add package container not found or not HTMLElement')
+                    }
+                })
+                break
+
+            case 'package-details':
+                pageTitle.textContent = 'Szczegóły Pakietu'
+                contentArea.innerHTML = this.getPackageDetailsContent()
+                
+                // Mount PackageDetails component
+                import('@/components/packages/PackageDetails').then(async (module) => {
+                    const packageDetails = new module.PackageDetails()
+                    const container = contentArea.querySelector('#package-details-container')
+
+                    if (container && container instanceof HTMLElement) {
+                        const element = await packageDetails.render()
+                        container.appendChild(element)
+                        packageDetails.mount && packageDetails.mount(container)
+                    } else {
+                        console.error('Package details container not found or not HTMLElement')
+                    }
+                })
+                break
+
+            case 'edytuj-pakiet':
+                pageTitle.textContent = 'Edytuj Pakiet'
+                contentArea.innerHTML = this.getEditPackageContent()
+                
+                // Mount PackageForm component
+                import('@/components/packages/PackageForm').then(async (module) => {
+                    const packageForm = new module.PackageForm()
+                    const container = contentArea.querySelector('#edit-package-container')
+
+                    if (container && container instanceof HTMLElement) {
+                        const element = await packageForm.render()
+                        container.appendChild(element)
+                        packageForm.mount && packageForm.mount(container)
+                    } else {
+                        console.error('Edit package container not found or not HTMLElement')
                     }
                 })
                 break
@@ -608,6 +694,46 @@ export class AdminDashboard implements RouteComponent {
         <div class="admin-content-area">
             <div id="edit-student-container">
                 <!-- StudentForm component will be mounted here -->
+            </div>
+        </div>
+    `
+    }
+
+    private getPackagesContent(): string {
+        return `
+        <div class="admin-content-area">
+            <div id="packages-list-container">
+                <!-- PackageList component will be mounted here -->
+            </div>
+        </div>
+    `
+    }
+
+    private getAddPackageContent(): string {
+        return `
+        <div class="admin-content-area">
+            <div id="add-package-container">
+                <!-- PackageForm component will be mounted here -->
+            </div>
+        </div>
+    `
+    }
+
+    private getPackageDetailsContent(): string {
+        return `
+        <div class="admin-content-area">
+            <div id="package-details-container">
+                <!-- PackageDetails component will be mounted here -->
+            </div>
+        </div>
+    `
+    }
+
+    private getEditPackageContent(): string {
+        return `
+        <div class="admin-content-area">
+            <div id="edit-package-container">
+                <!-- PackageForm component will be mounted here -->
             </div>
         </div>
     `

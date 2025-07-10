@@ -166,11 +166,12 @@ class UpdateStudentRequest extends FormRequest
                 'max:500'
             ],
 
-            // MVP: Ignorujemy pakiety na razie
-            'package_action' => [
+            // Package assignment
+            'package_id' => [
                 'sometimes',
-                'string',
-                'in:extend,new,cancel'
+                'nullable',
+                'integer',
+                'exists:packages,id'
             ]
         ];
     }

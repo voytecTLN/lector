@@ -97,6 +97,9 @@ export class StudentForm implements RouteComponent {
         } else {
             this.setupForm()
         }
+        
+        // Load packages after form setup
+        await this.loadPackages()
     }
 
     unmount(): void {
@@ -203,6 +206,29 @@ export class StudentForm implements RouteComponent {
                 <div class="card-body">
                     <div class="row g-2">
                         ${this.generateGoalCheckboxes()}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pakiety -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Pakiety godzin</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label">Przypisz pakiet (opcjonalne)</label>
+                            <select name="package_id" class="form-select" id="packageSelect">
+                                <option value="">Ładowanie pakietów...</option>
+                            </select>
+                            <div class="form-text">Wybierz pakiet godzin do przypisania studentowi</div>
+                        </div>
+                        <div class="col-md-12" id="packageInfo" style="display: none;">
+                            <div class="alert alert-info mb-0">
+                                <div id="packageDetails"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -398,6 +424,78 @@ export class StudentForm implements RouteComponent {
             passwordInput?.addEventListener('input', validatePasswords)
             confirmInput?.addEventListener('input', validatePasswords)
         }
+
+        // Package selection handler
+        const packageSelect = this.form.querySelector('#packageSelect') as HTMLSelectElement
+        if (packageSelect) {
+            packageSelect.addEventListener('change', (e) => {
+                const target = e.target as HTMLSelectElement
+                this.showPackageInfo(target.value)
+            })
+        }
+    }
+
+    private async loadPackages(): Promise<void> {
+        try {
+            // Import PackageService dynamically
+            const { PackageService } = await import('@services/PackageService')
+            const packageService = new PackageService()
+            
+            const packages = await packageService.getActivePackages()
+            
+            const select = this.form?.querySelector('#packageSelect') as HTMLSelectElement
+            if (select) {
+                select.innerHTML = '<option value="">Bez pakietu</option>'
+                packages.forEach(pkg => {
+                    const option = document.createElement('option')
+                    option.value = pkg.id.toString()
+                    option.textContent = `${pkg.name} (${pkg.hours_count}h - ${pkg.formatted_price || this.formatPrice(pkg.price)})`
+                    option.dataset.package = JSON.stringify(pkg)
+                    select.appendChild(option)
+                })
+            }
+        } catch (error) {
+            console.error('Error loading packages:', error)
+            const select = this.form?.querySelector('#packageSelect') as HTMLSelectElement
+            if (select) {
+                select.innerHTML = '<option value="">Błąd ładowania pakietów</option>'
+            }
+        }
+    }
+
+    private showPackageInfo(packageId: string): void {
+        const packageInfo = this.form?.querySelector('#packageInfo') as HTMLElement
+        const packageDetails = this.form?.querySelector('#packageDetails') as HTMLElement
+        
+        if (!packageId || !packageInfo || !packageDetails) {
+            packageInfo.style.display = 'none'
+            return
+        }
+
+        const select = this.form?.querySelector('#packageSelect') as HTMLSelectElement
+        const selectedOption = select?.querySelector(`option[value="${packageId}"]`) as HTMLOptionElement
+        
+        if (selectedOption?.dataset.package) {
+            const pkg = JSON.parse(selectedOption.dataset.package)
+            packageDetails.innerHTML = `
+                <strong>Pakiet:</strong> ${pkg.name}<br>
+                <strong>Godziny:</strong> ${pkg.hours_count}h<br>
+                <strong>Ważność:</strong> ${pkg.validity_days} dni<br>
+                <strong>Cena:</strong> ${pkg.formatted_price || this.formatPrice(pkg.price)}<br>
+                ${pkg.description ? `<strong>Opis:</strong> ${pkg.description}` : ''}
+            `
+            packageInfo.style.display = 'block'
+        } else {
+            packageInfo.style.display = 'none'
+        }
+    }
+
+    private formatPrice(priceInCents: number): string {
+        const price = priceInCents / 100
+        return new Intl.NumberFormat('pl-PL', {
+            style: 'currency',
+            currency: 'PLN'
+        }).format(price)
     }
 
     private showLevelSelector(language: string): void {

@@ -31,7 +31,8 @@ class StudentImportService
             'country',
             'learning_languages',
             'learning_goals',
-            'current_levels'
+            'current_levels',
+            'package_name'
         ];
 
         $sampleData = [
@@ -43,7 +44,8 @@ class StudentImportService
             'Polska',
             'english,german',
             'conversation,business',
-            'english:B1,german:A2'
+            'english:B1,german:A2',
+            'Pakiet Standard'
         ];
 
         $output = fopen('php://temp', 'w');
@@ -224,7 +226,8 @@ class StudentImportService
             'country' => 'nullable|string|max:100',
             'learning_languages' => 'nullable|string',
             'learning_goals' => 'nullable|string',
-            'current_levels' => 'nullable|string'
+            'current_levels' => 'nullable|string',
+            'package_name' => 'nullable|string|max:255'
         ]);
         
         $errors = [];
@@ -323,6 +326,17 @@ class StudentImportService
                 }
             }
             $studentData['current_levels'] = $levels;
+        }
+        
+        // Handle package assignment by name
+        if (!empty($row['package_name'])) {
+            $package = \App\Models\Package::where('name', trim($row['package_name']))
+                ->where('is_active', true)
+                ->first();
+            
+            if ($package) {
+                $studentData['package_id'] = $package->id;
+            }
         }
         
         return $this->studentService->createStudent($studentData);

@@ -277,8 +277,8 @@ export class StudentList implements RouteComponent {
         const rows = this.students.map(student => {
             const profileUrl = `/admin/dashboard?section=student-details&student_id=${student.id}`
 
-            // Package badge
-            const packageBadge = this.getPackageBadge(student.hour_package)
+            // Package badge - use activePackageAssignments instead of hour_package
+            const packageBadge = this.getPackageBadgeFromAssignments(student.active_package_assignments || [])
 
             // Status badge
             const actualStatus = this.getActualStatus(student)
@@ -506,6 +506,41 @@ export class StudentList implements RouteComponent {
             .substring(0, 2)
     }
 
+    private getPackageBadgeFromAssignments(assignments: any[]): string {
+        if (!assignments || assignments.length === 0) {
+            return '<span class="badge bg-secondary">Brak pakietu</span>'
+        }
+
+        // Find the most relevant active assignment
+        const activeAssignment = assignments.find(a => a.status === 'active') || assignments[0]
+        
+        if (!activeAssignment) {
+            return '<span class="badge bg-secondary">Brak pakietu</span>'
+        }
+
+        const statusClass = this.getPackageStatusClass(activeAssignment.status)
+        const packageName = activeAssignment.package?.name || 'Nieznany pakiet'
+        const hoursRemaining = activeAssignment.hours_remaining || 0
+        
+        return `<span class="badge ${statusClass}" title="${hoursRemaining}h pozostało">${packageName}</span>`
+    }
+
+    private getPackageStatusClass(status: string): string {
+        switch (status) {
+            case 'active':
+                return 'bg-success'
+            case 'expired':
+                return 'bg-danger'
+            case 'exhausted':
+                return 'bg-warning'
+            case 'inactive':
+                return 'bg-secondary'
+            default:
+                return 'bg-secondary'
+        }
+    }
+
+    // Keep old method for backward compatibility if needed
     private getPackageBadge(hourPackage: HourPackage | undefined): string {
         if (!hourPackage || hourPackage.is_placeholder) {
             return '<span class="badge bg-secondary">Brak pakietu</span>'

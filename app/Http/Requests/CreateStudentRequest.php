@@ -155,6 +155,13 @@ class CreateStudentRequest extends FormRequest
                 'nullable',
                 'string',
                 'in:website,referral,social_media,advertisement,other'
+            ],
+
+            // Package assignment
+            'package_id' => [
+                'nullable',
+                'integer',
+                'exists:packages,id'
             ]
         ];
     }

@@ -5,6 +5,7 @@
 @import './components/navigation.css';
 @import './components/footer.css';
 @import './components/students.css';
+@import './components/packages.css';
 
 /* Page styles */
 @import './pages/home.css';

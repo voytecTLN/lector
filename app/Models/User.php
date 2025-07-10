@@ -95,6 +95,24 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Lesson::class);
     }
 
+    /**
+     * Get package assignments for this student
+     */
+    public function packageAssignments(): HasMany
+    {
+        return $this->hasMany(PackageAssignment::class, 'student_id');
+    }
+
+    /**
+     * Get active package assignments for this student
+     */
+    public function activePackageAssignments(): HasMany
+    {
+        return $this->hasMany(PackageAssignment::class, 'student_id')
+                    ->where('is_active', true)
+                    ->where('expires_at', '>=', now());
+    }
+
     // Role checking methods
     public function isAdmin(): bool
     {
