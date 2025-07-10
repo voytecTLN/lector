@@ -31,7 +31,8 @@ class StudentService
                 'birth_date' => $data['birth_date'] ?? null,
                 'city' => $data['city'] ?? null,
                 'country' => $data['country'] ?? 'Polska',
-                'status' => $data['status'] ?? 'active'
+                'status' => $data['status'] ?? User::STATUS_ACTIVE,
+                'email_verified_at' => $data['email_verified_at'] ?? null
             ]);
 
             // 2. Create student profile
@@ -42,8 +43,11 @@ class StudentService
                 'preferred_schedule' => $data['preferred_schedule'] ?? []
             ]);
 
-            // 3. Send welcome email
-            $this->notificationService->sendWelcomeEmail($user);
+            // 3. Send welcome email (skip for imports)
+            $isImport = $data['is_import'] ?? false;
+            if (!$isImport) {
+                $this->notificationService->sendWelcomeEmail($user);
+            }
 
             DB::commit();
             return $user->load('studentProfile');

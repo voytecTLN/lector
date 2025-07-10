@@ -46,6 +46,9 @@ export class LoginPage implements RouteComponent {
                                 <input type="checkbox" id="remember" name="remember" hidden="">
 <!--                                <label for="remember">Zapamiętaj mnie</label>-->
                             </div>
+                            <div class="forgot-password">
+                                <a href="/forgot-password" class="forgot-password-link">Zapomniałeś hasła?</a>
+                            </div>
                         </div>
                         <button type="submit" class="login-btn" id="loginButton">
                             <span id="buttonText">Zaloguj się</span>

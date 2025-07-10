@@ -161,7 +161,7 @@ class AuthController extends Controller
     {
         $email = $request->validated()['email'];
 
-        // Rate limiting for password reset
+        // Rate limiting for password reset emails (3 attempts per 10 minutes)
         $key = 'password-reset:' . $email;
 
         if (RateLimiter::tooManyAttempts($key, 3)) {
@@ -175,7 +175,7 @@ class AuthController extends Controller
         try {
             $this->authService->sendPasswordResetEmail($email);
 
-            RateLimiter::hit($key, 3600); // 1 hour
+            RateLimiter::hit($key, 600); // 10 minutes
 
             return response()->json([
                 'success' => true,

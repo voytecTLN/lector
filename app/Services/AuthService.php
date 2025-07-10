@@ -119,6 +119,8 @@ class AuthService
      */
     public function sendPasswordResetEmail(string $email): void
     {
+        \Log::info('sendPasswordResetEmail called', ['email' => $email]);
+        
         $user = User::where('email', $email)->first();
 
         if (!$user) {
@@ -129,7 +131,12 @@ class AuthService
             throw new Exception('Konto jest nieaktywne');
         }
 
+        \Log::info('About to generate token for user', ['user_id' => $user->id, 'email' => $user->email]);
+        
         $token = $user->generatePasswordResetToken();
+        
+        \Log::info('Token generated, sending email', ['token' => $token]);
+        
         $this->notificationService->sendPasswordResetEmail($user, $token);
     }
 
@@ -138,16 +145,45 @@ class AuthService
      */
     public function resetPassword(array $data): void
     {
+        // DEBUG: Log the token being searched
+        \Log::info('Reset password attempt', [
+            'token_received' => $data['token'],
+            'token_length' => strlen($data['token']),
+            'has_password' => !empty($data['password'])
+        ]);
+        
         $user = User::where('password_reset_token', $data['token'])->first();
+        
+        // DEBUG: More detailed search result
+        $usersWithTokens = User::whereNotNull('password_reset_token')->get(['id', 'email', 'password_reset_token', 'password_reset_expires_at']);
+        
+        \Log::info('Token search result', [
+            'user_found' => $user ? $user->email : 'none',
+            'total_users_with_tokens' => $usersWithTokens->count(),
+            'all_tokens' => $usersWithTokens->map(function($u) {
+                return [
+                    'email' => $u->email,
+                    'token' => $u->password_reset_token,
+                    'expires_at' => $u->password_reset_expires_at,
+                    'token_length' => strlen($u->password_reset_token ?? '')
+                ];
+            })->toArray()
+        ]);
 
         if (!$user) {
             throw new Exception('Nieprawidłowy token resetowania hasła');
         }
 
         if ($user->password_reset_expires_at < Carbon::now()) {
+            // Clean up expired token
+            $user->update([
+                'password_reset_token' => null,
+                'password_reset_expires_at' => null
+            ]);
             throw new Exception('Token resetowania hasła wygasł');
         }
 
+        // Only clear token AFTER successful password update
         $user->update([
             'password' => Hash::make($data['password']),
             'password_reset_token' => null,

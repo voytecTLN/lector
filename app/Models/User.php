@@ -31,7 +31,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_login_ip',
         'email_verified_at',
         'verification_token_hash',
-        'verification_token_expires_at'
+        'verification_token_expires_at',
+        'password_reset_token',
+        'password_reset_expires_at'
     ];
 
     protected $hidden = [
@@ -222,10 +224,37 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $token = bin2hex(random_bytes(32));
 
-        $this->update([
-            'password_reset_token' => $token,
-            'password_reset_expires_at' => Carbon::now()->addHours(24)
+        \Log::info('Generating password reset token', [
+            'user_email' => $this->email,
+            'token' => $token,
+            'before_update' => true
         ]);
+
+        try {
+            $expiresAt = Carbon::now()->addHours(24);
+            
+            $this->update([
+                'password_reset_token' => $token,
+                'password_reset_expires_at' => $expiresAt
+            ]);
+
+            // Refresh the model to get updated values
+            $this->refresh();
+
+            \Log::info('Password reset token saved successfully', [
+                'user_email' => $this->email,
+                'token' => $token,
+                'expires_at' => $this->password_reset_expires_at,
+                'expires_at_raw' => $expiresAt->toDateTimeString()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to save password reset token', [
+                'user_email' => $this->email,
+                'token' => $token,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
 
         return $token;
     }

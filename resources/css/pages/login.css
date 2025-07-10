@@ -85,6 +85,19 @@ body.login-page {
     align-items: center;
     margin-bottom: 2rem;
 }
+
+.forgot-password-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.forgot-password-link:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
 .login-btn {
     width: 100%;
     background: #2563eb;

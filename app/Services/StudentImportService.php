@@ -298,7 +298,9 @@ class StudentImportService
             'city' => $row['city'] ?: null,
             'country' => $row['country'] ?: 'Polska',
             'password' => Str::random(12), // Generate random password
-            'status' => 'active'
+            'status' => User::STATUS_ACTIVE,
+            'email_verified_at' => now(), // Mark as verified during import
+            'is_import' => true // Flag to skip welcome email
         ];
         
         // Parse learning languages
