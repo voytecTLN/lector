@@ -7,6 +7,7 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\TutorController;
 use App\Http\Controllers\Admin\DashboardController;
 
 // Health check - publiczny endpoint
@@ -17,19 +18,19 @@ Route::get('/health', function () {
 // Authentication routes (publiczne - bez middleware auth)
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])
-        ->middleware('throttle:5,1') // 5 attempts per minute
+        ->middleware('throttle:60,1') // 60 attempts per minute (development)
         ->name('api.auth.login');
 
     Route::post('/register', [AuthController::class, 'register'])
-        ->middleware('throttle:3,10') // 3 attempts per 10 minutes
+        ->middleware('throttle:30,1') // 30 attempts per minute (development)
         ->name('api.auth.register');
 
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
-        ->middleware('throttle:3,60') // 3 attempts per hour
+        ->middleware('throttle:30,1') // 30 attempts per minute (development)
         ->name('api.auth.forgot-password');
 
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])
-        ->middleware('throttle:5,10') // 5 attempts per 10 minutes
+        ->middleware('throttle:30,1') // 30 attempts per minute (development)
         ->name('api.auth.reset-password');
 
     // POPRAWIONE - weryfikacja emaila jako POST (dla frontend)
@@ -40,7 +41,7 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::post('/auth/resend-verification-public', [AuthController::class, 'resendVerificationPublic'])
-    ->middleware('throttle:2,60') // 2 attempts per hour
+    ->middleware('throttle:30,1') // 30 attempts per minute (development)
     ->name('api.auth.resend-verification-public');
 
 // Protected routes (wymagają autentykacji Sanctum)
@@ -178,6 +179,36 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.packages.deactivate-expired');
             });
 
+            // Tutor management routes
+            Route::prefix('tutors')->group(function () {
+                Route::get('/', [TutorController::class, 'index'])
+                    ->name('api.tutors.index');
+                Route::get('/search', [TutorController::class, 'search'])
+                    ->name('api.tutors.search');
+                Route::get('/stats', [TutorController::class, 'stats'])
+                    ->name('api.tutors.stats');
+                Route::get('/available', [TutorController::class, 'available'])
+                    ->name('api.tutors.available');
+                Route::get('/export', [TutorController::class, 'export'])
+                    ->name('api.tutors.export');
+                Route::get('/{id}', [TutorController::class, 'show'])
+                    ->name('api.tutors.show');
+                Route::post('/', [TutorController::class, 'store'])
+                    ->name('api.tutors.store');
+                Route::put('/{id}', [TutorController::class, 'update'])
+                    ->name('api.tutors.update');
+                Route::delete('/{id}', [TutorController::class, 'destroy'])
+                    ->name('api.tutors.destroy');
+                Route::put('/{id}/deactivate', [TutorController::class, 'deactivate'])
+                    ->name('api.tutors.deactivate');
+                Route::put('/{id}/verify', [TutorController::class, 'verify'])
+                    ->name('api.tutors.verify');
+                Route::put('/{id}/availability', [TutorController::class, 'updateAvailability'])
+                    ->name('api.tutors.availability');
+                Route::post('/bulk-update-status', [TutorController::class, 'bulkUpdateStatus'])
+                    ->name('api.tutors.bulk-update-status');
+            });
+
         });
 
         // Admin only routes
@@ -231,4 +262,4 @@ Route::middleware('auth:sanctum')->group(function () {
 // CSRF Cookie endpoint for SPA authentication
 Route::get('/sanctum/csrf-cookie', function () {
     return response()->json(['message' => 'CSRF cookie set']);
-})->middleware(['web', 'throttle:10,1']); // Max 10 requests per minute
+})->middleware(['web', 'throttle:120,1']); // Max 120 requests per minute (development)

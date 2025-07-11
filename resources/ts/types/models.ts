@@ -14,7 +14,8 @@ export interface User {
   email_verified_at?: string
   last_login_at?: string
   last_login_ip?: string
-  student_profile: StudentProfile
+  student_profile?: StudentProfile
+  tutor_profile?: TutorProfile
   active_package_assignments?: PackageAssignment[]
 }
 
@@ -89,6 +90,88 @@ export interface UpdateAdminRequest {
 export interface AdminFilters {
   status?: 'active' | 'inactive' | 'blocked'
   city?: string
+  search?: string
+  per_page?: number
+  page?: number
+}
+
+// Tutor-related interfaces
+export interface TutorProfile {
+  id: number
+  user_id: number
+  languages: string[]
+  specializations: string[]
+  description?: string
+  weekly_availability: Record<string, any>
+  is_verified: boolean
+  verified_at?: string
+  verification_status: 'pending' | 'approved' | 'rejected'
+  verification_notes?: string
+  years_experience: number
+  certifications: string[]
+  education: string[]
+  average_rating: number
+  total_lessons: number
+  total_students: number
+  is_accepting_students: boolean
+  max_students_per_week?: number
+  lesson_types: string[]
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateTutorRequest {
+  name: string
+  email: string
+  password: string
+  password_confirmation: string
+  phone?: string
+  birth_date?: string
+  city?: string
+  country?: string
+  status: 'active' | 'inactive' | 'blocked'
+  languages: string[]
+  specializations: string[]
+  description?: string
+  years_experience: number
+  certifications?: string[]
+  education?: string[]
+  lesson_types?: string[]
+  weekly_availability?: Record<string, any>
+  is_accepting_students?: boolean
+  max_students_per_week?: number
+}
+
+export interface UpdateTutorRequest {
+  name?: string
+  email?: string
+  password?: string
+  password_confirmation?: string
+  phone?: string
+  birth_date?: string
+  city?: string
+  country?: string
+  status?: 'active' | 'inactive' | 'blocked'
+  languages?: string[]
+  specializations?: string[]
+  description?: string
+  years_experience?: number
+  certifications?: string[]
+  education?: string[]
+  lesson_types?: string[]
+  weekly_availability?: Record<string, any>
+  is_accepting_students?: boolean
+  max_students_per_week?: number
+}
+
+export interface TutorFilters {
+  status?: 'active' | 'inactive' | 'blocked'
+  city?: string
+  language?: string
+  specialization?: string
+  verification_status?: 'pending' | 'approved' | 'rejected'
+  is_verified?: boolean
+  is_accepting_students?: boolean
   search?: string
   per_page?: number
   page?: number

@@ -298,13 +298,21 @@ export class AdminDashboard implements RouteComponent {
 
             case 'lektorzy':
                 pageTitle.textContent = 'Zarządzanie Lektorami'
-                // contentArea.innerHTML = this.getTutorsContent()
-                contentArea.innerHTML = '<div class="admin-loading-container"><div class="admin-loading-spinner"></div><p class="admin-loading-text">Ładowanie listy lektorów...</p></div>'
+                contentArea.innerHTML = this.getTutorsContent()
 
-                // Symulacja ładowania (w przyszłości zastąp prawdziwym API)
-                setTimeout(() => {
-                    contentArea.innerHTML = this.getTutorsContent()
-                }, 1000)
+                // Mount TutorList component
+                import('@/components/tutors/TutorList').then(async (module) => {
+                    const tutorList = new module.TutorList()
+                    const container = contentArea.querySelector('#tutors-list-container')
+
+                    if (container && container instanceof HTMLElement) {
+                        const element = await tutorList.render()
+                        container.appendChild(element)
+                        tutorList.mount(container)
+                    } else {
+                        console.error('Tutors list container not found or not HTMLElement')
+                    }
+                })
                 break
 
             case 'uczniowie':
@@ -638,6 +646,84 @@ export class AdminDashboard implements RouteComponent {
                 }
                 break
 
+            case 'dodaj-lektora':
+                pageTitle.textContent = 'Dodaj Lektora'
+                contentArea.innerHTML = this.getAddTutorContent()
+                
+                // Mount TutorForm component
+                import('@/components/tutors/TutorForm').then(async (module) => {
+                    const tutorForm = new module.TutorForm()
+                    const container = contentArea.querySelector('#add-tutor-container')
+
+                    if (container && container instanceof HTMLElement) {
+                        const element = await tutorForm.render()
+                        container.appendChild(element)
+                        tutorForm.mount(container)
+                    } else {
+                        console.error('Add tutor container not found or not HTMLElement')
+                    }
+                }).catch(error => {
+                    console.error('Failed to load TutorForm:', error)
+                    contentArea.innerHTML = '<div class="alert alert-danger">Błąd ładowania formularza lektora</div>'
+                })
+                break
+
+            case 'tutor-details':
+                const tutorId = this.getTutorIdFromUrl()
+                if (tutorId) {
+                    pageTitle.textContent = 'Szczegóły Lektora'
+                    contentArea.innerHTML = this.getTutorDetailsContent()
+                    
+                    // Mount TutorDetails component
+                    import('@/components/tutors/TutorDetails').then(async (module) => {
+                        const tutorDetails = new module.TutorDetails()
+                        const container = contentArea.querySelector('#tutor-details-container')
+
+                        if (container && container instanceof HTMLElement) {
+                            const element = await tutorDetails.render()
+                            container.appendChild(element)
+                            tutorDetails.mount(container)
+                        } else {
+                            console.error('Tutor details container not found or not HTMLElement')
+                        }
+                    }).catch(error => {
+                        console.error('Failed to load TutorDetails:', error)
+                        contentArea.innerHTML = '<div class="alert alert-danger">Błąd ładowania szczegółów lektora</div>'
+                    })
+                } else {
+                    // Redirect back to tutors list if no ID
+                    navigate.to('/admin/dashboard?section=lektorzy')
+                }
+                break
+
+            case 'edytuj-lektora':
+                const editTutorId = this.getTutorIdFromUrl()
+                if (editTutorId) {
+                    pageTitle.textContent = 'Edytuj Lektora'
+                    contentArea.innerHTML = this.getEditTutorContent()
+                    
+                    // Mount TutorForm component in edit mode
+                    import('@/components/tutors/TutorForm').then(async (module) => {
+                        const tutorForm = new module.TutorForm()
+                        const container = contentArea.querySelector('#edit-tutor-container')
+
+                        if (container && container instanceof HTMLElement) {
+                            const element = await tutorForm.render()
+                            container.appendChild(element)
+                            tutorForm.mount(container)
+                        } else {
+                            console.error('Edit tutor container not found or not HTMLElement')
+                        }
+                    }).catch(error => {
+                        console.error('Failed to load TutorForm for editing:', error)
+                        contentArea.innerHTML = '<div class="alert alert-danger">Błąd ładowania formularza edycji lektora</div>'
+                    })
+                } else {
+                    // Redirect back to tutors list if no ID
+                    navigate.to('/admin/dashboard?section=lektorzy')
+                }
+                break
+
             default:
                 pageTitle.textContent = 'Dashboard'
                 this.isLoadingStats = true
@@ -666,12 +752,12 @@ export class AdminDashboard implements RouteComponent {
         return `
         <div class="admin-quick-actions">
             <div class="admin-action-card">
-                <div class="admin-action-icon">👥</div>
+                <div class="admin-action-icon">👨‍🏫</div>
                 <h3>Zarządzaj Lektorami</h3>
-                <p>Lista i edycja kont studentów</p>
-                <button class="admin-action-btn coming-soon" onclick="this.showComingSoon('Moduł lektorów')">
-                    Wkrótce
-                </button>
+                <p>Lista i edycja kont lektorów</p>
+                <a href="/#/admin/dashboard?section=lektorzy" class="admin-action-btn">
+                    Przejdź
+                </a>
             </div>
 
             <div class="admin-action-card">
@@ -729,18 +815,8 @@ export class AdminDashboard implements RouteComponent {
     private getTutorsContent(): string {
         return `
             <div class="admin-content-area">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h2>Lista Lektorów</h2>
-                    <div style="display: flex; gap: 1rem;">
-                        <a href="/#/admin/tutors/add" class="admin-action-btn">+ Dodaj Lektora</a>
-                        <a href="/#/admin/import/tutors" class="admin-action-btn" style="background: #10b981;">📥 Import CSV</a>
-                    </div>
-                </div>
-                <p>Zarządzaj wszystkimi lektorami w systemie, ich statusem i dostępnością.</p>
-                
-                <!-- Tu będzie tabela z lektorami -->
-                <div class="table-container">
-                    <p class="admin-text-muted">Tabela</p>
+                <div id="tutors-list-container">
+                    <!-- TutorList component will be mounted here -->
                 </div>
             </div>
         `
@@ -1066,5 +1142,50 @@ export class AdminDashboard implements RouteComponent {
         // Check for admin_id in hash fragment
         const hashParams = new URLSearchParams(hash.split('?')[1] || '')
         return hashParams.get('admin_id')
+    }
+
+    private getAddTutorContent(): string {
+        return `
+            <div class="admin-content-area">
+                <div id="add-tutor-container">
+                    <!-- TutorForm component will be mounted here -->
+                </div>
+            </div>
+        `
+    }
+
+    private getTutorDetailsContent(): string {
+        return `
+            <div class="admin-content-area">
+                <div id="tutor-details-container">
+                    <!-- TutorDetails component will be mounted here -->
+                </div>
+            </div>
+        `
+    }
+
+    private getEditTutorContent(): string {
+        return `
+            <div class="admin-content-area">
+                <div id="edit-tutor-container">
+                    <!-- TutorForm component will be mounted here -->
+                </div>
+            </div>
+        `
+    }
+
+    private getTutorIdFromUrl(): string | null {
+        const urlParams = new URLSearchParams(window.location.search)
+        const hash = window.location.hash
+        
+        // Check for tutor_id in URL params
+        const tutorId = urlParams.get('tutor_id')
+        if (tutorId) {
+            return tutorId
+        }
+        
+        // Check for tutor_id in hash fragment
+        const hashParams = new URLSearchParams(hash.split('?')[1] || '')
+        return hashParams.get('tutor_id')
     }
 }
