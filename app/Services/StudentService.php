@@ -113,8 +113,13 @@ class StudentService
 
     public function getStudentById(int $studentId): User
     {
-//         return User::with(['studentProfile', 'lessons'])
-        return User::with(['studentProfile'])
+        return User::with([
+                'studentProfile', 
+                'activePackageAssignments.package',
+                'packageAssignments' => function ($query) {
+                    $query->with('package')->orderBy('assigned_at', 'desc');
+                }
+            ])
             ->where('role', 'student')
             ->findOrFail($studentId);
     }

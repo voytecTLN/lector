@@ -620,6 +620,12 @@ export class StudentForm implements RouteComponent {
             data.learning_goals = goals
         }
 
+        // Package assignment
+        const packageId = formData.get('package_id')
+        if (packageId && packageId !== '') {
+            data.package_id = parseInt(packageId as string)
+        }
+
         return data
     }
 

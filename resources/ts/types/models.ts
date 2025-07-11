@@ -44,6 +44,7 @@ export interface CreateStudentRequest {
   learning_goals?: string[]
   preferred_schedule?: Record<string, any>
   status: 'active' | 'inactive' | 'blocked' | 'unverified'
+  package_id?: number
 }
 
 export interface UpdateStudentRequest {
@@ -58,6 +59,7 @@ export interface UpdateStudentRequest {
   learning_goals?: string[]
   preferred_schedule?: Record<string, any>
   status: 'active' | 'inactive' | 'blocked' | 'unverified'
+  package_id?: number
 }
 
 export interface StudentFilters {

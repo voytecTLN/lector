@@ -109,8 +109,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function activePackageAssignments(): HasMany
     {
         return $this->hasMany(PackageAssignment::class, 'student_id')
-                    ->where('is_active', true)
-                    ->where('expires_at', '>=', now());
+                    ->where('is_active', true);
     }
 
     // Role checking methods
