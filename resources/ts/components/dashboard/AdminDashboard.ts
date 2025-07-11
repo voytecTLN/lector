@@ -48,13 +48,21 @@ export class AdminDashboard implements RouteComponent {
                         </a>
                     </li>
 
-<!--                    <li class="admin-nav-item">-->
-<!--                        <a href="#moderatorzy" class="admin-nav-link" data-section="moderatorzy">-->
-<!--                            <span class="admin-nav-icon">👮‍♂️</span>-->
-<!--                            Moderatorzy-->
+                    <li class="admin-nav-item">
+                        <a href="#moderatorzy" class="admin-nav-link" data-section="moderatorzy">
+                            <span class="admin-nav-icon">👮‍♂️</span>
+                            Moderatorzy
 <!--                            <span class="admin-nav-badge" id="moderators-count">0</span>-->
-<!--                        </a>-->
-<!--                    </li>-->
+                        </a>
+                    </li>
+
+                    <li class="admin-nav-item">
+                        <a href="#administratorzy" class="admin-nav-link" data-section="administratorzy">
+                            <span class="admin-nav-icon">🔑</span>
+                            Administratorzy
+<!--                            <span class="admin-nav-badge" id="admins-count">0</span>-->
+                        </a>
+                    </li>
 
                     <div class="admin-nav-section">Lekcje i Harmonogram</div>
 
@@ -509,6 +517,127 @@ export class AdminDashboard implements RouteComponent {
                 }
                 break
 
+            case 'moderatorzy':
+                pageTitle.textContent = 'Zarządzanie Moderatorami'
+                contentArea.innerHTML = this.getComingSoonContent('Moderatorzy', 'Funkcjonalność zarządzania moderatorami będzie dostępna wkrótce.')
+                break
+
+            case 'administratorzy':
+                pageTitle.textContent = 'Zarządzanie Administratorami'
+                contentArea.innerHTML = this.getAdministratorsContent()
+
+                // Mount AdminList component
+                import('@/components/admins/AdminList').then(async (module) => {
+                    const adminList = new module.AdminList()
+                    const container = contentArea.querySelector('#admins-list-container')
+
+                    if (container && container instanceof HTMLElement) {
+                        const element = await adminList.render()
+                        container.appendChild(element)
+                        adminList.mount(container)
+                    } else {
+                        console.error('Admins list container not found or not HTMLElement')
+                    }
+                }).catch(() => {
+                    // Fallback if AdminList doesn't exist yet
+                    contentArea.innerHTML = this.getComingSoonContent('Administratorzy', 'Funkcjonalność zarządzania administratorami będzie dostępna wkrótce.')
+                })
+                break
+
+            case 'dodaj-administratora':
+                pageTitle.textContent = 'Dodaj Administratora'
+                contentArea.innerHTML = this.getAddAdminContent()
+                
+                // Mount AdminForm component
+                import('@/components/admins/AdminForm').then(async (module) => {
+                    const adminForm = new module.AdminForm()
+                    const container = contentArea.querySelector('#add-admin-container')
+
+                    if (container && container instanceof HTMLElement) {
+                        const element = await adminForm.render()
+                        container.appendChild(element)
+                        adminForm.mount(container)
+                    } else {
+                        console.error('Add admin container not found or not HTMLElement')
+                    }
+                })
+                break
+
+            case 'admin-details':
+                const adminId = this.getAdminIdFromUrl()
+                if (adminId) {
+                    pageTitle.textContent = 'Szczegóły Administratora'
+                    contentArea.innerHTML = this.getAdminDetailsContent()
+                    
+                    // Mount AdminDetails component
+                    import('@/components/admins/AdminDetails').then(async (module) => {
+                        const adminDetails = new module.AdminDetails()
+                        const container = contentArea.querySelector('#admin-details-container')
+
+                        if (container && container instanceof HTMLElement) {
+                            const element = await adminDetails.render()
+                            container.appendChild(element)
+                            adminDetails.mount(container)
+                        } else {
+                            console.error('Admin details container not found or not HTMLElement')
+                        }
+                    })
+                } else {
+                    // Redirect back to admins list if no ID
+                    navigate.to('/admin/dashboard?section=administratorzy')
+                }
+                break
+
+            case 'edytuj-administratora':
+                const editAdminId = this.getAdminIdFromUrl()
+                if (editAdminId) {
+                    pageTitle.textContent = 'Edytuj Administratora'
+                    contentArea.innerHTML = this.getEditAdminContent()
+                    
+                    // Mount AdminForm component in edit mode
+                    import('@/components/admins/AdminForm').then(async (module) => {
+                        const adminForm = new module.AdminForm()
+                        const container = contentArea.querySelector('#edit-admin-container')
+
+                        if (container && container instanceof HTMLElement) {
+                            const element = await adminForm.render()
+                            container.appendChild(element)
+                            adminForm.mount(container)
+                        } else {
+                            console.error('Edit admin container not found or not HTMLElement')
+                        }
+                    })
+                } else {
+                    // Redirect back to admins list if no ID
+                    navigate.to('/admin/dashboard?section=administratorzy')
+                }
+                break
+
+            case 'profil-administratora':
+                const profileAdminId = this.getAdminIdFromUrl()
+                if (profileAdminId) {
+                    pageTitle.textContent = 'Edytuj Profil Administratora'
+                    contentArea.innerHTML = this.getAdminProfileEditContent()
+                    
+                    // Mount AdminProfileEdit component
+                    import('@/components/admins/AdminProfileEdit').then(async (module) => {
+                        const adminProfileEdit = new module.AdminProfileEdit()
+                        const container = contentArea.querySelector('#admin-profile-edit-container')
+
+                        if (container && container instanceof HTMLElement) {
+                            const element = await adminProfileEdit.render()
+                            container.appendChild(element)
+                            adminProfileEdit.mount(container)
+                        } else {
+                            console.error('Admin profile edit container not found or not HTMLElement')
+                        }
+                    })
+                } else {
+                    // Redirect back to admins list if no ID
+                    navigate.to('/admin/dashboard?section=administratorzy')
+                }
+                break
+
             default:
                 pageTitle.textContent = 'Dashboard'
                 this.isLoadingStats = true
@@ -854,5 +983,88 @@ export class AdminDashboard implements RouteComponent {
         updateElement('students-count', stats.students || 0)
         updateElement('moderators-count', stats.moderators || 0)
         updateElement('active-lessons', stats.active_lessons || 0)
+    }
+
+    private getComingSoonContent(title: string, description: string): string {
+        return `
+            <div class="admin-content-area">
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-clock-history" style="font-size: 4rem; color: #6c757d;"></i>
+                    </div>
+                    <h2 class="text-muted mb-3">${title}</h2>
+                    <p class="text-muted mb-4">${description}</p>
+                    <div class="alert alert-info d-inline-block">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Ta funkcjonalność zostanie udostępniona w najbliższych aktualizacjach.
+                    </div>
+                </div>
+            </div>
+        `
+    }
+
+    private getAdministratorsContent(): string {
+        return `
+            <div class="admin-content-area">
+                <div id="admins-list-container">
+                    <!-- AdminList component will be mounted here -->
+                </div>
+            </div>
+        `
+    }
+
+    private getAddAdminContent(): string {
+        return `
+            <div class="admin-content-area">
+                <div id="add-admin-container">
+                    <!-- AdminForm component will be mounted here -->
+                </div>
+            </div>
+        `
+    }
+
+    private getAdminDetailsContent(): string {
+        return `
+            <div class="admin-content-area">
+                <div id="admin-details-container">
+                    <!-- AdminDetails component will be mounted here -->
+                </div>
+            </div>
+        `
+    }
+
+    private getEditAdminContent(): string {
+        return `
+            <div class="admin-content-area">
+                <div id="edit-admin-container">
+                    <!-- AdminForm component will be mounted here -->
+                </div>
+            </div>
+        `
+    }
+
+    private getAdminProfileEditContent(): string {
+        return `
+            <div class="admin-content-area">
+                <div id="admin-profile-edit-container">
+                    <!-- AdminProfileEdit component will be mounted here -->
+                </div>
+            </div>
+        `
+    }
+
+    private getAdminIdFromUrl(): string | null {
+        const urlParams = new URLSearchParams(window.location.search)
+        const hash = window.location.hash
+        
+        // Check for admin_id in URL params
+        const adminId = urlParams.get('admin_id')
+        if (adminId) {
+            return adminId
+        }
+        
+        // Check for admin_id in hash fragment
+        const hashParams = new URLSearchParams(hash.split('?')[1] || '')
+        return hashParams.get('admin_id')
     }
 }

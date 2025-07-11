@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\PackageController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Admin\DashboardController;
 
 // Health check - publiczny endpoint
@@ -175,6 +176,35 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.packages.student');
                 Route::post('/deactivate-expired', [PackageController::class, 'deactivateExpired'])
                     ->name('api.packages.deactivate-expired');
+            });
+
+        });
+
+        // Admin only routes
+        Route::middleware('role:admin')->group(function () {
+            
+            // Administrator management routes
+            Route::prefix('admins')->group(function () {
+                Route::get('/', [AdminController::class, 'index'])
+                    ->name('api.admins.index');
+                Route::get('/search', [AdminController::class, 'search'])
+                    ->name('api.admins.search');
+                Route::get('/stats', [AdminController::class, 'stats'])
+                    ->name('api.admins.stats');
+                Route::get('/export', [AdminController::class, 'export'])
+                    ->name('api.admins.export');
+                Route::get('/{id}', [AdminController::class, 'show'])
+                    ->name('api.admins.show');
+                Route::post('/', [AdminController::class, 'store'])
+                    ->name('api.admins.store');
+                Route::put('/{id}', [AdminController::class, 'update'])
+                    ->name('api.admins.update');
+                Route::delete('/{id}', [AdminController::class, 'destroy'])
+                    ->name('api.admins.destroy');
+                Route::put('/{id}/deactivate', [AdminController::class, 'deactivate'])
+                    ->name('api.admins.deactivate');
+                Route::post('/bulk-update-status', [AdminController::class, 'bulkUpdateStatus'])
+                    ->name('api.admins.bulk-update-status');
             });
 
         });

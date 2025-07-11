@@ -62,6 +62,38 @@ export interface UpdateStudentRequest {
   package_id?: number
 }
 
+export interface CreateAdminRequest {
+  name: string
+  email: string
+  password: string
+  password_confirmation: string
+  phone?: string
+  birth_date?: string
+  city?: string
+  country?: string
+  status: 'active' | 'inactive' | 'blocked'
+}
+
+export interface UpdateAdminRequest {
+  name?: string
+  email?: string
+  password?: string
+  password_confirmation?: string
+  phone?: string
+  birth_date?: string
+  city?: string
+  country?: string
+  status?: 'active' | 'inactive' | 'blocked'
+}
+
+export interface AdminFilters {
+  status?: 'active' | 'inactive' | 'blocked'
+  city?: string
+  search?: string
+  per_page?: number
+  page?: number
+}
+
 export interface StudentFilters {
   status?: 'active' | 'inactive' | 'blocked' | 'unverified'
   city?: string
