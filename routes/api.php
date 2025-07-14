@@ -205,6 +205,8 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.tutors.verify');
                 Route::put('/{id}/availability', [TutorController::class, 'updateAvailability'])
                     ->name('api.tutors.availability');
+                Route::get('/{id}/availability-slots', [TutorController::class, 'getTutorAvailabilitySlots'])
+                    ->name('api.tutors.availability-slots');
                 Route::post('/bulk-update-status', [TutorController::class, 'bulkUpdateStatus'])
                     ->name('api.tutors.bulk-update-status');
             });
@@ -240,20 +242,32 @@ Route::middleware('auth:sanctum')->group(function () {
 
         });
 
-        // Tutor dashboard stats
+        // Tutor dashboard stats and profile
         Route::middleware('role:tutor,admin')->group(function () {
             Route::prefix('tutor')->group(function () {
                 Route::get('/dashboard-stats', function () {
                     return response()->json([
                         'success' => true,
                         'data' => [
-                            'upcoming_lessons' => 0,
-                            'completed_lessons' => 0,
-                            'total_earnings' => 0,
-                            'student_count' => 0
+                            'upcomingLessons' => 0,
+                            'completedLessons' => 0,
+                            'totalEarnings' => 0,
+                            'activeStudents' => 0
                         ]
                     ]);
                 });
+                
+                Route::get('/profile', [TutorController::class, 'getOwnProfile'])
+                    ->name('api.tutor.profile');
+                
+                Route::put('/profile', [TutorController::class, 'updateOwnProfile'])
+                    ->name('api.tutor.profile.update');
+                    
+                Route::get('/availability-slots', [TutorController::class, 'getAvailabilitySlots'])
+                    ->name('api.tutor.availability-slots');
+                    
+                Route::post('/availability-slots', [TutorController::class, 'setAvailabilitySlots'])
+                    ->name('api.tutor.availability-slots.set');
             });
         });
     });

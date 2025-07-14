@@ -59,6 +59,8 @@ class UpdateTutorRequest extends FormRequest
             'weekly_availability' => ['nullable', 'array'],
             'is_accepting_students' => ['boolean'],
             'max_students_per_week' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'hourly_rate' => ['nullable', 'numeric', 'min:0', 'max:1000'],
+            'weekly_contract_limit' => ['sometimes', 'required', 'integer', 'in:8,16,24,32,40'],
         ];
     }
 

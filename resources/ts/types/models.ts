@@ -102,6 +102,8 @@ export interface TutorProfile {
   languages: string[]
   specializations: string[]
   description?: string
+  hourly_rate?: number
+  weekly_contract_limit: number
   weekly_availability: Record<string, any>
   is_verified: boolean
   verified_at?: string

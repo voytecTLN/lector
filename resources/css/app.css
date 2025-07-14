@@ -19,6 +19,7 @@
 
 @import './pages/admin-dashboard.css';
 @import './pages/student-dashboard.css';
+@import './pages/tutor-dashboard.css';
 @import './pages/not-found.css';
 @import './pages/unauthorized.css';
 

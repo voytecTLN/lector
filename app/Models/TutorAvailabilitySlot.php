@@ -20,7 +20,7 @@ class TutorAvailabilitySlot extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date:Y-m-d',
         'is_available' => 'boolean',
         'hours_booked' => 'integer'
     ];

@@ -44,6 +44,7 @@ export interface AuthUser {
     created_at: string
     updated_at: string
     studentProfile?: StudentProfile
+    tutor_profile?: TutorProfile
 }
 
 // Typy odpowiedzi z API
@@ -86,6 +87,24 @@ export interface StudentProfile {
     current_levels: Record<string, string>
     learning_goals: string[]
     preferred_schedule: Record<string, any>
+    created_at: string
+    updated_at: string
+}
+
+export interface TutorProfile {
+    id: number
+    user_id: number
+    description?: string
+    years_experience?: number
+    hourly_rate?: number
+    weekly_contract_limit?: number
+    languages?: string[]
+    specializations?: string[]
+    lesson_types?: string[]
+    certifications?: string[]
+    education?: string[]
+    is_accepting_students?: boolean
+    max_students_per_week?: number
     created_at: string
     updated_at: string
 }

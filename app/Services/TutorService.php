@@ -5,8 +5,10 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\TutorProfile;
+use App\Models\TutorAvailabilitySlot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 use Exception;
 
 class TutorService
@@ -46,6 +48,8 @@ class TutorService
                 'weekly_availability' => $data['weekly_availability'] ?? [],
                 'is_accepting_students' => $data['is_accepting_students'] ?? true,
                 'max_students_per_week' => $data['max_students_per_week'] ?? null,
+                'hourly_rate' => $data['hourly_rate'] ?? null,
+                'weekly_contract_limit' => $data['weekly_contract_limit'] ?? 40,
                 'verification_status' => TutorProfile::VERIFICATION_PENDING,
                 'is_verified' => false
             ]);
@@ -103,6 +107,8 @@ class TutorService
                     'weekly_availability' => $data['weekly_availability'] ?? $user->tutorProfile->weekly_availability,
                     'is_accepting_students' => $data['is_accepting_students'] ?? $user->tutorProfile->is_accepting_students,
                     'max_students_per_week' => $data['max_students_per_week'] ?? $user->tutorProfile->max_students_per_week,
+                    'hourly_rate' => $data['hourly_rate'] ?? $user->tutorProfile->hourly_rate,
+                    'weekly_contract_limit' => $data['weekly_contract_limit'] ?? $user->tutorProfile->weekly_contract_limit,
                 ]);
             }
 
@@ -329,5 +335,105 @@ class TutorService
         }
 
         return $query->get()->toArray();
+    }
+
+    /**
+     * Get availability slots for a tutor
+     */
+    public function getAvailabilitySlots(int $tutorId, string $startDate, string $endDate): array
+    {
+        return TutorAvailabilitySlot::forTutor($tutorId)
+            ->forDateRange($startDate, $endDate)
+            ->orderBy('date')
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * Set availability slots for a tutor
+     */
+    public function setAvailabilitySlots(int $tutorId, array $slots): array
+    {
+        DB::beginTransaction();
+
+        try {
+            $tutor = User::with('tutorProfile')->findOrFail($tutorId);
+            $weeklyLimit = $tutor->tutorProfile->weekly_contract_limit ?? 40;
+            
+            // Group slots by week to validate weekly limits
+            $slotsByWeek = collect($slots)->groupBy(function ($slot) {
+                return Carbon::parse($slot['date'])->startOfWeek()->format('Y-m-d');
+            });
+
+            foreach ($slotsByWeek as $weekStart => $weekSlots) {
+                // Count existing slots for this week
+                $existingSlots = TutorAvailabilitySlot::getTutorWeeklyHours($tutorId, $weekStart);
+                $newSlots = $weekSlots->count() * TutorAvailabilitySlot::HOURS_PER_SLOT;
+                
+                if (($existingSlots + $newSlots) > $weeklyLimit) {
+                    throw new Exception("Przekroczono tygodniowy limit godzin ({$weeklyLimit}h) dla tygodnia od {$weekStart}");
+                }
+            }
+
+            // Process each slot
+            $createdSlots = [];
+            foreach ($slots as $slotData) {
+                // Check if slot already exists
+                $existingSlot = TutorAvailabilitySlot::where('tutor_id', $tutorId)
+                    ->where('date', $slotData['date'])
+                    ->first();
+
+                if ($existingSlot) {
+                    // Update existing slot
+                    $existingSlot->update([
+                        'time_slot' => $slotData['time_slot'],
+                        'is_available' => true
+                    ]);
+                    $createdSlots[] = $existingSlot;
+                } else {
+                    // Create new slot
+                    $slot = TutorAvailabilitySlot::create([
+                        'tutor_id' => $tutorId,
+                        'date' => $slotData['date'],
+                        'time_slot' => $slotData['time_slot'],
+                        'is_available' => true,
+                        'hours_booked' => 0
+                    ]);
+                    $createdSlots[] = $slot;
+                }
+            }
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => 'Dostępność została zaktualizowana',
+                'slots' => $createdSlots
+            ];
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Remove availability slot
+     */
+    public function removeAvailabilitySlot(int $tutorId, int $slotId): bool
+    {
+        $slot = TutorAvailabilitySlot::where('tutor_id', $tutorId)
+            ->where('id', $slotId)
+            ->first();
+
+        if (!$slot) {
+            throw new Exception('Slot nie został znaleziony');
+        }
+
+        if ($slot->hours_booked > 0) {
+            throw new Exception('Nie można usunąć slotu z zarezerwowanymi godzinami');
+        }
+
+        return $slot->delete();
     }
 }

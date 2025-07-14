@@ -19,7 +19,7 @@ interface WeeklyStats {
 export class AvailabilityCalendar {
     private container: HTMLElement | null = null
     private slots: Map<string, AvailabilitySlot> = new Map()
-    private selectedSlots: Map<string, 'morning' | 'afternoon'> = new Map()
+    private selectedSlots: Map<string, 'morning' | 'afternoon' | ''> = new Map()
     private weeklyLimit: number = 40
     private currentMonth: Date = new Date()
 
@@ -43,17 +43,23 @@ export class AvailabilityCalendar {
         endDate.setDate(endDate.getDate() + 28) // 4 weeks
 
         try {
-            const response = await api.get<any>('/tutor/availability-slots', {
-                params: {
-                    start_date: formatDate(startDate),
-                    end_date: formatDate(endDate)
-                }
+            const params = new URLSearchParams({
+                start_date: formatDate(startDate),
+                end_date: formatDate(endDate)
             })
+            const response = await api.get<any>(`/tutor/availability-slots?${params.toString()}`)
+            
+            console.log('Loaded availability slots:', response)
 
             if (response.slots) {
                 this.slots.clear()
                 response.slots.forEach((slot: AvailabilitySlot) => {
-                    this.slots.set(slot.date, slot)
+                    // Handle date format - if it's an object with date property
+                    const slotDate = typeof slot.date === 'string' ? slot.date : formatDate(new Date(slot.date))
+                    this.slots.set(slotDate, {
+                        ...slot,
+                        date: slotDate
+                    })
                 })
                 this.render()
             }
@@ -268,10 +274,13 @@ export class AvailabilityCalendar {
                 const slot = this.slots.get(dateStr)
                 const selectedSlot = this.selectedSlots.get(dateStr)
                 
+                // Determine the active slot (from DB or selected)
+                const activeSlot = selectedSlot || slot?.time_slot
+                
                 let dayClass = 'calendar-day'
                 if (isPast) dayClass += ' past'
-                if (selectedSlot === 'morning') dayClass += ' selected-morning'
-                if (selectedSlot === 'afternoon') dayClass += ' selected-afternoon'
+                if (activeSlot === 'morning') dayClass += ' selected-morning'
+                if (activeSlot === 'afternoon') dayClass += ' selected-afternoon'
 
                 weeks.push(`
                     <div class="${dayClass}" data-date="${dateStr}">
@@ -283,11 +292,11 @@ export class AvailabilityCalendar {
                         </div>
                         ${!isPast ? `
                             <div class="time-slot-buttons">
-                                <button class="time-slot-btn morning ${selectedSlot === 'morning' ? 'active' : ''}" 
+                                <button class="time-slot-btn morning ${activeSlot === 'morning' ? 'active' : ''}" 
                                         data-date="${dateStr}" data-slot="morning">
                                     Rano
                                 </button>
-                                <button class="time-slot-btn afternoon ${selectedSlot === 'afternoon' ? 'active' : ''}" 
+                                <button class="time-slot-btn afternoon ${activeSlot === 'afternoon' ? 'active' : ''}" 
                                         data-date="${dateStr}" data-slot="afternoon">
                                     Popołudnie
                                 </button>
@@ -399,11 +408,20 @@ export class AvailabilityCalendar {
     }
 
     private toggleSlot(date: string, slot: 'morning' | 'afternoon'): void {
-        const currentSlot = this.selectedSlots.get(date)
+        const existingSlot = this.slots.get(date)
+        const currentSelectedSlot = this.selectedSlots.get(date)
+        const activeSlot = currentSelectedSlot || existingSlot?.time_slot
         
-        if (currentSlot === slot) {
-            this.selectedSlots.delete(date)
+        if (activeSlot === slot) {
+            // If clicking the same slot, remove it
+            if (existingSlot?.time_slot === slot) {
+                // Mark for deletion by setting to empty string
+                this.selectedSlots.set(date, '')
+            } else {
+                this.selectedSlots.delete(date)
+            }
         } else {
+            // Select the new slot
             this.selectedSlots.set(date, slot)
         }
         
@@ -411,10 +429,12 @@ export class AvailabilityCalendar {
     }
 
     private async saveAvailability(): Promise<void> {
-        const slots = Array.from(this.selectedSlots.entries()).map(([date, time_slot]) => ({
-            date,
-            time_slot
-        }))
+        const slots = Array.from(this.selectedSlots.entries())
+            .filter(([_, time_slot]) => time_slot !== '') // Filter out deletion markers
+            .map(([date, time_slot]) => ({
+                date,
+                time_slot
+            }))
 
         if (slots.length === 0) {
             this.showNotification('warning', 'Nie wybrano żadnych slotów')

@@ -90,6 +90,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(TutorProfile::class);
     }
 
+    public function availabilitySlots(): HasMany
+    {
+        return $this->hasMany(TutorAvailabilitySlot::class, 'tutor_id');
+    }
+
     public function lessons(): HasMany
     {
         return $this->hasMany(Lesson::class);

@@ -49,6 +49,8 @@ class CreateTutorRequest extends FormRequest
             'weekly_availability' => ['nullable', 'array'],
             'is_accepting_students' => ['boolean'],
             'max_students_per_week' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'hourly_rate' => ['nullable', 'numeric', 'min:0', 'max:1000'],
+            'weekly_contract_limit' => ['required', 'integer', 'in:8,16,24,32,40'],
         ];
     }
 
@@ -90,6 +92,12 @@ class CreateTutorRequest extends FormRequest
             'max_students_per_week.integer' => 'Maksymalna liczba studentów musi być liczbą.',
             'max_students_per_week.min' => 'Maksymalna liczba studentów musi być większa niż 0.',
             'max_students_per_week.max' => 'Maksymalna liczba studentów nie może być większa niż 100.',
+            'hourly_rate.numeric' => 'Stawka godzinowa musi być liczbą.',
+            'hourly_rate.min' => 'Stawka godzinowa nie może być ujemna.',
+            'hourly_rate.max' => 'Stawka godzinowa nie może być większa niż 1000 zł.',
+            'weekly_contract_limit.required' => 'Tygodniowy limit godzin jest wymagany.',
+            'weekly_contract_limit.integer' => 'Tygodniowy limit godzin musi być liczbą.',
+            'weekly_contract_limit.in' => 'Tygodniowy limit godzin musi być jednym z: 8, 16, 24, 32, 40.',
         ];
     }
 
@@ -116,6 +124,8 @@ class CreateTutorRequest extends FormRequest
             'lesson_types' => 'typy lekcji',
             'is_accepting_students' => 'przyjmowanie studentów',
             'max_students_per_week' => 'maksymalna liczba studentów tygodniowo',
+            'hourly_rate' => 'stawka godzinowa',
+            'weekly_contract_limit' => 'tygodniowy limit godzin',
         ];
     }
 }

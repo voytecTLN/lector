@@ -3,6 +3,7 @@ import type { RouteComponent } from '@router/routes'
 import { TutorService } from '@services/TutorService'
 import type { User } from '@/types/models'
 import { navigate } from '@/utils/navigation'
+import { AvailabilityCalendarReadonly } from '@components/tutor/AvailabilityCalendarReadonly'
 
 export class TutorDetails implements RouteComponent {
     private tutorService: TutorService
@@ -10,6 +11,7 @@ export class TutorDetails implements RouteComponent {
     private tutorId: number | null = null
     private tutor: User | null = null
     private activeTab: string = 'profile'
+    private availabilityCalendar: AvailabilityCalendarReadonly | null = null
 
     constructor() {
         this.tutorService = new TutorService()
@@ -113,6 +115,10 @@ export class TutorDetails implements RouteComponent {
     unmount(): void {
         this.container = null
         this.tutor = null
+        if (this.availabilityCalendar) {
+            this.availabilityCalendar.unmount()
+            this.availabilityCalendar = null
+        }
     }
 
     private async loadTutorData(): Promise<void> {
@@ -236,12 +242,27 @@ export class TutorDetails implements RouteComponent {
         const tabContent = this.container?.querySelector('#tab-content')
         if (!tabContent) return
 
+        // Clean up previous calendar if exists
+        if (this.availabilityCalendar) {
+            this.availabilityCalendar.unmount()
+            this.availabilityCalendar = null
+        }
+
         switch (tab) {
             case 'profile':
                 tabContent.innerHTML = this.getProfileContent()
                 break
             case 'availability':
                 tabContent.innerHTML = this.getAvailabilityContent()
+                // Initialize the availability calendar after content is rendered
+                setTimeout(() => {
+                    const calendarContainer = this.container?.querySelector('#availability-calendar-readonly')
+                    if (calendarContainer && this.tutorId) {
+                        const weeklyLimit = this.tutor?.tutor_profile?.weekly_contract_limit || 40
+                        this.availabilityCalendar = new AvailabilityCalendarReadonly(this.tutorId, weeklyLimit)
+                        this.availabilityCalendar.mount(calendarContainer as HTMLElement)
+                    }
+                }, 0)
                 break
             case 'students':
                 tabContent.innerHTML = this.getStudentsContent()
@@ -350,11 +371,54 @@ export class TutorDetails implements RouteComponent {
     }
 
     private getAvailabilityContent(): string {
+        const profile = this.tutor?.tutor_profile
+        const weeklyLimit = profile?.weekly_contract_limit || 40
+        
         return `
-            <div class="text-center py-5">
-                <i class="bi bi-calendar-week display-1 text-muted"></i>
-                <h4 class="mt-3">Dostępność</h4>
-                <p class="text-muted">Kalendarz dostępności będzie dostępny wkrótce</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-clock me-2"></i>
+                                Limit godzin tygodniowo
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="display-4 text-primary me-3">${weeklyLimit}</div>
+                                <div>
+                                    <div class="text-muted">godzin tygodniowo</div>
+                                    <small class="text-muted">Limit kontraktowy</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-calendar-check me-2"></i>
+                                Status dostępności
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">
+                                ${profile?.is_accepting_students 
+                                    ? '<span class="badge bg-success">Przyjmuje nowych uczniów</span>' 
+                                    : '<span class="badge bg-secondary">Nie przyjmuje nowych uczniów</span>'}
+                            </p>
+                            <small class="text-muted">
+                                Maksymalnie ${profile?.max_students_per_week || 0} uczniów tygodniowo
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <h5 class="mb-3">Kalendarz dostępności</h5>
+                <div id="availability-calendar-readonly"></div>
             </div>
         `
     }

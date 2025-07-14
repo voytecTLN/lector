@@ -260,27 +260,20 @@ export class TutorProfileEdit implements RouteComponent {
             })
 
             // Update profile
-            const response = await api.put('/api/tutor/profile', data) as Response
-
-            if (response.ok) {
-                const result = await response.json()
-                
-                // Update local tutor data
-                this.tutor = result.user || result.data?.user
-                
-                this.showNotification('success', 'Profil został zaktualizowany')
-                
-                // Clear password fields
-                const passwordField = this.form.querySelector('#password') as HTMLInputElement
-                const passwordConfirmField = this.form.querySelector('#password_confirmation') as HTMLInputElement
-                if (passwordField) passwordField.value = ''
-                if (passwordConfirmField) passwordConfirmField.value = ''
-                
-                this.form.classList.remove('was-validated')
-            } else {
-                const error = await response.json()
-                throw new Error(error.message || 'Błąd podczas aktualizacji profilu')
-            }
+            const result = await api.put<any>('/tutor/profile', data)
+            
+            // Update local tutor data
+            this.tutor = result.user || result.data?.user
+            
+            this.showNotification('success', 'Profil został zaktualizowany')
+            
+            // Clear password fields
+            const passwordField = this.form.querySelector('#password') as HTMLInputElement
+            const passwordConfirmField = this.form.querySelector('#password_confirmation') as HTMLInputElement
+            if (passwordField) passwordField.value = ''
+            if (passwordConfirmField) passwordConfirmField.value = ''
+            
+            this.form.classList.remove('was-validated')
         } catch (error: any) {
             console.error('Failed to update profile:', error)
             

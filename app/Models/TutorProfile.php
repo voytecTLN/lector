@@ -16,6 +16,7 @@ class TutorProfile extends Model
         'languages',
         'specializations',
         'hourly_rate',
+        'weekly_contract_limit',
         'description',
         'weekly_availability',
         'is_verified',
@@ -47,6 +48,7 @@ class TutorProfile extends Model
         'total_lessons' => 'integer',
         'total_students' => 'integer',
         'max_students_per_week' => 'integer',
+        'weekly_contract_limit' => 'integer',
         'is_verified',
         'verified_at'
     ];

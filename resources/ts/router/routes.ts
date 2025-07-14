@@ -185,7 +185,7 @@ export const routes: RouteDefinition[] = [
         meta: {
             requiresAuth: true,
             requiresVerification: true,
-            roles: ['student', 'admin'],
+            roles: ['student'],
             layout: 'app'
         }
     },

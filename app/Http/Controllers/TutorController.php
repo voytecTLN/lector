@@ -14,7 +14,15 @@ class TutorController extends Controller
     public function __construct(
         private TutorService $tutorService
     ) {
-        $this->middleware(['auth:sanctum', 'verified', 'role:admin,moderator']);
+        // Admin/moderator middleware for management endpoints
+        $this->middleware(['auth:sanctum', 'verified', 'role:admin,moderator'])->except([
+            'getOwnProfile', 'updateOwnProfile', 'getAvailabilitySlots', 'setAvailabilitySlots'
+        ]);
+        
+        // Tutor middleware for self-management endpoints
+        $this->middleware(['auth:sanctum', 'verified', 'role:tutor,admin'])->only([
+            'getOwnProfile', 'updateOwnProfile', 'getAvailabilitySlots', 'setAvailabilitySlots'
+        ]);
     }
 
     /**
@@ -163,6 +171,54 @@ class TutorController extends Controller
     }
 
     /**
+     * Get tutor availability slots
+     */
+    public function getAvailabilitySlots(Request $request): JsonResponse
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date'
+        ]);
+
+        $tutorId = auth()->id();
+        $slots = $this->tutorService->getAvailabilitySlots($tutorId, $request->start_date, $request->end_date);
+
+        return response()->json(['slots' => $slots]);
+    }
+
+    /**
+     * Get specific tutor's availability slots (for admin/moderator viewing)
+     */
+    public function getTutorAvailabilitySlots(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date'
+        ]);
+
+        $slots = $this->tutorService->getAvailabilitySlots($id, $request->start_date, $request->end_date);
+
+        return response()->json(['slots' => $slots]);
+    }
+
+    /**
+     * Set tutor availability slots
+     */
+    public function setAvailabilitySlots(Request $request): JsonResponse
+    {
+        $request->validate([
+            'slots' => 'required|array',
+            'slots.*.date' => 'required|date|after_or_equal:today',
+            'slots.*.time_slot' => 'required|in:morning,afternoon'
+        ]);
+
+        $tutorId = auth()->id();
+        $result = $this->tutorService->setAvailabilitySlots($tutorId, $request->slots);
+
+        return response()->json($result);
+    }
+
+    /**
      * Get tutor statistics
      */
     public function stats(): JsonResponse
@@ -298,5 +354,67 @@ class TutorController extends Controller
             'blocked' => 'Zablokowany',
             default => 'Nieznany'
         };
+    }
+
+    /**
+     * Get tutor's own profile (for self-management)
+     */
+    public function getOwnProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        if (!$user || $user->role !== 'tutor') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $tutor = $this->tutorService->getTutorById($user->id);
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => $tutor
+            ]
+        ]);
+    }
+
+    /**
+     * Update tutor's own profile (for self-management)
+     */
+    public function updateOwnProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        if (!$user || $user->role !== 'tutor') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|max:20',
+            'city' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:2000',
+            'years_experience' => 'nullable|integer|min:0|max:50',
+            'is_accepting_students' => 'boolean',
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        try {
+            $tutor = $this->tutorService->updateTutor($user->id, $validated);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Profil został zaktualizowany',
+                'data' => [
+                    'user' => $tutor
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Wystąpił błąd podczas aktualizacji profilu',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
