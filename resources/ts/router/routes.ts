@@ -23,7 +23,7 @@ export interface RouteQuery {
 export interface RouteDefinition {
     path: string
     name: string
-    component: () => Promise<RouteComponent> | RouteComponent
+    component: () => Promise<RouteComponent>| RouteComponent
     title?: string
     meta?: {
         requiresAuth?: boolean

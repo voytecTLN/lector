@@ -334,6 +334,18 @@ class TutorService
             });
         }
 
+        if (!empty($criteria['min_experience'])) {
+            $query->whereHas('tutorProfile', function ($q) use ($criteria) {
+                $q->where('years_experience', '>=', $criteria['min_experience']);
+            });
+        }
+
+        if (!empty($criteria['max_experience'])) {
+            $query->whereHas('tutorProfile', function ($q) use ($criteria) {
+                $q->where('years_experience', '<=', $criteria['max_experience']);
+            });
+        }
+
         return $query->get()->toArray();
     }
 

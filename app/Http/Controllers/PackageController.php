@@ -175,4 +175,18 @@ class PackageController extends Controller
             'count' => $count
         ]);
     }
+
+    /**
+     * Get packages for current student
+     */
+    public function myPackages(Request $request): JsonResponse
+    {
+        $studentId = auth()->id();
+        $packages = $this->packageService->getStudentPackages($studentId);
+        
+        return response()->json([
+            'success' => true,
+            'packages' => $packages
+        ]);
+    }
 }

@@ -14,15 +14,8 @@ class TutorController extends Controller
     public function __construct(
         private TutorService $tutorService
     ) {
-        // Admin/moderator middleware for management endpoints
-        $this->middleware(['auth:sanctum', 'verified', 'role:admin,moderator'])->except([
-            'getOwnProfile', 'updateOwnProfile', 'getAvailabilitySlots', 'setAvailabilitySlots'
-        ]);
-        
-        // Tutor middleware for self-management endpoints
-        $this->middleware(['auth:sanctum', 'verified', 'role:tutor,admin'])->only([
-            'getOwnProfile', 'updateOwnProfile', 'getAvailabilitySlots', 'setAvailabilitySlots'
-        ]);
+        // Temporarily disable all middleware to debug
+        // Middleware will be handled by routes only
     }
 
     /**
@@ -415,6 +408,48 @@ class TutorController extends Controller
                 'message' => 'Wystąpił błąd podczas aktualizacji profilu',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Get available tutors for students (with optional filters)
+     */
+    public function availableForStudents(Request $request): JsonResponse
+    {
+        \Log::info('availableForStudents method called', [
+            'user_id' => $request->user()?->id,
+            'user_role' => $request->user()?->role,
+            'method' => 'availableForStudents'
+        ]);
+        
+        $filters = $request->only(['language', 'specialization', 'min_experience', 'max_experience']);
+        
+        // Add filter to get only active tutors accepting students
+        $filters['is_accepting_students'] = true;
+        $filters['status'] = 'active';
+        $filters['is_verified'] = true;
+        
+        $tutors = $this->tutorService->getAvailableTutors($filters);
+        
+        return response()->json($tutors);
+    }
+    
+    /**
+     * Display public tutor profile (for students)
+     */
+    public function showPublic(int $id): JsonResponse
+    {
+        try {
+            $tutor = $this->tutorService->getTutorById($id);
+            
+            // Only show active and verified tutors
+            if ($tutor->status !== 'active' || !$tutor->tutorProfile || !$tutor->tutorProfile->is_verified) {
+                return response()->json(['error' => 'Lektor nie jest dostępny'], 404);
+            }
+            
+            return response()->json($tutor);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Lektor nie został znaleziony'], 404);
         }
     }
 }

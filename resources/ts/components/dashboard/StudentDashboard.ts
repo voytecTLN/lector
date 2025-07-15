@@ -11,6 +11,7 @@ export class StudentDashboard implements RouteComponent {
     private refreshInterval: number | null = null
     private isLoadingStats: boolean = false
     private profileEditComponent: StudentProfileEdit | null = null
+    private selectedTutorId: string | null = null
 
     async render(): Promise<HTMLElement> {
         const user = authService.getUser()
@@ -80,21 +81,14 @@ export class StudentDashboard implements RouteComponent {
 <!--                        </a>-->
 <!--                    </li>-->
 
-<!--                    <div class="student-nav-section">Pakiety i Płatności</div>-->
+                    <div class="student-nav-section">Pakiety</div>
 
-<!--                    <li class="student-nav-item">-->
-<!--                        <a href="#pakiet" class="student-nav-link" data-section="pakiet">-->
-<!--                            <span class="student-nav-icon">💳</span>-->
-<!--                            Mój pakiet godzin-->
-<!--                        </a>-->
-<!--                    </li>-->
-
-<!--                    <li class="student-nav-item">-->
-<!--                        <a href="#platnosci" class="student-nav-link" data-section="platnosci">-->
-<!--                            <span class="student-nav-icon">💰</span>-->
-<!--                            Historia płatności-->
-<!--                        </a>-->
-<!--                    </li>-->
+                    <li class="student-nav-item">
+                        <a href="#pakiety" class="student-nav-link" data-section="pakiety">
+                            <span class="student-nav-icon">📦</span>
+                            Moje pakiety
+                        </a>
+                    </li>
 
                     <div class="student-nav-section">Konto</div>
 
@@ -171,6 +165,12 @@ export class StudentDashboard implements RouteComponent {
         // NOWE: Odczytaj sekcję z URL
         const urlParams = new URLSearchParams(window.location.search)
         const section = urlParams.get('section') || 'dashboard'
+        
+        // Check if we have a tutor ID in the URL for tutor-specific sections
+        const tutorId = urlParams.get('tutor_id')
+        if (tutorId && (section === 'tutor-profile' || section === 'tutor-booking')) {
+            this.selectedTutorId = tutorId
+        }
 
         // NOWE: Ustaw aktywną klasę na podstawie URL
         this.setActiveNavLink(section)
@@ -194,6 +194,12 @@ export class StudentDashboard implements RouteComponent {
 
         const urlParams = new URLSearchParams(window.location.search)
         const section = urlParams.get('section') || 'dashboard'
+        
+        // Check if we have a tutor ID for tutor-specific sections
+        const tutorId = urlParams.get('tutor_id')
+        if (tutorId && (section === 'tutor-profile' || section === 'tutor-booking')) {
+            this.selectedTutorId = tutorId
+        }
 
         this.setActiveNavLink(section)
         this.loadContent(section)
@@ -214,6 +220,7 @@ export class StudentDashboard implements RouteComponent {
     private updateURL(section: string): void {
         const url = new URL(window.location.href)
         url.searchParams.set('section', section)
+        url.hash = section
 
         // Używamy pushState zamiast replaceState dla historii
         window.history.pushState({ section }, '', url.toString())
@@ -331,7 +338,11 @@ export class StudentDashboard implements RouteComponent {
 
             case 'rezerwuj':
                 pageTitle.textContent = 'Zarezerwuj lekcję'
-                contentArea.innerHTML = this.getBookLessonContent()
+                contentArea.innerHTML = '<div class="student-loading-container"><div class="student-loading-spinner"></div><p class="student-loading-text">Ładowanie dostępnych lektorów...</p></div>'
+                setTimeout(async () => {
+                    contentArea.innerHTML = await this.getBookLessonContent()
+                    this.setupBookingEventListeners()
+                }, 100)
                 break
 
             case 'historia':
@@ -386,6 +397,40 @@ export class StudentDashboard implements RouteComponent {
             case 'materialy':
                 pageTitle.textContent = 'Materiały'
                 contentArea.innerHTML = this.getMaterialsContent()
+                break
+
+            case 'pakiety':
+                pageTitle.textContent = 'Moje pakiety'
+                contentArea.innerHTML = '<div class="student-loading-container"><div class="student-loading-spinner"></div><p class="student-loading-text">Ładowanie pakietów...</p></div>'
+                setTimeout(async () => {
+                    contentArea.innerHTML = await this.getPackagesContent()
+                }, 100)
+                break
+                
+            case 'tutor-profile':
+                if (!this.selectedTutorId) {
+                    this.loadSection('rezerwuj')
+                    return
+                }
+                pageTitle.textContent = 'Profil lektora'
+                contentArea.innerHTML = '<div class="student-loading-container"><div class="student-loading-spinner"></div><p class="student-loading-text">Ładowanie profilu...</p></div>'
+                setTimeout(async () => {
+                    contentArea.innerHTML = await this.getTutorProfileContent(this.selectedTutorId!)
+                    // Attach event listeners for the booking button
+                    this.attachTutorButtonListeners()
+                }, 100)
+                break
+                
+            case 'tutor-booking':
+                if (!this.selectedTutorId) {
+                    this.loadSection('rezerwuj')
+                    return
+                }
+                pageTitle.textContent = 'Sprawdź terminy'
+                contentArea.innerHTML = '<div class="student-loading-container"><div class="student-loading-spinner"></div><p class="student-loading-text">Ładowanie kalendarza...</p></div>'
+                setTimeout(async () => {
+                    contentArea.innerHTML = await this.getTutorBookingContent(this.selectedTutorId!)
+                }, 100)
                 break
 
             default:
@@ -497,6 +542,23 @@ export class StudentDashboard implements RouteComponent {
         this.updateURL(section)
         this.loadContent(section)
     }
+    
+    private loadSectionWithParams(section: string, params: Record<string, string>): void {
+        const url = new URL(window.location.href)
+        url.searchParams.set('section', section)
+        
+        // Add additional parameters
+        Object.entries(params).forEach(([key, value]) => {
+            url.searchParams.set(key, value)
+        })
+        
+        // Add hash
+        url.hash = section
+        
+        // Update URL and load content
+        window.history.pushState({ section }, '', url.toString())
+        this.loadContent(section)
+    }
 
     private showComingSoon(feature: string): void {
         document.dispatchEvent(new CustomEvent('notification:show', {
@@ -534,26 +596,309 @@ export class StudentDashboard implements RouteComponent {
         `
     }
 
-    private getBookLessonContent(): string {
-        return `
-            <div class="student-content-area">
-                <h2>Zarezerwuj lekcję</h2>
-                <p>Wybierz lektora i termin, który Ci odpowiada.</p>
-                
-                <div class="booking-container">
-                    <div class="booking-steps">
-                        <div class="step active">1. Wybierz język</div>
-                        <div class="step">2. Wybierz lektora</div>
-                        <div class="step">3. Wybierz termin</div>
-                        <div class="step">4. Potwierdź</div>
+    private async getPackagesContent(): Promise<string> {
+        try {
+            // Pobierz pakiety studenta
+            const response = await api.get<any>('/student/packages')
+            const packages = response.packages || []
+            
+            if (packages.length === 0) {
+                return `
+                    <div class="student-content-area">
+                        <h2>Moje pakiety</h2>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📦</div>
+                            <h3>Brak przypisanych pakietów</h3>
+                            <p>Nie masz jeszcze żadnych pakietów godzin.</p>
+                            <p>Skontaktuj się z administratorem, aby przypisać pakiet.</p>
+                        </div>
                     </div>
-                    
-                    <div class="booking-content">
-                        <p class="student-text-muted">Wybierz język, którego chcesz się uczyć...</p>
+                `
+            }
+
+            const packagesHtml = packages.map((pkg: any) => {
+                const totalHours = pkg.package.hours_count
+                const usedHours = pkg.hours_used || 0
+                const remainingHours = totalHours - usedHours
+                const percentage = (usedHours / totalHours) * 100
+                const isExpired = pkg.status === 'expired'
+                const isActive = pkg.is_active && !isExpired
+
+                return `
+                    <div class="col-md-6 mb-3">
+                        <div class="card ${isActive ? '' : 'opacity-75'}">
+                            <div class="card-header ${isActive ? 'bg-primary text-white' : 'bg-secondary text-white'}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">${pkg.package.name}</h5>
+                                    ${isActive 
+                                        ? '<span class="badge bg-success">Aktywny</span>' 
+                                        : isExpired 
+                                            ? '<span class="badge bg-danger">Wygasły</span>'
+                                            : '<span class="badge bg-secondary">Nieaktywny</span>'}
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Wykorzystane godziny</span>
+                                        <span><strong>${usedHours}</strong> / ${totalHours} h</span>
+                                    </div>
+                                    <div class="progress" style="height: 25px;">
+                                        <div class="progress-bar ${percentage > 80 ? 'bg-warning' : 'bg-success'}" 
+                                             role="progressbar" 
+                                             style="width: ${percentage}%"
+                                             aria-valuenow="${percentage}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            ${Math.round(percentage)}%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Pozostało: ${remainingHours} godzin</small>
+                                </div>
+                                
+                                <!--            
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="text-muted small">Cena za godzinę</div>
+                                        <div class="fw-bold">${pkg.package.price_per_hour} zł</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small">Wartość pakietu</div>
+                                        <div class="fw-bold">${pkg.package.total_price} zł</div>
+                                    </div>
+                                </div>
+                                -->
+                                
+                                ${pkg.package.description ? `
+                                    <hr>
+                                    <p class="text-muted small mb-0">${pkg.package.description}</p>
+                                ` : ''}
+                                
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">Przypisany: ${new Date(pkg.assigned_at).toLocaleDateString('pl-PL')}</small>
+                                    ${pkg.expires_at ? `
+                                        <small class="text-muted">Wygasa: ${new Date(pkg.expires_at).toLocaleDateString('pl-PL')}</small>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            }).join('')
+
+            return `
+                <div class="student-content-area">
+                    <h2>Moje pakiety</h2>
+                    <div class="row">
+                        ${packagesHtml}
                     </div>
                 </div>
-            </div>
-        `
+            `
+            
+        } catch (error) {
+            console.error('Failed to load packages:', error)
+            return `
+                <div class="student-content-area">
+                    <h2>Moje pakiety</h2>
+                    <div class="alert alert-danger">
+                        Błąd podczas ładowania pakietów. Spróbuj ponownie później.
+                    </div>
+                </div>
+            `
+        }
+    }
+
+    private async getBookLessonContent(): Promise<string> {
+        try {
+            // Pobierz dostępnych lektorów
+            const response = await api.get<any>('/student/tutors-available')
+            const tutors = response || []
+            
+            if (tutors.length === 0) {
+                return `
+                    <div class="student-content-area">
+                        <h2>Zarezerwuj lekcję</h2>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👨‍🏫</div>
+                            <h3>Brak dostępnych lektorów</h3>
+                            <p>W tej chwili nie ma dostępnych lektorów.</p>
+                            <p>Spróbuj ponownie później.</p>
+                        </div>
+                    </div>
+                `
+            }
+
+            const tutorsHtml = tutors.map((tutor: any) => {
+                const profile = tutor.tutor_profile || {}
+                const languages = profile.languages || []
+                const specializations = profile.specializations || []
+                const lessonTypes = profile.lesson_types || []
+                
+                return `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card tutor-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="tutor-avatar">
+                                        <i class="bi bi-person-circle fs-1"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h5 class="card-title mb-0">${tutor.name}</h5>
+                                        <p class="text-muted mb-0">
+                                            <i class="bi bi-geo-alt me-1"></i>${tutor.city || 'Brak lokalizacji'}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="mb-2">
+                                        <small class="text-muted">Języki:</small>
+                                        <div>
+                                            ${languages.length > 0 
+                                                ? languages.map((lang: string) => `<span class="badge bg-primary me-1">${this.getLanguageName(lang)}</span>`).join('')
+                                                : '<span class="text-muted">Brak</span>'
+                                            }
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <small class="text-muted">Doświadczenie:</small>
+                                        <div>
+                                            <strong>${profile.years_experience || 0}</strong> ${this.getYearsLabel(profile.years_experience || 0)}
+                                        </div>
+                                    </div>
+                                    
+                                    ${profile.hourly_rate ? `
+                                        <!--
+                                        <div class="mb-2">
+                                            <small class="text-muted">Stawka godzinowa:</small>
+                                            <div>
+                                                <strong>${profile.hourly_rate} zł</strong>
+                                            </div>
+                                        </div>
+                                        -->
+                                    ` : ''}
+                                    
+                                    ${specializations.length > 0 ? `
+                                        <div class="mb-2">
+                                            <small class="text-muted">Specjalizacje:</small>
+                                            <div>
+                                                ${specializations.map((spec: string) => `<span class="badge bg-info me-1">${this.getSpecializationName(spec)}</span>`).join('')}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button class="btn btn-sm btn-outline-primary" data-tutor-id="${tutor.id}" data-action="view-profile">
+                                        <i class="bi bi-person me-1"></i>Zobacz profil
+                                    </button>
+                                    <button class="btn btn-sm btn-primary" data-tutor-id="${tutor.id}" data-action="book-lesson">
+                                        <i class="bi bi-calendar-check me-1"></i>Sprawdź terminy
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            }).join('')
+
+            return `
+                <div class="student-content-area">
+                    <h2>Zarezerwuj lekcję</h2>
+                    <p>Wybierz lektora i umów się na lekcję.</p>
+                    
+                    <!-- Filtry -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Filtry</h5>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label">Język</label>
+                                    <select class="form-select" id="filter-language">
+                                        <option value="">Wszystkie języki</option>
+                                        <option value="english">Angielski</option>
+                                        <option value="german">Niemiecki</option>
+                                        <option value="spanish">Hiszpański</option>
+                                        <option value="french">Francuski</option>
+                                        <option value="italian">Włoski</option>
+                                        <option value="polish">Polski</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Doświadczenie</label>
+                                    <select class="form-select" id="filter-experience">
+                                        <option value="">Dowolne</option>
+                                        <option value="0-2">0-2 lata</option>
+                                        <option value="3-5">3-5 lat</option>
+                                        <option value="6-10">6-10 lat</option>
+                                        <option value="10+">Powyżej 10 lat</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Specjalizacja</label>
+                                    <select class="form-select" id="filter-specialization">
+                                        <option value="">Wszystkie</option>
+                                        <option value="general">Język ogólny</option>
+                                        <option value="business">Biznesowy</option>
+                                        <option value="exams">Egzaminy</option>
+                                        <option value="kids">Dla dzieci</option>
+                                        <option value="conversation">Konwersacje</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-primary flex-fill" id="filter-tutors-btn">
+                                            <i class="bi bi-search me-1"></i>Szukaj
+                                        </button>
+                                        <button class="btn btn-outline-secondary" id="reset-filters-btn">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Lista lektorów -->
+                    <div class="row" id="tutors-list">
+                        ${tutorsHtml}
+                    </div>
+                </div>
+                
+                <style>
+                    .tutor-card {
+                        transition: transform 0.2s, box-shadow 0.2s;
+                    }
+                    .tutor-card:hover {
+                        transform: translateY(-5px);
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                    }
+                    .tutor-avatar {
+                        width: 60px;
+                        height: 60px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        background: #f8f9fa;
+                        border-radius: 50%;
+                    }
+                </style>
+            `
+            
+        } catch (error) {
+            console.error('Failed to load tutors:', error)
+            return `
+                <div class="student-content-area">
+                    <h2>Zarezerwuj lekcję</h2>
+                    <div class="alert alert-danger">
+                        Błąd podczas ładowania lektorów. Spróbuj ponownie później.
+                    </div>
+                </div>
+            `
+        }
     }
 
     private getLessonHistoryContent(): string {
@@ -751,5 +1096,391 @@ export class StudentDashboard implements RouteComponent {
             
         `
         document.head.appendChild(style)
+    }
+
+    private getLanguageName(code: string): string {
+        const languages: { [key: string]: string } = {
+            'english': 'Angielski',
+            'german': 'Niemiecki',
+            'spanish': 'Hiszpański',
+            'french': 'Francuski',
+            'italian': 'Włoski',
+            'polish': 'Polski',
+            'russian': 'Rosyjski',
+            'chinese': 'Chiński',
+            'japanese': 'Japoński',
+            'arabic': 'Arabski'
+        }
+        return languages[code] || code
+    }
+
+    private getSpecializationName(code: string): string {
+        const specializations: { [key: string]: string } = {
+            'general': 'Język ogólny',
+            'business': 'Biznesowy',
+            'exams': 'Egzaminy',
+            'kids': 'Dla dzieci',
+            'conversation': 'Konwersacje',
+            'grammar': 'Gramatyka',
+            'pronunciation': 'Wymowa',
+            'writing': 'Pisanie',
+            'reading': 'Czytanie',
+            'listening': 'Słuchanie'
+        }
+        return specializations[code] || code
+    }
+
+    private getYearsLabel(years: number): string {
+        if (years === 0) return 'lat'
+        if (years === 1) return 'rok'
+        if (years >= 2 && years <= 4) return 'lata'
+        return 'lat'
+    }
+
+    private setupBookingEventListeners(): void {
+        const filterBtn = document.getElementById('filter-tutors-btn')
+        if (filterBtn) {
+            filterBtn.addEventListener('click', () => this.filterTutors())
+        }
+        
+        const resetBtn = document.getElementById('reset-filters-btn')
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.resetFilters())
+        }
+        
+        // Attach tutor button listeners
+        this.attachTutorButtonListeners()
+    }
+    
+    private attachTutorButtonListeners(): void {
+        // Add event listeners for tutor profile and booking buttons
+        document.querySelectorAll('[data-action="view-profile"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tutorId = (e.currentTarget as HTMLElement).getAttribute('data-tutor-id')
+                if (tutorId) {
+                    // Store tutor ID and load tutor profile section
+                    this.selectedTutorId = tutorId
+                    this.loadSectionWithParams('tutor-profile', { tutor_id: tutorId })
+                }
+            })
+        })
+        
+        document.querySelectorAll('[data-action="book-lesson"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tutorId = (e.currentTarget as HTMLElement).getAttribute('data-tutor-id')
+                if (tutorId) {
+                    // Store tutor ID and load booking section
+                    this.selectedTutorId = tutorId
+                    this.loadSectionWithParams('tutor-booking', { tutor_id: tutorId })
+                }
+            })
+        })
+    }
+
+    private async filterTutors(): Promise<void> {
+        const languageSelect = document.getElementById('filter-language') as HTMLSelectElement
+        const experienceSelect = document.getElementById('filter-experience') as HTMLSelectElement
+        const specializationSelect = document.getElementById('filter-specialization') as HTMLSelectElement
+        const tutorsList = document.getElementById('tutors-list')
+
+        if (!tutorsList) return
+
+        // Pokaż loader
+        tutorsList.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Ładowanie...</span></div></div>'
+
+        try {
+            // Przygotuj parametry filtrów
+            const params = new URLSearchParams()
+            if (languageSelect?.value) params.append('language', languageSelect.value)
+            if (specializationSelect?.value) params.append('specialization', specializationSelect.value)
+            
+            // Obsługa doświadczenia
+            if (experienceSelect?.value) {
+                const experience = experienceSelect.value
+                if (experience === '0-2') {
+                    params.append('min_experience', '0')
+                    params.append('max_experience', '2')
+                } else if (experience === '3-5') {
+                    params.append('min_experience', '3')
+                    params.append('max_experience', '5')
+                } else if (experience === '6-10') {
+                    params.append('min_experience', '6')
+                    params.append('max_experience', '10')
+                } else if (experience === '10+') {
+                    params.append('min_experience', '10')
+                }
+            }
+
+            // Pobierz przefiltrowanych lektorów
+            const response = await api.get<any>(`/student/tutors-available?${params.toString()}`)
+            const tutors = response || []
+
+            if (tutors.length === 0) {
+                tutorsList.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Nie znaleziono lektorów spełniających wybrane kryteria. Spróbuj zmienić filtry.
+                        </div>
+                    </div>
+                `
+                return
+            }
+
+            // Wyrenderuj lektorów
+            const tutorsHtml = tutors.map((tutor: any) => {
+                const profile = tutor.tutor_profile || {}
+                const languages = profile.languages || []
+                const specializations = profile.specializations || []
+                
+                return `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card tutor-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="tutor-avatar">
+                                        <i class="bi bi-person-circle fs-1"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h5 class="card-title mb-0">${tutor.name}</h5>
+                                        <p class="text-muted mb-0">
+                                            <i class="bi bi-geo-alt me-1"></i>${tutor.city || 'Brak lokalizacji'}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="mb-2">
+                                        <small class="text-muted">Języki:</small>
+                                        <div>
+                                            ${languages.length > 0 
+                                                ? languages.map((lang: string) => `<span class="badge bg-primary me-1">${this.getLanguageName(lang)}</span>`).join('')
+                                                : '<span class="text-muted">Brak</span>'
+                                            }
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <small class="text-muted">Doświadczenie:</small>
+                                        <div>
+                                            <strong>${profile.years_experience || 0}</strong> ${this.getYearsLabel(profile.years_experience || 0)}
+                                        </div>
+                                    </div>
+                                    
+                                    ${specializations.length > 0 ? `
+                                        <div class="mb-2">
+                                            <small class="text-muted">Specjalizacje:</small>
+                                            <div>
+                                                ${specializations.map((spec: string) => `<span class="badge bg-info me-1">${this.getSpecializationName(spec)}</span>`).join('')}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button class="btn btn-sm btn-outline-primary" data-tutor-id="${tutor.id}" data-action="view-profile">
+                                        <i class="bi bi-person me-1"></i>Zobacz profil
+                                    </button>
+                                    <button class="btn btn-sm btn-primary" data-tutor-id="${tutor.id}" data-action="book-lesson">
+                                        <i class="bi bi-calendar-check me-1"></i>Sprawdź terminy
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            }).join('')
+
+            tutorsList.innerHTML = tutorsHtml
+            
+            // Re-attach event listeners for the new buttons
+            this.attachTutorButtonListeners()
+
+        } catch (error) {
+            console.error('Failed to filter tutors:', error)
+            tutorsList.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Błąd podczas filtrowania lektorów. Spróbuj ponownie później.
+                    </div>
+                </div>
+            `
+        }
+    }
+
+    private async resetFilters(): Promise<void> {
+        // Resetuj wartości filtrów
+        const languageSelect = document.getElementById('filter-language') as HTMLSelectElement
+        const experienceSelect = document.getElementById('filter-experience') as HTMLSelectElement
+        const specializationSelect = document.getElementById('filter-specialization') as HTMLSelectElement
+        
+        if (languageSelect) languageSelect.value = ''
+        if (experienceSelect) experienceSelect.value = ''
+        if (specializationSelect) specializationSelect.value = ''
+        
+        // Załaduj ponownie wszystkich lektorów
+        await this.filterTutors()
+    }
+    
+    private async getTutorProfileContent(tutorId: string): Promise<string> {
+        try {
+            const response = await api.get<any>(`/student/tutor/${tutorId}`)
+            const tutor = response
+            const profile = tutor.tutorProfile || {}
+            
+            return `
+                <div class="student-content-area">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" onclick="document.querySelector('[data-section=rezerwuj]').click(); return false;">Rezerwuj lekcję</a></li>
+                            <li class="breadcrumb-item active">Profil lektora</li>
+                        </ol>
+                    </nav>
+
+                    <div class="row">
+                        <div class="col-lg-4 mb-4">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <div class="avatar-placeholder mb-3" style="width: 150px; height: 150px; margin: 0 auto; background: #e9ecef; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #6c757d;">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <h3 class="card-title">${tutor.name}</h3>
+                                    <p class="text-muted">${tutor.city || 'Miasto nieznane'}</p>
+                                    
+                                    <div class="mb-3">
+                                        ${profile.is_accepting_students 
+                                            ? '<span class="badge bg-success">Przyjmuje studentów</span>'
+                                            : '<span class="badge bg-secondary">Nie przyjmuje studentów</span>'
+                                        }
+                                        ${profile.is_verified 
+                                            ? '<span class="badge bg-primary ms-1">Zweryfikowany</span>'
+                                            : ''
+                                        }
+                                    </div>
+                                    
+                                    <button class="btn btn-primary btn-lg w-100" data-tutor-id="${tutorId}" data-action="book-lesson">
+                                        <i class="bi bi-calendar-check me-2"></i>Sprawdź terminy
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-8">
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h4 class="card-title">O mnie</h4>
+                                    <p class="card-text">${profile.description || 'Brak opisu'}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h4 class="card-title">Języki nauczania</h4>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        ${(profile.languages || []).map((lang: string) => 
+                                            `<span class="badge bg-primary fs-6">${this.getLanguageName(lang)}</span>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h4 class="card-title">Specjalizacje</h4>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        ${(profile.specializations || []).map((spec: string) => 
+                                            `<span class="badge bg-info fs-6">${this.getSpecializationName(spec)}</span>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+        } catch (error) {
+            console.error('Error loading tutor profile:', error)
+            return `
+                <div class="alert alert-danger">
+                    <h4 class="alert-heading">Błąd</h4>
+                    <p>Nie udało się załadować profilu lektora.</p>
+                    <hr>
+                    <button class="btn btn-primary" onclick="document.querySelector('[data-section=rezerwuj]').click()">Wróć do listy lektorów</button>
+                </div>
+            `
+        }
+    }
+    
+    private async getTutorBookingContent(tutorId: string): Promise<string> {
+        try {
+            const response = await api.get<any>(`/student/tutor/${tutorId}`)
+            const tutor = response
+            
+            return `
+                <div class="student-content-area">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" onclick="document.querySelector('[data-section=rezerwuj]').click(); return false;">Rezerwuj lekcję</a></li>
+                            <li class="breadcrumb-item active">Sprawdź terminy</li>
+                        </ol>
+                    </nav>
+
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h4 class="mb-0">Dostępne terminy - ${tutor.name}</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        Wybierz datę, aby zobaczyć dostępne terminy lekcji.
+                                    </div>
+                                    
+                                    <div class="text-center py-5">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Ładowanie...</span>
+                                        </div>
+                                        <p class="mt-2">Funkcja rezerwacji jest obecnie w fazie rozwoju.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Podsumowanie</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="text-muted small">Lektor</label>
+                                        <p class="mb-0 fw-bold">${tutor.name}</p>
+                                    </div>
+                                    
+                                    <div class="alert alert-warning">
+                                        <small>
+                                            <i class="bi bi-exclamation-triangle me-1"></i>
+                                            Funkcja rezerwacji jest obecnie w fazie rozwoju.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+        } catch (error) {
+            console.error('Error loading booking page:', error)
+            return `
+                <div class="alert alert-danger">
+                    <h4 class="alert-heading">Błąd</h4>
+                    <p>Nie udało się załadować strony rezerwacji.</p>
+                    <hr>
+                    <button class="btn btn-primary" onclick="document.querySelector('[data-section=rezerwuj]').click()">Wróć do listy lektorów</button>
+                </div>
+            `
+        }
     }
 }

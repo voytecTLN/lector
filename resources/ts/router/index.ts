@@ -116,7 +116,17 @@ export class Router {
             // Load component
             try {
                 console.log(`📦 Loading component for: ${matchedRoute.route.name}`)
-                matchedRoute.component = await matchedRoute.route.component()
+                const ComponentClass = await matchedRoute.route.component()
+
+                // Check if component constructor expects params
+                if (matchedRoute.params && Object.keys(matchedRoute.params).length > 0) {
+                    // Pass params to component constructor if it has params
+                    matchedRoute.component = new (ComponentClass as any)(matchedRoute.params)
+                } else {
+                    // No params, instantiate normally
+                    matchedRoute.component = ComponentClass
+                }
+
                 console.log(`✅ Component loaded: ${matchedRoute.route.name}`)
             } catch (error) {
                 console.error(`❌ Failed to load route component:`, error)

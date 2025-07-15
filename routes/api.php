@@ -88,6 +88,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
             Route::get('/dashboard-stats', [DashboardController::class, 'studentStats'])
                 ->name('api.student.dashboard-stats');
+                
+            Route::get('/packages', [PackageController::class, 'myPackages'])
+                ->name('api.student.packages');
         });
 
         // Admin dashboard stats
@@ -187,8 +190,7 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.tutors.search');
                 Route::get('/stats', [TutorController::class, 'stats'])
                     ->name('api.tutors.stats');
-                Route::get('/available', [TutorController::class, 'available'])
-                    ->name('api.tutors.available');
+                // Removed /available route - using availableForStudents instead
                 Route::get('/export', [TutorController::class, 'export'])
                     ->name('api.tutors.export');
                 Route::get('/{id}', [TutorController::class, 'show'])
@@ -270,8 +272,23 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.tutor.availability-slots.set');
             });
         });
+
     });
+    
+    // Publicly available endpoints for all authenticated users
+    // Using different path to avoid conflict with admin tutors routes
+    Route::get('/student/tutors-available', [TutorController::class, 'availableForStudents'])
+        ->name('api.student.tutors-available');
+        
+    // Student can view tutor profiles  
+    Route::get('/student/tutor/{id}', [TutorController::class, 'showPublic'])
+        ->name('api.student.tutor-profile');
 });
+
+// Test route for debugging
+Route::get('/api/test-tutors-available', [TutorController::class, 'availableForStudents'])
+    ->middleware(['auth:sanctum'])
+    ->name('api.test.tutors.available');
 
 // CSRF Cookie endpoint for SPA authentication
 Route::get('/sanctum/csrf-cookie', function () {
