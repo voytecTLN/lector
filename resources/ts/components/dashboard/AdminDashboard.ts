@@ -3,6 +3,7 @@ import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
 import { api } from '@services/ApiService'
 import { navigate } from "@utils/navigation";
+import { AdminLessons } from './admin/AdminLessons'
 
 export class AdminDashboard implements RouteComponent {
     private activeSection: string = 'dashboard'
@@ -960,17 +961,7 @@ export class AdminDashboard implements RouteComponent {
     }
 
     private getLessonsContent(): string {
-        return `
-            <div class="admin-content-area">
-                <h2>Historia Lekcji</h2>
-                <p>Przeglądaj wszystkie przeprowadzone i zaplanowane lekcje w systemie.</p>
-                
-                <!-- Tu będzie kalendarz/lista lekcji -->
-                <div class="lessons-container">
-                    <p class="admin-text-muted">Wkrótce</p>
-                </div>
-            </div>
-        `
+        return AdminLessons.instance.getLessonsContent()
     }
 
     private getActivityContent(): string {

@@ -3,6 +3,7 @@ import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
 import { TutorProfileEdit } from '@components/tutors/TutorProfileEdit'
 import { AvailabilityCalendar } from '@components/tutor/AvailabilityCalendar'
+import { TutorLessons } from './tutor/TutorLessons'
 
 export class TutorDashboard implements RouteComponent {
     private currentSection: string = 'dashboard'
@@ -389,16 +390,8 @@ export class TutorDashboard implements RouteComponent {
         const contentDiv = this.container?.querySelector('#tutorContent')
         if (!contentDiv) return
         
-        contentDiv.innerHTML = `
-            <div class="tutor-content-area">
-                <h2>Kalendarz lekcji</h2>
-                <div class="empty-state">
-                    <div class="empty-state-icon">📅</div>
-                    <h3>Brak zaplanowanych lekcji</h3>
-                    <p>Gdy studenci zarezerwują lekcje, pojawią się tutaj.</p>
-                </div>
-            </div>
-        `
+        const tutorLessons = new TutorLessons()
+        contentDiv.innerHTML = tutorLessons.getCalendarContent()
     }
 
     private loadStudentsContent(): void {

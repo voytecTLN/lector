@@ -431,7 +431,11 @@ class TutorController extends Controller
         
         $tutors = $this->tutorService->getAvailableTutors($filters);
         
-        return response()->json($tutors);
+        return response()->json([
+            'success' => true,
+            'data' => $tutors,
+            'message' => 'Tutors loaded successfully'
+        ]);
     }
     
     /**
@@ -444,12 +448,22 @@ class TutorController extends Controller
             
             // Only show active and verified tutors
             if ($tutor->status !== 'active' || !$tutor->tutorProfile || !$tutor->tutorProfile->is_verified) {
-                return response()->json(['error' => 'Lektor nie jest dostępny'], 404);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Lektor nie jest dostępny'
+                ], 404);
             }
             
-            return response()->json($tutor);
+            return response()->json([
+                'success' => true,
+                'data' => $tutor,
+                'message' => 'Tutor profile loaded successfully'
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Lektor nie został znaleziony'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Lektor nie został znaleziony'
+            ], 404);
         }
     }
 }

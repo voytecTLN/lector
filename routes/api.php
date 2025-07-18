@@ -8,6 +8,7 @@ use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\TutorController;
+use App\Http\Controllers\LessonController;
 use App\Http\Controllers\Admin\DashboardController;
 
 // Health check - publiczny endpoint
@@ -91,6 +92,24 @@ Route::middleware('auth:sanctum')->group(function () {
                 
             Route::get('/packages', [PackageController::class, 'myPackages'])
                 ->name('api.student.packages');
+                
+            // Lesson booking routes for students
+            Route::prefix('lessons')->group(function () {
+                Route::post('/book', [LessonController::class, 'bookLesson'])
+                    ->name('api.student.lessons.book');
+                Route::get('/available-slots', [LessonController::class, 'getAvailableSlots'])
+                    ->name('api.student.lessons.available-slots');
+                Route::get('/my-lessons', [LessonController::class, 'getUserLessons'])
+                    ->name('api.student.lessons.my-lessons');
+                Route::get('/today', [LessonController::class, 'getTodayLessons'])
+                    ->name('api.student.lessons.today');
+                Route::get('/upcoming', [LessonController::class, 'getUpcomingLessons'])
+                    ->name('api.student.lessons.upcoming');
+                Route::put('/{lessonId}/cancel', [LessonController::class, 'cancelLesson'])
+                    ->name('api.student.lessons.cancel');
+                Route::post('/{lessonId}/feedback', [LessonController::class, 'submitFeedback'])
+                    ->name('api.student.lessons.feedback');
+            });
         });
 
         // Admin dashboard stats
@@ -241,6 +260,16 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::post('/bulk-update-status', [AdminController::class, 'bulkUpdateStatus'])
                     ->name('api.admins.bulk-update-status');
             });
+            
+            // Lesson management routes for admins
+            Route::prefix('lessons')->group(function () {
+                Route::get('/', [LessonController::class, 'getAllLessons'])
+                    ->name('api.admin.lessons.index');
+                Route::get('/stats', [LessonController::class, 'getStats'])
+                    ->name('api.admin.lessons.stats');
+                Route::put('/{lessonId}/cancel', [LessonController::class, 'adminCancelLesson'])
+                    ->name('api.admin.lessons.cancel');
+            });
 
         });
 
@@ -270,6 +299,22 @@ Route::middleware('auth:sanctum')->group(function () {
                     
                 Route::post('/availability-slots', [TutorController::class, 'setAvailabilitySlots'])
                     ->name('api.tutor.availability-slots.set');
+                    
+                // Lesson management routes for tutors
+                Route::prefix('lessons')->group(function () {
+                    Route::get('/my-lessons', [LessonController::class, 'getUserLessons'])
+                        ->name('api.tutor.lessons.my-lessons');
+                    Route::get('/today', [LessonController::class, 'getTodayLessons'])
+                        ->name('api.tutor.lessons.today');
+                    Route::get('/upcoming', [LessonController::class, 'getUpcomingLessons'])
+                        ->name('api.tutor.lessons.upcoming');
+                    Route::put('/{lessonId}/cancel', [LessonController::class, 'cancelLesson'])
+                        ->name('api.tutor.lessons.cancel');
+                    Route::put('/{lessonId}/complete', [LessonController::class, 'completeLesson'])
+                        ->name('api.tutor.lessons.complete');
+                    Route::put('/{lessonId}/no-show', [LessonController::class, 'markAsNoShow'])
+                        ->name('api.tutor.lessons.no-show');
+                });
             });
         });
 

@@ -571,6 +571,50 @@
     100% { transform: rotate(360deg); }
 }
 
+/* Minimal dropdown fixes - only what's needed for student dashboard */
+.student-content-area .dropdown-menu {
+    z-index: 1050;
+}
+
+.student-content-area .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Fix card overflow clipping dropdown */
+.student-content-area .card {
+    overflow: visible !important;
+    position: relative;
+    z-index: 1;
+}
+
+.student-content-area .card-body {
+    overflow: visible !important;
+}
+
+.student-content-area .row {
+    overflow: visible !important;
+}
+
+.student-content-area .col-md-2:last-child {
+    overflow: visible !important;
+}
+
+/* Ensure card with active dropdown appears above other cards */
+.student-content-area .card:has(.dropdown-menu.show) {
+    z-index: 1055;
+}
+
+/* Alternative fallback for browsers that don't support :has() */
+.student-content-area .card .dropdown.show {
+    z-index: 1055;
+}
+
+.student-content-area .card .dropdown-menu {
+    z-index: 1055;
+}
+
 @media (max-width: 768px) {
     .student-sidebar {
         transform: translateX(-100%);

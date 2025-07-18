@@ -223,10 +223,6 @@ export class TutorForm implements RouteComponent {
                                     <input type="number" name="max_students_per_week" class="form-control" min="1" max="100">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Stawka godzinowa (zł)</label>
-                                    <input type="number" name="hourly_rate" class="form-control" min="0" max="1000" step="0.01">
-                                </div>
-                                <div class="col-md-6">
                                     <label class="form-label">Tygodniowy limit godzin <span class="text-danger">*</span></label>
                                     <select name="weekly_contract_limit" class="form-select" required>
                                         <option value="8">8 godzin</option>
