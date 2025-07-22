@@ -97,7 +97,17 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function lessons(): HasMany
     {
-        return $this->hasMany(Lesson::class);
+        return $this->hasMany(Lesson::class, 'student_id');
+    }
+    
+    public function studentLessons(): HasMany
+    {
+        return $this->hasMany(Lesson::class, 'student_id');
+    }
+    
+    public function tutorLessons(): HasMany
+    {
+        return $this->hasMany(Lesson::class, 'tutor_id');
     }
 
     /**
@@ -114,7 +124,9 @@ class User extends Authenticatable implements MustVerifyEmail
     public function activePackageAssignments(): HasMany
     {
         return $this->hasMany(PackageAssignment::class, 'student_id')
-                    ->where('is_active', true);
+                    ->where('is_active', true)
+                    ->where('expires_at', '>', now())
+                    ->where('hours_remaining', '>', 0);
     }
 
     // Role checking methods

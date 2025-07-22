@@ -321,6 +321,14 @@ Route::middleware('auth:sanctum')->group(function () {
                     Route::get('/{lessonId}', [LessonController::class, 'show'])
                         ->name('api.tutor.lessons.show');
                 });
+                
+                // Student management routes for tutors
+                Route::prefix('students')->group(function () {
+                    Route::get('/', [TutorController::class, 'getMyStudents'])
+                        ->name('api.tutor.students.index');
+                    Route::get('/{studentId}', [TutorController::class, 'getStudentDetails'])
+                        ->name('api.tutor.students.show');
+                });
             });
         });
 

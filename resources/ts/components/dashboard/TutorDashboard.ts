@@ -4,6 +4,7 @@ import { authService } from '@services/AuthService'
 import { TutorProfileEdit } from '@components/tutors/TutorProfileEdit'
 import { AvailabilityCalendar } from '@components/tutor/AvailabilityCalendar'
 import { TutorLessons } from './tutor/TutorLessons'
+import { TutorStudents } from './tutor/TutorStudents'
 import { LessonDetailsModal } from '../modals/LessonDetailsModal'
 
 export class TutorDashboard implements RouteComponent {
@@ -402,16 +403,8 @@ export class TutorDashboard implements RouteComponent {
         const contentDiv = this.container?.querySelector('#tutorContent')
         if (!contentDiv) return
         
-        contentDiv.innerHTML = `
-            <div class="tutor-content-area">
-                <h2>Moi studenci</h2>
-                <div class="empty-state">
-                    <div class="empty-state-icon">👥</div>
-                    <h3>Brak studentów</h3>
-                    <p>Gdy studenci zapiszą się na Twoje lekcje, zobaczysz ich tutaj.</p>
-                </div>
-            </div>
-        `
+        const tutorStudents = new TutorStudents()
+        contentDiv.innerHTML = tutorStudents.getStudentsContent()
     }
 
     private async loadProfileContent(): Promise<void> {

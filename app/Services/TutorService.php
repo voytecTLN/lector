@@ -448,4 +448,187 @@ class TutorService
 
         return $slot->delete();
     }
+    
+    /**
+     * Get students for a tutor with proper relationships
+     */
+    public function getMyStudents(int $tutorId, array $filters = []): array
+    {
+        // Get students who have lessons with this tutor using proper relationships
+        $studentsQuery = User::where('role', 'student')
+            ->whereHas('studentLessons', function ($query) use ($tutorId) {
+                $query->where('tutor_id', $tutorId);
+            })
+            ->with([
+                'studentProfile',
+                'packageAssignments.package',
+                'studentLessons' => function ($query) use ($tutorId) {
+                    $query->where('tutor_id', $tutorId);
+                }
+            ]);
+
+        // Apply filters
+        if (!empty($filters['status'])) {
+            if ($filters['status'] === 'active') {
+                $studentsQuery->where('status', 'active');
+            } elseif ($filters['status'] === 'inactive') {
+                $studentsQuery->where('status', '!=', 'active');
+            }
+        }
+
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $studentsQuery->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($filters['language'])) {
+            $language = $filters['language'];
+            $studentsQuery->whereHas('studentProfile', function ($query) use ($language) {
+                $query->whereJsonContains('learning_languages', $language);
+            });
+        }
+
+        $students = $studentsQuery->orderBy('name')->get();
+
+        // Transform student data using relationships
+        $transformedStudents = $students->map(function ($student) use ($tutorId) {
+            $tutorLessons = $student->studentLessons;
+            $totalLessons = $tutorLessons->count();
+            $completedLessons = $tutorLessons->where('status', 'completed')->count();
+
+            $lastLesson = $tutorLessons->where('status', 'completed')
+                ->sortByDesc('lesson_date')
+                ->first();
+
+            $nextLesson = $tutorLessons->where('status', 'scheduled')
+                ->sortBy('lesson_date')
+                ->first();
+
+            $activePackage = $student->packageAssignments
+                ->where('is_active', true)
+                ->where('expires_at', '>', now())
+                ->where('hours_remaining', '>', 0)
+                ->first();
+
+            return [
+                'id' => $student->id,
+                'name' => $student->name,
+                'email' => $student->email,
+                'phone' => $student->phone,
+                'city' => $student->city,
+                'status' => $student->status,
+                'created_at' => $student->created_at,
+                'last_lesson_date' => $lastLesson?->lesson_date,
+                'next_lesson_date' => $nextLesson?->lesson_date,
+                'total_lessons' => $totalLessons,
+                'completed_lessons' => $completedLessons,
+                'active_package' => $activePackage ? [
+                    'id' => $activePackage->package->id,
+                    'name' => $activePackage->package->name,
+                    'hours_remaining' => $activePackage->hours_remaining,
+                    'hours_total' => $activePackage->package->hours_count,
+                    'expires_at' => $activePackage->expires_at,
+                ] : null,
+                'student_profile' => $student->studentProfile ? [
+                    'learning_languages' => $student->studentProfile->learning_languages ?? [],
+                    'learning_goals' => $student->studentProfile->learning_goals ?? [],
+                    'current_levels' => $student->studentProfile->current_levels ?? [],
+                ] : null,
+            ];
+        });
+
+        // Calculate stats using relationships
+        $stats = [
+            'totalStudents' => $students->count(),
+            'activeStudents' => $students->where('status', 'active')->count(),
+            'lessonsThisWeek' => \App\Models\Lesson::where('tutor_id', $tutorId)
+                ->whereBetween('lesson_date', [
+                    now()->startOfWeek(),
+                    now()->endOfWeek()
+                ])
+                ->where('status', '!=', 'cancelled')
+                ->count(),
+            'upcomingLessons' => \App\Models\Lesson::where('tutor_id', $tutorId)
+                ->where('lesson_date', '>=', now())
+                ->where('status', 'scheduled')
+                ->count(),
+        ];
+
+        return [
+            'students' => $transformedStudents,
+            'stats' => $stats
+        ];
+    }
+
+    /**
+     * Get detailed student information for a tutor
+     */
+    public function getStudentDetails(int $tutorId, int $studentId): array
+    {
+        $student = User::where('role', 'student')
+            ->where('id', $studentId)
+            ->whereHas('studentLessons', function ($query) use ($tutorId) {
+                $query->where('tutor_id', $tutorId);
+            })
+            ->with([
+                'studentProfile',
+                'packageAssignments.package',
+                'studentLessons' => function ($query) use ($tutorId) {
+                    $query->where('tutor_id', $tutorId);
+                }
+            ])
+            ->first();
+
+        if (!$student) {
+            throw new Exception('Student nie został znaleziony lub nie ma lekcji z tym lektorem');
+        }
+
+        // Transform student data using relationships
+        $tutorLessons = $student->studentLessons;
+        $totalLessons = $tutorLessons->count();
+        $completedLessons = $tutorLessons->where('status', 'completed')->count();
+
+        $lastLesson = $tutorLessons->where('status', 'completed')
+            ->sortByDesc('lesson_date')
+            ->first();
+
+        $nextLesson = $tutorLessons->where('status', 'scheduled')
+            ->sortBy('lesson_date')
+            ->first();
+
+        $activePackage = $student->packageAssignments
+            ->where('is_active', true)
+            ->where('expires_at', '>', now())
+            ->where('hours_remaining', '>', 0)
+            ->first();
+
+        return [
+            'id' => $student->id,
+            'name' => $student->name,
+            'email' => $student->email,
+            'phone' => $student->phone,
+            'city' => $student->city,
+            'status' => $student->status,
+            'created_at' => $student->created_at,
+            'last_lesson_date' => $lastLesson?->lesson_date,
+            'next_lesson_date' => $nextLesson?->lesson_date,
+            'total_lessons' => $totalLessons,
+            'completed_lessons' => $completedLessons,
+            'active_package' => $activePackage ? [
+                'id' => $activePackage->package->id,
+                'name' => $activePackage->package->name,
+                'hours_remaining' => $activePackage->hours_remaining,
+                'hours_total' => $activePackage->package->hours_count,
+                'expires_at' => $activePackage->expires_at,
+            ] : null,
+            'student_profile' => $student->studentProfile ? [
+                'learning_languages' => $student->studentProfile->learning_languages ?? [],
+                'learning_goals' => $student->studentProfile->learning_goals ?? [],
+                'current_levels' => $student->studentProfile->current_levels ?? [],
+            ] : null,
+        ];
+    }
 }

@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Models\TutorProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {

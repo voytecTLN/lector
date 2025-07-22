@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Services\TutorService;
 use App\Http\Requests\CreateTutorRequest;
 use App\Http\Requests\UpdateTutorRequest;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -464,6 +465,74 @@ class TutorController extends Controller
                 'success' => false,
                 'message' => 'Lektor nie został znaleziony'
             ], 404);
+        }
+    }
+    
+    /**
+     * Get students who have had lessons with this tutor
+     */
+    public function getMyStudents(Request $request): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            if ($user->role !== 'tutor' && $user->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+            
+            $tutorId = $user->role === 'admin' ? $request->get('tutor_id', $user->id) : $user->id;
+            
+            // Use the service to get students
+            $result = $this->tutorService->getMyStudents($tutorId, $request->all());
+            
+            return response()->json([
+                'success' => true,
+                'data' => $result
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Wystąpił błąd podczas pobierania studentów',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Get detailed information about a specific student for this tutor
+     */
+    public function getStudentDetails(Request $request, $studentId): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            if ($user->role !== 'tutor' && $user->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+            
+            $tutorId = $user->role === 'admin' ? $request->get('tutor_id', $user->id) : $user->id;
+            
+            // Use the service to get student details
+            $student = $this->tutorService->getStudentDetails($tutorId, $studentId);
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'student' => $student
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Wystąpił błąd podczas pobierania szczegółów studenta',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }

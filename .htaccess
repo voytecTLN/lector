@@ -35,6 +35,16 @@ Options -Indexes -MultiViews +FollowSymLinks
     </If>
 </FilesMatch>
 
+# [DODANE] Blokuj dostęp do plików deweloperskich i narzędziowych
+<FilesMatch "^(Makefile|README\.md|docker-compose\.yml|vite\.config\.ts|tsconfig\.json|pint\.json)$">
+    Require all denied
+</FilesMatch>
+
+# [DODANE] Blokuj dostęp do composer.phar
+<FilesMatch "^composer\.phar$">
+    Require all denied
+</FilesMatch>
+
 # ==================================================================
 # HEADERS BEZPIECZEŃSTWA
 # ==================================================================
@@ -72,6 +82,14 @@ Options -Indexes -MultiViews +FollowSymLinks
     # Blokuj dostęp do folderów Laravel (MUSI BYĆ PIERWSZE!)
     RewriteRule ^(app|bootstrap|config|database|lang|resources|routes|tests|vendor)/.*$ - [F,L]
     RewriteRule ^(storage)/(.*)$ - [F,L]
+
+    # Blokuj dostęp do folderów node_modules i build
+    # [DODANE]
+    RewriteRule ^(node_modules|build)/.*$ - [F,L]
+
+    # Blokuj dostęp do katalogu .githooks
+    # [DODANE]
+    RewriteRule ^\.githooks/.*$ - [F,L]
 
     # Blokuj dostęp do plików w głównym katalogu
     RewriteRule ^(artisan|composer\.(json|lock)|package\.(json|lock)|phpunit\.xml|\.env|\.env\..*|webpack\..*|vite\..*|postcss\..*|tailwind\..*)$ - [F,L]
