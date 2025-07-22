@@ -83,9 +83,9 @@ Options -Indexes -MultiViews +FollowSymLinks
     RewriteRule ^(app|bootstrap|config|database|lang|resources|routes|tests|vendor)/.*$ - [F,L]
     RewriteRule ^(storage)/(.*)$ - [F,L]
 
-    # Blokuj dostęp do folderów node_modules i build
+    # Blokuj dostęp do node_modules (build/assets/ musi być dostępny dla Vite)
     # [DODANE]
-    RewriteRule ^(node_modules|build)/.*$ - [F,L]
+    RewriteRule ^node_modules/.*$ - [F,L]
 
     # Blokuj dostęp do katalogu .githooks
     # [DODANE]
@@ -137,6 +137,16 @@ Options -Indexes -MultiViews +FollowSymLinks
     AddOutputFilterByType DEFLATE application/xhtml+xml
     AddOutputFilterByType DEFLATE application/rss+xml
     AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ==================================================================
+# MIME TYPES
+# ==================================================================
+
+<IfModule mod_mime.c>
+    AddType application/javascript .js .mjs
+    AddType text/css .css
+    AddType application/json .json
 </IfModule>
 
 # ==================================================================
