@@ -4,6 +4,7 @@ import { authService } from '@services/AuthService'
 import { TutorProfileEdit } from '@components/tutors/TutorProfileEdit'
 import { AvailabilityCalendar } from '@components/tutor/AvailabilityCalendar'
 import { TutorLessons } from './tutor/TutorLessons'
+import { LessonDetailsModal } from '../modals/LessonDetailsModal'
 
 export class TutorDashboard implements RouteComponent {
     private currentSection: string = 'dashboard'
@@ -93,6 +94,9 @@ export class TutorDashboard implements RouteComponent {
         this.container = container
         this.setupEventListeners()
         this.handleUrlChange()
+        
+        // Make LessonDetailsModal available globally for onclick handlers
+        ;(window as any).LessonDetailsModal = LessonDetailsModal
         
         // Set up auto-refresh for dashboard stats
         this.refreshInterval = window.setInterval(() => {

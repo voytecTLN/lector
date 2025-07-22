@@ -1,4 +1,5 @@
 import { api } from '@services/ApiService'
+import { formatDate } from '@utils/date'
 
 export class StudentBooking {
     private tutor: any = null
@@ -140,11 +141,11 @@ export class StudentBooking {
         
         for (let week = 0; week < 4; week++) {
             for (let day = 0; day < 7; day++) {
-                const date = new Date()
-                date.setDate(today.getDate() + (week * 7) + day)
+                // Use explicit date construction to avoid timezone issues
+                const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (week * 7) + day)
                 
                 if (date >= today) { // Only load for current and future dates
-                    const dateStr = this.formatDate(date)
+                    const dateStr = formatDate(date)
                     promises.push(this.loadAvailabilityForDate(tutorId, dateStr))
                 }
             }
@@ -219,10 +220,10 @@ export class StudentBooking {
         // Render 4 weeks of calendar
         for (let week = 0; week < 4; week++) {
             for (let day = 0; day < 7; day++) {
-                const date = new Date()
-                date.setDate(today.getDate() + (week * 7) + day)
+                // Use a more explicit date construction to avoid timezone issues
+                const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (week * 7) + day)
                 
-                const dateStr = this.formatDate(date)
+                const dateStr = formatDate(date)
                 const isPast = date < today
                 const availability = this.tutorAvailability.get(dateStr)
                 
@@ -431,6 +432,7 @@ export class StudentBooking {
                 lesson_type: 'individual'
             }
             
+            
             const response = await api.post<{success: boolean, message?: string, data?: any}>('/student/lessons/book', bookingData)
             
             if (response.success) {
@@ -452,13 +454,28 @@ export class StudentBooking {
             
         } catch (error: any) {
             console.error('Error booking lesson:', error)
+            
+            // Check if it's a slot conflict error (but not from cancelled lessons)
+            const isConflictError = error.message?.includes('zajęty') || 
+                                  (error.message?.includes('Duplicate entry') && !error.message?.includes('cancelled'))
+            
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'error',
-                    message: error.message || 'Wystąpił błąd podczas rezerwacji lekcji',
+                    message: isConflictError 
+                        ? 'Ten slot został właśnie zarezerwowany przez innego studenta. Wybierz inny termin.'
+                        : error.message || 'Wystąpił błąd podczas rezerwacji lekcji',
                     duration: 5000
                 }
             }))
+            
+            // If it's a conflict, refresh availability to show updated slots
+            if (isConflictError) {
+                this.loadTutorAvailability(tutorId)
+                this.selectedDate = ''
+                this.selectedTime = ''
+                this.renderCalendar()
+            }
         } finally {
             // Re-enable button
             confirmBtn.disabled = false
@@ -522,9 +539,6 @@ export class StudentBooking {
         return urlParams.get('tutor_id')
     }
     
-    private formatDate(date: Date): string {
-        return date.toISOString().split('T')[0]
-    }
     
     private formatDisplayDate(dateStr: string): string {
         const date = new Date(dateStr)

@@ -4,6 +4,7 @@ import { authService } from '@services/AuthService'
 import { api } from '@services/ApiService'
 import { navigate } from "@utils/navigation";
 import { AdminLessons } from './admin/AdminLessons'
+import { LessonDetailsModal } from '../modals/LessonDetailsModal'
 
 export class AdminDashboard implements RouteComponent {
     private activeSection: string = 'dashboard'
@@ -160,6 +161,9 @@ export class AdminDashboard implements RouteComponent {
 
     mount(container: HTMLElement): void {
         this.container = container
+
+        // Make LessonDetailsModal available globally
+        ;(window as any).LessonDetailsModal = LessonDetailsModal
 
         // Setup navigation
         this.setupNavigation()

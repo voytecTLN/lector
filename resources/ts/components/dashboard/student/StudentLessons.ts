@@ -1,4 +1,5 @@
 import { api } from '@services/ApiService'
+import Swal from 'sweetalert2'
 
 export class StudentLessons {
     
@@ -162,8 +163,23 @@ export class StudentLessons {
     }
     
     private canCancelLesson(lesson: any): boolean {
-        const lessonDate = lesson.lesson_date.split('T')[0]
-        const lessonDateTime = new Date(`${lessonDate}T${lesson.start_time}`)
+        // Handle different date formats that might come from the API
+        let lessonDateStr = lesson.lesson_date
+        if (lessonDateStr.includes('T')) {
+            lessonDateStr = lessonDateStr.split('T')[0]
+        }
+        
+        // Extract just the time part if start_time contains a full datetime
+        let startTimeStr = lesson.start_time
+        if (startTimeStr.includes(' ')) {
+            // If it's in format "YYYY-MM-DD HH:MM:SS", extract just the time
+            startTimeStr = startTimeStr.split(' ')[1].substring(0, 5) // Get HH:MM
+        } else if (startTimeStr.length > 5) {
+            // If it's longer than HH:MM format, truncate
+            startTimeStr = startTimeStr.substring(0, 5)
+        }
+        
+        const lessonDateTime = new Date(`${lessonDateStr}T${startTimeStr}`)
         const now = new Date()
         const hoursUntilLesson = (lessonDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
         
@@ -327,89 +343,244 @@ export class StudentLessons {
     
     // Static methods for global access
     static async cancelLesson(lessonId: number): Promise<void> {
-        if (!confirm('Czy na pewno chcesz anulować tę lekcję?')) return
+        // Użyj SweetAlert2 dla lepszego UX
+        const { value: formValues } = await Swal.fire({
+            title: 'Anulowanie lekcji',
+            html: `
+                <div class="text-left">
+                    <p class="mb-3">Czy na pewno chcesz anulować lekcję #${lessonId}?</p>
+                    <div class="form-group">
+                        <label for="cancel-reason" class="form-label">Powód anulowania (opcjonalny):</label>
+                        <textarea id="cancel-reason" class="form-control" rows="3" placeholder="Podaj powód anulowania lekcji..."></textarea>
+                    </div>
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Uwaga:</strong> Anulowanie lekcji na mniej niż 12 godzin przed rozpoczęciem może być niemożliwe.
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Anuluj lekcję',
+            cancelButtonText: 'Wróć',
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            focusConfirm: false,
+            preConfirm: () => {
+                const reason = (document.getElementById('cancel-reason') as HTMLTextAreaElement)?.value
+                return { reason: reason || 'Anulowanie przez studenta' }
+            }
+        })
+
+        if (!formValues) return
+
+        // Pokaż loader
+        Swal.fire({
+            title: 'Anulowanie lekcji...',
+            text: 'Proszę czekać',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading()
+            }
+        })
         
         try {
             const response = await api.put<{success: boolean, message?: string}>(`/student/lessons/${lessonId}/cancel`, {
-                reason: 'Anulowanie przez studenta'
+                reason: formValues.reason
             })
             
             if (response.success) {
-                document.dispatchEvent(new CustomEvent('notification:show', {
-                    detail: {
-                        type: 'success',
-                        message: 'Lekcja została anulowana pomyślnie.',
-                        duration: 3000
-                    }
-                }))
-                location.reload()
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Lekcja anulowana',
+                    text: 'Lekcja została anulowana pomyślnie. Lista lekcji zostanie odświeżona.',
+                    confirmButtonText: 'OK',
+                    timer: 3000,
+                    timerProgressBar: true
+                })
+                
+                // Odśwież tylko sekcję lekcji zamiast całej strony
+                if ((window as any).studentDashboard) {
+                    (window as any).studentDashboard.loadContent('nadchodzace')
+                } else {
+                    location.reload()
+                }
             } else {
                 throw new Error(response.message || 'Błąd podczas anulowania lekcji')
             }
         } catch (error: any) {
             console.error('Error canceling lesson:', error)
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'error',
-                    message: error.message || 'Wystąpił błąd podczas anulowania lekcji',
-                    duration: 5000
-                }
-            }))
+            await Swal.fire({
+                icon: 'error',
+                title: 'Błąd anulowania',
+                text: error.message || 'Wystąpił błąd podczas anulowania lekcji',
+                confirmButtonText: 'OK'
+            })
         }
     }
     
     static async rateLesson(lessonId: number): Promise<void> {
-        const rating = prompt('Oceń lekcję (1-5):')
-        if (!rating || isNaN(parseInt(rating)) || parseInt(rating) < 1 || parseInt(rating) > 5) {
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'warning',
-                    message: 'Proszę podać ocenę od 1 do 5',
-                    duration: 3000
+        // Użyj SweetAlert2 dla lepszego UX oceniania
+        const { value: formValues } = await Swal.fire({
+            title: 'Oceń lekcję',
+            html: `
+                <div class="text-left">
+                    <p class="mb-3">Jak oceniasz lekcję #${lessonId}?</p>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Ocena (1-5 gwiazdek):</label>
+                        <div class="rating-stars text-center py-2">
+                            <span class="star" data-rating="1">★</span>
+                            <span class="star" data-rating="2">★</span>
+                            <span class="star" data-rating="3">★</span>
+                            <span class="star" data-rating="4">★</span>
+                            <span class="star" data-rating="5">★</span>
+                        </div>
+                        <input type="hidden" id="lesson-rating" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="lesson-feedback" class="form-label">Komentarz (opcjonalny):</label>
+                        <textarea id="lesson-feedback" class="form-control" rows="3" placeholder="Podziel się swoją opinią o lekcji..."></textarea>
+                    </div>
+                </div>
+                <style>
+                    .rating-stars .star {
+                        font-size: 2rem;
+                        color: #ddd;
+                        cursor: pointer;
+                        margin: 0 2px;
+                        transition: color 0.2s;
+                    }
+                    .rating-stars .star.active,
+                    .rating-stars .star:hover {
+                        color: #ffc107;
+                    }
+                </style>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Dodaj ocenę',
+            cancelButtonText: 'Anuluj',
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            focusConfirm: false,
+            didOpen: () => {
+                // Obsługa kliknięć na gwiazdki
+                const stars = document.querySelectorAll('.star')
+                const ratingInput = document.getElementById('lesson-rating') as HTMLInputElement
+                
+                stars.forEach((star, index) => {
+                    star.addEventListener('click', () => {
+                        const rating = index + 1
+                        ratingInput.value = rating.toString()
+                        
+                        // Aktualizuj wygląd gwiazdek
+                        stars.forEach((s, i) => {
+                            if (i < rating) {
+                                s.classList.add('active')
+                            } else {
+                                s.classList.remove('active')
+                            }
+                        })
+                    })
+                    
+                    star.addEventListener('mouseenter', () => {
+                        stars.forEach((s, i) => {
+                            const htmlElement = s as HTMLElement
+                            if (i <= index) {
+                                htmlElement.style.color = '#ffc107'
+                            } else {
+                                htmlElement.style.color = '#ddd'
+                            }
+                        })
+                    })
+                })
+                
+                document.querySelector('.rating-stars')?.addEventListener('mouseleave', () => {
+                    const currentRating = parseInt(ratingInput.value) || 0
+                    stars.forEach((s, i) => {
+                        const htmlElement = s as HTMLElement
+                        if (i < currentRating) {
+                            htmlElement.style.color = '#ffc107'
+                        } else {
+                            htmlElement.style.color = '#ddd'
+                        }
+                    })
+                })
+            },
+            preConfirm: () => {
+                const rating = (document.getElementById('lesson-rating') as HTMLInputElement)?.value
+                const feedback = (document.getElementById('lesson-feedback') as HTMLTextAreaElement)?.value
+                
+                if (!rating || parseInt(rating) < 1 || parseInt(rating) > 5) {
+                    Swal.showValidationMessage('Proszę wybrać ocenę od 1 do 5 gwiazdek')
+                    return false
                 }
-            }))
-            return
-        }
-        
-        const feedback = prompt('Opcjonalny komentarz:') || ''
+                
+                return { rating: parseInt(rating), feedback: feedback || '' }
+            }
+        })
+
+        if (!formValues) return
+
+        // Pokaż loader
+        Swal.fire({
+            title: 'Dodawanie oceny...',
+            text: 'Proszę czekać',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading()
+            }
+        })
         
         try {
             const response = await api.post<{success: boolean, message?: string}>(`/student/lessons/${lessonId}/feedback`, {
-                rating: parseInt(rating),
-                feedback: feedback
+                rating: formValues.rating,
+                feedback: formValues.feedback
             })
             
             if (response.success) {
-                document.dispatchEvent(new CustomEvent('notification:show', {
-                    detail: {
-                        type: 'success',
-                        message: 'Ocena została dodana pomyślnie.',
-                        duration: 3000
-                    }
-                }))
-                location.reload()
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Ocena dodana',
+                    text: 'Dziękujemy za ocenę lekcji. Lista lekcji zostanie odświeżona.',
+                    confirmButtonText: 'OK',
+                    timer: 3000,
+                    timerProgressBar: true
+                })
+                
+                // Odśwież tylko sekcję lekcji
+                if ((window as any).studentDashboard) {
+                    (window as any).studentDashboard.loadContent('historia')
+                } else {
+                    location.reload()
+                }
             } else {
                 throw new Error(response.message || 'Błąd podczas dodawania oceny')
             }
         } catch (error: any) {
             console.error('Error rating lesson:', error)
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'error',
-                    message: error.message || 'Wystąpił błąd podczas dodawania oceny',
-                    duration: 5000
-                }
-            }))
+            await Swal.fire({
+                icon: 'error',
+                title: 'Błąd oceny',
+                text: error.message || 'Wystąpił błąd podczas dodawania oceny',
+                confirmButtonText: 'OK'
+            })
         }
     }
     
     static async viewLessonDetails(lessonId: number): Promise<void> {
-        document.dispatchEvent(new CustomEvent('notification:show', {
-            detail: {
-                type: 'info',
-                message: `Szczegóły lekcji #${lessonId} - funkcja w przygotowaniu`,
-                duration: 3000
-            }
-        }))
+        // Importuj i wywołaj modal ze szczegółami
+        if ((window as any).LessonDetailsModal) {
+            await (window as any).LessonDetailsModal.show(lessonId)
+        } else {
+            // Fallback jeśli modal nie jest załadowany
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Nie można załadować szczegółów lekcji',
+                    duration: 3000
+                }
+            }))
+        }
     }
 }

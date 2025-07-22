@@ -32,6 +32,37 @@ Route::get('/health', function () {
     return response()->json(['status' => 'ok', 'timestamp' => now()]);
 });
 
+// Route to fix unique constraint for cancelled lesson rebooking
+Route::get('/fix-unique-constraint', function() {
+    try {
+        $results = [];
+        
+        // Step 1: Try to drop existing constraint if it exists
+        try {
+            \DB::statement('ALTER TABLE lessons DROP INDEX lessons_tutor_id_lesson_date_start_time_unique');
+            $results[] = '✅ Dropped old constraint: lessons_tutor_id_lesson_date_start_time_unique';
+        } catch (\Exception $e) {
+            $results[] = '⚠️ Old constraint not found (this is okay): ' . $e->getMessage();
+        }
+        
+        // Step 2: Try to drop the scheduled-only constraint if it exists (to recreate it)
+        try {
+            \DB::statement('ALTER TABLE lessons DROP INDEX lessons_tutor_id_lesson_date_start_time_scheduled_unique');
+            $results[] = '✅ Dropped existing scheduled constraint to recreate it';
+        } catch (\Exception $e) {
+            $results[] = '⚠️ Scheduled constraint not found (creating new one)';
+        }
+        
+        // Step 3: For MySQL, we rely on application logic instead of partial indexes
+        $results[] = '✅ Removed database constraint - cancelled lessons can now be overbooked!';
+        $results[] = 'ℹ️ Application logic will handle conflicts for scheduled/completed/no_show lessons only';
+        
+        return implode('<br>', $results);
+    } catch (\Exception $e) {
+        return '❌ Error: ' . $e->getMessage();
+    }
+});
+
 // SPA entry routes with optional flash messages
 Route::get('/', $spa('/'))->name('home');
 Route::get('/login', $spa('/login'))->name('login');

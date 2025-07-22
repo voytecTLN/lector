@@ -147,7 +147,7 @@ class Lesson extends Model
             return false;
         }
 
-        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->start_time);
+        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->start_time->format('H:i:s'));
         $hoursUntilLesson = now()->diffInHours($lessonDateTime, false);
 
         return $hoursUntilLesson >= 12;
@@ -230,13 +230,13 @@ class Lesson extends Model
 
     public function isUpcoming(): bool
     {
-        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->start_time);
+        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->start_time->format('H:i:s'));
         return $lessonDateTime->isFuture() && $this->status === self::STATUS_SCHEDULED;
     }
 
     public function isPast(): bool
     {
-        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->end_time);
+        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->end_time->format('H:i:s'));
         return $lessonDateTime->isPast();
     }
 

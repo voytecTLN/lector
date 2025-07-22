@@ -11,14 +11,6 @@ export function formatDate(date: Date): string {
 }
 
 /**
- * Parse a date string (YYYY-MM-DD) to Date object
- */
-export function parseDate(dateStr: string): Date {
-    const [year, month, day] = dateStr.split('-').map(Number)
-    return new Date(year, month - 1, day)
-}
-
-/**
  * Format a date to Polish locale string
  */
 export function formatDatePL(date: Date): string {

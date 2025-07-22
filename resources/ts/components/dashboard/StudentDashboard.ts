@@ -2,6 +2,7 @@ import { api } from '@services/ApiService'
 import { StudentLessons } from './student/StudentLessons'
 import { StudentBooking } from './student/StudentBooking'
 import { StudentTutors } from './student/StudentTutors'
+import { LessonDetailsModal } from '../modals/LessonDetailsModal'
 import type { RouteComponent } from '@router/routes'
 
 export class StudentDashboard implements RouteComponent {
@@ -15,6 +16,15 @@ export class StudentDashboard implements RouteComponent {
         this.studentLessons = new StudentLessons()
         this.studentBooking = new StudentBooking()
         this.studentTutors = new StudentTutors()
+        
+        // Make StudentLessons available globally for onclick handlers
+        ;(window as any).StudentLessons = StudentLessons
+        
+        // Make LessonDetailsModal available globally
+        ;(window as any).LessonDetailsModal = LessonDetailsModal
+        
+        // Make this dashboard instance available globally
+        ;(window as any).studentDashboard = this
     }
 
     public async render(): Promise<HTMLElement> {

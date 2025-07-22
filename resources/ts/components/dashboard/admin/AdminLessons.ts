@@ -193,23 +193,6 @@ export class AdminLessons {
                             </div>
                         </div>
                     </div>
-                    <!--
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h6 class="card-title">Przychód</h6>
-                                <div class="d-flex justify-content-between">
-                                    <span>Zakończone:</span>
-                                    <strong>${this.calculateRevenue(lessons.filter(l => l.status === 'completed'))} zł</strong>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span>Zaplanowane:</span>
-                                    <strong>${this.calculateRevenue(lessons.filter(l => l.status === 'scheduled'))} zł</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    -->
                 </div>
             </div>
         `
@@ -266,9 +249,6 @@ export class AdminLessons {
         `
     }
     
-    private calculateRevenue(lessons: any[]): number {
-        return lessons.reduce((sum, lesson) => sum + (lesson.price || 0), 0)
-    }
     
     private renderError(): void {
         const container = document.getElementById('lessons-container')
@@ -368,13 +348,18 @@ export class AdminLessons {
     }
     
     static async viewDetails(lessonId: number): Promise<void> {
-        document.dispatchEvent(new CustomEvent('notification:show', {
-            detail: {
-                type: 'info',
-                message: `Szczegóły lekcji #${lessonId} - funkcja w przygotowaniu`,
-                duration: 3000
-            }
-        }))
+        // Use the LessonDetailsModal
+        if ((window as any).LessonDetailsModal) {
+            (window as any).LessonDetailsModal.show(lessonId)
+        } else {
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Nie można załadować modalu szczegółów',
+                    duration: 3000
+                }
+            }))
+        }
     }
     
     static async exportLessons(): Promise<void> {
@@ -387,3 +372,6 @@ export class AdminLessons {
         }))
     }
 }
+
+// Export to global scope
+;(window as any).AdminLessons = AdminLessons

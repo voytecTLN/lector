@@ -301,15 +301,39 @@ class LessonService
     
     private function checkForConflicts(int $tutorId, string $date, string $startTime, string $endTime): void
     {
+        // First check exact match (due to unique constraint) with lock for update to prevent race conditions
+        $exactMatch = Lesson::where('tutor_id', $tutorId)
+            ->where('lesson_date', $date)
+            ->where('start_time', $startTime)
+            ->where('status', Lesson::STATUS_SCHEDULED)
+            ->lockForUpdate()
+            ->exists();
+            
+        if ($exactMatch) {
+            throw new \Exception('Ten slot czasowy jest już zajęty');
+        }
+        
+        
+        // Then check for overlapping time ranges (excluding adjacent times)
         $conflicts = Lesson::where('tutor_id', $tutorId)
             ->where('lesson_date', $date)
             ->where('status', Lesson::STATUS_SCHEDULED)
             ->where(function($query) use ($startTime, $endTime) {
-                $query->whereBetween('start_time', [$startTime, $endTime])
-                    ->orWhereBetween('end_time', [$startTime, $endTime])
+                $query
+                    // New lesson starts during existing lesson (excluding exact end time)
+                    ->where(function($q) use ($startTime, $endTime) {
+                        $q->where('start_time', '<', $startTime)
+                          ->where('end_time', '>', $startTime);
+                    })
+                    // New lesson ends during existing lesson (excluding exact start time)
                     ->orWhere(function($q) use ($startTime, $endTime) {
-                        $q->where('start_time', '<=', $startTime)
-                          ->where('end_time', '>=', $endTime);
+                        $q->where('start_time', '<', $endTime)
+                          ->where('end_time', '>', $endTime);
+                    })
+                    // New lesson completely contains existing lesson
+                    ->orWhere(function($q) use ($startTime, $endTime) {
+                        $q->where('start_time', '>=', $startTime)
+                          ->where('end_time', '<=', $endTime);
                     });
             })
             ->exists();

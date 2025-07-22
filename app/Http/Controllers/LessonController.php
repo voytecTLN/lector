@@ -20,7 +20,7 @@ class LessonController extends Controller
     {
         $validated = $request->validate([
             'tutor_id' => 'required|integer|exists:users,id',
-            'lesson_date' => 'required|date|after_or_equal:today',
+            'lesson_date' => 'required|date_format:Y-m-d|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'duration_minutes' => 'required|integer|min:30|max:120',
             'language' => 'nullable|string|max:50',
@@ -268,6 +268,50 @@ class LessonController extends Controller
                 'success' => false,
                 'message' => $e->getMessage()
             ], 400);
+        }
+    }
+
+    /**
+     * Get single lesson details
+     */
+    public function show(int $lessonId): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+            $lesson = \App\Models\Lesson::with([
+                'tutor',
+                'tutor.tutorProfile',
+                'student',
+                'packageAssignment',
+                'packageAssignment.package'
+            ])->findOrFail($lessonId);
+            
+            // Check if user can view this lesson
+            if ($user->role === 'student' && $lesson->student_id !== $user->id) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+            
+            if ($user->role === 'tutor' && $lesson->tutor_id !== $user->id) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+            
+            // Admins can view all lessons
+            if ($user->role === 'admin') {
+                // Admin has access to all lessons
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'lesson' => $lesson
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
         }
     }
 

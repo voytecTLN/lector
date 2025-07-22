@@ -109,6 +109,8 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.student.lessons.cancel');
                 Route::post('/{lessonId}/feedback', [LessonController::class, 'submitFeedback'])
                     ->name('api.student.lessons.feedback');
+                Route::get('/{lessonId}', [LessonController::class, 'show'])
+                    ->name('api.student.lessons.show');
             });
         });
 
@@ -267,6 +269,8 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.admin.lessons.index');
                 Route::get('/stats', [LessonController::class, 'getStats'])
                     ->name('api.admin.lessons.stats');
+                Route::get('/{lessonId}', [LessonController::class, 'show'])
+                    ->name('api.admin.lessons.show');
                 Route::put('/{lessonId}/cancel', [LessonController::class, 'adminCancelLesson'])
                     ->name('api.admin.lessons.cancel');
             });
@@ -314,6 +318,8 @@ Route::middleware('auth:sanctum')->group(function () {
                         ->name('api.tutor.lessons.complete');
                     Route::put('/{lessonId}/no-show', [LessonController::class, 'markAsNoShow'])
                         ->name('api.tutor.lessons.no-show');
+                    Route::get('/{lessonId}', [LessonController::class, 'show'])
+                        ->name('api.tutor.lessons.show');
                 });
             });
         });

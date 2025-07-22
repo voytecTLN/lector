@@ -1,4 +1,5 @@
 import { api } from '@services/ApiService'
+import { formatDate } from '@utils/date'
 
 export class TutorLessons {
     private currentView: 'calendar' | 'list' = 'calendar'
@@ -18,10 +19,12 @@ export class TutorLessons {
                                 onclick="TutorLessons.switchView('calendar')">
                             <i class="bi bi-calendar3 me-2"></i>Kalendarz
                         </button>
+                        <!--
                         <button class="btn ${this.currentView === 'list' ? 'btn-primary' : 'btn-outline-primary'}" 
                                 onclick="TutorLessons.switchView('list')">
                             <i class="bi bi-list-ul me-2"></i>Lista
                         </button>
+                        -->
                     </div>
                 </div>
                 
@@ -125,16 +128,36 @@ export class TutorLessons {
     }
     
     private renderDayColumn(day: Date): string {
-        const dayStr = this.formatDate(day)
+        const dayStr = formatDate(day)
         const dayLessons = this.lessons.filter(lesson => {
-            const lessonDate = lesson.lesson_date.split('T')[0]
-            return lessonDate === dayStr
-        }).sort((a, b) => a.start_time.localeCompare(b.start_time))
+            let lessonDateStr = lesson.lesson_date
+            if (lessonDateStr.includes('T')) {
+                lessonDateStr = lessonDateStr.split('T')[0]
+            }
+            return lessonDateStr === dayStr
+        }).sort((a, b) => {
+            // Extract just the time for comparison
+            let aTime = a.start_time
+            let bTime = b.start_time
+            if (aTime.includes(' ')) aTime = aTime.split(' ')[1].substring(0, 5)
+            if (bTime.includes(' ')) bTime = bTime.split(' ')[1].substring(0, 5)
+            return aTime.localeCompare(bTime)
+        })
         
         const slots = []
         for (let hour = 8; hour < 22; hour++) {
             const hourStr = hour.toString().padStart(2, '0') + ':00'
-            const lesson = dayLessons.find(l => l.start_time === hourStr)
+            const lesson = dayLessons.find(l => {
+                // Handle different time formats that might come from API
+                let lessonTime = l.start_time
+                if (lessonTime.includes(' ')) {
+                    lessonTime = lessonTime.split(' ')[1] // Extract time part if datetime
+                }
+                if (lessonTime.length > 5) {
+                    lessonTime = lessonTime.substring(0, 5) // Truncate seconds if present (HH:MM:SS -> HH:MM)
+                }
+                return lessonTime === hourStr
+            })
             
             if (lesson) {
                 slots.push(this.renderLessonSlot(lesson))
@@ -152,18 +175,24 @@ export class TutorLessons {
         
         return `
             <div class="time-slot lesson ${statusClass}" data-lesson-id="${lesson.id}">
-                <div class="lesson-time">${lesson.start_time} - ${lesson.end_time}</div>
+                <div class="lesson-time">${this.formatTime(lesson.start_time)} - ${this.formatTime(lesson.end_time)}</div>
                 <div class="lesson-student">
                     <i class="bi bi-person me-1"></i>${lesson.student?.name || 'Student'}
                 </div>
                 ${lesson.topic ? `<div class="lesson-topic small">${lesson.topic}</div>` : ''}
                 <div class="lesson-actions">
+                    <button class="btn btn-sm btn-outline-primary" onclick="TutorLessons.viewDetails(${lesson.id})" title="Szczegóły">
+                        <i class="bi bi-eye"></i>
+                    </button>
                     ${canModify ? `
                         <button class="btn btn-sm btn-success" onclick="TutorLessons.completeLesson(${lesson.id})" title="Oznacz jako zakończoną">
                             <i class="bi bi-check"></i>
                         </button>
                         <button class="btn btn-sm btn-warning" onclick="TutorLessons.markNoShow(${lesson.id})" title="Nieobecność">
                             <i class="bi bi-x-lg"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="TutorLessons.cancelLesson(${lesson.id})" title="Anuluj">
+                            <i class="bi bi-x-circle"></i>
                         </button>
                     ` : ''}
                 </div>
@@ -224,7 +253,7 @@ export class TutorLessons {
         return `
             <tr>
                 <td>${lessonDate.toLocaleDateString('pl-PL')}</td>
-                <td>${lesson.start_time} - ${lesson.end_time}</td>
+                <td>${this.formatTime(lesson.start_time)} - ${this.formatTime(lesson.end_time)}</td>
                 <td>
                     <div class="d-flex align-items-center">
                         <div class="avatar-placeholder-small bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
@@ -237,8 +266,11 @@ export class TutorLessons {
                 <td><span class="badge bg-secondary">${this.getLessonTypeName(lesson.lesson_type)}</span></td>
                 <td>${statusBadge}</td>
                 <td>
-                    ${canModify ? `
-                        <div class="btn-group btn-group-sm" role="group">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-primary" onclick="TutorLessons.viewDetails(${lesson.id})" title="Szczegóły">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        ${canModify ? `
                             <button class="btn btn-outline-success" onclick="TutorLessons.completeLesson(${lesson.id})" title="Oznacz jako zakończoną">
                                 <i class="bi bi-check"></i>
                             </button>
@@ -248,8 +280,8 @@ export class TutorLessons {
                             <button class="btn btn-outline-danger" onclick="TutorLessons.cancelLesson(${lesson.id})" title="Anuluj">
                                 <i class="bi bi-x-circle"></i>
                             </button>
-                        </div>
-                    ` : `<span class="text-muted">-</span>`}
+                        ` : ''}
+                    </div>
                 </td>
             </tr>
         `
@@ -406,9 +438,6 @@ export class TutorLessons {
     }
     
     // Helper methods
-    private formatDate(date: Date): string {
-        return date.toISOString().split('T')[0]
-    }
     
     private formatWeekRange(weekStart: Date): string {
         const weekEnd = new Date(weekStart)
@@ -435,8 +464,23 @@ export class TutorLessons {
     }
     
     private canModifyLesson(lesson: any): boolean {
-        const lessonDate = lesson.lesson_date.split('T')[0]
-        const lessonDateTime = new Date(`${lessonDate}T${lesson.start_time}`)
+        // Handle different date formats that might come from the API
+        let lessonDateStr = lesson.lesson_date
+        if (lessonDateStr.includes('T')) {
+            lessonDateStr = lessonDateStr.split('T')[0]
+        }
+        
+        // Extract just the time part if start_time contains a full datetime
+        let startTimeStr = lesson.start_time
+        if (startTimeStr.includes(' ')) {
+            // If it's in format "YYYY-MM-DD HH:MM:SS", extract just the time
+            startTimeStr = startTimeStr.split(' ')[1].substring(0, 5) // Get HH:MM
+        } else if (startTimeStr.length > 5) {
+            // If it's longer than HH:MM format, truncate
+            startTimeStr = startTimeStr.substring(0, 5)
+        }
+        
+        const lessonDateTime = new Date(`${lessonDateStr}T${startTimeStr}`)
         const now = new Date()
         return lessonDateTime <= now
     }
@@ -514,6 +558,18 @@ export class TutorLessons {
         }
     }
     
+    private formatTime(time: string): string {
+        // Handle different time formats that might come from API
+        let timeStr = time
+        if (timeStr.includes(' ')) {
+            timeStr = timeStr.split(' ')[1] // Extract time part if datetime
+        }
+        if (timeStr.length > 5) {
+            timeStr = timeStr.substring(0, 5) // Truncate seconds if present (HH:MM:SS -> HH:MM)
+        }
+        return timeStr
+    }
+    
     // Static methods for global access
     static instance = new TutorLessons()
     
@@ -524,12 +580,12 @@ export class TutorLessons {
     
     static previousWeek(): void {
         this.instance.currentWeekOffset--
-        this.instance.renderCalendarView()
+        this.instance.loadLessons()
     }
     
     static nextWeek(): void {
         this.instance.currentWeekOffset++
-        this.instance.renderCalendarView()
+        this.instance.loadLessons()
     }
     
     static async completeLesson(lessonId: number): Promise<void> {
@@ -623,4 +679,22 @@ export class TutorLessons {
             }))
         }
     }
+    
+    static async viewDetails(lessonId: number): Promise<void> {
+        // Use the LessonDetailsModal
+        if ((window as any).LessonDetailsModal) {
+            (window as any).LessonDetailsModal.show(lessonId)
+        } else {
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Nie można załadować modalu szczegółów',
+                    duration: 3000
+                }
+            }))
+        }
+    }
 }
+
+// Export to global scope
+;(window as any).TutorLessons = TutorLessons
