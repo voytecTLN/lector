@@ -47,7 +47,13 @@ class TutorController extends Controller
      */
     public function store(CreateTutorRequest $request): JsonResponse
     {
-        $tutor = $this->tutorService->createTutor($request->validated());
+        $data = $request->validated();
+        
+        // Auto-verify users created by admin (like import)
+        $data['email_verified_at'] = now();
+        $data['is_import'] = true; // Skip welcome email
+        
+        $tutor = $this->tutorService->createTutor($data);
 
         return response()->json($tutor, 201);
     }

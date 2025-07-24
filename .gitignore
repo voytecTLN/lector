@@ -42,3 +42,4 @@ Thumbs.db
 
 *.js
 /CLAUDE.local.md
+Makefile

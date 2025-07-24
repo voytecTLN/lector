@@ -151,7 +151,7 @@ class PackageService
     {
         return Package::active()
             ->ordered()
-            ->get(['id', 'name', 'hours_count', 'price', 'color'])
+            ->get(['id', 'name', 'hours_count', 'price', 'validity_days', 'description', 'color'])
             ->toArray();
     }
 

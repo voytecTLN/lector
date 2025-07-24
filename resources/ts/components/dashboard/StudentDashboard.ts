@@ -124,6 +124,9 @@ export class StudentDashboard implements RouteComponent {
                             <button class="btn btn-primary" id="quick-book-lesson-btn">
                                 <i class="bi bi-plus-circle"></i> Zarezerwuj lekcję
                             </button>
+                            <button class="btn btn-outline-danger ms-2" id="logoutBtn">
+                                <i class="bi bi-box-arrow-right"></i> Wyloguj
+                            </button>
                         </div>
                     </div>
                     
@@ -164,6 +167,14 @@ export class StudentDashboard implements RouteComponent {
         if (quickBookBtn) {
             quickBookBtn.addEventListener('click', () => {
                 this.navigateToSection('rezerwuj')
+            })
+        }
+
+        // Logout button
+        const logoutBtn = document.getElementById('logoutBtn')
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                this.handleLogout()
             })
         }
 
@@ -238,6 +249,11 @@ export class StudentDashboard implements RouteComponent {
                 contentArea.innerHTML = '<div class="student-loading-container"><div class="student-loading-spinner"></div><p class="student-loading-text">Ładowanie statystyk...</p></div>'
                 this.isLoadingStats = false
                 contentArea.innerHTML = await this.getDashboardContent()
+                
+                // Load upcoming lessons preview after dashboard content is set
+                setTimeout(() => {
+                    this.loadUpcomingLessonsPreview()
+                }, 100)
                 break
             case 'nadchodzace':
                 pageTitle.textContent = 'Nadchodzące lekcje'
@@ -816,5 +832,41 @@ export class StudentDashboard implements RouteComponent {
                 </div>
             </div>
         `
+    }
+
+    private async loadUpcomingLessonsPreview(): Promise<void> {
+        const previewContainer = document.getElementById('upcoming-lessons-preview')
+        if (!previewContainer) return
+
+        try {
+            // Use studentLessons component to get preview content
+            const previewContent = await this.studentLessons.getUpcomingLessonsPreview()
+            previewContainer.innerHTML = previewContent
+        } catch (error) {
+            console.error('Error loading upcoming lessons preview:', error)
+            previewContainer.innerHTML = `
+                <div class="text-center py-3 text-muted">
+                    <p>Nie udało się załadować nadchodzących lekcji</p>
+                </div>
+            `
+        }
+    }
+
+    private async handleLogout(): Promise<void> {
+        try {
+            // Call logout API
+            await api.post('/auth/logout')
+            
+            // Clear any stored tokens/data
+            localStorage.removeItem('auth_token')
+            sessionStorage.clear()
+            
+            // Redirect to login page
+            window.location.href = '/login'
+        } catch (error) {
+            console.error('Error during logout:', error)
+            // Even if logout fails, redirect to login
+            window.location.href = '/login'
+        }
     }
 }

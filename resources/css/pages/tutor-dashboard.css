@@ -407,10 +407,11 @@
 }
 
 .calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
     margin-bottom: 1.5rem;
+    width: 100% !important;
 }
 
 .calendar-nav {
@@ -639,4 +640,9 @@
     .time-slots {
         grid-template-columns: repeat(4, 1fr);
     }
+}
+
+/* Fix dropdown z-index issues */
+.tutor-content-area .dropdown-menu {
+    z-index: 1050 !important;
 }

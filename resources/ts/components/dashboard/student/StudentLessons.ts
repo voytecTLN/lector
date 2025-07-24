@@ -583,4 +583,69 @@ export class StudentLessons {
             }))
         }
     }
+
+    public async getUpcomingLessonsPreview(): Promise<string> {
+        try {
+            const response = await api.get<any>('/student/lessons/my-lessons?type=upcoming&limit=3')
+            const lessons = response.data?.lessons || []
+            
+            if (lessons.length === 0) {
+                return `
+                    <div class="text-center py-3">
+                        <div class="text-muted">
+                            <i class="bi bi-calendar-x fs-1 mb-2"></i>
+                            <p>Brak nadchodzących lekcji</p>
+                            <button class="btn btn-primary btn-sm" data-action="goto-rezerwuj">
+                                Zarezerwuj pierwszą lekcję
+                            </button>
+                        </div>
+                    </div>
+                `
+            }
+            
+            const lessonsHtml = lessons.map((lesson: any) => {
+                const lessonDate = new Date(lesson.lesson_date)
+                const startTime = lesson.start_time ? new Date(`1970-01-01T${lesson.start_time}:00`) : null
+                
+                return `
+                <div class="d-flex align-items-center py-2 border-bottom">
+                    <div class="me-3">
+                        <div class="bg-primary text-white rounded p-2 text-center" style="min-width: 50px;">
+                            <div class="fw-bold">${lessonDate.getDate()}</div>
+                            <div class="small">${lessonDate.toLocaleDateString('pl-PL', { month: 'short' })}</div>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">${lesson.tutor?.name || 'Nieznany lektor'}</div>
+                        <div class="text-muted small">
+                            ${startTime ? startTime.toLocaleTimeString('pl-PL', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                            }) : '00:00'} - ${lesson.lesson_type || 'Standardowa'}
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-success">Zaplanowana</span>
+                    </div>
+                </div>
+                `
+            }).join('')
+            
+            return `
+                ${lessonsHtml}
+                <div class="text-center pt-3">
+                    <button class="btn btn-outline-primary btn-sm" data-action="goto-nadchodzace">
+                        Zobacz wszystkie
+                    </button>
+                </div>
+            `
+        } catch (error) {
+            console.error('Error loading upcoming lessons preview:', error)
+            return `
+                <div class="text-center py-3 text-muted">
+                    <p>Nie udało się załadować nadchodzących lekcji</p>
+                </div>
+            `
+        }
+    }
 }

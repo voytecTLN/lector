@@ -82,9 +82,24 @@ class DashboardController extends Controller
                 'learning_goals' => $user->studentProfile?->learning_goals ?? [],
                 'current_levels' => $user->studentProfile?->current_levels ?? [],
 
+                // STATYSTYKI LEKCJI - prawdziwe dane
+                'completedLessons' => \App\Models\Lesson::where('student_id', $user->id)
+                    ->where('status', 'completed')
+                    ->count(),
+                'upcomingLessons' => \App\Models\Lesson::where('student_id', $user->id)
+                    ->where('status', 'scheduled')
+                    ->where('lesson_date', '>=', now())
+                    ->count(),
+                
+                // PAKIETY - prawdziwe dane
+                'remainingHours' => $user->activePackageAssignments()->sum('hours_remaining'),
+                
+                // LEKTORZY - prawdziwe dane
+                'activeTutors' => \App\Models\Lesson::where('student_id', $user->id)
+                    ->distinct('tutor_id')
+                    ->count(),
+                
                 // PLACEHOLDERS - do przyszłych modułów
-                'completed_lessons' => null,
-                'upcoming_lessons' => null,
                 'total_hours' => null,
                 'streak_days' => null,
                 'average_rating' => null,

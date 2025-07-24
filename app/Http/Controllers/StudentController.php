@@ -41,7 +41,13 @@ class StudentController extends BaseController
     public function store(CreateStudentRequest $request): JsonResponse
     {
         try {
-            $student = $this->studentService->createStudent($request->validated());
+            $data = $request->validated();
+            
+            // Auto-verify users created by admin (like import)
+            $data['email_verified_at'] = now();
+            $data['is_import'] = true; // Skip welcome email
+            
+            $student = $this->studentService->createStudent($data);
             return $this->successResponse($student, 'Student został utworzony pomyślnie', 201);
         } catch (\Exception $e) {
             return $this->handleServiceException($e, 'tworzenia studenta');

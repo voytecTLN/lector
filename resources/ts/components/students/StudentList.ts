@@ -573,10 +573,15 @@ export class StudentList implements RouteComponent {
     }
 
     private getActualStatus(student: User & { hour_package: HourPackage }): string {
+        // Status inactive/blocked is more important than unverified
+        // todo - zalogować statusy do konsoli i debug
+        if (student.status === 'inactive' || student.status === 'blocked') {
+            return student.status
+        }
         if (!student.email_verified_at) {
             return 'unverified'
         }
-        return student.status || 'inactive'
+        return student.status || 'active'
     }
 
     private isValidFilterKey(key: string): key is keyof StudentFilters {
