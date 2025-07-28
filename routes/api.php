@@ -269,10 +269,16 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.admin.lessons.index');
                 Route::get('/stats', [LessonController::class, 'getStats'])
                     ->name('api.admin.lessons.stats');
+                Route::get('/status-options', [LessonController::class, 'getStatusOptions'])
+                    ->name('api.admin.lessons.status-options');
                 Route::get('/{lessonId}', [LessonController::class, 'show'])
                     ->name('api.admin.lessons.show');
                 Route::put('/{lessonId}/cancel', [LessonController::class, 'adminCancelLesson'])
                     ->name('api.admin.lessons.cancel');
+                Route::put('/{lessonId}/status', [LessonController::class, 'updateStatus'])
+                    ->name('api.admin.lessons.update-status');
+                Route::get('/{lessonId}/status-history', [LessonController::class, 'getStatusHistory'])
+                    ->name('api.admin.lessons.status-history');
             });
 
         });

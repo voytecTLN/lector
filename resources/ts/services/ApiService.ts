@@ -87,7 +87,11 @@ export class ApiService {
 
       // Sprawdź content-type
       const contentType = response.headers.get('content-type')
+      console.log('Content-Type:', contentType)
+      console.log('Response OK:', response.ok)
+      
       if (!contentType || !contentType.includes('application/json')) {
+        console.log('⚠️ Content-Type is not JSON, returning empty object')
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
@@ -96,6 +100,7 @@ export class ApiService {
       }
 
       const result: LaravelResponse<T> = await response.json()
+      console.log('Parsed JSON result:', result)
 
       if (!response.ok) {
         // Laravel validation errors (422)

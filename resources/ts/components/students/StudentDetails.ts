@@ -5,6 +5,7 @@ import type { User, StudentProfile, PackageAssignment } from '@/types/models'
 import { navigate, routeChecker, urlBuilder } from '@/utils/navigation'
 import { ROUTES } from '@/config/routing'
 import { LinkTemplates } from '@/components/common/Link'
+import { LessonStatusManager } from '@/components/lessons/LessonStatusManager'
 
 declare global {
     interface Window {
@@ -23,6 +24,8 @@ export class StudentDetails implements RouteComponent {
         stats?: StudentStats;
         active_package_assignments?: PackageAssignment[];
         package_assignments?: PackageAssignment[];
+        studentLessons?: any[];
+        student_lessons?: any[]; // Laravel returns snake_case
     }) | null = null
     private container: HTMLElement | null = null
 
@@ -56,6 +59,7 @@ export class StudentDetails implements RouteComponent {
 
     async mount(container: HTMLElement): Promise<void> {
         window.studentDetails = this
+        StudentDetails.instance = this
         this.container = container
 
         if (!this.studentId || this.studentId === 0) {
@@ -71,6 +75,7 @@ export class StudentDetails implements RouteComponent {
         this.container = null
         this.student = null
         this.studentId = null
+        StudentDetails.instance = null
     }
 
     private async loadStudentData(): Promise<void> {
@@ -560,18 +565,164 @@ export class StudentDetails implements RouteComponent {
     }
 
     private generateLessonsHTML(): string {
-        return `
-            <div class="text-center py-5">
-                <div class="mb-3">
-                    <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+        // Laravel returns snake_case, so check both
+        const lessons = this.student?.student_lessons || this.student?.studentLessons
+        
+        if (!lessons) {
+            return `
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5>Brak danych o lekcjach</h5>
+                    <p class="text-muted">Nie udało się załadować lekcji studenta.</p>
                 </div>
-                <h5>System lekcji (wkrótce)</h5>
-                <p class="text-muted">Moduł zarządzania lekcjami będzie dostępny w następnej wersji.</p>
-                <button class="btn btn-primary mt-3" disabled>
-                    <i class="bi bi-calendar-plus me-1"></i> Zaplanuj lekcję
-                </button>
-                <p class="text-muted mt-2"><small>🔧 Funkcja w przygotowaniu</small></p>
+            `
+        }
+        
+        if (lessons.length === 0) {
+            return `
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-calendar-plus text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5>Brak lekcji</h5>
+                    <p class="text-muted">Student nie ma jeszcze żadnych zaplanowanych lekcji.</p>
+                </div>
+            `
+        }
+
+        // Group lessons by status
+        const upcoming = lessons.filter(l => l.status === 'scheduled' && new Date(l.lesson_date) >= new Date())
+        const completed = lessons.filter(l => l.status === 'completed')
+        const cancelled = lessons.filter(l => l.status === 'cancelled')
+        const past = lessons.filter(l => l.status === 'scheduled' && new Date(l.lesson_date) < new Date())
+
+        return `
+            <div class="lessons-container">
+                <!-- Stats Row -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="text-primary">${lessons.length}</h3>
+                                <p class="text-muted mb-0">Łączna liczba</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="text-success">${upcoming.length}</h3>
+                                <p class="text-muted mb-0">Nadchodzące</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="text-info">${completed.length}</h3>
+                                <p class="text-muted mb-0">Ukończone</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="text-warning">${cancelled.length}</h3>
+                                <p class="text-muted mb-0">Anulowane</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lessons List -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Lista lekcji</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Godzina</th>
+                                        <th>Lektor</th>
+                                        <th>Typ</th>
+                                        <th>Status</th>
+                                        <th>Pakiet</th>
+                                        <th>Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${lessons.map(lesson => this.renderLessonRow(lesson)).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
+        `
+    }
+
+    private renderLessonRow(lesson: any): string {
+        const lessonDate = new Date(lesson.lesson_date)
+        const startTime = lesson.start_time || 'N/A'
+        const endTime = lesson.end_time || 'N/A'
+        const tutorName = lesson.tutor?.name || 'Nieznany lektor'
+        const lessonType = lesson.lesson_type || 'Standardowa'
+        const packageName = lesson.package_assignment?.package?.name || lesson.packageAssignment?.package?.name || 'Brak pakietu'
+        
+        // Status badge
+        const statusLabel = LessonStatusManager.getStatusLabel(lesson.status)
+        const badgeClass = LessonStatusManager.getStatusBadgeClass(lesson.status)
+        
+        // Special handling for scheduled lessons
+        let statusBadge = ''
+        if (lesson.status === 'scheduled' && lessonDate < new Date()) {
+            statusBadge = `<span class="badge bg-secondary">Przeterminowana</span>`
+        } else {
+            statusBadge = `<span class="badge ${badgeClass}">${statusLabel}</span>`
+        }
+
+        return `
+            <tr>
+                <td>${lessonDate.toLocaleDateString('pl-PL')}</td>
+                <td>${startTime} - ${endTime}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 14px;">
+                            ${tutorName.charAt(0)}
+                        </div>
+                        ${tutorName}
+                    </div>
+                </td>
+                <td>${lessonType}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <small class="text-muted">${packageName}</small>
+                </td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="StudentDetails.changeStatus(${lesson.id}, '${lesson.status}'); return false;">
+                                    <i class="bi bi-arrow-repeat me-2"></i>Zmień status
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="StudentDetails.viewStatusHistory(${lesson.id}); return false;">
+                                    <i class="bi bi-clock-history me-2"></i>Historia statusów
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
         `
     }
 
@@ -1188,4 +1339,117 @@ export class StudentDetails implements RouteComponent {
         }
         return labels[goal] || goal
     }
+
+    // Static methods for global access
+    static instance: StudentDetails | null = null
+
+    static async changeStatus(lessonId: number, currentStatus: string): Promise<void> {
+        try {
+            console.log('StudentDetails.changeStatus called with:', { lessonId, currentStatus })
+            console.log('LessonStatusManager available:', !!LessonStatusManager)
+            
+            const statusManager = new LessonStatusManager(lessonId, currentStatus, (newStatus: string) => {
+                console.log('Status update callback triggered:', newStatus)
+                // Reload lessons after status update
+                if (StudentDetails.instance) {
+                    console.log('Reloading student data...')
+                    StudentDetails.instance.loadStudentData()
+                } else {
+                    console.error('StudentDetails.instance is null!')
+                }
+            })
+
+            console.log('Showing status modal...')
+            await statusManager.showModal()
+            console.log('Status modal shown successfully')
+        } catch (error) {
+            console.error('Error in changeStatus:', error)
+            console.error('Error stack:', (error as Error).stack)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Wystąpił błąd podczas zmiany statusu: ' + (error as Error).message,
+                    duration: 5000
+                }
+            }))
+        }
+    }
+
+    static async viewStatusHistory(lessonId: number): Promise<void> {
+        try {
+            console.log('StudentDetails.viewStatusHistory called with lessonId:', lessonId)
+            const { api } = await import('@services/ApiService')
+            console.log('API service imported successfully')
+            const response = await api.get<{ success: boolean, data: any[] }>(`/lessons/${lessonId}/status-history`)
+            console.log('Status history response:', response)
+            const history = response.data || []
+
+            const modalHtml = `
+                <div class="modal fade" id="statusHistoryModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Historia statusów lekcji</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                ${history.length === 0 ? `
+                                    <p class="text-muted text-center">Brak historii zmian statusu</p>
+                                ` : `
+                                    <div class="timeline">
+                                        ${history.map(entry => `
+                                            <div class="timeline-item mb-3">
+                                                <div class="d-flex align-items-start">
+                                                    <div class="timeline-icon bg-primary text-white rounded-circle p-2 me-3">
+                                                        <i class="bi bi-clock-history"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <div class="d-flex justify-content-between">
+                                                            <h6 class="mb-1">${entry.status}</h6>
+                                                            <small class="text-muted">${new Date(entry.changed_at).toLocaleString('pl-PL')}</small>
+                                                        </div>
+                                                        <p class="mb-1 text-muted">Zmienione przez: ${entry.changed_by}</p>
+                                                        ${entry.reason ? `<p class="mb-0"><small>Powód: ${entry.reason}</small></p>` : ''}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                `}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+
+            // Remove existing modal if any
+            const existingModal = document.getElementById('statusHistoryModal')
+            if (existingModal) {
+                existingModal.remove()
+            }
+
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml)
+            
+            // Show modal
+            const modal = new (window as any).bootstrap.Modal(document.getElementById('statusHistoryModal'))
+            modal.show()
+
+        } catch (error) {
+            console.error('Error loading status history:', error)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Nie udało się załadować historii statusów',
+                    duration: 3000
+                }
+            }))
+        }
+    }
 }
+
+// Export to global scope
+(window as any).StudentDetails = StudentDetails

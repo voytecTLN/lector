@@ -503,4 +503,78 @@ class LessonController extends Controller
             ], 400);
         }
     }
+
+    /**
+     * Update lesson status
+     */
+    public function updateStatus(Request $request, int $lessonId): JsonResponse
+    {
+        $validated = $request->validate([
+            'status' => 'required|string|in:scheduled,in_progress,completed,cancelled,no_show_student,no_show_tutor,technical_issues',
+            'reason' => 'nullable|string|max:500'
+        ]);
+
+        try {
+            $statusService = app(\App\Services\LessonStatusService::class);
+            $lesson = $statusService->updateLessonStatus(
+                $lessonId,
+                $validated['status'],
+                $validated['reason'] ?? null
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status lekcji został zaktualizowany',
+                'data' => $lesson
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Get lesson status history
+     */
+    public function getStatusHistory(int $lessonId): JsonResponse
+    {
+        try {
+            $statusService = app(\App\Services\LessonStatusService::class);
+            $history = $statusService->getStatusHistory($lessonId);
+
+            return response()->json([
+                'success' => true,
+                'data' => $history
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Get available status options
+     */
+    public function getStatusOptions(): JsonResponse
+    {
+        $user = Auth::user();
+        $statuses = \App\Services\LessonStatusService::getStatusLabels();
+        
+        // Filter based on user role
+        if ($user->role === 'tutor') {
+            $allowedStatuses = ['in_progress', 'completed', 'no_show_student', 'technical_issues', 'cancelled'];
+            $statuses = array_intersect_key($statuses, array_flip($allowedStatuses));
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $statuses
+        ]);
+    }
 }

@@ -1,4 +1,5 @@
 import { api } from '@services/ApiService'
+import { LessonStatusManager } from '@/components/lessons/LessonStatusManager'
 
 export class AdminLessons {
     private currentFilter = {
@@ -49,9 +50,12 @@ export class AdminLessons {
                             <select class="form-select" id="status-filter" onchange="AdminLessons.applyFilters()">
                                 <option value="all">Wszystkie</option>
                                 <option value="scheduled">Zaplanowane</option>
+                                <option value="in_progress">W trakcie</option>
                                 <option value="completed">Zakończone</option>
                                 <option value="cancelled">Anulowane</option>
-                                <option value="no_show">Nieobecność</option>
+                                <option value="no_show_student">Student nieobecny</option>
+                                <option value="no_show_tutor">Lektor nieobecny</option>
+                                <option value="technical_issues">Problemy techniczne</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -94,8 +98,14 @@ export class AdminLessons {
             if (this.currentFilter.dateTo) params.append('date_to', this.currentFilter.dateTo)
             
             const response = await api.get<{success: boolean, data: {lessons: any[]}, message?: string}>(`/lessons?${params.toString()}`)
+            
+            console.log('AdminLessons API response:', response)
+            console.log('Response data:', response.data)
+            console.log('Lessons array:', response.data?.lessons)
+            
             const lessons = response.data?.lessons || []
             
+            console.log('Final lessons array:', lessons)
             this.renderLessons(lessons)
         } catch (error) {
             console.error('Error loading lessons:', error)
@@ -107,6 +117,7 @@ export class AdminLessons {
         try {
             // Load tutors
             const tutorsResponse = await api.get<{success: boolean, data: any[], message?: string}>('/tutors')
+            console.log('Tutors response:', tutorsResponse)
             const tutors = tutorsResponse.data || []
             
             const tutorSelect = document.getElementById('tutor-filter') as HTMLSelectElement
@@ -117,6 +128,7 @@ export class AdminLessons {
             
             // Load students
             const studentsResponse = await api.get<{success: boolean, data: any[], message?: string}>('/students')
+            console.log('Students response:', studentsResponse)
             const students = studentsResponse.data || []
             
             const studentSelect = document.getElementById('student-filter') as HTMLSelectElement
@@ -126,12 +138,18 @@ export class AdminLessons {
             }
         } catch (error) {
             console.error('Error loading filter options:', error)
+            // Don't block lesson loading if filter options fail
         }
     }
     
     private renderLessons(lessons: any[]): void {
+        console.log('renderLessons called with:', lessons)
         const container = document.getElementById('lessons-container')
-        if (!container) return
+        console.log('Container found:', container)
+        if (!container) {
+            console.error('lessons-container not found!')
+            return
+        }
         
         if (lessons.length === 0) {
             container.innerHTML = `
@@ -202,7 +220,9 @@ export class AdminLessons {
     
     private renderLessonRow(lesson: any): string {
         const lessonDate = new Date(lesson.lesson_date)
-        const statusBadge = this.getStatusBadge(lesson.status)
+        const statusLabel = LessonStatusManager.getStatusLabel(lesson.status)
+        const badgeClass = LessonStatusManager.getStatusBadgeClass(lesson.status)
+        const statusBadge = `<span class="badge ${badgeClass}">${statusLabel}</span>`
         
         return `
             <tr>
@@ -237,7 +257,14 @@ export class AdminLessons {
                             <li><a class="dropdown-item" href="#" onclick="AdminLessons.viewDetails(${lesson.id})">
                                 <i class="bi bi-eye me-2"></i>Szczegóły
                             </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="AdminLessons.changeStatus(${lesson.id}, '${lesson.status}')">
+                                <i class="bi bi-arrow-repeat me-2"></i>Zmień status
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="AdminLessons.viewStatusHistory(${lesson.id})">
+                                <i class="bi bi-clock-history me-2"></i>Historia statusów
+                            </a></li>
                             ${lesson.status === 'scheduled' ? `
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="#" onclick="AdminLessons.cancelLesson(${lesson.id})">
                                     <i class="bi bi-x-circle me-2"></i>Anuluj
                                 </a></li>
@@ -264,20 +291,6 @@ export class AdminLessons {
         `
     }
     
-    private getStatusBadge(status: string): string {
-        switch (status) {
-            case 'scheduled':
-                return '<span class="badge bg-primary">Zaplanowana</span>'
-            case 'completed':
-                return '<span class="badge bg-success">Zakończona</span>'
-            case 'cancelled':
-                return '<span class="badge bg-danger">Anulowana</span>'
-            case 'no_show':
-                return '<span class="badge bg-warning">Nieobecność</span>'
-            default:
-                return '<span class="badge bg-secondary">Nieznany</span>'
-        }
-    }
     
     private getLessonTypeName(type: string): string {
         switch (type) {
@@ -370,6 +383,102 @@ export class AdminLessons {
                 duration: 3000
             }
         }))
+    }
+    
+    static async changeStatus(lessonId: number, currentStatus: string): Promise<void> {
+        try {
+            const statusManager = new LessonStatusManager(lessonId, currentStatus, (newStatus: string) => {
+                // Reload lessons after status update
+                this.instance.loadLessons()
+            })
+
+            await statusManager.showModal()
+        } catch (error) {
+            console.error('Error in changeStatus:', error)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Wystąpił błąd podczas zmiany statusu',
+                    duration: 3000
+                }
+            }))
+        }
+    }
+
+    static async viewStatusHistory(lessonId: number): Promise<void> {
+        try {
+            const response = await api.get<{ success: boolean, data: any[] }>(`/lessons/${lessonId}/status-history`)
+            const history = response.data || []
+
+            const modalHtml = `
+                <div class="modal fade" id="statusHistoryModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Historia statusów lekcji #${lessonId}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                ${history.length === 0 ? `
+                                    <p class="text-muted text-center">Brak historii zmian statusu</p>
+                                ` : `
+                                    <div class="timeline">
+                                        ${history.map(entry => `
+                                            <div class="timeline-item mb-3">
+                                                <div class="d-flex align-items-start">
+                                                    <div class="timeline-icon bg-primary text-white rounded-circle p-2 me-3">
+                                                        <i class="bi bi-clock-history"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <div class="d-flex justify-content-between">
+                                                            <h6 class="mb-1">${entry.status}</h6>
+                                                            <small class="text-muted">${new Date(entry.changed_at).toLocaleString('pl-PL')}</small>
+                                                        </div>
+                                                        <p class="mb-1 text-muted">Zmienione przez: ${entry.changed_by}</p>
+                                                        ${entry.reason ? `<p class="mb-0"><small>Powód: ${entry.reason}</small></p>` : ''}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                `}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+
+            // Remove existing modal if any
+            const existingModal = document.getElementById('statusHistoryModal')
+            if (existingModal) {
+                existingModal.remove()
+            }
+
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml)
+            
+            // Show modal
+            const modal = new (window as any).bootstrap.Modal(document.getElementById('statusHistoryModal'))
+            modal.show()
+
+            // Cleanup on modal hidden
+            document.getElementById('statusHistoryModal')?.addEventListener('hidden.bs.modal', () => {
+                document.getElementById('statusHistoryModal')?.remove()
+            })
+
+        } catch (error) {
+            console.error('Error loading status history:', error)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Nie udało się załadować historii statusów',
+                    duration: 3000
+                }
+            }))
+        }
     }
 }
 

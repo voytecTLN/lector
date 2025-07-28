@@ -21,6 +21,9 @@ class Lesson extends Model
         'end_time',
         'duration_minutes',
         'status',
+        'status_reason',
+        'status_updated_by',
+        'status_updated_at',
         'cancelled_by',
         'cancelled_at',
         'cancellation_reason',
@@ -33,6 +36,7 @@ class Lesson extends Model
         'student_rating',
         'student_feedback',
         'feedback_submitted_at'
+        // TODO: Add after migration: 'started_at', 'ended_at'
     ];
 
     protected $casts = [
@@ -41,6 +45,8 @@ class Lesson extends Model
         'end_time' => 'datetime:H:i',
         'cancelled_at' => 'datetime',
         'feedback_submitted_at' => 'datetime',
+        'status_updated_at' => 'datetime',
+        // TODO: Add after migration: 'started_at' => 'datetime', 'ended_at' => 'datetime',
         'is_paid' => 'boolean',
         'price' => 'decimal:2',
         'duration_minutes' => 'integer',
@@ -49,15 +55,21 @@ class Lesson extends Model
 
     // Status constants
     const STATUS_SCHEDULED = 'scheduled';
+    const STATUS_IN_PROGRESS = 'in_progress';
     const STATUS_COMPLETED = 'completed';
     const STATUS_CANCELLED = 'cancelled';
-    const STATUS_NO_SHOW = 'no_show';
+    const STATUS_NO_SHOW_STUDENT = 'no_show_student';
+    const STATUS_NO_SHOW_TUTOR = 'no_show_tutor';
+    const STATUS_TECHNICAL_ISSUES = 'technical_issues';
 
     const STATUSES = [
         self::STATUS_SCHEDULED,
+        self::STATUS_IN_PROGRESS,
         self::STATUS_COMPLETED,
         self::STATUS_CANCELLED,
-        self::STATUS_NO_SHOW
+        self::STATUS_NO_SHOW_STUDENT,
+        self::STATUS_NO_SHOW_TUTOR,
+        self::STATUS_TECHNICAL_ISSUES
     ];
 
     // Lesson type constants
@@ -92,6 +104,11 @@ class Lesson extends Model
     public function availabilitySlot(): BelongsTo
     {
         return $this->belongsTo(TutorAvailabilitySlot::class, 'tutor_availability_slot_id');
+    }
+    
+    public function statusUpdatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'status_updated_by');
     }
 
     // Scopes

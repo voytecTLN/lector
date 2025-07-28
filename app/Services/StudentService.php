@@ -118,6 +118,11 @@ class StudentService
                 'activePackageAssignments.package',
                 'packageAssignments' => function ($query) {
                     $query->with('package')->orderBy('assigned_at', 'desc');
+                },
+                'studentLessons' => function ($query) {
+                    $query->with(['tutor', 'packageAssignment.package'])
+                        ->orderBy('lesson_date', 'desc')
+                        ->orderBy('start_time', 'desc');
                 }
             ])
             ->where('role', 'student')
