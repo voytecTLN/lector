@@ -23,6 +23,14 @@ deploy.sh
 /storage/logs/*
 !/storage/logs/.gitkeep
 
+# Materials storage (keep structure, ignore files)
+/storage/app/materials/*/*
+!/storage/app/materials/.gitkeep
+/storage/app/quarantine/*/*
+!/storage/app/quarantine/.gitkeep
+/storage/app/temp/*
+!/storage/app/temp/.gitkeep
+
 .env
 
 # TypeScript
@@ -43,3 +51,13 @@ Thumbs.db
 *.js
 /CLAUDE.local.md
 Makefile
+
+# Test files
+test_*.html
+test_*.php
+
+# Documentation (temporary)
+MATERIALS_IMPLEMENTATION_SUMMARY.md
+
+# Symlinks
+/public/storage

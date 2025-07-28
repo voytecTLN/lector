@@ -67,14 +67,27 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Student management (admin/moderator)
         Route::middleware('role:admin,moderator')->group(function () {
-            Route::get('students/search', [StudentController::class, 'search'])
-                ->name('api.students.search');
-            Route::put('students/{id}/learning-goals', [StudentController::class, 'updateLearningGoals'])
-                ->name('api.students.learning-goals.update');
-            Route::post('students/bulk-status', [StudentController::class, 'bulkUpdateStatus'])
-                ->name('api.students.bulk-status');
-            Route::get('students/stats', [StudentController::class, 'getStats'])
-                ->name('api.students.stats');
+            // Additional student endpoints (MUST be before apiResource)
+            Route::prefix('students')->group(function () {
+                Route::get('search', [StudentController::class, 'search'])
+                    ->name('api.students.search');
+                Route::get('stats', [StudentController::class, 'getStats'])
+                    ->name('api.students.stats');
+                Route::put('{id}/learning-goals', [StudentController::class, 'updateLearningGoals'])
+                    ->name('api.students.learning-goals.update');
+                Route::post('bulk-status', [StudentController::class, 'bulkUpdateStatus'])
+                    ->name('api.students.bulk-status');
+                
+                // CSV Import routes
+                Route::get('import/template', [StudentImportController::class, 'downloadTemplate'])
+                    ->name('api.students.import.template');
+                Route::post('import/preview', [StudentImportController::class, 'preview'])
+                    ->name('api.students.import.preview');
+                Route::post('import', [StudentImportController::class, 'import'])
+                    ->name('api.students.import');
+            });
+            
+            // Student CRUD (MUST be after specific routes)
             Route::apiResource('students', StudentController::class)
                 ->names('api.students');
         });
@@ -92,6 +105,12 @@ Route::middleware('auth:sanctum')->group(function () {
                 
             Route::get('/packages', [PackageController::class, 'myPackages'])
                 ->name('api.student.packages');
+                
+            // Materials routes for students
+            Route::get('/materials', [\App\Http\Controllers\MaterialsController::class, 'getMyMaterials'])
+                ->name('api.student.materials');
+            Route::get('/materials/{material}/download', [\App\Http\Controllers\MaterialsController::class, 'download'])
+                ->name('api.student.materials.download');
                 
             // Lesson booking routes for students
             Route::prefix('lessons')->group(function () {
@@ -155,29 +174,7 @@ Route::middleware('auth:sanctum')->group(function () {
                 });
             });
 
-            // Student CRUD
-            Route::apiResource('students', StudentController::class)
-                ->names('api.students');
-
-            // Additional student endpoints
-            Route::prefix('students')->group(function () {
-                Route::get('search', [StudentController::class, 'search'])
-                    ->name('api.students.search');
-                Route::get('stats', [StudentController::class, 'getStats'])
-                    ->name('api.students.stats');
-                Route::put('{id}/learning-goals', [StudentController::class, 'updateLearningGoals'])
-                    ->name('api.students.learning-goals.update');
-                Route::post('bulk-status', [StudentController::class, 'bulkUpdateStatus'])
-                    ->name('api.students.bulk-status');
-                
-                // CSV Import routes
-                Route::get('import/template', [StudentImportController::class, 'downloadTemplate'])
-                    ->name('api.students.import.template');
-                Route::post('import/preview', [StudentImportController::class, 'preview'])
-                    ->name('api.students.import.preview');
-                Route::post('import', [StudentImportController::class, 'import'])
-                    ->name('api.students.import');
-            });
+            // Removed duplicate student routes - they are already defined above in lines 69-80
 
             // Package management routes
             Route::prefix('packages')->group(function () {
@@ -334,7 +331,27 @@ Route::middleware('auth:sanctum')->group(function () {
                         ->name('api.tutor.students.index');
                     Route::get('/{studentId}', [TutorController::class, 'getStudentDetails'])
                         ->name('api.tutor.students.show');
+                    
+                    // Materials management routes
+                    Route::get('/{studentId}/materials', [\App\Http\Controllers\MaterialsController::class, 'index'])
+                        ->name('api.tutor.students.materials.index');
+                    Route::get('/{studentId}/materials/versions', [\App\Http\Controllers\MaterialsController::class, 'versions'])
+                        ->name('api.tutor.students.materials.versions');
                 });
+            });
+            
+            // Materials management routes (common for tutors)
+            Route::prefix('materials')->group(function () {
+                Route::post('/upload', [\App\Http\Controllers\MaterialsController::class, 'upload'])
+                    ->name('api.materials.upload');
+                Route::get('/{material}/download', [\App\Http\Controllers\MaterialsController::class, 'download'])
+                    ->name('api.materials.download');
+                Route::delete('/{materialId}', [\App\Http\Controllers\MaterialsController::class, 'destroy'])
+                    ->name('api.materials.destroy');
+                Route::put('/{materialId}/toggle-active', [\App\Http\Controllers\MaterialsController::class, 'toggleActive'])
+                    ->name('api.materials.toggle-active');
+                Route::get('/lesson/{lessonId}', [\App\Http\Controllers\MaterialsController::class, 'byLesson'])
+                    ->name('api.materials.by-lesson');
             });
         });
 

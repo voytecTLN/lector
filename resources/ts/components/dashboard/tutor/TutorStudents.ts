@@ -293,8 +293,8 @@ export class TutorStudents {
                                 <i class="bi bi-clock-history me-2"></i>Historia lekcji
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-muted" href="#" onclick="TutorStudents.showComingSoon()">
-                                <i class="bi bi-folder-plus me-2"></i>Materiały (wkrótce)
+                            <li><a class="dropdown-item" href="#" onclick="TutorStudents.showMaterialsModal(${student.id})">
+                                <i class="bi bi-folder-plus me-2"></i>Materiały
                             </a></li>
                             <li><a class="dropdown-item text-muted" href="#" onclick="TutorStudents.showComingSoon()">
                                 <i class="bi bi-chat-dots me-2"></i>Komunikacja (wkrótce)
@@ -461,6 +461,264 @@ export class TutorStudents {
                 duration: 3000
             }
         }))
+    }
+    
+    static async showMaterialsModal(studentId: number): Promise<void> {
+        try {
+            // Get student data
+            const response = await api.get(`/tutor/students/${studentId}`)
+            const responseData = response as any
+            const student = responseData.data?.student || responseData.student || { name: 'Student' }
+            
+            const modalHtml = `
+                <div class="modal fade" id="materialsModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Materiały dla ${student.name}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-4">
+                                    <div class="border-2 border-dashed border-secondary rounded p-4 text-center">
+                                        <input type="file" id="materialFile" class="d-none" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                        <button class="btn btn-primary" onclick="document.getElementById('materialFile').click()">
+                                            <i class="bi bi-cloud-upload me-2"></i>Wybierz plik
+                                        </button>
+                                        <p class="small text-muted mt-2 mb-0">
+                                            Dozwolone formaty: JPG, JPEG, PNG, PDF, DOC, DOCX (max 10MB)
+                                        </p>
+                                        <div id="uploadProgress" class="mt-3 d-none">
+                                            <div class="progress">
+                                                <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="materialsContainer">
+                                    <div class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Ładowanie...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('materialsModal')
+            if (existingModal) {
+                existingModal.remove()
+            }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHtml)
+            
+            // Show modal
+            const modal = new (window as any).bootstrap.Modal(document.getElementById('materialsModal'))
+            modal.show()
+            
+            // Load materials
+            await TutorStudents.loadMaterials(studentId)
+            
+            // Setup file upload handler
+            const fileInput = document.getElementById('materialFile') as HTMLInputElement
+            fileInput.addEventListener('change', (e) => TutorStudents.handleFileUpload(e, studentId))
+            
+        } catch (error) {
+            console.error('Error showing materials modal:', error)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Błąd podczas ładowania materiałów',
+                    duration: 3000
+                }
+            }))
+        }
+    }
+    
+    private static async loadMaterials(studentId: number): Promise<void> {
+        try {
+            const response = await api.get(`/tutor/students/${studentId}/materials`)
+            const responseData = response as any
+            const materials = responseData.materials || responseData.data?.materials || []
+            
+            const container = document.getElementById('materialsContainer')
+            if (!container) return
+            
+            if (materials.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted">Brak materiałów dla tego studenta</p>'
+                return
+            }
+            
+            container.innerHTML = materials.map((material: any) => `
+                <div class="d-flex align-items-center justify-content-between p-3 border rounded mb-2">
+                    <div class="d-flex align-items-center">
+                        <i class="bi ${TutorStudents.getFileIcon(material.mime_type)} fs-3 me-3"></i>
+                        <div>
+                            <div class="fw-semibold">${material.original_name}</div>
+                            <div class="small text-muted">
+                                ${TutorStudents.formatFileSize(material.file_size)} • 
+                                Wersja ${material.version} • 
+                                ${new Date(material.uploaded_at).toLocaleDateString('pl-PL')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="TutorStudents.downloadMaterial(${material.id})">
+                            <i class="bi bi-download"></i>
+                        </button>
+                        <button class="btn btn-sm ${material.is_active ? 'btn-success' : 'btn-outline-secondary'}" 
+                                onclick="TutorStudents.toggleMaterialActive(${material.id}, ${studentId})">
+                            <i class="bi bi-check-circle"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="TutorStudents.deleteMaterial(${material.id}, ${studentId})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('')
+            
+        } catch (error) {
+            console.error('Error loading materials:', error)
+        }
+    }
+    
+    private static async handleFileUpload(event: Event, studentId: number): Promise<void> {
+        const input = event.target as HTMLInputElement
+        const file = input.files?.[0]
+        if (!file) return
+        
+        // Validate file
+        const maxSize = 10 * 1024 * 1024 // 10MB
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 
+                              'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+        
+        if (file.size > maxSize) {
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: { type: 'error', message: 'Plik jest za duży (max 10MB)', duration: 3000 }
+            }))
+            return
+        }
+        
+        if (!allowedTypes.includes(file.type)) {
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: { type: 'error', message: 'Niedozwolony typ pliku', duration: 3000 }
+            }))
+            return
+        }
+        
+        // Show progress
+        const progressDiv = document.getElementById('uploadProgress')
+        const progressBar = progressDiv?.querySelector('.progress-bar') as HTMLElement
+        if (progressDiv && progressBar) {
+            progressDiv.classList.remove('d-none')
+            progressBar.style.width = '0%'
+        }
+        
+        // Upload file
+        const formData = new FormData()
+        formData.append('student_id', studentId.toString())
+        formData.append('file', file)
+        
+        try {
+            // Upload with simulated progress
+            const uploadPromise = api.post('/materials/upload', formData)
+            
+            // Simulate progress for better UX
+            let currentProgress = 0
+            const progressInterval = setInterval(() => {
+                if (progressBar && currentProgress < 90) {
+                    currentProgress += 10
+                    progressBar.style.width = currentProgress + '%'
+                }
+            }, 200)
+            
+            await uploadPromise
+            
+            clearInterval(progressInterval)
+            if (progressBar) progressBar.style.width = '100%'
+            
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: { type: 'success', message: 'Plik został przesłany pomyślnie', duration: 3000 }
+            }))
+            
+            // Reset form first
+            setTimeout(() => {
+                input.value = ''
+                if (progressDiv) {
+                    progressDiv.classList.add('d-none')
+                    const progressBar = progressDiv.querySelector('.progress-bar') as HTMLElement
+                    if (progressBar) progressBar.style.width = '0%'
+                }
+            }, 1000)
+            
+            // Reload materials
+            await TutorStudents.loadMaterials(studentId)
+            
+        } catch (error: any) {
+            console.error('Upload error:', error)
+            const message = error.response?.data?.error || 'Błąd podczas przesyłania pliku'
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: { type: 'error', message, duration: 3000 }
+            }))
+            
+            if (progressDiv) progressDiv.classList.add('d-none')
+        }
+    }
+    
+    private static downloadMaterial(materialId: number): void {
+        window.open(`/api/materials/${materialId}/download`, '_blank')
+    }
+    
+    private static async toggleMaterialActive(materialId: number, studentId: number): Promise<void> {
+        try {
+            await api.put(`/materials/${materialId}/toggle-active`, {})
+            await TutorStudents.loadMaterials(studentId)
+        } catch (error) {
+            console.error('Error toggling material:', error)
+        }
+    }
+    
+    private static async deleteMaterial(materialId: number, studentId: number): Promise<void> {
+        if (!confirm('Czy na pewno chcesz usunąć ten materiał?')) return
+        
+        try {
+            await api.delete(`/materials/${materialId}`)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: { type: 'success', message: 'Materiał został usunięty', duration: 3000 }
+            }))
+            await TutorStudents.loadMaterials(studentId)
+        } catch (error) {
+            console.error('Error deleting material:', error)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: { type: 'error', message: 'Błąd podczas usuwania materiału', duration: 3000 }
+            }))
+        }
+    }
+    
+    private static getFileIcon(mimeType: string): string {
+        if (mimeType.startsWith('image/')) return 'bi-file-image'
+        if (mimeType === 'application/pdf') return 'bi-file-pdf'
+        if (mimeType.includes('word')) return 'bi-file-word'
+        return 'bi-file-earmark'
+    }
+    
+    private static formatFileSize(bytes: number): string {
+        const units = ['B', 'KB', 'MB', 'GB']
+        let size = bytes
+        let unitIndex = 0
+        
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024
+            unitIndex++
+        }
+        
+        return `${size.toFixed(2)} ${units[unitIndex]}`
     }
     
     static async exportStudents(): Promise<void> {

@@ -7,13 +7,14 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RoleMiddleware
 {
     /**
      * Handle an incoming request.
      */
-    public function handle(Request $request, Closure $next, string ...$roles): Response | JsonResponse
+    public function handle(Request $request, Closure $next, string ...$roles): Response | JsonResponse | StreamedResponse
     {
         $user = $request->user();
 

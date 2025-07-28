@@ -313,4 +313,36 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $query->where('role', self::ROLE_ADMIN);
     }
+    
+    // Many-to-many relationships through lessons
+    
+    /**
+     * Get students for this tutor (based on lessons)
+     */
+    public function students()
+    {
+        return $this->hasManyThrough(
+            User::class,
+            Lesson::class,
+            'tutor_id',     // Foreign key on lessons table
+            'id',           // Foreign key on users table
+            'id',           // Local key on users table
+            'student_id'    // Local key on lessons table
+        )->distinct();
+    }
+    
+    /**
+     * Get tutors for this student (based on lessons)
+     */
+    public function tutors()
+    {
+        return $this->hasManyThrough(
+            User::class,
+            Lesson::class,
+            'student_id',   // Foreign key on lessons table
+            'id',           // Foreign key on users table  
+            'id',           // Local key on users table
+            'tutor_id'      // Local key on lessons table
+        )->distinct();
+    }
 }

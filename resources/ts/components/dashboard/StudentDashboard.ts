@@ -2,6 +2,7 @@ import { api } from '@services/ApiService'
 import { StudentLessons } from './student/StudentLessons'
 import { StudentBooking } from './student/StudentBooking'
 import { StudentTutors } from './student/StudentTutors'
+import { StudentMaterials } from './student/StudentMaterials'
 import { LessonDetailsModal } from '../modals/LessonDetailsModal'
 import type { RouteComponent } from '@router/routes'
 
@@ -11,14 +12,19 @@ export class StudentDashboard implements RouteComponent {
     private studentLessons: StudentLessons
     private studentBooking: StudentBooking
     private studentTutors: StudentTutors
+    private studentMaterials: StudentMaterials
 
     constructor() {
         this.studentLessons = new StudentLessons()
         this.studentBooking = new StudentBooking()
         this.studentTutors = new StudentTutors()
+        this.studentMaterials = new StudentMaterials()
         
         // Make StudentLessons available globally for onclick handlers
         ;(window as any).StudentLessons = StudentLessons
+        
+        // Make StudentMaterials available globally
+        ;(window as any).StudentMaterials = StudentMaterials
         
         // Make LessonDetailsModal available globally
         ;(window as any).LessonDetailsModal = LessonDetailsModal
@@ -651,7 +657,7 @@ export class StudentDashboard implements RouteComponent {
                                             </div>
                                         </div>
                                         
-                                        <!-- Current Language Levels -->
+                                        <!-- Current Language Levels 
                                         ${profile?.current_levels && Object.keys(profile.current_levels).length > 0 ? `
                                         <div class="row">
                                             <div class="col-md-12">
@@ -677,6 +683,7 @@ export class StudentDashboard implements RouteComponent {
                                             </div>
                                         </div>
                                         ` : ''}
+                                        -->
                                         
                                         <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
                                     </form>
@@ -799,39 +806,7 @@ export class StudentDashboard implements RouteComponent {
     }
 
     private getMaterialsContent(): string {
-        return `
-            <div class="student-content-area">
-                <h2>Materiały</h2>
-                <p>Twoje materiały do nauki będą dostępne wkrótce.</p>
-                
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Słownik</h5>
-                                <p class="card-text">Funkcja w przygotowaniu...</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Notatki</h5>
-                                <p class="card-text">Funkcja w przygotowaniu...</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Zadania</h5>
-                                <p class="card-text">Funkcja w przygotowaniu...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `
+        return this.studentMaterials.getMaterialsContent()
     }
 
     private async loadUpcomingLessonsPreview(): Promise<void> {

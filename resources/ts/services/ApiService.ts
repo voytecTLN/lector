@@ -26,7 +26,7 @@ export class ApiService {
     return localStorage.getItem('auth_token')
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}, retryCount: number = 0): Promise<T> {
+  async request<T>(endpoint: string, options: RequestInit & { responseType?: 'json' | 'blob' } = {}, retryCount: number = 0): Promise<T> {
     // Najpierw pobierz CSRF cookie dla Sanctum (tylko jeśli potrzebne)
     if (!this.csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method?.toUpperCase() || 'GET')) {
       await this.refreshCSRF()
@@ -83,6 +83,18 @@ export class ApiService {
 
         // Powtórz żądanie
         return this.request<T>(endpoint, options, retryCount + 1)
+      }
+
+      // Handle different response types
+      if (options.responseType === 'blob') {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        const blob = await response.blob()
+        // Return blob with headers attached
+        return Object.assign(blob, {
+          headers: Object.fromEntries(response.headers.entries())
+        }) as T
       }
 
       // Sprawdź content-type
@@ -203,10 +215,11 @@ export class ApiService {
     return this.request<T>(endpoint, { method: 'GET' }, 0)
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: any, config?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: data ? (data instanceof FormData ? data : JSON.stringify(data)) : undefined
+      body: data ? (data instanceof FormData ? data : JSON.stringify(data)) : undefined,
+      ...config
     }, 0)
   }
 
@@ -250,6 +263,36 @@ export class ApiService {
     } catch (error) {
       console.error('❌ Failed to refresh CSRF token:', error)
       // Nie rzucaj błędu - pozwól żądaniu kontynuować
+    }
+  }
+
+  async downloadFile(endpoint: string): Promise<{ blob: Blob; filename: string }> {
+    try {
+      const response = await this.request<Blob & { headers: Record<string, string> }>(
+        endpoint,
+        {
+          method: 'GET',
+          responseType: 'blob',
+          headers: {
+            'Accept': 'application/octet-stream'
+          }
+        }
+      )
+
+      // Extract filename from content-disposition header
+      let filename = 'download'
+      const contentDisposition = response.headers?.['content-disposition']
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '')
+        }
+      }
+
+      return { blob: response, filename }
+    } catch (error) {
+      console.error('Download error:', error)
+      throw error
     }
   }
 }

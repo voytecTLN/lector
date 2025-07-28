@@ -57,7 +57,7 @@ class StudentController extends BaseController
     /**
      * Display the specified student with full details
      */
-    public function show(int $id): JsonResponse
+    public function show($id): JsonResponse
     {
         try {
             $student = $this->studentService->getStudentById($id);

@@ -607,7 +607,7 @@ class DatabaseSeeder extends Seeder
             'birth_date' => '1990-06-15',
             'city' => 'Łódź',
             'country' => 'Polska',
-            'status' => User::STATUS_UNVERIFIED,
+            'status' => 'unverified',
             'email_verified_at' => null,
             'created_at' => now()->subDays(2),
         ]);

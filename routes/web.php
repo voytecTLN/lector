@@ -63,6 +63,12 @@ Route::get('/fix-unique-constraint', function() {
     }
 });
 
+// Download routes (before SPA catch-all)
+Route::middleware(['web', 'auth:sanctum'])->group(function () {
+    Route::get('/download/material/{id}', [\App\Http\Controllers\DownloadController::class, 'material'])
+        ->name('download.material');
+});
+
 // SPA entry routes with optional flash messages
 Route::get('/', $spa('/'))->name('home');
 Route::get('/login', $spa('/login'))->name('login');

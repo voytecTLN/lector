@@ -197,7 +197,7 @@ class StudentService
      */
     public function searchStudents(string $query)
     {
-        return User::students()
+        return User::where('role', 'student')
             ->with('studentProfile')
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', '%' . $query . '%')
@@ -212,7 +212,7 @@ class StudentService
      */
     public function bulkUpdateStatus(array $ids, string $status): void
     {
-        User::students()
+        User::where('role', 'student')
             ->whereIn('id', $ids)
             ->update(['status' => $status]);
     }
@@ -222,9 +222,9 @@ class StudentService
      */
     public function getStudentStats(): array
     {
-        $total = User::students()->count();
-        $active = User::students()->where('status', User::STATUS_ACTIVE)->count();
-        $newThisMonth = User::students()
+        $total = User::where('role', 'student')->count();
+        $active = User::where('role', 'student')->where('status', User::STATUS_ACTIVE)->count();
+        $newThisMonth = User::where('role', 'student')
             ->where('created_at', '>=', now()->subMonth())
             ->count();
 
