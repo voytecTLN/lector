@@ -454,9 +454,7 @@ export class TutorForm implements RouteComponent {
             }
 
             // Redirect to tutor list
-            setTimeout(() => {
-                navigate.to('/admin/dashboard?section=lektorzy')
-            }, 1000)
+            navigate.to('/admin/dashboard?section=lektorzy')
 
         } catch (error: any) {
             console.error('Form submission error:', error)

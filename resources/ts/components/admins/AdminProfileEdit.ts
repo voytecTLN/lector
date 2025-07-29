@@ -337,10 +337,8 @@ export class AdminProfileEdit implements RouteComponent {
             
             this.showSuccess('Profil administratora został zaktualizowany')
             
-            // Redirect back to details after short delay
-            setTimeout(() => {
-                navigate.to(`/admin/dashboard?section=admin-details&admin_id=${this.adminId}`)
-            }, 1500)
+            // Redirect back to details
+            navigate.to(`/admin/dashboard?section=admin-details&admin_id=${this.adminId}`)
 
         } catch (error: any) {
             console.error('Form submission error:', error)
@@ -410,8 +408,6 @@ export class AdminProfileEdit implements RouteComponent {
         }))
         
         // If critical error, redirect back
-        setTimeout(() => {
-            navigate.to('/admin/dashboard?section=administratorzy')
-        }, 3000)
+        navigate.to('/admin/dashboard?section=administratorzy')
     }
 }

@@ -427,9 +427,7 @@ export class AdminDetails implements RouteComponent {
             this.showSuccess('Administrator został usunięty')
             
             // Redirect to admin list
-            setTimeout(() => {
-                navigate.to('/admin/dashboard?section=administratorzy')
-            }, 1500)
+            navigate.to('/admin/dashboard?section=administratorzy')
         } catch (error) {
             console.error('Failed to delete admin:', error)
             this.showError('Nie udało się usunąć administratora')

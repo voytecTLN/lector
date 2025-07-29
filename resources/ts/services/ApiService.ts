@@ -187,10 +187,7 @@ export class ApiService {
               !window.location.hash.includes('/register') &&
               !window.location.hash.includes('/forgot-password')) {
 
-            // NOWE: Małe opóźnienie aby użytkownik zobaczył komunikat
-            setTimeout(() => {
-              navigateTo('/#/login');
-            }, 500)
+            navigateTo('/#/login')
           }
         }
 

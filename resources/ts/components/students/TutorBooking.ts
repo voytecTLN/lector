@@ -285,7 +285,6 @@ export class TutorBooking implements RouteComponent {
         try {
             // In a real implementation, this would fetch actual availability
             // For now, we'll simulate some available slots
-            await new Promise(resolve => setTimeout(resolve, 500))
             
             const slots = [
                 { time: '09:00', available: true },

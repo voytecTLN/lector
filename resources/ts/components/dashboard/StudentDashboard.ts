@@ -257,31 +257,23 @@ export class StudentDashboard implements RouteComponent {
                 contentArea.innerHTML = await this.getDashboardContent()
                 
                 // Load upcoming lessons preview after dashboard content is set
-                setTimeout(() => {
-                    this.loadUpcomingLessonsPreview()
-                }, 100)
+                this.loadUpcomingLessonsPreview()
                 break
             case 'nadchodzace':
                 pageTitle.textContent = 'Nadchodzące lekcje'
                 contentArea.innerHTML = '<div class="student-loading-container"><div class="student-loading-spinner"></div><p class="student-loading-text">Ładowanie nadchodzących lekcji...</p></div>'
-                setTimeout(() => {
-                    contentArea.innerHTML = this.studentLessons.getUpcomingLessonsContent()
-                }, 800)
+                contentArea.innerHTML = this.studentLessons.getUpcomingLessonsContent()
                 break
             case 'rezerwuj':
                 pageTitle.textContent = 'Zarezerwuj lekcję'
                 contentArea.innerHTML = '<div class="student-loading-container"><div class="student-loading-spinner"></div><p class="student-loading-text">Ładowanie dostępnych lektorów...</p></div>'
-                setTimeout(async () => {
-                    contentArea.innerHTML = await this.studentTutors.getBookLessonContent()
-                    this.studentTutors.setupBookingEventListeners()
-                }, 100)
+                contentArea.innerHTML = await this.studentTutors.getBookLessonContent()
+                this.studentTutors.setupBookingEventListeners()
                 break
             case 'historia':
                 pageTitle.textContent = 'Historia lekcji'
                 contentArea.innerHTML = '<div class="student-loading-container"><div class="student-loading-spinner"></div><p class="student-loading-text">Ładowanie historii lekcji...</p></div>'
-                setTimeout(() => {
-                    contentArea.innerHTML = this.studentLessons.getLessonHistoryContent()
-                }, 800)
+                contentArea.innerHTML = this.studentLessons.getLessonHistoryContent()
                 break
             case 'profil':
                 pageTitle.textContent = 'Mój profil'

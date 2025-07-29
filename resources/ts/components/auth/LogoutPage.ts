@@ -47,33 +47,27 @@ export class LogoutPage implements RouteComponent {
     async mount(container: HTMLElement): Promise<void> {
         this.mounted = true
 
-        // Wykonaj logout po krótkim opóźnieniu (żeby użytkownik zobaczył komunikat)
-        setTimeout(async () => {
-            if (!this.mounted) return // Zabezpieczenie jeśli komponent został odmontowany
+        // Wykonaj logout natychmiast
+        try {
+            await authService.logout()
 
-            try {
-                await authService.logout()
+            // Pokaż komunikat sukcesu
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'success',
+                    message: 'Wylogowano pomyślnie',
+                    duration: 3000
+                }
+            }))
 
-                // Pokaż komunikat sukcesu
-                document.dispatchEvent(new CustomEvent('notification:show', {
-                    detail: {
-                        type: 'success',
-                        message: 'Wylogowano pomyślnie',
-                        duration: 3000
-                    }
-                }))
+            // Przekieruj na stronę główną
+            navigateTo('/')
 
-                // Przekieruj na stronę główną
-                setTimeout(() => {
-                    navigateTo('/')
-                }, 500)
-
-            } catch (error) {
-                console.error('Logout error:', error)
-                // W przypadku błędu też przekieruj (logout po stronie frontu już wykonany)
-                navigateTo('/')
-            }
-        }, 1500) // 1.5 sekundy opóźnienia
+        } catch (error) {
+            console.error('Logout error:', error)
+            // W przypadku błędu też przekieruj (logout po stronie frontu już wykonany)
+            navigateTo('/')
+        }
     }
 
     unmount(): void {
