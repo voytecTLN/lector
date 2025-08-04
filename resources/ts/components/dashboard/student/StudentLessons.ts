@@ -121,6 +121,9 @@ export class StudentLessons {
                                         </a></li>
                                     </ul>
                                 </div>
+                                <div class="mt-2" id="meeting-button-${lesson.id}">
+                                    <!-- Meeting button will be initialized here -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -146,6 +149,20 @@ export class StudentLessons {
             </div>
             ${lessonsHtml}
         `
+        
+        // Initialize meeting buttons for each lesson
+        lessons.forEach(lesson => {
+            const buttonContainer = document.getElementById(`meeting-button-${lesson.id}`)
+            if (buttonContainer) {
+                import('@components/video/MeetingButton').then(({ MeetingButton }) => {
+                    new MeetingButton(buttonContainer, lesson.id, {
+                        onMeetingOpen: () => {
+                            window.location.hash = `#/lesson/${lesson.id}/meeting`
+                        }
+                    })
+                })
+            }
+        })
     }
     
     private renderUpcomingLessonsError(): void {

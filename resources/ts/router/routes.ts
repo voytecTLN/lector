@@ -137,6 +137,19 @@ export const routes: RouteDefinition[] = [
         }
     },
 
+    // Meeting page - requires auth and participant of the lesson
+    {
+        path: '/lesson/:id/meeting',
+        name: 'lesson.meeting',
+        component: () => import('../pages/MeetingPage').then(m => new m.MeetingPage()),
+        title: 'Spotkanie online - Platforma Lektorów',
+        meta: {
+            requiresAuth: true,
+            requiresVerification: true,
+            layout: 'app'
+        }
+    },
+
     // Protected dashboard routes - require auth + verification + specific roles
     {
         path: '/admin/dashboard',

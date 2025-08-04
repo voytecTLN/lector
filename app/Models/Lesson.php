@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 
 class Lesson extends Model
@@ -35,8 +36,14 @@ class Lesson extends Model
         'is_paid',
         'student_rating',
         'student_feedback',
-        'feedback_submitted_at'
-        // TODO: Add after migration: 'started_at', 'ended_at'
+        'feedback_submitted_at',
+        // Daily.co fields
+        'meeting_room_name',
+        'meeting_room_url',
+        'meeting_token',
+        'meeting_started_at',
+        'meeting_ended_at',
+        'recording_url'
     ];
 
     protected $casts = [
@@ -46,7 +53,8 @@ class Lesson extends Model
         'cancelled_at' => 'datetime',
         'feedback_submitted_at' => 'datetime',
         'status_updated_at' => 'datetime',
-        // TODO: Add after migration: 'started_at' => 'datetime', 'ended_at' => 'datetime',
+        'meeting_started_at' => 'datetime',
+        'meeting_ended_at' => 'datetime',
         'is_paid' => 'boolean',
         'price' => 'decimal:2',
         'duration_minutes' => 'integer',
@@ -111,6 +119,11 @@ class Lesson extends Model
         return $this->belongsTo(User::class, 'status_updated_by');
     }
 
+    public function meetingSessions(): HasMany
+    {
+        return $this->hasMany(MeetingSession::class);
+    }
+
     // Scopes
     public function scopeScheduled($query)
     {
@@ -130,7 +143,7 @@ class Lesson extends Model
     public function scopeUpcoming($query)
     {
         return $query->where('lesson_date', '>=', now()->toDateString())
-                    ->where('status', self::STATUS_SCHEDULED)
+                    ->whereIn('status', [self::STATUS_SCHEDULED, self::STATUS_IN_PROGRESS, self::STATUS_COMPLETED])
                     ->orderBy('lesson_date')
                     ->orderBy('start_time');
     }
@@ -260,5 +273,54 @@ class Lesson extends Model
     public function isToday(): bool
     {
         return $this->lesson_date->isToday();
+    }
+
+    // Daily.co helper methods
+    public function hasMeetingRoom(): bool
+    {
+        return !empty($this->meeting_room_name) && !empty($this->meeting_room_url);
+    }
+
+    public function isMeetingActive(): bool
+    {
+        return $this->hasMeetingRoom() && 
+               $this->meeting_started_at && 
+               !$this->meeting_ended_at;
+    }
+
+    public function canStartMeeting(): bool
+    {
+        if ($this->status !== self::STATUS_SCHEDULED) {
+            return false;
+        }
+
+        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->start_time->format('H:i:s'));
+        $minutesUntilLesson = now()->diffInMinutes($lessonDateTime, false);
+
+        // Lektor może rozpocząć 15 minut wcześniej
+        // TODO: Dla testów zmieniono na 60 minut
+        return $minutesUntilLesson <= 60 && $minutesUntilLesson >= -120;
+    }
+
+    public function canJoinMeeting(): bool
+    {
+        if (!$this->hasMeetingRoom() || $this->status === self::STATUS_CANCELLED) {
+            return false;
+        }
+
+        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->start_time->format('H:i:s'));
+        $minutesUntilLesson = now()->diffInMinutes($lessonDateTime, false);
+
+        // Student może dołączyć 10 minut wcześniej
+        // TODO: Dla testów zmieniono na 60 minut
+        return $minutesUntilLesson <= 60 && $minutesUntilLesson >= -120;
+    }
+
+    public function getActiveMeetingParticipants()
+    {
+        return $this->meetingSessions()
+            ->whereNull('left_at')
+            ->with('participant')
+            ->get();
     }
 }

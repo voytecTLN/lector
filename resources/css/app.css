@@ -7,6 +7,7 @@
 @import './components/students.css';
 @import './components/packages.css';
 @import './components/lesson-details-modal.css';
+@import './video.css';
 
 /* Page styles */
 @import './pages/home.css';

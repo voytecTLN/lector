@@ -54,8 +54,16 @@ export class AvailabilityCalendar {
             if (response.slots) {
                 this.slots.clear()
                 response.slots.forEach((slot: AvailabilitySlot) => {
-                    // Handle date format - if it's an object with date property
-                    const slotDate = typeof slot.date === 'string' ? slot.date : formatDate(new Date(slot.date))
+                    // Handle date format - keep the date string as-is from API
+                    let slotDate = slot.date
+                    
+                    // If date contains time component, extract just the date part
+                    if (slotDate.includes('T')) {
+                        slotDate = slotDate.split('T')[0]
+                    }
+                    
+                    console.log('Processing slot:', { original: slot.date, processed: slotDate })
+                    
                     this.slots.set(slotDate, {
                         ...slot,
                         date: slotDate
@@ -98,8 +106,13 @@ export class AvailabilityCalendar {
                     </div>
                 </div>
 
-                <div class="calendar-grid">
-                    ${this.renderCalendar()}
+                <div class="calendar-container">
+                    <div class="calendar-header-row">
+                        ${this.renderCalendarHeader()}
+                    </div>
+                    <div class="calendar-grid">
+                        ${this.renderCalendar()}
+                    </div>
                 </div>
 
                 <div class="calendar-summary mt-4">
@@ -122,7 +135,40 @@ export class AvailabilityCalendar {
                 .availability-calendar {
                     max-width: 100%;
                 }
+                
+                .availability-calendar * {
+                    box-sizing: border-box;
+                }
 
+                .calendar-header-row {
+                    display: grid;
+                    grid-template-columns: repeat(7, 1fr);
+                    gap: 10px;
+                    margin-bottom: 10px;
+                }
+                
+                .calendar-header-day {
+                    text-align: center;
+                    font-weight: bold;
+                    color: #374151;
+                    padding: 10px;
+                    background-color: #f3f4f6;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 8px;
+                    box-sizing: border-box;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                }
+                
+                .calendar-header-date {
+                    font-size: 0.85em;
+                    font-weight: normal;
+                    margin-top: 2px;
+                    color: #6b7280;
+                }
+                
                 .calendar-grid {
                     display: grid;
                     grid-template-columns: repeat(7, 1fr);
@@ -154,10 +200,6 @@ export class AvailabilityCalendar {
                     border-color: #ff9800;
                 }
 
-                .calendar-day-header {
-                    font-weight: bold;
-                    margin-bottom: 5px;
-                }
 
                 .calendar-day-date {
                     font-size: 0.9em;
@@ -259,20 +301,61 @@ export class AvailabilityCalendar {
         this.attachEventListeners()
     }
 
+    private renderCalendarHeader(): string {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        // Start from the beginning of current week (Monday)
+        const currentDayOfWeek = today.getDay()
+        const daysFromMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1
+        const startDate = new Date(today)
+        startDate.setDate(today.getDate() - daysFromMonday)
+        
+        const days = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
+        
+        return days.map((day, index) => {
+            const date = new Date(startDate)
+            date.setDate(startDate.getDate() + index)
+            return `
+                <div class="calendar-header-day">
+                    <div>${day}</div>
+                    <div class="calendar-header-date">${date.getDate()}.${(date.getMonth() + 1).toString().padStart(2, '0')}</div>
+                </div>
+            `
+        }).join('')
+    }
+
     private renderCalendar(): string {
         const weeks = []
         const today = new Date()
         today.setHours(0, 0, 0, 0)
+        
+        // Start from the beginning of current week (Monday)
+        const currentDayOfWeek = today.getDay()
+        const daysFromMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1
+        const startDate = new Date(today)
+        startDate.setDate(today.getDate() - daysFromMonday)
 
         for (let week = 0; week < 4; week++) {
             for (let day = 0; day < 7; day++) {
-                const date = new Date()
-                date.setDate(today.getDate() + (week * 7) + day)
+                const date = new Date(startDate)
+                date.setDate(startDate.getDate() + (week * 7) + day)
+                date.setHours(12, 0, 0, 0) // Ustaw na południe aby uniknąć problemów ze strefą czasową
                 
                 const dateStr = formatDate(date)
                 const isPast = date < today
                 const slot = this.slots.get(dateStr)
                 const selectedSlot = this.selectedSlots.get(dateStr)
+                
+                // Debug logging
+                if (week === 0 && day < 7) {
+                    console.log('Calendar date:', { 
+                        dateObj: date.toISOString(), 
+                        formatted: dateStr,
+                        dayOfWeek: date.getDay(),
+                        hasSlot: this.slots.has(dateStr)
+                    })
+                }
                 
                 // Determine the active slot (from DB or selected)
                 const activeSlot = selectedSlot || slot?.time_slot
@@ -284,9 +367,6 @@ export class AvailabilityCalendar {
 
                 weeks.push(`
                     <div class="${dayClass}" data-date="${dateStr}">
-                        <div class="calendar-day-header">
-                            ${this.getDayName(date.getDay())}
-                        </div>
                         <div class="calendar-day-date">
                             ${date.getDate()}.${(date.getMonth() + 1).toString().padStart(2, '0')}
                         </div>
@@ -353,6 +433,7 @@ export class AvailabilityCalendar {
             const weekStart = new Date(today)
             weekStart.setDate(today.getDate() + (week * 7))
             weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1) // Monday
+            weekStart.setHours(12, 0, 0, 0) // Ustaw na południe
             
             let totalHours = 0
             
@@ -360,6 +441,7 @@ export class AvailabilityCalendar {
             for (let day = 0; day < 7; day++) {
                 const date = new Date(weekStart)
                 date.setDate(weekStart.getDate() + day)
+                date.setHours(12, 0, 0, 0) // Ustaw na południe aby uniknąć problemów ze strefą czasową
                 const dateStr = formatDate(date)
                 
                 if (this.slots.has(dateStr) || this.selectedSlots.has(dateStr)) {
@@ -379,7 +461,8 @@ export class AvailabilityCalendar {
     }
 
     private getDayName(dayIndex: number): string {
-        const days = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota']
+        // Days for calendar starting from Monday (index 0 = Monday)
+        const days = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
         return days[dayIndex]
     }
 

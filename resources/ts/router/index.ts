@@ -118,13 +118,16 @@ export class Router {
                 console.log(`📦 Loading component for: ${matchedRoute.route.name}`)
                 const ComponentClass = await matchedRoute.route.component()
 
-                // Check if component constructor expects params
-                if (matchedRoute.params && Object.keys(matchedRoute.params).length > 0) {
+                // Check if ComponentClass is already an instance (has render method)
+                if (typeof ComponentClass.render === 'function') {
+                    // Already an instance
+                    matchedRoute.component = ComponentClass
+                } else if (matchedRoute.params && Object.keys(matchedRoute.params).length > 0) {
                     // Pass params to component constructor if it has params
                     matchedRoute.component = new (ComponentClass as any)(matchedRoute.params)
                 } else {
                     // No params, instantiate normally
-                    matchedRoute.component = ComponentClass
+                    matchedRoute.component = new (ComponentClass as any)()
                 }
 
                 console.log(`✅ Component loaded: ${matchedRoute.route.name}`)

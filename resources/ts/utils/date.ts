@@ -2,6 +2,7 @@
 
 /**
  * Format a date object to YYYY-MM-DD string
+ * Uses local time to avoid timezone issues
  */
 export function formatDate(date: Date): string {
     const year = date.getFullYear()

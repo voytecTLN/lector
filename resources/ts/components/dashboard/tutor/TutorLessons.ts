@@ -6,6 +6,28 @@ export class TutorLessons {
     private currentWeekOffset = 0
     private lessons: any[] = []
     
+    public getUpcomingLessonsContent(): string {
+        // Load upcoming lessons
+        this.loadUpcomingLessons()
+        
+        return `
+            <div class="tutor-content-area">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Nadchodzące lekcje</h2>
+                </div>
+                
+                <div id="upcoming-lessons-container">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Ładowanie...</span>
+                        </div>
+                        <p class="mt-2">Ładowanie nadchodzących lekcji...</p>
+                    </div>
+                </div>
+            </div>
+        `
+    }
+    
     public getCalendarContent(): string {
         // Trigger async loading
         this.loadLessons()
@@ -34,6 +56,101 @@ export class TutorLessons {
                             <span class="visually-hidden">Ładowanie...</span>
                         </div>
                         <p class="mt-2">Ładowanie lekcji...</p>
+                    </div>
+                </div>
+            </div>
+        `
+    }
+    
+    private async loadUpcomingLessons(): Promise<void> {
+        try {
+            const response = await api.get<{success: boolean, data: {lessons: any[]}, message?: string}>('/tutor/lessons/upcoming')
+            const upcomingLessons = response.data?.lessons || []
+            
+            const container = document.getElementById('upcoming-lessons-container')
+            if (!container) return
+            
+            if (upcomingLessons.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Nie masz żadnych nadchodzących lekcji.
+                    </div>
+                `
+                return
+            }
+            
+            // Render upcoming lessons list
+            container.innerHTML = `
+                <div class="row">
+                    ${upcomingLessons.map(lesson => this.renderUpcomingLessonCard(lesson)).join('')}
+                </div>
+            `
+        } catch (error) {
+            console.error('Failed to load upcoming lessons:', error)
+            const container = document.getElementById('upcoming-lessons-container')
+            if (container) {
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Błąd podczas ładowania nadchodzących lekcji.
+                    </div>
+                `
+            }
+        }
+    }
+    
+    private renderUpcomingLessonCard(lesson: any): string {
+        const lessonDate = new Date(lesson.lesson_date)
+        const startTime = lesson.start_time
+        const endTime = lesson.end_time
+        
+        // Style based on lesson status
+        const isCompleted = lesson.status === 'completed'
+        const isInProgress = lesson.status === 'in_progress'
+        const cardClass = isCompleted ? 'border-success opacity-75' : isInProgress ? 'border-primary' : ''
+        const titleClass = isCompleted ? 'text-success' : ''
+        
+        // Get the appropriate status badge
+        let statusBadge = ''
+        switch (lesson.status) {
+            case 'scheduled':
+                statusBadge = '<span class="badge bg-primary">Zaplanowana</span>'
+                break
+            case 'completed':
+                statusBadge = '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Zakończona</span>'
+                break
+            case 'in_progress':
+                statusBadge = '<span class="badge bg-warning text-dark"><i class="bi bi-play-circle me-1"></i>W trakcie</span>'
+                break
+            default:
+                statusBadge = `<span class="badge bg-secondary">${lesson.status}</span>`
+        }
+        
+        return `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 lesson-card ${cardClass}" onclick="console.log('🎯 Lesson clicked:', ${lesson.id}, ${JSON.stringify(lesson).replace(/"/g, '&quot;')}); LessonDetailsModal.show(${lesson.id})" style="cursor: pointer; transition: transform 0.2s;">
+                    <div class="card-body">
+                        <h5 class="card-title ${titleClass}">
+                            <i class="bi bi-person-circle me-2"></i>
+                            ${lesson.student?.name || 'Student'}
+                        </h5>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar me-1"></i>
+                                ${lessonDate.toLocaleDateString('pl-PL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            </small><br>
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                ${startTime} - ${endTime}
+                            </small><br>
+                            <small class="text-muted">
+                                <i class="bi bi-translate me-1"></i>
+                                ${lesson.language || 'Nieznany język'}
+                            </small>
+                        </p>
+                        ${statusBadge}
+                        ${isCompleted ? '<div class="mt-2"><small class="text-muted"><i class="bi bi-check-all me-1"></i>Lekcja została zakończona</small></div>' : ''}
                     </div>
                 </div>
             </div>

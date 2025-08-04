@@ -49,6 +49,12 @@ export class TutorDashboard implements RouteComponent {
                                 <span>Kalendarz</span>
                             </a>
                         </li>
+                        <li class="tutor-nav-item">
+                            <a href="#" class="tutor-nav-link" data-section="nadchodzace">
+                                <span class="tutor-nav-icon">🎯</span>
+                                <span>Nadchodzące lekcje</span>
+                            </a>
+                        </li>
                         
                         <li class="tutor-nav-section">STUDENCI</li>
                         <li class="tutor-nav-item">
@@ -216,6 +222,10 @@ export class TutorDashboard implements RouteComponent {
             case 'calendar':
                 if (titleEl) titleEl.textContent = 'Kalendarz'
                 this.loadCalendarContent()
+                break
+            case 'nadchodzace':
+                if (titleEl) titleEl.textContent = 'Nadchodzące lekcje'
+                this.loadUpcomingLessonsContent()
                 break
             case 'students':
                 if (titleEl) titleEl.textContent = 'Moi studenci'
@@ -397,6 +407,14 @@ export class TutorDashboard implements RouteComponent {
         
         const tutorLessons = new TutorLessons()
         contentDiv.innerHTML = tutorLessons.getCalendarContent()
+    }
+
+    private loadUpcomingLessonsContent(): void {
+        const contentDiv = this.container?.querySelector('#tutorContent')
+        if (!contentDiv) return
+        
+        const tutorLessons = new TutorLessons()
+        contentDiv.innerHTML = tutorLessons.getUpcomingLessonsContent()
     }
 
     private loadStudentsContent(): void {

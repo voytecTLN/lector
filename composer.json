@@ -4,7 +4,7 @@
     "description": "Platforma zarządzania lekcjami języków obcych",
     "require": {
         "php": "^8.2",
-        "guzzlehttp/guzzle": "^7.0",
+        "guzzlehttp/guzzle": "^7.9",
         "inertiajs/inertia-laravel": "^2.0",
         "intervention/image": "^3.0",
         "laravel/framework": "^11.0",

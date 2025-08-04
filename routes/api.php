@@ -9,6 +9,7 @@ use App\Http\Controllers\PackageController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\TutorController;
 use App\Http\Controllers\LessonController;
+use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\Admin\DashboardController;
 
 // Health check - publiczny endpoint
@@ -44,6 +45,10 @@ Route::prefix('auth')->group(function () {
 Route::post('/auth/resend-verification-public', [AuthController::class, 'resendVerificationPublic'])
     ->middleware('throttle:30,1') // 30 attempts per minute (development)
     ->name('api.auth.resend-verification-public');
+
+// Daily.co webhook endpoint (publiczny, weryfikowany przez signature)
+Route::post('/webhooks/daily', [MeetingController::class, 'handleWebhook'])
+    ->name('api.webhooks.daily');
 
 // Protected routes (wymagają autentykacji Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
@@ -130,6 +135,14 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.student.lessons.feedback');
                 Route::get('/{lessonId}', [LessonController::class, 'show'])
                     ->name('api.student.lessons.show');
+                
+                // Daily.co Meeting endpoints
+                Route::prefix('/{lesson}/meeting')->group(function () {
+                    Route::get('/status', [MeetingController::class, 'getMeetingStatus'])
+                        ->name('api.student.lessons.meeting.status');
+                    Route::post('/join', [MeetingController::class, 'joinMeeting'])
+                        ->name('api.student.lessons.meeting.join');
+                });
             });
         });
 
@@ -323,6 +336,18 @@ Route::middleware('auth:sanctum')->group(function () {
                         ->name('api.tutor.lessons.no-show');
                     Route::get('/{lessonId}', [LessonController::class, 'show'])
                         ->name('api.tutor.lessons.show');
+                    
+                    // Daily.co Meeting endpoints for tutors
+                    Route::prefix('/{lesson}/meeting')->group(function () {
+                        Route::get('/status', [MeetingController::class, 'getMeetingStatus'])
+                            ->name('api.tutor.lessons.meeting.status');
+                        Route::post('/start', [MeetingController::class, 'startMeeting'])
+                            ->name('api.tutor.lessons.meeting.start');
+                        Route::post('/join', [MeetingController::class, 'joinMeeting'])
+                            ->name('api.tutor.lessons.meeting.join');
+                        Route::post('/end', [MeetingController::class, 'endMeeting'])
+                            ->name('api.tutor.lessons.meeting.end');
+                    });
                 });
                 
                 // Student management routes for tutors
@@ -371,6 +396,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/api/test-tutors-available', [TutorController::class, 'availableForStudents'])
     ->middleware(['auth:sanctum'])
     ->name('api.test.tutors.available');
+
 
 // CSRF Cookie endpoint for SPA authentication
 Route::get('/sanctum/csrf-cookie', function () {

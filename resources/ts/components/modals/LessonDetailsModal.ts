@@ -1,6 +1,7 @@
 import Swal from 'sweetalert2'
 import { api } from '../../services/ApiService'
 import { authService } from '../../services/AuthService'
+import { MeetingButton } from '../video/MeetingButton'
 
 interface LessonDetails {
     id: number
@@ -93,7 +94,7 @@ export class LessonDetailsModal {
             const lesson = response.data.lesson
             
             // Przygotuj HTML z szczegółami
-            const html = this.buildDetailsHtml(lesson)
+            const html = await this.buildDetailsHtml(lesson)
             
             // Pokaż modal ze szczegółami
             await Swal.fire({
@@ -109,6 +110,25 @@ export class LessonDetailsModal {
                     container: 'lesson-details-modal',
                     popup: 'lesson-details-popup',
                     htmlContainer: 'lesson-details-content'
+                },
+                didOpen: () => {
+                    console.log('📋 Modal opened, looking for meeting button container...')
+                    // Inicjalizuj przycisk spotkania jeśli istnieje
+                    const meetingButtonContainer = document.getElementById('meeting-button-container')
+                    console.log('🔍 Meeting button container found:', !!meetingButtonContainer)
+                    if (meetingButtonContainer) {
+                        console.log('✅ Initializing MeetingButton component for lesson:', lesson.id)
+                        new MeetingButton(meetingButtonContainer, lesson.id, {
+                            onMeetingOpen: () => {
+                                console.log('🚀 Meeting opened, closing modal and redirecting...')
+                                Swal.close()
+                                // Use hash routing for SPA navigation
+                                window.location.hash = `#/lesson/${lesson.id}/meeting`
+                            }
+                        })
+                    } else {
+                        console.log('❌ Meeting button container not found in DOM')
+                    }
                 }
             }).then((result: any) => {
                 if (result.dismiss === Swal.DismissReason.cancel) {
@@ -127,7 +147,7 @@ export class LessonDetailsModal {
         }
     }
 
-    private static buildDetailsHtml(lesson: LessonDetails): string {
+    private static async buildDetailsHtml(lesson: LessonDetails): Promise<string> {
         const formatDate = (date: string) => {
             return new Date(date).toLocaleDateString('pl-PL', {
                 weekday: 'long',
@@ -182,6 +202,8 @@ export class LessonDetailsModal {
                         </div>
                     </div>
                 </div>
+
+                ${await this.buildMeetingSection(lesson)}
 
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold mb-4">Szczegóły zajęć</h3>
@@ -275,6 +297,61 @@ export class LessonDetailsModal {
         `
 
         return html
+    }
+
+    private static async buildMeetingSection(lesson: LessonDetails): Promise<string> {
+        console.log('🔍 Building meeting section for lesson:', {
+            lessonId: lesson.id,
+            status: lesson.status,
+            tutorId: lesson.tutor_id,
+            studentId: lesson.student_id,
+            lessonDate: lesson.lesson_date,
+            startTime: lesson.start_time,
+            endTime: lesson.end_time
+        })
+        
+        // Pokaż sekcję spotkania tylko dla aktywnych lekcji
+        if (lesson.status !== 'scheduled' && lesson.status !== 'in_progress') {
+            console.log('❌ Meeting section skipped - wrong status:', lesson.status)
+            return ''
+        }
+
+        const user = await authService.getCurrentUser()
+        console.log('👤 Current user:', {
+            userId: user?.id,
+            role: user?.role,
+            name: user?.name
+        })
+        
+        const isTutor = user?.role === 'tutor' && user.id === lesson.tutor_id
+        const isStudent = user?.role === 'student' && user.id === lesson.student_id
+        const isParticipant = isTutor || isStudent
+        
+        console.log('🔐 Access check:', {
+            isTutor,
+            isStudent,
+            isParticipant
+        })
+
+        if (!isParticipant) {
+            console.log('❌ Meeting section skipped - not a participant')
+            return ''
+        }
+
+        return `
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+                <h3 class="text-lg font-semibold mb-3 flex items-center">
+                    <i class="fas fa-video mr-2"></i>
+                    Spotkanie online
+                </h3>
+                <div id="meeting-button-container" class="text-center">
+                    <div class="text-gray-500">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        Sprawdzanie statusu spotkania...
+                    </div>
+                </div>
+            </div>
+        `
     }
 
     private static getActionButton(lesson: LessonDetails): string {

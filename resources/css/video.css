@@ -1,0 +1,92 @@
+/* Daily.co Video Component Styles */
+
+.daily-video-wrapper {
+    @apply w-full;
+}
+
+.meeting-start-container,
+.meeting-waiting-container,
+.meeting-ended-container {
+    @apply bg-white rounded-lg shadow-md;
+}
+
+.meeting-join-container {
+    @apply w-full;
+}
+
+.daily-frame-container {
+    @apply relative w-full bg-black rounded-lg overflow-hidden;
+    min-height: 600px;
+}
+
+.daily-frame-container iframe {
+    @apply w-full h-full;
+}
+
+.meeting-controls {
+    @apply absolute bottom-4 right-4 z-10;
+}
+
+/* Meeting Button Styles */
+.meeting-action-btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-md font-medium transition-colors;
+}
+
+.meeting-action-btn:hover {
+    @apply opacity-90;
+}
+
+/* Meeting Page Styles */
+.meeting-page-container {
+    @apply min-h-screen bg-gray-100;
+}
+
+.meeting-page-container header {
+    @apply bg-white shadow-sm;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .daily-frame-container {
+        min-height: 400px;
+    }
+    
+    .meeting-controls {
+        @apply bottom-2 right-2;
+    }
+    
+    .meeting-controls button {
+        @apply text-sm px-3 py-1.5;
+    }
+}
+
+/* Spinner animation */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinner-border {
+    border-color: #e5e7eb;
+    border-top-color: #3b82f6;
+    animation: spin 1s linear infinite;
+}
+
+/* Modal adjustments for video meeting */
+.lesson-details-modal .meeting-section {
+    @apply bg-blue-50 p-4 rounded-lg mb-4;
+}
+
+.lesson-details-modal #meeting-button-container {
+    @apply mt-3;
+}
+
+/* Loading states */
+.meeting-loading {
+    @apply flex items-center justify-center text-gray-500;
+}
+
+.meeting-loading i {
+    @apply animate-spin mr-2;
+}
