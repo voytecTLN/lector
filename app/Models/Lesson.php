@@ -196,9 +196,28 @@ class Lesson extends Model
             'cancellation_reason' => $reason
         ]);
 
-        // Release the availability slot
+        // Release the availability slot(s)
         if ($this->availabilitySlot) {
-            $this->availabilitySlot->decrement('hours_booked', ceil($this->duration_minutes / 60));
+            // Dla slotów godzinowych
+            if ($this->duration_minutes === 60) {
+                $this->availabilitySlot->releaseHours(1);
+            } else {
+                // Dla dłuższych lekcji, zwolnij wszystkie sloty
+                $lessonStartHour = (int) date('H', strtotime($this->start_time));
+                $lessonEndHour = (int) ceil((strtotime($this->start_time) + ($this->duration_minutes * 60)) / 3600);
+                
+                for ($hour = $lessonStartHour; $hour < $lessonEndHour; $hour++) {
+                    $slot = TutorAvailabilitySlot::where('tutor_id', $this->tutor_id)
+                        ->where('date', $this->lesson_date->format('Y-m-d'))
+                        ->where('start_hour', $hour)
+                        ->where('end_hour', $hour + 1)
+                        ->first();
+                        
+                    if ($slot) {
+                        $slot->releaseHours(1);
+                    }
+                }
+            }
         }
 
         // Return hour to package if applicable

@@ -209,7 +209,9 @@ class TutorController extends Controller
         $request->validate([
             'slots' => 'required|array',
             'slots.*.date' => 'required|date|after_or_equal:today',
-            'slots.*.time_slot' => 'required|in:morning,afternoon'
+            'slots.*.start_hour' => 'required|integer|min:8|max:21',
+            'slots.*.end_hour' => 'required|integer|min:9|max:22|gt:slots.*.start_hour',
+            'slots.*.is_available' => 'required|boolean'
         ]);
 
         $tutorId = auth()->id();

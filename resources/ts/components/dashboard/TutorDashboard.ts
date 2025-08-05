@@ -2,7 +2,7 @@
 import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
 import { TutorProfileEdit } from '@components/tutors/TutorProfileEdit'
-import { AvailabilityCalendar } from '@components/tutor/AvailabilityCalendar'
+import { HourlyAvailabilityCalendar } from '@components/tutor/HourlyAvailabilityCalendar'
 import { TutorLessons } from './tutor/TutorLessons'
 import { TutorStudents } from './tutor/TutorStudents'
 import { LessonDetailsModal } from '../modals/LessonDetailsModal'
@@ -13,7 +13,7 @@ export class TutorDashboard implements RouteComponent {
     private container: HTMLElement | null = null
     private refreshInterval: number | null = null
     private profileComponent: TutorProfileEdit | null = null
-    private availabilityComponent: AvailabilityCalendar | null = null
+    private availabilityComponent: HourlyAvailabilityCalendar | null = null
 
     async render(): Promise<HTMLElement> {
         const user = authService.getUser()
@@ -393,10 +393,10 @@ export class TutorDashboard implements RouteComponent {
             </div>
         `
         
-        // Initialize the availability calendar component
+        // Initialize the hourly availability calendar component
         const calendarContainer = contentDiv.querySelector('#availability-calendar-container')
         if (calendarContainer) {
-            this.availabilityComponent = new AvailabilityCalendar()
+            this.availabilityComponent = new HourlyAvailabilityCalendar()
             this.availabilityComponent.mount(calendarContainer as HTMLElement)
         }
     }

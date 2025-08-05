@@ -378,11 +378,15 @@ class TutorService
             });
 
             foreach ($slotsByWeek as $weekStart => $weekSlots) {
-                // Count existing slots for this week
-                $existingSlots = TutorAvailabilitySlot::getTutorWeeklyHours($tutorId, $weekStart);
-                $newSlots = $weekSlots->count() * TutorAvailabilitySlot::HOURS_PER_SLOT;
+                // Count existing hours for this week
+                $existingHours = TutorAvailabilitySlot::getTutorWeeklyHours($tutorId, $weekStart);
                 
-                if (($existingSlots + $newSlots) > $weeklyLimit) {
+                // Calculate new hours being added
+                $newHours = $weekSlots->sum(function($slot) {
+                    return ($slot['end_hour'] - $slot['start_hour']);
+                });
+                
+                if (($existingHours + $newHours) > $weeklyLimit) {
                     throw new Exception("Przekroczono tygodniowy limit godzin ({$weeklyLimit}h) dla tygodnia od {$weekStart}");
                 }
             }
@@ -390,28 +394,32 @@ class TutorService
             // Process each slot
             $createdSlots = [];
             foreach ($slots as $slotData) {
-                // Check if slot already exists
+                // Check if slot already exists for this hour
                 $existingSlot = TutorAvailabilitySlot::where('tutor_id', $tutorId)
                     ->where('date', $slotData['date'])
+                    ->where('start_hour', $slotData['start_hour'])
                     ->first();
 
                 if ($existingSlot) {
                     // Update existing slot
                     $existingSlot->update([
-                        'time_slot' => $slotData['time_slot'],
-                        'is_available' => true
+                        'end_hour' => $slotData['end_hour'],
+                        'is_available' => $slotData['is_available'] ?? true
                     ]);
                     $createdSlots[] = $existingSlot;
                 } else {
-                    // Create new slot
-                    $slot = TutorAvailabilitySlot::create([
-                        'tutor_id' => $tutorId,
-                        'date' => $slotData['date'],
-                        'time_slot' => $slotData['time_slot'],
-                        'is_available' => true,
-                        'hours_booked' => 0
-                    ]);
-                    $createdSlots[] = $slot;
+                    // Create new slot only if marking as available
+                    if ($slotData['is_available'] ?? true) {
+                        $slot = TutorAvailabilitySlot::create([
+                            'tutor_id' => $tutorId,
+                            'date' => $slotData['date'],
+                            'start_hour' => $slotData['start_hour'],
+                            'end_hour' => $slotData['end_hour'],
+                            'is_available' => true,
+                            'hours_booked' => 0
+                        ]);
+                        $createdSlots[] = $slot;
+                    }
                 }
             }
 
