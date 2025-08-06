@@ -6,7 +6,7 @@ import { NotificationService } from '@/utils/NotificationService'
 import { PasswordValidator } from '@/utils/PasswordValidator'
 import { LoadingStateManager } from '@/utils/LoadingStateManager'
 
-export interface StudentProfile {
+export interface StudentProfileEditData {
     id: number;
     name: string;
     email: string;
@@ -24,7 +24,7 @@ export interface StudentProfile {
 export class StudentProfileEdit implements RouteComponent {
     private form: HTMLFormElement | null = null
     private container: HTMLElement | null = null
-    private profile: StudentProfile | null = null
+    private profile: StudentProfileEditData | null = null
     private validationHandler: FormValidationHandler | null = null
     private passwordValidator: PasswordValidator | null = null
     private loadingManager: LoadingStateManager | null = null

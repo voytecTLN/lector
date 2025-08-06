@@ -333,11 +333,11 @@ export class StudentService {
     /**
      * Get student profile for editing
      */
-    async getProfile(): Promise<StudentProfile> {
+    async getProfile(): Promise<any> {
         try {
             console.log('👤 StudentService: Getting student profile')
 
-            const response = await api.get<{ success: boolean, data: StudentProfile }>('/student/profile')
+            const response = await api.get<{ success: boolean, data: any }>('/student/profile')
             
             return response.data
 
@@ -350,11 +350,11 @@ export class StudentService {
     /**
      * Update student profile
      */
-    async updateProfile(data: any): Promise<StudentProfile> {
+    async updateProfile(data: any): Promise<any> {
         try {
             console.log('✏️ StudentService: Updating student profile')
 
-            const response = await api.put<{ success: boolean, data: StudentProfile }>('/student/profile', data)
+            const response = await api.put<{ success: boolean, data: any }>('/student/profile', data)
 
             return response.data
 
