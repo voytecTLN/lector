@@ -1,6 +1,6 @@
 // resources/ts/components/forms/TutorProfileEdit.ts
 import type { RouteComponent } from '@router/routes'
-import { api } from '@services/ApiService'
+import { TutorService } from '@services/TutorService'
 import { FormValidationHandler } from '@/utils/FormValidationHandler'
 import { NotificationService } from '@/utils/NotificationService'
 import { PasswordValidator } from '@/utils/PasswordValidator'
@@ -30,6 +30,7 @@ export class TutorProfileEdit implements RouteComponent {
     private validationHandler: FormValidationHandler | null = null
     private passwordValidator: PasswordValidator | null = null
     private loadingManager: LoadingStateManager | null = null
+    private tutorService = new TutorService()
 
     async render(): Promise<HTMLElement> {
         const el = document.createElement('div')
@@ -323,8 +324,7 @@ export class TutorProfileEdit implements RouteComponent {
         try {
             this.loadingManager?.showLoading()
 
-            const response = await api.get('/tutor/profile')
-            this.profile = response.data
+            this.profile = await this.tutorService.getProfile()
 
             this.loadingManager?.showContent()
             this.fillForm()
@@ -558,7 +558,7 @@ export class TutorProfileEdit implements RouteComponent {
             const formData = new FormData(this.form)
             const updateData = this.parseFormData(formData)
 
-            await api.put('/tutor/profile', updateData)
+            await this.tutorService.updateProfile(updateData)
             
             NotificationService.success('Profil został zaktualizowany')
             

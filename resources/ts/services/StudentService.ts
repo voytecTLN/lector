@@ -329,4 +329,38 @@ export class StudentService {
             throw error
         }
     }
+
+    /**
+     * Get student profile for editing
+     */
+    async getProfile(): Promise<StudentProfile> {
+        try {
+            console.log('👤 StudentService: Getting student profile')
+
+            const response = await api.get<{ success: boolean, data: StudentProfile }>('/student/profile')
+            
+            return response.data
+
+        } catch (error) {
+            console.error('❌ Get student profile error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Update student profile
+     */
+    async updateProfile(data: any): Promise<StudentProfile> {
+        try {
+            console.log('✏️ StudentService: Updating student profile')
+
+            const response = await api.put<{ success: boolean, data: StudentProfile }>('/student/profile', data)
+
+            return response.data
+
+        } catch (error) {
+            console.error('❌ Update student profile error:', error)
+            throw error
+        }
+    }
 }

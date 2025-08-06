@@ -215,4 +215,38 @@ export class TutorService {
 
         return lessonTypes.map(type => lessonTypeMap[type] || type).join(', ')
     }
+
+    /**
+     * Get tutor profile for editing
+     */
+    async getProfile(): Promise<any> {
+        try {
+            console.log('👤 TutorService: Getting tutor profile')
+
+            const response = await api.get<{ success: boolean, data: any }>('/tutor/profile')
+            
+            return response.data
+
+        } catch (error) {
+            console.error('❌ Get tutor profile error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Update tutor profile
+     */
+    async updateProfile(data: any): Promise<any> {
+        try {
+            console.log('✏️ TutorService: Updating tutor profile')
+
+            const response = await api.put<{ success: boolean, data: any }>('/tutor/profile', data)
+
+            return response.data
+
+        } catch (error) {
+            console.error('❌ Update tutor profile error:', error)
+            throw error
+        }
+    }
 }
