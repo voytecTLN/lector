@@ -33,6 +33,7 @@ export class StudentLessons {
             const response = await api.get<any>('/student/lessons/my-lessons?type=upcoming')
             const lessons = response.data?.lessons || []
             
+            // Backend now properly filters upcoming lessons
             this.renderUpcomingLessons(lessons)
         } catch (error) {
             console.error('Error loading upcoming lessons:', error)

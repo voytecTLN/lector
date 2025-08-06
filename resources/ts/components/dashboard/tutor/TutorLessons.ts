@@ -181,12 +181,8 @@ export class TutorLessons {
         const weekStart = new Date(today)
         weekStart.setDate(today.getDate() - today.getDay() + 1 + (this.currentWeekOffset * 7)) // Monday
         
-        const weekDays = []
-        for (let i = 0; i < 7; i++) {
-            const day = new Date(weekStart)
-            day.setDate(weekStart.getDate() + i)
-            weekDays.push(day)
-        }
+        const days = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
+        const hours = Array.from({length: 14}, (_, i) => i + 8) // 8:00 to 21:00
         
         container.innerHTML = `
             <div class="calendar-navigation mb-3">
@@ -201,19 +197,8 @@ export class TutorLessons {
                 </div>
             </div>
             
-            <div class="calendar-grid">
-                <div class="calendar-header">
-                    ${weekDays.map(day => `
-                        <div class="calendar-header-day ${this.isToday(day) ? 'today' : ''}">
-                            <div class="day-name">${this.getDayName(day)}</div>
-                            <div class="day-date">${day.getDate()}.${(day.getMonth() + 1).toString().padStart(2, '0')}</div>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                <div class="calendar-body">
-                    ${weekDays.map(day => this.renderDayColumn(day)).join('')}
-                </div>
+            <div class="hourly-grid">
+                ${this.renderHourlyGrid(weekStart, days, hours)}
             </div>
             
             <div class="mt-4">
@@ -241,6 +226,96 @@ export class TutorLessons {
             </div>
             
             ${this.renderCalendarStyles()}
+        `
+    }
+    
+    private renderHourlyGrid(weekStart: Date, days: string[], hours: number[]): string {
+        let grid = '<div class="hour-header"></div>' // Empty top-left corner
+        
+        // Day headers
+        for (let d = 0; d < 7; d++) {
+            const date = new Date(weekStart)
+            date.setDate(weekStart.getDate() + d)
+            const isToday = this.isToday(date)
+            
+            grid += `
+                <div class="day-header ${isToday ? 'today' : ''}">
+                    <div>${days[d]}</div>
+                    <div class="small">${date.getDate()}.${(date.getMonth() + 1).toString().padStart(2, '0')}</div>
+                </div>
+            `
+        }
+        
+        // Hour rows
+        for (const hour of hours) {
+            // Hour label
+            grid += `<div class="hour-header">${hour}:00</div>`
+            
+            // Hour cells for each day
+            for (let d = 0; d < 7; d++) {
+                const date = new Date(weekStart)
+                date.setDate(weekStart.getDate() + d)
+                const dateStr = formatDate(date)
+                
+                // Find lesson for this date and hour
+                const lesson = this.lessons.find(l => {
+                    let lessonDateStr = l.lesson_date
+                    if (lessonDateStr.includes('T')) {
+                        lessonDateStr = lessonDateStr.split('T')[0]
+                    }
+                    
+                    // Handle different time formats
+                    let lessonTime = l.start_time
+                    if (lessonTime.includes(' ')) {
+                        lessonTime = lessonTime.split(' ')[1]
+                    }
+                    if (lessonTime.length > 5) {
+                        lessonTime = lessonTime.substring(0, 5)
+                    }
+                    
+                    const lessonHour = lessonTime.split(':')[0]
+                    return lessonDateStr === dateStr && parseInt(lessonHour) === hour
+                })
+                
+                if (lesson) {
+                    grid += this.renderLessonCell(lesson)
+                } else {
+                    grid += `<div class="hour-cell empty"></div>`
+                }
+            }
+        }
+        
+        return grid
+    }
+    
+    private renderLessonCell(lesson: any): string {
+        const statusClass = this.getStatusClass(lesson.status)
+        const canModify = lesson.status === 'scheduled' && this.canModifyLesson(lesson)
+        
+        return `
+            <div class="hour-cell lesson ${statusClass}" data-lesson-id="${lesson.id}">
+                <div class="lesson-time">${this.formatTime(lesson.start_time)} - ${this.formatTime(lesson.end_time)}</div>
+                <div class="lesson-student">
+                    <i class="bi bi-person me-1"></i>${lesson.student?.name || 'Student'}
+                </div>
+                ${lesson.topic ? `<div class="lesson-topic small">${lesson.topic}</div>` : ''}
+                <div class="lesson-actions">
+                    <button class="btn btn-sm btn-outline-primary" onclick="TutorLessons.viewDetails(${lesson.id})" title="Szczegóły">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    ${canModify ? `
+                        <button class="btn btn-sm btn-success" onclick="TutorLessons.completeLesson(${lesson.id})" title="Oznacz jako zakończoną">
+                            <i class="bi bi-check"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="TutorLessons.markNoShow(${lesson.id})" title="Nieobecność">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="TutorLessons.cancelLesson(${lesson.id})" title="Anuluj">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
         `
     }
     
@@ -421,134 +496,122 @@ export class TutorLessons {
     private renderCalendarStyles(): string {
         return `
             <style>
-                .calendar-grid {
+                .hourly-grid {
+                    display: grid;
+                    grid-template-columns: 80px repeat(7, 1fr);
+                    gap: 1px;
+                    background-color: #dee2e6;
                     border: 1px solid #dee2e6;
                     border-radius: 8px;
                     overflow: hidden;
                 }
                 
-                .calendar-header {
-                    display: grid;
-                    grid-template-columns: repeat(7, 1fr);
-                    background: #f8f9fa;
+                .hour-header, .day-header, .hour-cell {
+                    background-color: white;
+                    padding: 8px;
+                    text-align: center;
+                    user-select: none;
+                }
+                
+                .hour-header {
+                    background-color: #f8f9fa;
+                    font-weight: 500;
+                    color: #495057;
+                    text-align: right;
+                    padding-right: 12px;
+                }
+                
+                .day-header {
+                    background-color: #f8f9fa;
+                    font-weight: bold;
+                    color: #495057;
+                    padding: 12px 8px;
                     border-bottom: 2px solid #dee2e6;
                 }
                 
-                .calendar-header-day {
-                    padding: 15px;
-                    text-align: center;
-                    border-right: 1px solid #dee2e6;
+                .day-header.today {
+                    background-color: #e3f2fd;
+                    color: #1976d2;
                 }
                 
-                .calendar-header-day:last-child {
-                    border-right: none;
-                }
-                
-                .calendar-header-day.today {
-                    background: #e3f2fd;
-                    font-weight: bold;
-                }
-                
-                .day-name {
-                    font-weight: bold;
-                    color: #495057;
-                }
-                
-                .day-date {
-                    color: #6c757d;
-                    font-size: 0.9em;
-                }
-                
-                .calendar-body {
-                    display: grid;
-                    grid-template-columns: repeat(7, 1fr);
-                    min-height: 600px;
-                }
-                
-                .day-column {
-                    border-right: 1px solid #dee2e6;
-                    display: flex;
-                    flex-direction: column;
-                }
-                
-                .day-column:last-child {
-                    border-right: none;
-                }
-                
-                .time-slot {
-                    flex: 1;
-                    border-bottom: 1px solid #e9ecef;
-                    padding: 5px;
-                    min-height: 60px;
+                .hour-cell {
+                    cursor: pointer;
+                    transition: all 0.2s;
                     position: relative;
+                    min-height: 40px;
                 }
                 
-                .time-slot.empty {
+                .hour-cell.empty {
                     background: #fff;
                 }
                 
-                .time-slot.lesson {
+                .hour-cell.lesson {
                     background: #e8f4fd;
-                    border-left: 4px solid #2196f3;
+                    border: 1px solid #2196f3;
                     cursor: pointer;
                     transition: all 0.2s;
                 }
                 
-                .time-slot.lesson:hover {
+                .hour-cell.lesson:hover {
                     background: #d1e7fd;
                 }
                 
-                .time-slot.lesson.completed {
+                .hour-cell.lesson.completed {
                     background: #d4edda;
-                    border-left-color: #28a745;
+                    border-color: #28a745;
                 }
                 
-                .time-slot.lesson.cancelled {
+                .hour-cell.lesson.cancelled {
                     background: #f8d7da;
-                    border-left-color: #dc3545;
+                    border-color: #dc3545;
                     opacity: 0.7;
                 }
                 
-                .time-slot.lesson.no_show {
+                .hour-cell.lesson.no-show {
                     background: #fff3cd;
-                    border-left-color: #ffc107;
+                    border-color: #ffc107;
                 }
                 
                 .lesson-time {
                     font-weight: bold;
-                    font-size: 0.85em;
+                    font-size: 0.75em;
                     color: #495057;
+                    line-height: 1;
                 }
                 
                 .lesson-student {
-                    font-size: 0.85em;
+                    font-size: 0.7em;
                     color: #6c757d;
                     margin-top: 2px;
+                    line-height: 1;
                 }
                 
                 .lesson-topic {
                     font-style: italic;
                     color: #6c757d;
+                    font-size: 0.65em;
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
+                    margin-top: 1px;
                 }
                 
                 .lesson-actions {
                     position: absolute;
-                    bottom: 5px;
-                    right: 5px;
+                    bottom: 2px;
+                    right: 2px;
                     display: none;
+                    gap: 2px;
                 }
                 
-                .time-slot.lesson:hover .lesson-actions {
+                .hour-cell.lesson:hover .lesson-actions {
                     display: flex;
-                    gap: 5px;
                 }
                 
                 .lesson-actions .btn {
-                    padding: 2px 6px;
-                    font-size: 0.75em;
+                    padding: 1px 3px;
+                    font-size: 0.6em;
+                    line-height: 1;
                 }
             </style>
         `

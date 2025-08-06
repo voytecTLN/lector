@@ -163,8 +163,8 @@ class LessonService
             ->forStudent($studentId);
             
         return match($type) {
-            'upcoming' => $query->upcoming()->get(),
-            'past' => $query->past()->get(),
+            'upcoming' => $this->applyUpcomingFilter($query)->get(),
+            'past' => $this->applyPastFilter($query)->get(),
             'scheduled' => $query->scheduled()->get(),
             'completed' => $query->completed()->get(),
             'cancelled' => $query->cancelled()->get(),
@@ -183,8 +183,8 @@ class LessonService
             ->forTutor($tutorId);
             
         return match($type) {
-            'upcoming' => $query->upcoming()->get(),
-            'past' => $query->past()->get(),
+            'upcoming' => $this->applyUpcomingFilter($query)->get(),
+            'past' => $this->applyPastFilter($query)->get(),
             'scheduled' => $query->scheduled()->get(),
             'completed' => $query->completed()->get(),
             'cancelled' => $query->cancelled()->get(),
@@ -217,17 +217,15 @@ class LessonService
      */
     public function getUpcomingLessons(int $userId, string $role, int $limit = 5): Collection
     {
-        $query = Lesson::with(['student', 'tutor', 'tutor.tutorProfile'])
-            ->upcoming()
-            ->limit($limit);
-            
+        $query = Lesson::with(['student', 'tutor', 'tutor.tutorProfile']);
+        
         if ($role === 'student') {
             $query->forStudent($userId);
         } elseif ($role === 'tutor') {
             $query->forTutor($userId);
         }
         
-        return $query->get();
+        return $this->applyUpcomingFilter($query)->limit($limit)->get();
     }
     
     /**
@@ -435,5 +433,37 @@ class LessonService
         }
         
         return $slots;
+    }
+    
+    /**
+     * Apply upcoming lessons filter (future lessons including today's lessons that haven't started)
+     */
+    private function applyUpcomingFilter($query)
+    {
+        return $query->where(function($q) {
+                    $q->where('lesson_date', '>', now()->toDateString())
+                      ->orWhere(function($q2) {
+                          $q2->where('lesson_date', '=', now()->toDateString())
+                             ->whereTime('start_time', '>', now()->toTimeString());
+                      });
+                })
+                ->whereIn('status', [Lesson::STATUS_SCHEDULED, Lesson::STATUS_IN_PROGRESS, Lesson::STATUS_COMPLETED])
+                ->orderBy('lesson_date')
+                ->orderBy('start_time');
+    }
+    
+    /**
+     * Apply past lessons filter (past lessons including today's lessons that have ended)
+     */
+    private function applyPastFilter($query)
+    {
+        return $query->where(function($q) {
+            $q->where('lesson_date', '<', now()->toDateString())
+              ->orWhere(function($q2) {
+                  $q2->where('lesson_date', '=', now()->toDateString())
+                     ->whereTime('end_time', '<', now()->toTimeString());
+              });
+        })->orderBy('lesson_date', 'desc')
+          ->orderBy('start_time', 'desc');
     }
 }

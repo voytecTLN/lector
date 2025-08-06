@@ -22,7 +22,11 @@ class DashboardController extends Controller
                 // PODSTAWOWE DANE - już dostępne
                 'users_count' => User::count(),
                 'students' => User::where('role', 'student')->count(),
-                'tutors' => User::where('role', 'tutor')->count(),
+                // ZMIENIONE: tylko aktywni i zweryfikowani lektorzy
+                'tutors' => User::where('role', 'tutor')
+                    ->where('status', 'active')
+                    ->whereNotNull('email_verified_at')
+                    ->count(),
                 'moderators' => User::where('role', 'moderator')->count(),
                 'active_users' => User::where('status', 'active')->count(),
                 'verified_users' => User::whereNotNull('email_verified_at')->count(),
@@ -35,6 +39,17 @@ class DashboardController extends Controller
                 // DANE LEKTORÓW - jeśli tabela tutor_profiles istnieje
                 'verified_tutors' => TutorProfile::where('is_verified', true)->count(),
                 'pending_tutor_approvals' => TutorProfile::where('verification_status', 'pending')->count(),
+
+                // DODANE: nadchodzące lekcje
+                'upcoming_lessons' => \App\Models\Lesson::where(function($query) {
+                        $query->where('lesson_date', '>', now()->toDateString())
+                              ->orWhere(function($q) {
+                                  $q->where('lesson_date', '=', now()->toDateString())
+                                    ->whereTime('start_time', '>', now()->toTimeString());
+                              });
+                    })
+                    ->whereIn('status', [\App\Models\Lesson::STATUS_SCHEDULED, \App\Models\Lesson::STATUS_IN_PROGRESS])
+                    ->count(),
 
                 // PLACEHOLDERS - oznaczyć jako niedostępne
                 'total_lessons' => null, // Will show "—" in frontend

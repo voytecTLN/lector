@@ -140,25 +140,6 @@ class Lesson extends Model
         return $query->where('status', self::STATUS_CANCELLED);
     }
 
-    public function scopeUpcoming($query)
-    {
-        return $query->where('lesson_date', '>=', now()->toDateString())
-                    ->whereIn('status', [self::STATUS_SCHEDULED, self::STATUS_IN_PROGRESS, self::STATUS_COMPLETED])
-                    ->orderBy('lesson_date')
-                    ->orderBy('start_time');
-    }
-
-    public function scopePast($query)
-    {
-        return $query->where(function($q) {
-            $q->where('lesson_date', '<', now()->toDateString())
-              ->orWhere(function($q2) {
-                  $q2->where('lesson_date', '=', now()->toDateString())
-                     ->whereTime('end_time', '<', now()->toTimeString());
-              });
-        })->orderBy('lesson_date', 'desc')
-          ->orderBy('start_time', 'desc');
-    }
 
     public function scopeForStudent($query, $studentId)
     {

@@ -572,6 +572,63 @@ class TutorService
     }
 
     /**
+     * Get dashboard statistics for tutor
+     */
+    public function getDashboardStats(int $tutorId): array
+    {
+        // Get upcoming lessons count
+        $upcomingLessons = \App\Models\Lesson::where('tutor_id', $tutorId)
+            ->where(function($q) {
+                $q->where('lesson_date', '>', now()->toDateString())
+                  ->orWhere(function($q2) {
+                      $q2->where('lesson_date', '=', now()->toDateString())
+                         ->whereTime('start_time', '>', now()->toTimeString());
+                  });
+            })
+            ->whereIn('status', ['scheduled', 'in_progress'])
+            ->count();
+
+        // Get completed lessons count (all time)
+        $completedLessons = \App\Models\Lesson::where('tutor_id', $tutorId)
+            ->where('status', 'completed')
+            ->count();
+
+        // Get active students count (students who have lessons with this tutor)
+        $activeStudents = \App\Models\User::where('role', 'student')
+            ->where('status', 'active')
+            ->whereHas('studentLessons', function ($query) use ($tutorId) {
+                $query->where('tutor_id', $tutorId);
+            })
+            ->count();
+
+        // Additional stats
+        $thisWeekLessons = \App\Models\Lesson::where('tutor_id', $tutorId)
+            ->whereBetween('lesson_date', [
+                now()->startOfWeek()->toDateString(),
+                now()->endOfWeek()->toDateString()
+            ])
+            ->where('status', '!=', 'cancelled')
+            ->count();
+
+        $thisMonthEarnings = \App\Models\Lesson::where('tutor_id', $tutorId)
+            ->where('status', 'completed')
+            ->whereYear('lesson_date', now()->year)
+            ->whereMonth('lesson_date', now()->month)
+            ->sum('price');
+
+        return [
+            'upcomingLessons' => $upcomingLessons,
+            'completedLessons' => $completedLessons,
+            'activeStudents' => $activeStudents,
+            'thisWeekLessons' => $thisWeekLessons,
+            'thisMonthEarnings' => round($thisMonthEarnings ?? 0, 2),
+            'totalEarnings' => round(\App\Models\Lesson::where('tutor_id', $tutorId)
+                ->where('status', 'completed')
+                ->sum('price') ?? 0, 2)
+        ];
+    }
+
+    /**
      * Get detailed student information for a tutor
      */
     public function getStudentDetails(int $tutorId, int $studentId): array

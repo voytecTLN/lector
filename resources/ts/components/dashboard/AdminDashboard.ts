@@ -806,11 +806,11 @@ export class AdminDashboard implements RouteComponent {
                     </div>
                     <div class="info-item">
                         <span class="info-number">${stats.tutors || 0}</span>
-                        <div class="info-label">Lektorów</div>
+                        <div class="info-label">Lektorów aktywnych</div>
                     </div>
-                    <div class="info-item ${stats.total_lessons === null ? 'placeholder' : ''}">
-                        <span class="info-number">${stats.total_lessons ?? '—'}</span>
-                        <div class="info-label">Lekcje (wkrótce)</div>
+                    <div class="info-item">
+                        <span class="info-number">${stats.upcoming_lessons || 0}</span>
+                        <div class="info-label">Nadchodzące lekcje</div>
                     </div>
                 </div>
             </div>

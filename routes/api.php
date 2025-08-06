@@ -296,17 +296,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Tutor dashboard stats and profile
         Route::middleware('role:tutor,admin')->group(function () {
             Route::prefix('tutor')->group(function () {
-                Route::get('/dashboard-stats', function () {
-                    return response()->json([
-                        'success' => true,
-                        'data' => [
-                            'upcomingLessons' => 0,
-                            'completedLessons' => 0,
-                            'totalEarnings' => 0,
-                            'activeStudents' => 0
-                        ]
-                    ]);
-                });
+                Route::get('/dashboard-stats', [TutorController::class, 'getDashboardStats'])
+                    ->name('api.tutor.dashboard-stats');
                 
                 Route::get('/profile', [TutorController::class, 'getOwnProfile'])
                     ->name('api.tutor.profile');

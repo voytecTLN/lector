@@ -542,6 +542,38 @@ class TutorController extends Controller
     }
     
     /**
+     * Get dashboard statistics for tutor
+     */
+    public function getDashboardStats(Request $request): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            if ($user->role !== 'tutor' && $user->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+            
+            $tutorId = $user->role === 'admin' ? $request->get('tutor_id', $user->id) : $user->id;
+            
+            $stats = $this->tutorService->getDashboardStats($tutorId);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Wystąpił błąd podczas pobierania statystyk',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get detailed information about a specific student for this tutor
      */
     public function getStudentDetails(Request $request, $studentId): JsonResponse

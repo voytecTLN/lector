@@ -13,8 +13,11 @@ export class StudentBooking {
             const response = await api.get<{success: boolean, data: any, message?: string}>(`/student/tutor/${tutorId}`)
             this.tutor = response.data
             
-            // Load tutor availability data
+            // Load tutor availability data first
             await this.loadTutorAvailability(tutorId)
+            
+            // Now render the calendar with availability data
+            const calendarHTML = this.renderCalendar()
             
             return `
                 <div class="student-content-area">
@@ -68,8 +71,19 @@ export class StudentBooking {
                                     </div>
                                 </div>
                                 
-                                <div class="calendar-grid">
-                                    ${this.renderCalendar()}
+                                <div class="calendar-wrapper">
+                                    <div class="calendar-header-row">
+                                        <div class="calendar-header-day">PN</div>
+                                        <div class="calendar-header-day">WT</div>
+                                        <div class="calendar-header-day">ŚR</div>
+                                        <div class="calendar-header-day">CZ</div>
+                                        <div class="calendar-header-day">PT</div>
+                                        <div class="calendar-header-day">SB</div>
+                                        <div class="calendar-header-day">ND</div>
+                                    </div>
+                                    <div class="calendar-grid">
+                                        ${calendarHTML}
+                                    </div>
                                 </div>
                                 
                                 <div id="time-slots-container" class="mt-4" style="display: none;">
@@ -137,12 +151,20 @@ export class StudentBooking {
     private async loadTutorAvailability(tutorId: string): Promise<void> {
         // Load availability for all visible days (4 weeks)
         const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        // Get the start of the current week (Monday) - same calculation as in renderCalendar
+        const currentDay = today.getDay()
+        const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1
+        const weekStart = new Date(today)
+        weekStart.setDate(today.getDate() - daysFromMonday)
+        
         const promises = []
         
         for (let week = 0; week < 4; week++) {
             for (let day = 0; day < 7; day++) {
-                // Use explicit date construction to avoid timezone issues
-                const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (week * 7) + day)
+                // Calculate date starting from Monday - same as renderCalendar
+                const date = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + (week * 7) + day)
                 
                 if (date >= today) { // Only load for current and future dates
                     const dateStr = formatDate(date)
@@ -153,9 +175,6 @@ export class StudentBooking {
         
         // Wait for all requests to complete
         await Promise.all(promises)
-        
-        // Re-render calendar with updated availability data
-        this.renderCalendarWithAvailability()
     }
     
     private async loadAvailabilityForDate(tutorId: string, date: string): Promise<void> {
@@ -209,19 +228,17 @@ export class StudentBooking {
         const today = new Date()
         today.setHours(0, 0, 0, 0)
         
-        // Render calendar header
-        const daysOfWeek = ['PN', 'WT', 'ŚR', 'CZ', 'PT', 'SB', 'ND']
-        weeks.push(`
-            <div class="calendar-header">
-                ${daysOfWeek.map(day => `<div class="calendar-header-day">${day}</div>`).join('')}
-            </div>
-        `)
+        // Get the start of the current week (Monday)
+        const currentDay = today.getDay()
+        const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1
+        const weekStart = new Date(today)
+        weekStart.setDate(today.getDate() - daysFromMonday)
         
         // Render 4 weeks of calendar
         for (let week = 0; week < 4; week++) {
             for (let day = 0; day < 7; day++) {
-                // Use a more explicit date construction to avoid timezone issues
-                const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (week * 7) + day)
+                // Calculate date starting from Monday
+                const date = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + (week * 7) + day)
                 
                 const dateStr = formatDate(date)
                 const isPast = date < today
@@ -264,9 +281,6 @@ export class StudentBooking {
                 
                 weeks.push(`
                     <div class="${dayClass}" data-date="${dateStr}">
-                        <div class="calendar-day-header">
-                            ${this.getDayName(date.getDay())}
-                        </div>
                         <div class="calendar-day-date">
                             ${date.getDate()}.${(date.getMonth() + 1).toString().padStart(2, '0')}
                         </div>
@@ -562,15 +576,22 @@ export class StudentBooking {
                     max-width: 100%;
                 }
                 
+                .calendar-wrapper {
+                    width: 100%;
+                }
+                
+                .calendar-header-row {
+                    display: grid;
+                    grid-template-columns: repeat(7, 1fr);
+                    gap: 10px;
+                    margin-bottom: 10px;
+                }
+                
                 .calendar-grid {
                     display: grid;
                     grid-template-columns: repeat(7, 1fr);
                     gap: 10px;
                     margin-bottom: 20px;
-                }
-                
-                .calendar-header {
-                    display: contents;
                 }
                 
                 .calendar-header-day {
