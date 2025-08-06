@@ -1,9 +1,8 @@
-// resources/ts/components/students/StudentForm.ts
+// resources/ts/components/forms/StudentForm.ts
 import type { RouteComponent } from '@router/routes'
 import { StudentService } from '@services/StudentService'
 import type { CreateStudentRequest, UpdateStudentRequest, User } from '@/types/models'
-import { navigate, routeChecker, urlBuilder } from '@/utils/navigation'
-import { ROUTES } from '@/config/routing'
+import { navigate } from '@/utils/navigation'
 
 export class StudentForm implements RouteComponent {
     private studentService: StudentService
@@ -341,7 +340,7 @@ export class StudentForm implements RouteComponent {
                     message: 'Nie udało się załadować danych studenta'
                 }
             }))
-            navigate.to('/admin/dashboard?section=uczniowie')
+            await navigate.to('/admin/dashboard?section=uczniowie')
         }
     }
 
@@ -548,10 +547,10 @@ export class StudentForm implements RouteComponent {
 
             if (this.isEditMode && this.studentId) {
                 await this.studentService.updateStudent(this.studentId, studentData as UpdateStudentRequest)
-                navigate.to(`/admin/dashboard?section=student-details&student_id=${this.studentId}`)
+                await navigate.to(`/admin/dashboard?section=student-details&student_id=${this.studentId}`)
             } else {
                 const student = await this.studentService.createStudent(studentData as CreateStudentRequest)
-                navigate.to(`/admin/dashboard?section=student-details&student_id=${student.id}`)
+                await navigate.to(`/admin/dashboard?section=student-details&student_id=${student.id}`)
             }
 
         } catch (error: any) {

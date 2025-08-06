@@ -26,7 +26,7 @@ export class PackageForm implements RouteComponent {
                 this.package = await this.packageService.getPackage(this.packageId!)
             } catch (error) {
                 console.error('Error loading package:', error)
-                navigate.to('/admin/dashboard?section=pakiety')
+                await navigate.to('/admin/dashboard?section=pakiety')
                 return document.createElement('div')
             }
         }
@@ -276,7 +276,7 @@ export class PackageForm implements RouteComponent {
                 await this.packageService.createPackage(data)
             }
 
-            navigate.to('/admin/dashboard?section=pakiety')
+            await navigate.to('/admin/dashboard?section=pakiety')
 
         } catch (error) {
             console.error('Error saving package:', error)

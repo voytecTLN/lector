@@ -1,4 +1,5 @@
 import { api } from '@services/ApiService'
+import { authService } from '@services/AuthService'
 import { StudentLessons } from './student/StudentLessons'
 import { StudentBooking } from './student/StudentBooking'
 import { StudentTutors } from './student/StudentTutors'
@@ -63,6 +64,9 @@ export class StudentDashboard implements RouteComponent {
 
     private async renderContent(): Promise<void> {
         if (!this.dashboardContainer) return
+        
+        const user = authService.getUser()
+        
         this.dashboardContainer.innerHTML = `
             <div class="student-container">
                 <div class="student-sidebar">
@@ -125,14 +129,17 @@ export class StudentDashboard implements RouteComponent {
                 
                 <div class="student-main-content">
                     <div class="student-header">
-                        <h1 class="student-page-title">Panel główny</h1>
-                        <div class="student-header-actions">
-                            <button class="btn btn-primary" id="quick-book-lesson-btn">
-                                <i class="bi bi-plus-circle"></i> Zarezerwuj lekcję
-                            </button>
-                            <button class="btn btn-outline-danger ms-2" id="logoutBtn">
-                                <i class="bi bi-box-arrow-right"></i> Wyloguj
-                            </button>
+                        <div>
+                            <button class="student-mobile-menu-btn" id="mobile-menu-btn">☰</button>
+                            <h1 class="student-page-title">Panel główny</h1>
+                        </div>
+                        <div class="student-user-info">
+                            <div class="student-user-avatar">${user?.name?.charAt(0).toUpperCase() || 'S'}</div>
+                            <div>
+                                <div style="font-weight: 600;">${user?.name || 'Student'}</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">${user?.email || ''}</div>
+                            </div>
+                            <button class="student-logout-btn" id="logoutBtn">Wyloguj</button>
                         </div>
                     </div>
                     

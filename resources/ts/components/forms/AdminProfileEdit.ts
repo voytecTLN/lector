@@ -1,4 +1,4 @@
-// resources/ts/components/admins/AdminProfileEdit.ts
+// resources/ts/components/forms/AdminProfileEdit.ts
 import type { RouteComponent } from '@router/routes'
 import { AdminService } from '@services/AdminService'
 import type { UpdateAdminRequest, User } from '@/types/models'
@@ -338,7 +338,7 @@ export class AdminProfileEdit implements RouteComponent {
             this.showSuccess('Profil administratora został zaktualizowany')
             
             // Redirect back to details
-            navigate.to(`/admin/dashboard?section=admin-details&admin_id=${this.adminId}`)
+            await navigate.to(`/admin/dashboard?section=admin-details&admin_id=${this.adminId}`)
 
         } catch (error: any) {
             console.error('Form submission error:', error)

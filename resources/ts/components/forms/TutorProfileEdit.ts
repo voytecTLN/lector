@@ -1,4 +1,4 @@
-// resources/ts/components/tutors/TutorProfileEdit.ts
+// resources/ts/components/forms/TutorProfileEdit.ts
 import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
 import { api } from '@services/ApiService'
@@ -8,7 +8,6 @@ export class TutorProfileEdit implements RouteComponent {
     private form: HTMLFormElement | null = null
     private container: HTMLElement | null = null
     private tutor: AuthUser | null = null
-    private isLoading: boolean = false
     private isSaving: boolean = false
 
     constructor() {

@@ -1,11 +1,11 @@
 // resources/ts/components/dashboard/TutorDashboard.ts
-import type { RouteComponent } from '@router/routes'
-import { authService } from '@services/AuthService'
-import { TutorProfileEdit } from '@components/tutors/TutorProfileEdit'
-import { HourlyAvailabilityCalendar } from '@components/tutor/HourlyAvailabilityCalendar'
-import { TutorLessons } from './tutor/TutorLessons'
-import { TutorStudents } from './tutor/TutorStudents'
-import { LessonDetailsModal } from '../modals/LessonDetailsModal'
+import type {RouteComponent} from '@router/routes'
+import {authService} from '@services/AuthService'
+import {TutorProfileEdit} from '@components/forms/TutorProfileEdit'
+import {HourlyAvailabilityCalendar} from '@components/tutor/HourlyAvailabilityCalendar'
+import {TutorLessons} from './tutor/TutorLessons'
+import {TutorStudents} from './tutor/TutorStudents'
+import {LessonDetailsModal} from '../modals/LessonDetailsModal'
 
 export class TutorDashboard implements RouteComponent {
     private currentSection: string = 'dashboard'
@@ -83,7 +83,10 @@ export class TutorDashboard implements RouteComponent {
                     </div>
                     <div class="tutor-user-info">
                         <div class="tutor-user-avatar">${user?.name?.charAt(0).toUpperCase() || 'L'}</div>
-                        <span>${user?.name || 'Lektor'}</span>
+                        <div>
+                            <div style="font-weight: 600;">${user?.name || 'Lektor'}</div>
+                            <div style="font-size: 0.75rem; color: #64748b;">${user?.email || ''}</div>
+                        </div>
                         <button class="tutor-logout-btn" id="logoutBtn">Wyloguj</button>
                     </div>
                 </header>
@@ -180,8 +183,7 @@ export class TutorDashboard implements RouteComponent {
 
     private handleUrlChange(): void {
         const urlParams = new URLSearchParams(window.location.search)
-        const section = urlParams.get('section') || 'dashboard'
-        this.currentSection = section
+        this.currentSection = urlParams.get('section') || 'dashboard'
         this.updateActiveNavLink()
         this.loadSectionContent()
     }
