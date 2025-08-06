@@ -415,7 +415,7 @@ class TutorService
                             'date' => $slotData['date'],
                             'start_hour' => $slotData['start_hour'],
                             'end_hour' => $slotData['end_hour'],
-                            'is_available' => true,
+                            'is_available' => $slotData['is_available'] ?? true,
                             'hours_booked' => 0
                         ]);
                         $createdSlots[] = $slot;

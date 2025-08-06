@@ -684,24 +684,10 @@ export class HourlyAvailabilityCalendar {
             processedKeys.add(key)
         })
         
-        // Also process slots that need to be removed (were available but now deselected)
-        this.slots.forEach((slot, key) => {
-            if (!this.selectedHours.has(key) && slot.is_available && !slot.hours_booked) {
-                // Use the same parsing method
-                const lastDashIndex = key.lastIndexOf('-')
-                if (lastDashIndex !== -1) {
-                    const date = key.substring(0, lastDashIndex)
-                    const hour = parseInt(key.substring(lastDashIndex + 1))
-                    
-                    slots.push({
-                        date,
-                        start_hour: hour,
-                        end_hour: hour + 1,
-                        is_available: false
-                    })
-                }
-            }
-        })
+        // Only process slots that were explicitly deselected (not just unselected)
+        // This prevents sending all unselected slots as is_available: false
+        // TODO: Implement proper tracking of explicitly removed slots if needed
+        // For now, we only send the newly selected slots
         
         console.log('📤 Slots to save:', slots)
         

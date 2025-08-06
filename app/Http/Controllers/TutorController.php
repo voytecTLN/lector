@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateTutorRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Carbon\Carbon;
 
 class TutorController extends Controller
 {
@@ -206,9 +207,40 @@ class TutorController extends Controller
      */
     public function setAvailabilitySlots(Request $request): JsonResponse
     {
+        // Always log for debugging
+        \Log::info('Availability slots request:', [
+            'slots_count' => count($request->slots ?? []),
+            'today' => Carbon::today()->toDateString(),
+            'timezone' => config('app.timezone'),
+            'slots' => $request->slots
+        ]);
+
+        // Validate the request with custom date validation
         $request->validate([
             'slots' => 'required|array',
-            'slots.*.date' => 'required|date|after_or_equal:today',
+            'slots.*.date' => [
+                'required',
+                'date_format:Y-m-d',
+                function ($attribute, $value, $fail) use ($request) {
+                    // Get the index from attribute (e.g., "slots.0.date" -> 0)
+                    preg_match('/slots\.(\d+)\.date/', $attribute, $matches);
+                    $index = isset($matches[1]) ? intval($matches[1]) : null;
+                    
+                    // Check if this slot is being marked as unavailable
+                    $isAvailable = $index !== null && isset($request->slots[$index]) 
+                        ? $request->slots[$index]['is_available'] ?? true 
+                        : true;
+                    
+                    $slotDate = Carbon::createFromFormat('Y-m-d', $value, 'Europe/Warsaw')->startOfDay();
+                    $today = Carbon::now('Europe/Warsaw')->startOfDay();
+                    
+                    // Only validate future dates for slots being marked as available
+                    // Allow past dates when marking slots as unavailable (for cleanup)
+                    if ($isAvailable && $slotDate->lt($today)) {
+                        $fail("The {$attribute} field must be a date after or equal to today when setting availability.");
+                    }
+                }
+            ],
             'slots.*.start_hour' => 'required|integer|min:8|max:21',
             'slots.*.end_hour' => 'required|integer|min:9|max:22|gt:slots.*.start_hour',
             'slots.*.is_available' => 'required|boolean'
