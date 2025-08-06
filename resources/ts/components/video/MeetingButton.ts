@@ -38,7 +38,7 @@ export class MeetingButton {
         this.checkInterval = window.setInterval(() => {
             console.log('🔄 MeetingButton auto-refresh for lesson:', this.lessonId)
             this.updateButton()
-        }, 30000)
+        }, 60000)
     }
 
     private updateButton = async (): Promise<void> => {
