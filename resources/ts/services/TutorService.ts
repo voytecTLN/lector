@@ -238,7 +238,22 @@ export class TutorService {
         try {
             console.log('👤 TutorService: Getting tutor profile')
 
-            const response = await api.get('/tutor/profile')
+            const response = await api.get<{ success: boolean, data: {
+                id: number;
+                name: string;
+                email: string;
+                phone?: string;
+                city?: string;
+                tutor_profile?: {
+                    description?: string;
+                    years_experience?: number;
+                    is_accepting_students?: boolean;
+                    hourly_rate?: number;
+                    teaching_languages?: string[];
+                    specializations?: string[];
+                    qualifications?: string[];
+                };
+            } }>('/tutor/profile')
             
             return response.data
 
