@@ -219,11 +219,26 @@ export class TutorService {
     /**
      * Get tutor profile for editing
      */
-    async getProfile(): Promise<any> {
+    async getProfile(): Promise<{
+        id: number;
+        name: string;
+        email: string;
+        phone?: string;
+        city?: string;
+        tutor_profile?: {
+            description?: string;
+            years_experience?: number;
+            is_accepting_students?: boolean;
+            hourly_rate?: number;
+            teaching_languages?: string[];
+            specializations?: string[];
+            qualifications?: string[];
+        };
+    }> {
         try {
             console.log('👤 TutorService: Getting tutor profile')
 
-            const response = await api.get<{ success: boolean, data: any }>('/tutor/profile')
+            const response = await api.get('/tutor/profile')
             
             return response.data
 

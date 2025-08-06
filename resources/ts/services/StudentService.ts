@@ -333,11 +333,24 @@ export class StudentService {
     /**
      * Get student profile for editing
      */
-    async getProfile(): Promise<any> {
+    async getProfile(): Promise<{
+        id: number;
+        name: string;
+        email: string;
+        phone?: string;
+        birth_date?: string;
+        city?: string;
+        country?: string;
+        student_profile?: {
+            learning_languages?: string[];
+            learning_goals?: string[];
+            current_levels?: { [key: string]: string };
+        };
+    }> {
         try {
             console.log('👤 StudentService: Getting student profile')
 
-            const response = await api.get<{ success: boolean, data: any }>('/student/profile')
+            const response = await api.get('/student/profile')
             
             return response.data
 

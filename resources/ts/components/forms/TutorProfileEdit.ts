@@ -6,7 +6,7 @@ import { NotificationService } from '@/utils/NotificationService'
 import { PasswordValidator } from '@/utils/PasswordValidator'
 import { LoadingStateManager } from '@/utils/LoadingStateManager'
 
-export interface TutorProfileEditData {
+export interface TutorProfile {
     id: number;
     name: string;
     email: string;
@@ -26,7 +26,7 @@ export interface TutorProfileEditData {
 export class TutorProfileEdit implements RouteComponent {
     private form: HTMLFormElement | null = null
     private container: HTMLElement | null = null
-    private profile: TutorProfileEditData | null = null
+    private profile: TutorProfile | null = null
     private validationHandler: FormValidationHandler | null = null
     private passwordValidator: PasswordValidator | null = null
     private loadingManager: LoadingStateManager | null = null
