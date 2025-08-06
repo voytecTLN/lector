@@ -284,8 +284,24 @@ export class StudentDashboard implements RouteComponent {
                 break
             case 'profil':
                 pageTitle.textContent = 'Mój profil'
-                contentArea.innerHTML = await this.getProfileContent()
-                this.setupProfileForm()
+                contentArea.innerHTML = '<div id="student-profile-edit-container"></div>'
+                
+                // Mount StudentProfileEdit component
+                import('@/components/forms/StudentProfileEdit').then(async (module) => {
+                    const profileEdit = new module.StudentProfileEdit()
+                    const container = contentArea.querySelector('#student-profile-edit-container')
+
+                    if (container && container instanceof HTMLElement) {
+                        const element = await profileEdit.render()
+                        container.appendChild(element)
+                        profileEdit.mount(container)
+                    } else {
+                        console.error('Student profile edit container not found or not HTMLElement')
+                    }
+                }).catch(error => {
+                    console.error('Failed to load StudentProfileEdit:', error)
+                    contentArea.innerHTML = '<div class="alert alert-danger">Błąd ładowania formularza profilu</div>'
+                })
                 break
             case 'pakiet':
                 pageTitle.textContent = 'Mój pakiet godzin'

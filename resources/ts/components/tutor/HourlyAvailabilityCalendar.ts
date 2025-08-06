@@ -114,10 +114,6 @@ export class HourlyAvailabilityCalendar {
                         <i class="bi bi-x-circle me-2"></i>
                         Wyczyść wybór
                     </button>
-                    <button class="btn btn-outline-info ms-2" id="copy-prev-week">
-                        <i class="bi bi-files me-2"></i>
-                        Kopiuj z poprzedniego tygodnia
-                    </button>
                 </div>
             </div>
 
