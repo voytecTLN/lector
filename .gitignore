@@ -5,6 +5,9 @@
 /public/build
 /build
 
+# Documentation
+/docsmd/
+
 # Deployment required
 index.php
 composer.phar
@@ -47,23 +50,17 @@ Thumbs.db
 
 # Claude Code
 .claude/settings.local.json
+CLAUDE.local.md
+CLAUDE.md
 
 *.js
-/CLAUDE.local.md
 Makefile
 
 # Test files
 test_*.html
 test_*.php
 
-# Documentation (temporary)
-MATERIALS_IMPLEMENTATION_SUMMARY.md
-
 # Symlinks
 /public/storage
 
 daily-debug.log
-
-AI_INSTRUCTIONS.md
-CLAUDE.md
-CLAUDE.local.md
