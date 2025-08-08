@@ -43,6 +43,7 @@ export class HourlyAvailabilityCalendar {
             )
             
             console.log('Loaded availability slots:', response)
+            console.log('Sample slot structure:', response.slots[0])
 
             if (response.slots) {
                 this.slots.clear()
@@ -110,10 +111,12 @@ export class HourlyAvailabilityCalendar {
                         <i class="bi bi-check-circle me-2"></i>
                         Zapisz dostępność
                     </button>
+<!--
                     <button class="btn btn-outline-secondary ms-2" id="clear-selection">
                         <i class="bi bi-x-circle me-2"></i>
                         Wyczyść wybór
                     </button>
+                    -->
                 </div>
             </div>
 
@@ -247,21 +250,47 @@ export class HourlyAvailabilityCalendar {
                     border-radius: 4px;
                     font-size: 12px;
                     z-index: 1000;
-                    pointer-events: none;
+                    pointer-events: auto;
                     white-space: nowrap;
                     display: none;
                 }
                 
-                .hour-cell:hover .tooltip-content {
+                .hour-cell:hover .tooltip-content,
+                .hour-cell.show-tooltip .tooltip-content,
+                .hour-cell.available .tooltip-content {
                     display: block;
                     top: -25px;
                     left: 50%;
                     transform: translateX(-50%);
+                    z-index: 1000;
+                }
+
+                .tooltip-content .withdraw-btn {
+                    font-size: 0.75rem;
+                    padding: 4px 8px;
+                    white-space: nowrap;
+                    border-radius: 3px;
+                    margin-top: 3px;
+                    cursor: pointer;
+                    position: relative;
+                    z-index: 1001;
+                    display: block;
+                    width: 100%;
+                }
+
+                .tooltip-content .withdraw-btn:hover {
+                    background-color: #c82333 !important;
+                    border-color: #bd2130 !important;
+                }
+
+                .tooltip-text {
+                    margin-bottom: 2px;
                 }
             </style>
         `
 
         this.attachEventListeners()
+        this.attachWithdrawButtonListeners()
     }
 
     private renderHourlyGrid(): string {
@@ -310,8 +339,23 @@ export class HourlyAvailabilityCalendar {
                 else if (isAvailable) cellClass += ' available'
                 
                 let tooltip = ''
-                if (isBooked) {
-                    tooltip = '<div class="tooltip-content">Zajęte</div>'
+                if (!isPast) { // Only show tooltips for non-past cells
+                    if (isBooked) {
+                        tooltip = '<div class="tooltip-content">Zajęte</div>'
+                    } else if (isAvailable && existingSlot) {
+                        tooltip = `
+                            <div class="tooltip-content">
+                                <div class="tooltip-text">Dostępne</div>
+                                <button class="withdraw-btn btn btn-danger btn-sm mt-1" 
+                                        data-slot-id="${existingSlot.id}" 
+                                        data-date="${dateStr}"
+                                        data-hour="${hour}">
+                                    <i class="bi bi-x-circle me-1"></i> Wycofaj
+                                </button>
+                            </div>
+                        `
+                        console.log(`📝 Generated tooltip for slot ${existingSlot.id} at ${dateStr}:${hour} (existingSlot.date was: ${existingSlot.date})`, tooltip)
+                    }
                 }
                 
                 grid += `
@@ -444,13 +488,42 @@ export class HourlyAvailabilityCalendar {
         hourCells?.forEach(cell => {
             // Use click for simple selection (like in the old calendar)
             cell.addEventListener('click', (e) => {
+                // Don't preventDefault here - let the event bubble for button clicks
+                const target = e.currentTarget as HTMLElement
+                const clickedElement = e.target as HTMLElement
+                const key = target.dataset.key
+                
+                console.log('🖱️ Hour cell clicked:', {
+                    key,
+                    clickedElement: clickedElement.tagName,
+                    clickedClasses: clickedElement.className,
+                    isWithdrawBtn: clickedElement.closest('.withdraw-btn')
+                })
+                
+                // If clicked on withdraw button, don't handle cell logic
+                if (clickedElement.closest('.withdraw-btn')) {
+                    console.log('🗑️ Withdraw button clicked - skipping cell logic')
+                    return
+                }
+                
                 e.preventDefault()
                 e.stopPropagation()
-                const target = e.currentTarget as HTMLElement
-                const key = target.dataset.key
-                console.log('🖱️ Hour cell clicked:', key)
+                
                 if (key && !this.isDragging) {
-                    this.toggleHour(key)
+                    // Check if this cell has an available slot (green)
+                    if (target.classList.contains('available')) {
+                        // Show tooltip for available slots
+                        console.log('📌 Showing tooltip for available slot')
+                        target.classList.add('show-tooltip')
+                        
+                        // Hide tooltip after 10 seconds (longer time)
+                        setTimeout(() => {
+                            target.classList.remove('show-tooltip')
+                        }, 10000)
+                    } else {
+                        // Normal selection for empty cells
+                        this.toggleHour(key)
+                    }
                 }
             })
             
@@ -512,8 +585,92 @@ export class HourlyAvailabilityCalendar {
         this.container?.querySelector('#copy-prev-week')?.addEventListener('click', () => {
             this.copyFromPreviousWeek()
         })
+
+        // Withdraw buttons - use multiple approaches for maximum compatibility
+        
+        // Method 1: Event delegation on container
+        this.container?.addEventListener('click', (e) => {
+            const target = e.target as HTMLElement
+            console.log('🎯 Container click:', { 
+                target: target.tagName, 
+                classes: target.className,
+                parentClasses: target.parentElement?.className,
+                hasWithdrawBtn: !!target.closest('.withdraw-btn')
+            })
+            
+            // Check if clicked element is a withdraw button or child of one
+            const withdrawBtn = target.closest('.withdraw-btn') as HTMLButtonElement
+            
+            if (withdrawBtn) {
+                console.log('🗑️ Withdraw button clicked via delegation!')
+                console.log('🗑️ Button data:', {
+                    slotId: withdrawBtn.dataset.slotId,
+                    date: withdrawBtn.dataset.date,
+                    hour: withdrawBtn.dataset.hour
+                })
+                
+                e.preventDefault()
+                e.stopPropagation()
+                e.stopImmediatePropagation()
+                
+                const slotId = parseInt(withdrawBtn.dataset.slotId!)
+                const date = withdrawBtn.dataset.date!
+                const hour = parseInt(withdrawBtn.dataset.hour!)
+                
+                console.log('🗑️ Calling withdrawSlot with:', { slotId, date, hour })
+                this.withdrawSlot(slotId, date, hour)
+                return false
+            }
+        })
+
+        // Method 2: Direct event listeners (add after DOM is updated)
+        setTimeout(() => {
+            const withdrawButtons = this.container?.querySelectorAll('.withdraw-btn')
+            console.log('🔧 Adding direct listeners to', withdrawButtons?.length, 'withdraw buttons')
+            
+            withdrawButtons?.forEach(btn => {
+                const button = btn as HTMLButtonElement
+                button.addEventListener('click', (e) => {
+                    console.log('🗑️ DIRECT withdraw button clicked!')
+                    e.preventDefault()
+                    e.stopPropagation()
+                    e.stopImmediatePropagation()
+                    
+                    const slotId = parseInt(button.dataset.slotId!)
+                    const date = button.dataset.date!
+                    const hour = parseInt(button.dataset.hour!)
+                    
+                    console.log('🗑️ DIRECT calling withdrawSlot with:', { slotId, date, hour })
+                    this.withdrawSlot(slotId, date, hour)
+                })
+            })
+        }, 100)
     }
 
+    private attachWithdrawButtonListeners(): void {
+        // Wait for DOM to be fully rendered, then attach direct listeners
+        setTimeout(() => {
+            const withdrawButtons = this.container?.querySelectorAll('.withdraw-btn')
+            console.log('🔧 attachWithdrawButtonListeners: found', withdrawButtons?.length, 'withdraw buttons')
+            
+            withdrawButtons?.forEach(btn => {
+                const button = btn as HTMLButtonElement
+                button.addEventListener('click', (e) => {
+                    console.log('🗑️ DIRECT withdraw button clicked! (from attachWithdrawButtonListeners)')
+                    e.preventDefault()
+                    e.stopPropagation()
+                    e.stopImmediatePropagation()
+                    
+                    const slotId = parseInt(button.dataset.slotId!)
+                    const date = button.dataset.date!
+                    const hour = parseInt(button.dataset.hour!)
+                    
+                    console.log('🗑️ DIRECT calling withdrawSlot with:', { slotId, date, hour })
+                    this.withdrawSlot(slotId, date, hour)
+                })
+            })
+        }, 200) // Slightly longer delay to ensure DOM is ready
+    }
 
     private handleCellTouchStart(e: TouchEvent): void {
         e.preventDefault()
@@ -705,6 +862,45 @@ export class HourlyAvailabilityCalendar {
         } catch (error: any) {
             console.error('Failed to save availability:', error)
             this.showNotification('error', error.message || 'Błąd podczas zapisywania dostępności')
+        }
+    }
+
+    private async withdrawSlot(slotId: number, date: string, hour: number): Promise<void> {
+        console.log('🗑️ withdrawSlot called:', { slotId, date, hour })
+        
+        // Import SweetAlert2 for confirmation dialog
+        const { default: Swal } = await import('sweetalert2')
+
+        const result = await Swal.fire({
+            title: 'Czy na pewno chcesz wycofać dostępność?',
+            html: `
+                <p>Dostępność na dzień <strong>${new Date(date).toLocaleDateString('pl-PL')}</strong> o godzinie <strong>${hour}:00</strong> zostanie usunięta.</p>
+                <p class="text-muted">Ta operacja nie może być cofnięta.</p>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Tak, wycofaj',
+            cancelButtonText: 'Anuluj'
+        })
+
+        if (!result.isConfirmed) return
+
+        try {
+            // Use api service directly since tutorAvailabilityService might not have withdraw method
+            const { api } = await import('@services/ApiService')
+            await api.delete(`/tutor/availability-slots/${slotId}`)
+            
+            this.showNotification('success', 'Dostępność została wycofana')
+            
+            // Reload availability data
+            await this.loadAvailability()
+            
+        } catch (error: any) {
+            console.error('Failed to withdraw slot:', error)
+            const message = error.response?.data?.message || 'Wystąpił błąd podczas wycofywania dostępności'
+            this.showNotification('error', message)
         }
     }
 

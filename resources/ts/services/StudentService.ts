@@ -87,9 +87,11 @@ export class StudentService {
      */
     async createStudent(data: CreateStudentRequest): Promise<User> {
         try {
-            console.log('👨‍🎓 StudentService: Creating student')
+            console.log('👨‍🎓 StudentService: Creating student with data:', data)
+            console.log('📦 StudentService: package_id value:', data.package_id)
+            console.log('📦 StudentService: package_id type:', typeof data.package_id)
 
-            const response = await api.post<LaravelStudentResponse>('/students', {
+            const requestPayload = {
                 name: data.name,
                 email: data.email,
                 password: data.password,
@@ -102,8 +104,14 @@ export class StudentService {
                 current_levels: data.current_levels || {},
                 learning_goals: data.learning_goals || [],
                 preferred_schedule: data.preferred_schedule || {},
-                status: data.status
-            })
+                status: data.status,
+                package_id: data.package_id // ✅ DODANE!
+            }
+            
+            console.log('🚀 StudentService: Final request payload:', requestPayload)
+            console.log('📦 StudentService: payload package_id:', requestPayload.package_id)
+
+            const response = await api.post<LaravelStudentResponse>('/students', requestPayload)
 
             // const response = await api.post<LaravelStudentResponse>('/students', {data})
 

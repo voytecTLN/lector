@@ -337,6 +337,9 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::post('/availability-slots', [TutorController::class, 'setAvailabilitySlots'])
                     ->name('api.tutor.availability-slots.set');
                     
+                Route::delete('/availability-slots/{id}', [TutorController::class, 'withdrawAvailabilitySlot'])
+                    ->name('api.tutor.availability-slots.withdraw');
+                    
                 // Lesson management routes for tutors
                 Route::prefix('lessons')->group(function () {
                     Route::get('/my-lessons', [LessonController::class, 'getUserLessons'])

@@ -281,6 +281,11 @@ export class TutorForm implements RouteComponent {
                                     <i class="bi bi-check-circle me-1"></i> 
                                     ${this.isEditMode ? 'Zapisz zmiany' : 'Utwórz lektora'}
                                 </button>
+                                ${this.isEditMode ? `
+                                    <button type="button" class="btn btn-danger" id="delete-button">
+                                        <i class="bi bi-trash me-1"></i> Usuń lektora
+                                    </button>
+                                ` : ''}
                                 <a href="/admin/dashboard?section=lektorzy" class="btn btn-outline-secondary">
                                     <i class="bi bi-x-circle me-1"></i> Anuluj
                                 </a>
@@ -349,6 +354,15 @@ export class TutorForm implements RouteComponent {
         if (!this.form) return
 
         this.form.addEventListener('submit', this.handleSubmit.bind(this))
+        
+        // Setup delete button for edit mode
+        if (this.isEditMode) {
+            const deleteButton = this.form.querySelector('#delete-button') as HTMLButtonElement
+            if (deleteButton) {
+                deleteButton.addEventListener('click', this.handleDelete.bind(this))
+            }
+        }
+        
         this.showForm()
     }
 
@@ -470,6 +484,57 @@ export class TutorForm implements RouteComponent {
         } finally {
             submitButton.disabled = false
             submitButton.innerHTML = originalText
+        }
+    }
+
+    private async handleDelete(): Promise<void> {
+        if (!this.tutorId || !this.tutor) return
+
+        // Import SweetAlert2 for confirmation dialog
+        const { default: Swal } = await import('sweetalert2')
+
+        const result = await Swal.fire({
+            title: 'Czy na pewno chcesz usunąć lektora?',
+            html: `
+                <p>Lektor <strong>${this.tutor.name}</strong> zostanie dezaktywowany.</p>
+                <p class="text-muted">Ta operacja nie usuwa lektora z bazy danych, tylko dezaktywuje go.</p>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Tak, usuń',
+            cancelButtonText: 'Anuluj',
+            customClass: {
+                popup: 'swal-wide'
+            }
+        })
+
+        if (!result.isConfirmed) return
+
+        const deleteButton = this.form?.querySelector('#delete-button') as HTMLButtonElement
+        if (!deleteButton) return
+
+        const originalText = deleteButton.innerHTML
+        deleteButton.disabled = true
+        deleteButton.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i> Usuwanie...'
+
+        try {
+            await this.tutorService.deactivateTutor(this.tutorId)
+            
+            this.showSuccess('Lektor został dezaktywowany')
+            
+            // Redirect to tutor list
+            setTimeout(() => {
+                navigate.to('/admin/dashboard?section=lektorzy')
+            }, 1500)
+
+        } catch (error: any) {
+            console.error('Delete error:', error)
+            this.showError('Wystąpił błąd podczas dezaktywacji lektora')
+        } finally {
+            deleteButton.disabled = false
+            deleteButton.innerHTML = originalText
         }
     }
 

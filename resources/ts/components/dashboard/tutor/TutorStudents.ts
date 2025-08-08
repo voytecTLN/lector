@@ -640,11 +640,13 @@ export class TutorStudents {
                         <button class="btn btn-sm btn-outline-primary" onclick="TutorStudents.downloadMaterial(${material.id})">
                             <i class="bi bi-download"></i>
                         </button>
+                        <!--
                         <button class="btn btn-sm ${material.is_active ? 'btn-success' : 'btn-outline-secondary'}" 
                                 onclick="TutorStudents.toggleMaterialActive(${material.id}, ${studentId})"
                                 title="${material.is_active ? 'Materiał aktywny' : 'Materiał nieaktywny'}">
                             <i class="bi bi-check-circle"></i>
                         </button>
+                        -->
                         <button class="btn btn-sm btn-outline-danger" onclick="TutorStudents.deleteMaterial(${material.id}, ${studentId})">
                             <i class="bi bi-trash"></i>
                         </button>

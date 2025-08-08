@@ -91,14 +91,14 @@ export class StudentForm implements RouteComponent {
         this.container = container
         this.form = container.querySelector('#student-form')
 
+        // Load packages first (needed for both create and edit)
+        await this.loadPackages()
+
         if (this.isEditMode && this.studentId) {
             await this.loadStudentData()
         } else {
             this.setupForm()
         }
-        
-        // Load packages after form setup
-        await this.loadPackages()
     }
 
     unmount(): void {
@@ -219,7 +219,7 @@ export class StudentForm implements RouteComponent {
                         <div class="col-md-12">
                             <label class="form-label">Przypisz pakiet (opcjonalne)</label>
                             <select name="package_id" class="form-select" id="packageSelect">
-                                <option value="">Ładowanie pakietów...</option>
+                                <option value="">Bez pakietu</option>
                             </select>
                             <div class="form-text">Wybierz pakiet godzin do przypisania studentowi</div>
                         </div>
@@ -383,6 +383,16 @@ export class StudentForm implements RouteComponent {
                 }
             })
         }
+
+        // Package assignment (from active package assignments)
+        if (student.active_package_assignments && student.active_package_assignments.length > 0) {
+            const activePackage = student.active_package_assignments[0] // Get first active package
+            const packageSelect = this.form!.querySelector('#packageSelect') as HTMLSelectElement
+            if (packageSelect && activePackage.package) {
+                packageSelect.value = activePackage.package.id.toString()
+                this.showPackageInfo(activePackage.package.id.toString())
+            }
+        }
     }
 
     private setupForm(): void {
@@ -435,30 +445,40 @@ export class StudentForm implements RouteComponent {
     }
 
     private async loadPackages(): Promise<void> {
+        const select = this.form?.querySelector('#packageSelect') as HTMLSelectElement
+        if (!select) {
+            console.error('Package select element not found')
+            return
+        }
+
         try {
+            // Show loading state
+            select.innerHTML = '<option value="">Ładowanie pakietów...</option>'
+            select.disabled = true
+
             // Import PackageService dynamically
             const { PackageService } = await import('@services/PackageService')
             const packageService = new PackageService()
             
             const packages = await packageService.getActivePackages()
             
-            const select = this.form?.querySelector('#packageSelect') as HTMLSelectElement
-            if (select) {
-                select.innerHTML = '<option value="">Bez pakietu</option>'
-                packages.forEach(pkg => {
-                    const option = document.createElement('option')
-                    option.value = pkg.id.toString()
-                    option.textContent = `${pkg.name} (${pkg.hours_count}h - ${pkg.formatted_price || this.formatPrice(pkg.price)})`
-                    option.dataset.package = JSON.stringify(pkg)
-                    select.appendChild(option)
-                })
-            }
+            // Clear loading and add options
+            select.innerHTML = '<option value="">Bez pakietu</option>'
+            packages.forEach(pkg => {
+                const option = document.createElement('option')
+                option.value = pkg.id.toString()
+                option.textContent = `${pkg.name} (${pkg.hours_count}h - ${pkg.formatted_price || this.formatPrice(pkg.price)})`
+                option.dataset.package = JSON.stringify(pkg)
+                select.appendChild(option)
+            })
+            
+            select.disabled = false
+            console.log(`Loaded ${packages.length} packages successfully`)
+            
         } catch (error) {
             console.error('Error loading packages:', error)
-            const select = this.form?.querySelector('#packageSelect') as HTMLSelectElement
-            if (select) {
-                select.innerHTML = '<option value="">Błąd ładowania pakietów</option>'
-            }
+            select.innerHTML = '<option value="">Błąd ładowania pakietów</option>'
+            select.disabled = false
         }
     }
 
@@ -530,20 +550,7 @@ export class StudentForm implements RouteComponent {
         try {
             const formData = new FormData(this.form)
 
-            // DODAJ TO DO DEBUGOWANIA
-            console.log('=== Form Debug ===')
-            console.log('Password:', formData.get('password'))
-            console.log('Password Confirmation:', formData.get('password_confirmation'))
-            console.log('All form data:')
-            formData.forEach((value, key) => {
-                console.log(`${key}: ${value}`)
-            })
-            console.log('=================')
-
             const studentData = this.parseFormData(formData)
-
-            // DODAJ TO TEŻ
-            console.log('Parsed data:', studentData)
 
             if (this.isEditMode && this.studentId) {
                 await this.studentService.updateStudent(this.studentId, studentData as UpdateStudentRequest)
@@ -571,6 +578,11 @@ export class StudentForm implements RouteComponent {
     }
 
     private parseFormData(formData: FormData): CreateStudentRequest | UpdateStudentRequest {
+        console.log('🔍 Parsing FormData - all entries:')
+        for (const [key, value] of formData.entries()) {
+            console.log(`  ${key}: ${value}`)
+        }
+
         const data: any = {}
 
         // Basic fields
@@ -621,10 +633,15 @@ export class StudentForm implements RouteComponent {
 
         // Package assignment
         const packageId = formData.get('package_id')
+        console.log('📦 Package ID from form:', packageId)
         if (packageId && packageId !== '') {
             data.package_id = parseInt(packageId as string)
+            console.log('📦 Parsed package_id:', data.package_id)
+        } else {
+            console.log('📦 No package selected or empty value')
         }
 
+        console.log('🚀 Final parsed data:', data)
         return data
     }
 

@@ -744,4 +744,44 @@ class TutorService
             ] : null,
         ];
     }
+
+    /**
+     * Withdraw availability slot (only if no lessons booked)
+     */
+    public function withdrawAvailabilitySlot(int $tutorId, int $slotId): bool
+    {
+        DB::beginTransaction();
+
+        try {
+            // Find the slot and verify ownership
+            $slot = TutorAvailabilitySlot::where('id', $slotId)
+                ->where('tutor_id', $tutorId)
+                ->first();
+
+            if (!$slot) {
+                throw new \Exception('Slot dostępności nie został znaleziony');
+            }
+
+            // Check if slot has any lessons booked
+            if ($slot->hours_booked > 0) {
+                throw new \Exception('Nie można wycofać dostępności - są zarezerwowane lekcje');
+            }
+
+            // Check if slot is not in the past - compare slot date + hour with current time
+            $slotDateTime = Carbon::parse($slot->date)->setHour($slot->start_hour);
+            if ($slotDateTime->isPast()) {
+                throw new \Exception('Nie można wycofać dostępności z przeszłości');
+            }
+
+            // Remove the slot
+            $slot->delete();
+
+            DB::commit();
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
 }

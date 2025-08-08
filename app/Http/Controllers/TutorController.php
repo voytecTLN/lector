@@ -646,4 +646,27 @@ class TutorController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Withdraw availability slot (only if no lessons booked)
+     */
+    public function withdrawAvailabilitySlot(int $id): JsonResponse
+    {
+        try {
+            $tutorId = auth()->id();
+            
+            $result = $this->tutorService->withdrawAvailabilitySlot($tutorId, $id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Dostępność została wycofana'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
 }

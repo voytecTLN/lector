@@ -43,6 +43,13 @@ class StudentController extends BaseController
         try {
             $data = $request->validated();
             
+            \Log::info('📝 StudentController: Creating student with data', [
+                'data_keys' => array_keys($data),
+                'has_package_id' => isset($data['package_id']),
+                'package_id_value' => $data['package_id'] ?? 'not_set',
+                'package_id_type' => isset($data['package_id']) ? gettype($data['package_id']) : 'not_set'
+            ]);
+            
             // Auto-verify users created by admin (like import)
             $data['email_verified_at'] = now();
             $data['is_import'] = true; // Skip welcome email
