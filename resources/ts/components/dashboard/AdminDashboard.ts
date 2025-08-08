@@ -107,6 +107,12 @@ export class AdminDashboard implements RouteComponent {
                             Logi systemowe
                         </a>
                     </li>
+                    <li class="admin-nav-item">
+                        <a href="#logowania" class="admin-nav-link" data-section="logowania">
+                            <span class="admin-nav-icon">🔑</span>
+                            Logowania
+                        </a>
+                    </li>
 
                     <div class="admin-nav-section">System</div>
 
@@ -430,11 +436,49 @@ export class AdminDashboard implements RouteComponent {
             case 'ustawienia':
                 pageTitle.textContent = 'Ustawienia Systemu'
                 contentArea.innerHTML = this.getSettingsContent()
+                
+                // Mount SystemSettings component
+                import('../admin/SystemSettings').then(async (module) => {
+                    const systemSettings = new module.SystemSettings()
+                    const container = contentArea.querySelector('#system-settings-container') as HTMLElement
+                    if (container) {
+                        await systemSettings.mount(container)
+                    }
+                }).catch(error => {
+                    console.error('Error loading SystemSettings:', error)
+                    contentArea.innerHTML = `
+                        <div class="admin-content-area">
+                            <div class="alert alert-danger">
+                                <h4>Błąd ładowania</h4>
+                                <p>Nie udało się załadować komponentu ustawień systemu.</p>
+                            </div>
+                        </div>
+                    `
+                })
                 break
 
             case 'logi':
-                pageTitle.textContent = 'Logi'
+                pageTitle.textContent = 'Logi Systemu'
                 contentArea.innerHTML = this.getLogsContent()
+                
+                // Mount AdminAuditLogs component
+                import('../admin/AdminAuditLogs').then(async (module) => {
+                    const auditLogs = new module.AdminAuditLogs()
+                    const container = contentArea.querySelector('#audit-logs-container') as HTMLElement
+                    if (container) {
+                        await auditLogs.mount(container)
+                    }
+                }).catch(error => {
+                    console.error('Error loading AdminAuditLogs:', error)
+                    contentArea.innerHTML = `
+                        <div class="admin-content-area">
+                            <div class="alert alert-danger">
+                                <h4>Błąd ładowania</h4>
+                                <p>Nie udało się załadować komponentu logów systemowych.</p>
+                            </div>
+                        </div>
+                    `
+                })
                 break
 
             case 'raporty':
@@ -729,6 +773,30 @@ export class AdminDashboard implements RouteComponent {
                 }
                 break
 
+            case 'logowania':
+                pageTitle.textContent = 'Logi Logowań'
+                contentArea.innerHTML = this.getLoginLogsContent()
+                
+                // Mount AdminLoginLogs component
+                import('../admin/AdminLoginLogs').then(async (module) => {
+                    const loginLogs = new module.AdminLoginLogs()
+                    const container = contentArea.querySelector('#login-logs-container') as HTMLElement
+                    if (container) {
+                        await loginLogs.mount(container)
+                    }
+                }).catch(error => {
+                    console.error('Error loading AdminLoginLogs:', error)
+                    contentArea.innerHTML = `
+                        <div class="admin-content-area">
+                            <div class="alert alert-danger">
+                                <h4>Błąd ładowania</h4>
+                                <p>Nie udało się załadować komponentu logów logowań.</p>
+                            </div>
+                        </div>
+                    `
+                })
+                break
+
             default:
                 pageTitle.textContent = 'Dashboard'
                 this.isLoadingStats = true
@@ -829,16 +897,16 @@ export class AdminDashboard implements RouteComponent {
 
     private getLogsContent(): string {
         return `
-            <div class="admin-content-area">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h2>Logi</h2>
-                </div>
-                <p>Logi dostępne wkrótce.</p>
-                
-                <!-- Tu będzie tabela z logami -->
-                <div class="table-container">
-                    <p class="admin-text-muted">Logi</p>
-                </div>
+            <div class="admin-content-area" id="audit-logs-container">
+                <!-- AdminAuditLogs component will be mounted here -->
+            </div>
+        `
+    }
+    
+    private getLoginLogsContent(): string {
+        return `
+            <div class="admin-content-area" id="login-logs-container">
+                <!-- AdminLoginLogs component will be mounted here -->
             </div>
         `
     }
@@ -984,14 +1052,8 @@ export class AdminDashboard implements RouteComponent {
 
     private getSettingsContent(): string {
         return `
-            <div class="admin-content-area">
-                <h2>Konfiguracja Platformy</h2>
-                <p>Globalne ustawienia systemu, integracje i konfiguracja.</p>
-                
-                <!-- Tu będą ustawienia -->
-                <div class="settings-form">
-                    <p class="admin-text-muted">Ładowanie ustawień...</p>
-                </div>
+            <div class="admin-content-area" id="system-settings-container">
+                <!-- SystemSettings component will be mounted here -->
             </div>
         `
     }

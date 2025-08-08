@@ -295,6 +295,28 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.admin.lessons.status-history');
             });
 
+            // Admin audit log routes  
+            Route::prefix('audit')->group(function () {
+                Route::get('/recent', [\App\Http\Controllers\AdminAuditController::class, 'getRecentActivity'])
+                    ->name('api.admin.audit.recent');
+                Route::get('/logs', [\App\Http\Controllers\AdminAuditController::class, 'getActivityLogs'])
+                    ->name('api.admin.audit.logs');
+                Route::get('/stats', [\App\Http\Controllers\AdminAuditController::class, 'getActivityStats'])
+                    ->name('api.admin.audit.stats');
+                Route::get('/model/{modelType}/{modelId}', [\App\Http\Controllers\AdminAuditController::class, 'getModelActivity'])
+                    ->name('api.admin.audit.model');
+            });
+
+            // Admin login logs routes
+            Route::prefix('login-logs')->group(function () {
+                Route::get('/recent', [\App\Http\Controllers\LoginLogsController::class, 'getRecentActivity'])
+                    ->name('api.admin.login-logs.recent');
+                Route::get('/logs', [\App\Http\Controllers\LoginLogsController::class, 'getLoginLogs'])
+                    ->name('api.admin.login-logs.logs');
+                Route::get('/stats', [\App\Http\Controllers\LoginLogsController::class, 'getLoginStats'])
+                    ->name('api.admin.login-logs.stats');
+            });
+
         });
 
         // Tutor dashboard stats and profile
