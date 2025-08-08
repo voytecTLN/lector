@@ -8,7 +8,7 @@ import type {
     AdminFilters 
 } from '@/types/models'
 
-export class AdminService {
+class AdminServiceClass {
     async getAdmins(filters: AdminFilters = {}): Promise<PaginatedResponse<User[]>> {
         const params = new URLSearchParams()
         
@@ -90,4 +90,19 @@ export class AdminService {
 
         return await response.blob()
     }
+
+    /**
+     * Get dashboard statistics for admin
+     */
+    async getDashboardStats(): Promise<any> {
+        try {
+            const response = await api.get<{ success: boolean, data: any }>('/admin/dashboard-stats')
+            return response.data || response
+        } catch (error) {
+            console.error('❌ Get dashboard stats error:', error)
+            throw error
+        }
+    }
 }
+
+export const adminService = new AdminServiceClass()

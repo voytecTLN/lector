@@ -1,4 +1,6 @@
-import { api } from '@services/ApiService'
+import { LessonService } from '@services/LessonService'
+import { tutorService } from '@services/TutorService'
+import { studentService } from '@services/StudentService'
 import { LessonStatusManager } from '@/components/lessons/LessonStatusManager'
 
 export class AdminLessons {
@@ -97,13 +99,20 @@ export class AdminLessons {
             if (this.currentFilter.dateFrom) params.append('date_from', this.currentFilter.dateFrom)
             if (this.currentFilter.dateTo) params.append('date_to', this.currentFilter.dateTo)
             
-            const response = await api.get<{success: boolean, data: {lessons: any[]}, message?: string}>(`/lessons?${params.toString()}`)
+            const filters = {
+                status: this.currentFilter.status === 'all' ? undefined : this.currentFilter.status,
+                tutor_id: this.currentFilter.tutorId || undefined,
+                student_id: this.currentFilter.studentId || undefined,
+                date_from: this.currentFilter.dateFrom || undefined,
+                date_to: this.currentFilter.dateTo || undefined
+            }
+            
+            const response = await LessonService.getAdminLessons(filters)
             
             console.log('AdminLessons API response:', response)
-            console.log('Response data:', response.data)
-            console.log('Lessons array:', response.data?.lessons)
+            console.log('Lessons array:', response.lessons)
             
-            const lessons = response.data?.lessons || []
+            const lessons = response.lessons || []
             
             console.log('Final lessons array:', lessons)
             this.renderLessons(lessons)
@@ -116,25 +125,25 @@ export class AdminLessons {
     private async loadFilterOptions(): Promise<void> {
         try {
             // Load tutors
-            const tutorsResponse = await api.get<{success: boolean, data: any[], message?: string}>('/tutors')
+            const tutorsResponse = await tutorService.getAllTutors()
             console.log('Tutors response:', tutorsResponse)
-            const tutors = tutorsResponse.data || []
+            const tutors = tutorsResponse || []
             
             const tutorSelect = document.getElementById('tutor-filter') as HTMLSelectElement
             if (tutorSelect) {
                 tutorSelect.innerHTML = '<option value="">Wszyscy</option>' + 
-                    tutors.map(tutor => `<option value="${tutor.id}">${tutor.name}</option>`).join('')
+                    tutors.map((tutor: any) => `<option value="${tutor.id}">${tutor.name}</option>`).join('')
             }
             
             // Load students
-            const studentsResponse = await api.get<{success: boolean, data: any[], message?: string}>('/students')
+            const studentsResponse = await studentService.getAllStudents()
             console.log('Students response:', studentsResponse)
-            const students = studentsResponse.data || []
+            const students = studentsResponse || []
             
             const studentSelect = document.getElementById('student-filter') as HTMLSelectElement
             if (studentSelect) {
                 studentSelect.innerHTML = '<option value="">Wszyscy</option>' + 
-                    students.map(student => `<option value="${student.id}">${student.name}</option>`).join('')
+                    students.map((student: any) => `<option value="${student.id}">${student.name}</option>`).join('')
             }
         } catch (error) {
             console.error('Error loading filter options:', error)
@@ -176,6 +185,7 @@ export class AdminLessons {
                             <th>Lektor</th>
                             <th>Status</th>
                             <th>Typ</th>
+                            <th>Ocena</th>
 <!--                            <th>Cena</th>-->
                             <th>Akcje</th>
                         </tr>
@@ -247,6 +257,7 @@ export class AdminLessons {
                 </td>
                 <td>${statusBadge}</td>
                 <td><span class="badge bg-secondary">${this.getLessonTypeName(lesson.lesson_type)}</span></td>
+                <td>${this.renderLessonRating(lesson)}</td>
                 <!-- <td>${lesson.price ? `${Math.round(lesson.price)} zł` : '-'}</td> -->
                 <td>
                     <div class="dropdown">
@@ -307,6 +318,23 @@ export class AdminLessons {
         }
     }
     
+    private renderLessonRating(lesson: any): string {
+        if (lesson.student_rating && lesson.student_rating > 0) {
+            const rating = lesson.student_rating
+            const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating)
+            return `
+                <div class="d-flex align-items-center">
+                    <span class="text-warning me-1" style="font-size: 0.9rem;">${stars}</span>
+                    <small class="text-muted">${rating}/5</small>
+                </div>
+            `
+        } else if (lesson.status === 'completed') {
+            return '<small class="text-muted">Brak oceny</small>'
+        } else {
+            return '<small class="text-muted">-</small>'
+        }
+    }
+    
     // Static methods for global access
     static instance = new AdminLessons()
     
@@ -332,7 +360,8 @@ export class AdminLessons {
         if (!confirm('Czy na pewno chcesz anulować tę lekcję?')) return
         
         try {
-            const response = await api.put<{success: boolean, message?: string}>(`/lessons/${lessonId}/cancel`, {
+            const response = await LessonService.updateLessonStatus(lessonId, {
+                status: 'cancelled',
                 reason: 'Anulowane przez administratora'
             })
             
@@ -407,8 +436,8 @@ export class AdminLessons {
 
     static async viewStatusHistory(lessonId: number): Promise<void> {
         try {
-            const response = await api.get<{ success: boolean, data: any[] }>(`/lessons/${lessonId}/status-history`)
-            const history = response.data || []
+            // TODO: Add getStatusHistory method to LessonService when backend endpoint is ready
+            const history: any[] = []
 
             const modalHtml = `
                 <div class="modal fade" id="statusHistoryModal" tabindex="-1">

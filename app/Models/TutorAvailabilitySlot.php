@@ -14,27 +14,26 @@ class TutorAvailabilitySlot extends Model
     protected $fillable = [
         'tutor_id',
         'date',
-        'time_slot',
+        'start_hour',
+        'end_hour',
         'is_available',
         'hours_booked'
     ];
 
     protected $casts = [
         'date' => 'date:Y-m-d',
+        'start_hour' => 'integer',
+        'end_hour' => 'integer',
         'is_available' => 'boolean',
         'hours_booked' => 'integer'
     ];
 
-    // Time slot constants
-    public const TIME_SLOT_MORNING = 'morning';     // 8:00 - 16:00
-    public const TIME_SLOT_AFTERNOON = 'afternoon'; // 14:00 - 22:00
+    // Hour constants
+    public const MIN_HOUR = 8;   // 8:00
+    public const MAX_HOUR = 22;  // 22:00 (last lesson can end at 22:00)
     
-    public const TIME_SLOTS = [
-        self::TIME_SLOT_MORNING => '8:00 - 16:00',
-        self::TIME_SLOT_AFTERNOON => '14:00 - 22:00'
-    ];
-
-    public const HOURS_PER_SLOT = 8;
+    // For backward compatibility during transition
+    public const HOURS_PER_SLOT = 1; // Now each slot is 1 hour
 
     // Relationships
     public function tutor(): BelongsTo
@@ -67,54 +66,82 @@ class TutorAvailabilitySlot extends Model
     // Helper methods
     public function getAvailableHours(): int
     {
-        return self::HOURS_PER_SLOT - $this->hours_booked;
+        return $this->is_available && !$this->hours_booked ? 1 : 0;
     }
 
     public function hasAvailableHours(): bool
     {
-        return $this->is_available && $this->getAvailableHours() > 0;
+        return $this->is_available && $this->hours_booked === 0;
     }
 
     public function getTimeSlotLabel(): string
     {
-        return self::TIME_SLOTS[$this->time_slot] ?? '';
+        return sprintf('%02d:00 - %02d:00', $this->start_hour, $this->end_hour);
     }
 
     public function getTimeSlotHours(): array
     {
-        if ($this->time_slot === self::TIME_SLOT_MORNING) {
-            return range(8, 15); // 8:00 - 15:00 (last hour starts at 15:00)
-        } else {
-            return range(14, 21); // 14:00 - 21:00 (last hour starts at 21:00)
-        }
+        // For single hour slot, return just this hour
+        return [$this->start_hour];
+    }
+    
+    public function getDuration(): int
+    {
+        return $this->end_hour - $this->start_hour;
+    }
+    
+    public function overlapsWithTime(string $startTime, string $endTime): bool
+    {
+        $requestedStart = (int) date('H', strtotime($startTime));
+        $requestedEnd = (int) date('H', strtotime($endTime));
+        
+        return $this->start_hour < $requestedEnd && $this->end_hour > $requestedStart;
     }
 
-    public function bookHours(int $hours): bool
+    public function bookHours(int $hours = 1): bool
     {
-        if ($this->getAvailableHours() < $hours) {
+        \Log::info("TutorAvailabilitySlot::bookHours called", [
+            'slot_id' => $this->id,
+            'tutor_id' => $this->tutor_id,
+            'date' => $this->date,
+            'start_hour' => $this->start_hour,
+            'is_available' => $this->is_available,
+            'current_hours_booked' => $this->hours_booked,
+            'hours_to_book' => $hours
+        ]);
+        
+        if (!$this->is_available || $this->hours_booked > 0) {
+            \Log::warning("Cannot book hours - slot not available or already booked", [
+                'is_available' => $this->is_available,
+                'hours_booked' => $this->hours_booked
+            ]);
             return false;
         }
 
-        $this->hours_booked += $hours;
+        $this->hours_booked = 1;
+        // Note: We keep is_available = true so the slot shows as "taken" but still visible
         
-        // Mark as unavailable if fully booked
-        if ($this->hours_booked >= self::HOURS_PER_SLOT) {
-            $this->is_available = false;
-        }
-
-        return $this->save();
+        $result = $this->save();
+        
+        \Log::info("TutorAvailabilitySlot::bookHours completed", [
+            'success' => $result,
+            'new_hours_booked' => $this->hours_booked
+        ]);
+        
+        return $result;
     }
 
-    public function releaseHours(int $hours): bool
+    public function releaseHours(int $hours = 1): bool
     {
-        $this->hours_booked = max(0, $this->hours_booked - $hours);
+        $this->hours_booked = 0;
+        // Slot remains available for rebooking
         
-        // Mark as available if there are free hours
-        if ($this->hours_booked < self::HOURS_PER_SLOT) {
-            $this->is_available = true;
-        }
-
         return $this->save();
+    }
+    
+    public function isBooked(): bool
+    {
+        return $this->hours_booked > 0;
     }
 
     // Static helper to get slots for a week
@@ -130,6 +157,19 @@ class TutorAvailabilitySlot extends Model
     public static function getTutorWeeklyHours($tutorId, $weekStart): int
     {
         $slots = self::getTutorWeeklySlots($tutorId, $weekStart);
-        return $slots->count() * self::HOURS_PER_SLOT;
+        return $slots->sum(function($slot) {
+            return $slot->end_hour - $slot->start_hour;
+        });
+    }
+    
+    // Get available hours for a specific date
+    public static function getAvailableHoursForDate($tutorId, $date)
+    {
+        return self::where('tutor_id', $tutorId)
+            ->where('date', $date)
+            ->where('is_available', true)
+            ->where('hours_booked', 0)
+            ->orderBy('start_hour')
+            ->get();
     }
 }

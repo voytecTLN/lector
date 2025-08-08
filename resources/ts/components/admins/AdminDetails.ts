@@ -1,18 +1,14 @@
 // resources/ts/components/admins/AdminDetails.ts
 import type { RouteComponent } from '@router/routes'
-import { AdminService } from '@services/AdminService'
+import { adminService } from '@services/AdminService'
 import type { User } from '@/types/models'
 import { navigate } from '@/utils/navigation'
 
 export class AdminDetails implements RouteComponent {
-    private adminService: AdminService
     private container: HTMLElement | null = null
     private admin: User | null = null
     private adminId: number | null = null
 
-    constructor() {
-        this.adminService = new AdminService()
-    }
 
     async render(): Promise<HTMLElement> {
         const el = document.createElement('div')
@@ -301,7 +297,7 @@ export class AdminDetails implements RouteComponent {
         if (!this.adminId) return
 
         try {
-            this.admin = await this.adminService.getAdminById(this.adminId)
+            this.admin = await adminService.getAdminById(this.adminId)
             this.displayAdminData()
             this.showContent()
         } catch (error) {
@@ -397,9 +393,9 @@ export class AdminDetails implements RouteComponent {
         if (confirm(`Czy na pewno chcesz ${action} tego administratora?`)) {
             try {
                 if (newStatus === 'inactive') {
-                    await this.adminService.deactivateAdmin(this.adminId)
+                    await adminService.deactivateAdmin(this.adminId)
                 } else {
-                    await this.adminService.updateAdmin(this.adminId, { status: newStatus })
+                    await adminService.updateAdmin(this.adminId, { status: newStatus })
                 }
 
                 this.showSuccess(`Administrator został ${newStatus === 'active' ? 'aktywowany' : 'dezaktywowany'}`)
@@ -423,7 +419,7 @@ export class AdminDetails implements RouteComponent {
         if (!this.adminId) return
 
         try {
-            await this.adminService.deleteAdmin(this.adminId)
+            await adminService.deleteAdmin(this.adminId)
             this.showSuccess('Administrator został usunięty')
             
             // Redirect to admin list

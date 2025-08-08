@@ -140,25 +140,6 @@ class Lesson extends Model
         return $query->where('status', self::STATUS_CANCELLED);
     }
 
-    public function scopeUpcoming($query)
-    {
-        return $query->where('lesson_date', '>=', now()->toDateString())
-                    ->whereIn('status', [self::STATUS_SCHEDULED, self::STATUS_IN_PROGRESS, self::STATUS_COMPLETED])
-                    ->orderBy('lesson_date')
-                    ->orderBy('start_time');
-    }
-
-    public function scopePast($query)
-    {
-        return $query->where(function($q) {
-            $q->where('lesson_date', '<', now()->toDateString())
-              ->orWhere(function($q2) {
-                  $q2->where('lesson_date', '=', now()->toDateString())
-                     ->whereTime('end_time', '<', now()->toTimeString());
-              });
-        })->orderBy('lesson_date', 'desc')
-          ->orderBy('start_time', 'desc');
-    }
 
     public function scopeForStudent($query, $studentId)
     {
@@ -196,9 +177,28 @@ class Lesson extends Model
             'cancellation_reason' => $reason
         ]);
 
-        // Release the availability slot
+        // Release the availability slot(s)
         if ($this->availabilitySlot) {
-            $this->availabilitySlot->decrement('hours_booked', ceil($this->duration_minutes / 60));
+            // Dla slotów godzinowych
+            if ($this->duration_minutes === 60) {
+                $this->availabilitySlot->releaseHours(1);
+            } else {
+                // Dla dłuższych lekcji, zwolnij wszystkie sloty
+                $lessonStartHour = (int) date('H', strtotime($this->start_time));
+                $lessonEndHour = (int) ceil((strtotime($this->start_time) + ($this->duration_minutes * 60)) / 3600);
+                
+                for ($hour = $lessonStartHour; $hour < $lessonEndHour; $hour++) {
+                    $slot = TutorAvailabilitySlot::where('tutor_id', $this->tutor_id)
+                        ->where('date', $this->lesson_date->format('Y-m-d'))
+                        ->where('start_hour', $hour)
+                        ->where('end_hour', $hour + 1)
+                        ->first();
+                        
+                    if ($slot) {
+                        $slot->releaseHours(1);
+                    }
+                }
+            }
         }
 
         // Return hour to package if applicable
@@ -238,11 +238,14 @@ class Lesson extends Model
                 ->whereNotNull('student_rating')
                 ->avg('student_rating');
             
-            $this->tutor->tutorProfile->updateRating($avgRating, 
-                $this->tutor->tutorProfile->user->lessons()
-                    ->whereNotNull('student_rating')
-                    ->count()
-            );
+            // Only update if we have a valid average rating
+            if ($avgRating !== null) {
+                $this->tutor->tutorProfile->updateRating((float) $avgRating, 
+                    $this->tutor->tutorProfile->user->lessons()
+                        ->whereNotNull('student_rating')
+                        ->count()
+                );
+            }
         }
     }
 

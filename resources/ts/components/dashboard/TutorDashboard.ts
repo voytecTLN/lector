@@ -1,11 +1,11 @@
 // resources/ts/components/dashboard/TutorDashboard.ts
-import type { RouteComponent } from '@router/routes'
-import { authService } from '@services/AuthService'
-import { TutorProfileEdit } from '@components/tutors/TutorProfileEdit'
-import { AvailabilityCalendar } from '@components/tutor/AvailabilityCalendar'
-import { TutorLessons } from './tutor/TutorLessons'
-import { TutorStudents } from './tutor/TutorStudents'
-import { LessonDetailsModal } from '../modals/LessonDetailsModal'
+import type {RouteComponent} from '@router/routes'
+import {authService} from '@services/AuthService'
+import {TutorProfileEdit} from '@components/forms/TutorProfileEdit'
+import {HourlyAvailabilityCalendar} from '@components/tutor/HourlyAvailabilityCalendar'
+import {TutorLessons} from './tutor/TutorLessons'
+import {TutorStudents} from './tutor/TutorStudents'
+import {LessonDetailsModal} from '../modals/LessonDetailsModal'
 
 export class TutorDashboard implements RouteComponent {
     private currentSection: string = 'dashboard'
@@ -13,7 +13,7 @@ export class TutorDashboard implements RouteComponent {
     private container: HTMLElement | null = null
     private refreshInterval: number | null = null
     private profileComponent: TutorProfileEdit | null = null
-    private availabilityComponent: AvailabilityCalendar | null = null
+    private availabilityComponent: HourlyAvailabilityCalendar | null = null
 
     async render(): Promise<HTMLElement> {
         const user = authService.getUser()
@@ -83,7 +83,10 @@ export class TutorDashboard implements RouteComponent {
                     </div>
                     <div class="tutor-user-info">
                         <div class="tutor-user-avatar">${user?.name?.charAt(0).toUpperCase() || 'L'}</div>
-                        <span>${user?.name || 'Lektor'}</span>
+                        <div>
+                            <div style="font-weight: 600;">${user?.name || 'Lektor'}</div>
+                            <div style="font-size: 0.75rem; color: #64748b;">${user?.email || ''}</div>
+                        </div>
                         <button class="tutor-logout-btn" id="logoutBtn">Wyloguj</button>
                     </div>
                 </header>
@@ -180,8 +183,7 @@ export class TutorDashboard implements RouteComponent {
 
     private handleUrlChange(): void {
         const urlParams = new URLSearchParams(window.location.search)
-        const section = urlParams.get('section') || 'dashboard'
-        this.currentSection = section
+        this.currentSection = urlParams.get('section') || 'dashboard'
         this.updateActiveNavLink()
         this.loadSectionContent()
     }
@@ -269,51 +271,69 @@ export class TutorDashboard implements RouteComponent {
                 <div class="welcome-card">
                     <h2>Witaj, ${user?.name || 'Lektorze'}! 👋</h2>
                     <p>Miło Cię znowu widzieć. Oto przegląd Twojej aktywności.</p>
+                    <div class="refresh-info">
+                        <small class="text-muted">
+                            <i class="bi bi-arrow-clockwise"></i> 
+                            Dane aktualizowane automatycznie co minutę
+                        </small>
+                    </div>
                 </div>
                 
                 <div class="stats-grid">
-                    <div class="stat-card">
+                    <div class="stat-card highlight">
                         <div class="stat-icon" style="background: #3b82f6;">📚</div>
                         <div class="stat-content">
-                            <div class="stat-number">${stats.upcomingLessons || 0}</div>
+                            <div class="stat-number" id="upcomingLessons">${stats.data?.upcomingLessons || 0}</div>
                             <div class="stat-label">Nadchodzące lekcje</div>
+                            <div class="stat-sublabel">Zaplanowane na najbliższy czas</div>
+                        </div>
+                        <div class="stat-trend">
+                            <span class="trend-text">W tym tygodniu: ${stats.data?.thisWeekLessons || 0}</span>
                         </div>
                     </div>
+                    
                     <div class="stat-card">
                         <div class="stat-icon" style="background: #10b981;">✅</div>
                         <div class="stat-content">
-                            <div class="stat-number">${stats.completedLessons || 0}</div>
+                            <div class="stat-number" id="completedLessons">${stats.data?.completedLessons || 0}</div>
                             <div class="stat-label">Ukończone lekcje</div>
+                            <div class="stat-sublabel">Łącznie od początku</div>
                         </div>
                     </div>
+                    
                     <div class="stat-card">
                         <div class="stat-icon" style="background: #e91e63;">👥</div>
                         <div class="stat-content">
-                            <div class="stat-number">${stats.activeStudents || 0}</div>
+                            <div class="stat-number" id="activeStudents">${stats.data?.activeStudents || 0}</div>
                             <div class="stat-label">Aktywni studenci</div>
+                            <div class="stat-sublabel">Uczniowie z lekcjami</div>
                         </div>
                     </div>
                 </div>
                 
-                <h2 style="margin-top: 2rem; margin-bottom: 1rem;">Szybkie akcje</h2>
-                <div class="tutor-quick-actions">
-                    <div class="tutor-action-card">
-                        <div class="tutor-action-icon" style="background: #3b82f6;">🕐</div>
-                        <h3>Ustaw dostępność</h3>
-                        <p>Zarządzaj swoim kalendarzem</p>
-                        <button class="tutor-action-btn" onclick="window.location.href='?section=availability'">Przejdź</button>
-                    </div>
-                    <div class="tutor-action-card">
-                        <div class="tutor-action-icon" style="background: #10b981;">📅</div>
-                        <h3>Zobacz kalendarz</h3>
-                        <p>Sprawdź zaplanowane lekcje</p>
-                        <button class="tutor-action-btn" onclick="window.location.href='?section=calendar'">Przejdź</button>
-                    </div>
-                    <div class="tutor-action-card">
-                        <div class="tutor-action-icon" style="background: #e91e63;">👥</div>
-                        <h3>Moi studenci</h3>
-                        <p>Zobacz listę studentów</p>
-                        <button class="tutor-action-btn" onclick="window.location.href='?section=students'">Przejdź</button>
+                <div class="dashboard-row">
+                    <div class="dashboard-section">
+                        <h3>Szybkie akcje</h3>
+                        <div class="tutor-quick-actions">
+                            <div class="tutor-action-card">
+                                <div class="tutor-action-icon" style="background: #3b82f6;">🕐</div>
+                                <h4>Ustaw dostępność</h4>
+                                <p>Zarządzaj swoim kalendarzem</p>
+                                <button class="tutor-action-btn" onclick="window.location.href='?section=availability'">Przejdź</button>
+                            </div>
+                            <div class="tutor-action-card">
+                                <div class="tutor-action-icon" style="background: #10b981;">📅</div>
+                                <h4>Zobacz kalendarz</h4>
+                                <p>Sprawdź zaplanowane lekcje</p>
+                                <button class="tutor-action-btn" onclick="window.location.href='?section=calendar'">Przejdź</button>
+                            </div>
+                            <div class="tutor-action-card">
+                                <div class="tutor-action-icon" style="background: #e91e63;">👥</div>
+                                <h4>Moi studenci</h4>
+                                <p>Zobacz listę studentów</p>
+                                <button class="tutor-action-btn" onclick="window.location.href='?section=students'">Przejdź</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `
@@ -393,10 +413,10 @@ export class TutorDashboard implements RouteComponent {
             </div>
         `
         
-        // Initialize the availability calendar component
+        // Initialize the hourly availability calendar component
         const calendarContainer = contentDiv.querySelector('#availability-calendar-container')
         if (calendarContainer) {
-            this.availabilityComponent = new AvailabilityCalendar()
+            this.availabilityComponent = new HourlyAvailabilityCalendar()
             this.availabilityComponent.mount(calendarContainer as HTMLElement)
         }
     }
@@ -407,6 +427,8 @@ export class TutorDashboard implements RouteComponent {
         
         const tutorLessons = new TutorLessons()
         contentDiv.innerHTML = tutorLessons.getCalendarContent()
+        
+        // TutorLessons already exports itself to global scope with static methods
     }
 
     private loadUpcomingLessonsContent(): void {

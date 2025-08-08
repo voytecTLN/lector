@@ -1,19 +1,33 @@
 // resources/ts/components/dashboard/ModeratorDashboard.ts
 import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
+import { navigate } from '@/utils/navigation'
 
 export class ModeratorDashboard implements RouteComponent {
     async render(): Promise<HTMLElement> {
         const user = authService.getUser()
         const el = document.createElement('div')
-        el.className = 'moderator-dashboard container mt-5'
+        el.className = 'moderator-container'
         el.innerHTML = `
-            <div class="row">
-                <div class="col-12">
-                    <h1 class="mb-4">Panel Moderatora</h1>
-                    <p class="lead">Witaj, ${user?.name || 'Moderatorze'}!</p>
-                </div>
-            </div>
+            <!-- Main Content -->
+            <main class="moderator-main-content">
+                <header class="moderator-header">
+                    <div>
+                        <button class="moderator-mobile-menu-btn" id="mobile-menu-btn">☰</button>
+                        <h1 id="page-title">Panel Moderatora</h1>
+                    </div>
+                    <div class="moderator-user-info">
+                        <div class="moderator-user-avatar">${user?.name?.charAt(0).toUpperCase() || 'M'}</div>
+                        <div>
+                            <div style="font-weight: 600;">${user?.name || 'Moderator'}</div>
+                            <div style="font-size: 0.75rem; color: #64748b;">${user?.email || ''}</div>
+                        </div>
+                        <button class="moderator-logout-btn" id="logout-btn">Wyloguj</button>
+                    </div>
+                </header>
+
+                <div class="moderator-content-area">
+                    <div class="container-fluid">
             
             <div class="row mt-4">
                 <div class="col-md-3">
@@ -71,12 +85,21 @@ export class ModeratorDashboard implements RouteComponent {
                         </a>
                     </div>
                 </div>
-            </div>
+                    </div>
+                </div>
+            </main>
         `
         return el
     }
 
     mount(container: HTMLElement): void {
+        // Setup logout
+        const logoutBtn = container.querySelector('#logout-btn')
+        logoutBtn?.addEventListener('click', async () => {
+            await authService.logout()
+            await navigate.to('/')
+        })
+
         // Load dashboard stats
         this.loadStats()
     }

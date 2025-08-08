@@ -1,7 +1,7 @@
 // resources/ts/components/dashboard/AdminDashboard.ts
 import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
-import { api } from '@services/ApiService'
+import { adminService } from "@services/AdminService";
 import { navigate } from "@utils/navigation";
 import { AdminLessons } from './admin/AdminLessons'
 import { LessonDetailsModal } from '../modals/LessonDetailsModal'
@@ -191,7 +191,7 @@ export class AdminDashboard implements RouteComponent {
         this.startStatsRefresh()
     }
 
-    private handlePopState = (event: PopStateEvent): void => {
+    private handlePopState = (): void => {
         const urlParams = new URLSearchParams(window.location.search)
         const section = urlParams.get('section') || 'dashboard'
 
@@ -273,7 +273,7 @@ export class AdminDashboard implements RouteComponent {
         const logoutBtn = this.container?.querySelector('#logout-btn')
         logoutBtn?.addEventListener('click', async () => {
             await authService.logout()
-            navigate.to('/')
+            await navigate.to('/')
             //TODO
         })
     }
@@ -333,7 +333,7 @@ export class AdminDashboard implements RouteComponent {
                     if (container && container instanceof HTMLElement) {
                         const element = await studentList.render()
                         container.appendChild(element)
-                        studentList.mount(container)
+                        await studentList.mount(container)
                     } else {
                         console.error('Students list container not found or not HTMLElement')
                     }
@@ -353,7 +353,7 @@ export class AdminDashboard implements RouteComponent {
                     if (container && container instanceof HTMLElement) {
                         const element = await packageList.render()
                         container.appendChild(element)
-                        packageList.mount(container)
+                        await packageList.mount(container)
                     } else {
                         console.error('Packages list container not found or not HTMLElement')
                     }
@@ -365,14 +365,14 @@ export class AdminDashboard implements RouteComponent {
                 contentArea.innerHTML = this.getAddPackageContent()
                 
                 // Mount PackageForm component
-                import('@/components/packages/PackageForm').then(async (module) => {
+                import('@/components/forms/PackageForm').then(async (module) => {
                     const packageForm = new module.PackageForm()
                     const container = contentArea.querySelector('#add-package-container')
 
                     if (container && container instanceof HTMLElement) {
                         const element = await packageForm.render()
                         container.appendChild(element)
-                        packageForm.mount && packageForm.mount(container)
+                        packageForm.mount && await packageForm.mount(container)
                     } else {
                         console.error('Add package container not found or not HTMLElement')
                     }
@@ -391,7 +391,7 @@ export class AdminDashboard implements RouteComponent {
                     if (container && container instanceof HTMLElement) {
                         const element = await packageDetails.render()
                         container.appendChild(element)
-                        packageDetails.mount && packageDetails.mount(container)
+                        packageDetails.mount && await packageDetails.mount(container)
                     } else {
                         console.error('Package details container not found or not HTMLElement')
                     }
@@ -403,7 +403,7 @@ export class AdminDashboard implements RouteComponent {
                 contentArea.innerHTML = this.getEditPackageContent()
                 
                 // Mount PackageForm component
-                import('@/components/packages/PackageForm').then(async (module) => {
+                import('@/components/forms/PackageForm').then(async (module) => {
                     const packageForm = new module.PackageForm()
                     const container = contentArea.querySelector('#edit-package-container')
 
@@ -466,7 +466,7 @@ export class AdminDashboard implements RouteComponent {
                 contentArea.innerHTML = this.getAddStudentContent()
                 
                 // Mount StudentForm component
-                import('@/components/students/StudentForm').then(async (module) => {
+                import('@/components/forms/StudentForm').then(async (module) => {
                     const studentForm = new module.StudentForm()
                     const container = contentArea.querySelector('#add-student-container')
 
@@ -501,7 +501,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to students list if no ID
-                    navigate.to('/admin/dashboard?section=uczniowie')
+                    await navigate.to('/admin/dashboard?section=uczniowie')
                 }
                 break
 
@@ -512,7 +512,7 @@ export class AdminDashboard implements RouteComponent {
                     contentArea.innerHTML = this.getEditStudentContent()
                     
                     // Mount StudentForm component in edit mode
-                    import('@/components/students/StudentForm').then(async (module) => {
+                    import('@/components/forms/StudentForm').then(async (module) => {
                         const studentForm = new module.StudentForm()
                         const container = contentArea.querySelector('#edit-student-container')
 
@@ -526,7 +526,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to students list if no ID
-                    navigate.to('/admin/dashboard?section=uczniowie')
+                    await navigate.to('/admin/dashboard?section=uczniowie')
                 }
                 break
 
@@ -562,7 +562,7 @@ export class AdminDashboard implements RouteComponent {
                 contentArea.innerHTML = this.getAddAdminContent()
                 
                 // Mount AdminForm component
-                import('@/components/admins/AdminForm').then(async (module) => {
+                import('@/components/forms/AdminForm').then(async (module) => {
                     const adminForm = new module.AdminForm()
                     const container = contentArea.querySelector('#add-admin-container')
 
@@ -597,7 +597,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to admins list if no ID
-                    navigate.to('/admin/dashboard?section=administratorzy')
+                    await navigate.to('/admin/dashboard?section=administratorzy')
                 }
                 break
 
@@ -608,7 +608,7 @@ export class AdminDashboard implements RouteComponent {
                     contentArea.innerHTML = this.getEditAdminContent()
                     
                     // Mount AdminForm component in edit mode
-                    import('@/components/admins/AdminForm').then(async (module) => {
+                    import('@/components/forms/AdminForm').then(async (module) => {
                         const adminForm = new module.AdminForm()
                         const container = contentArea.querySelector('#edit-admin-container')
 
@@ -622,7 +622,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to admins list if no ID
-                    navigate.to('/admin/dashboard?section=administratorzy')
+                    await navigate.to('/admin/dashboard?section=administratorzy')
                 }
                 break
 
@@ -633,7 +633,7 @@ export class AdminDashboard implements RouteComponent {
                     contentArea.innerHTML = this.getAdminProfileEditContent()
                     
                     // Mount AdminProfileEdit component
-                    import('@/components/admins/AdminProfileEdit').then(async (module) => {
+                    import('@/components/forms/AdminProfileEdit').then(async (module) => {
                         const adminProfileEdit = new module.AdminProfileEdit()
                         const container = contentArea.querySelector('#admin-profile-edit-container')
 
@@ -647,7 +647,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to admins list if no ID
-                    navigate.to('/admin/dashboard?section=administratorzy')
+                    await navigate.to('/admin/dashboard?section=administratorzy')
                 }
                 break
 
@@ -656,7 +656,7 @@ export class AdminDashboard implements RouteComponent {
                 contentArea.innerHTML = this.getAddTutorContent()
                 
                 // Mount TutorForm component
-                import('@/components/tutors/TutorForm').then(async (module) => {
+                import('@/components/forms/TutorForm').then(async (module) => {
                     const tutorForm = new module.TutorForm()
                     const container = contentArea.querySelector('#add-tutor-container')
 
@@ -697,7 +697,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to tutors list if no ID
-                    navigate.to('/admin/dashboard?section=lektorzy')
+                    await navigate.to('/admin/dashboard?section=lektorzy')
                 }
                 break
 
@@ -708,7 +708,7 @@ export class AdminDashboard implements RouteComponent {
                     contentArea.innerHTML = this.getEditTutorContent()
                     
                     // Mount TutorForm component in edit mode
-                    import('@/components/tutors/TutorForm').then(async (module) => {
+                    import('@/components/forms/TutorForm').then(async (module) => {
                         const tutorForm = new module.TutorForm()
                         const container = contentArea.querySelector('#edit-tutor-container')
 
@@ -725,7 +725,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to tutors list if no ID
-                    navigate.to('/admin/dashboard?section=lektorzy')
+                    await navigate.to('/admin/dashboard?section=lektorzy')
                 }
                 break
 
@@ -806,11 +806,11 @@ export class AdminDashboard implements RouteComponent {
                     </div>
                     <div class="info-item">
                         <span class="info-number">${stats.tutors || 0}</span>
-                        <div class="info-label">Lektorów</div>
+                        <div class="info-label">Lektorów aktywnych</div>
                     </div>
-                    <div class="info-item ${stats.total_lessons === null ? 'placeholder' : ''}">
-                        <span class="info-number">${stats.total_lessons ?? '—'}</span>
-                        <div class="info-label">Lekcje (wkrótce)</div>
+                    <div class="info-item">
+                        <span class="info-number">${stats.upcoming_lessons || 0}</span>
+                        <div class="info-label">Nadchodzące lekcje</div>
                     </div>
                 </div>
             </div>
@@ -1007,9 +1007,9 @@ export class AdminDashboard implements RouteComponent {
             // dodaj inne pola według API
             *}
              */
-            const response = await api.get('/admin/dashboard-stats')
-            // return response.data || {}
-            return (response as any).data || {}
+            const stats = await adminService.getDashboardStats()
+            // return stats || {}
+            return stats || {}
         } catch (error) {
             console.error('Failed to fetch dashboard stats:', error)
             return {}

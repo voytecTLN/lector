@@ -163,11 +163,13 @@ export class StudentDetails implements RouteComponent {
                         <i class="bi bi-calendar me-1"></i> Lekcje
                     </button>
                 </li>
+                <!--
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#stats-tab-pane">
                         <i class="bi bi-graph-up me-1"></i> Statystyki
                     </button>
                 </li>
+                -->
             </ul>
 
             <!-- Tab Content -->

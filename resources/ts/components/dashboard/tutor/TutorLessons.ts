@@ -1,10 +1,15 @@
-import { api } from '@services/ApiService'
+import { LessonService } from '@services/LessonService'
 import { formatDate } from '@utils/date'
 
 export class TutorLessons {
     private currentView: 'calendar' | 'list' = 'calendar'
     private currentWeekOffset = 0
     private lessons: any[] = []
+    private tutorId?: number // For admin view - when viewing specific tutor's lessons
+    
+    constructor(tutorId?: number) {
+        this.tutorId = tutorId
+    }
     
     public getUpcomingLessonsContent(): string {
         // Load upcoming lessons
@@ -64,8 +69,22 @@ export class TutorLessons {
     
     private async loadUpcomingLessons(): Promise<void> {
         try {
-            const response = await api.get<{success: boolean, data: {lessons: any[]}, message?: string}>('/tutor/lessons/upcoming')
-            const upcomingLessons = response.data?.lessons || []
+            let response
+            if (this.tutorId) {
+                // Admin view - get upcoming lessons for specific tutor using admin endpoint
+                response = await LessonService.getAdminLessons({ 
+                    tutor_id: this.tutorId.toString(),
+                    status: 'scheduled' // Only get scheduled lessons for upcoming view
+                })
+            } else {
+                // Tutor view - get own upcoming lessons
+                response = await LessonService.getTutorUpcomingLessons()
+            }
+            let upcomingLessons = response.lessons || []
+            
+            
+            // Backend now properly filters upcoming lessons (like StudentLessons)
+            // No frontend filtering needed
             
             const container = document.getElementById('upcoming-lessons-container')
             if (!container) return
@@ -83,7 +102,7 @@ export class TutorLessons {
             // Render upcoming lessons list
             container.innerHTML = `
                 <div class="row">
-                    ${upcomingLessons.map(lesson => this.renderUpcomingLessonCard(lesson)).join('')}
+                    ${upcomingLessons.map((lesson: any) => this.renderUpcomingLessonCard(lesson)).join('')}
                 </div>
             `
         } catch (error) {
@@ -129,7 +148,7 @@ export class TutorLessons {
         
         return `
             <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card h-100 lesson-card ${cardClass}" onclick="console.log('🎯 Lesson clicked:', ${lesson.id}, ${JSON.stringify(lesson).replace(/"/g, '&quot;')}); LessonDetailsModal.show(${lesson.id})" style="cursor: pointer; transition: transform 0.2s;">
+                <div class="card h-100 lesson-card ${cardClass}" onclick="LessonDetailsModal.show(${lesson.id})" style="cursor: pointer; transition: transform 0.2s;">
                     <div class="card-body">
                         <h5 class="card-title ${titleClass}">
                             <i class="bi bi-person-circle me-2"></i>
@@ -159,8 +178,18 @@ export class TutorLessons {
     
     private async loadLessons(): Promise<void> {
         try {
-            const response = await api.get<{success: boolean, data: {lessons: any[]}, message?: string}>('/tutor/lessons/my-lessons')
-            this.lessons = response.data?.lessons || []
+            let response
+            if (this.tutorId) {
+                // Admin view - get lessons for specific tutor
+                response = await LessonService.getAdminLessons({ 
+                    tutor_id: this.tutorId.toString() 
+                })
+            } else {
+                // Tutor view - get own lessons
+                response = await LessonService.getTutorLessons()
+            }
+            this.lessons = response.lessons || []
+            
             
             if (this.currentView === 'calendar') {
                 this.renderCalendarView()
@@ -178,15 +207,14 @@ export class TutorLessons {
         if (!container) return
         
         const today = new Date()
-        const weekStart = new Date(today)
-        weekStart.setDate(today.getDate() - today.getDay() + 1 + (this.currentWeekOffset * 7)) // Monday
+        const dayOfWeek = today.getDay()
+        const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) // Monday
+        const weekStart = new Date(today.setDate(diff))
+        weekStart.setDate(weekStart.getDate() + (this.currentWeekOffset * 7))
+        weekStart.setHours(0, 0, 0, 0)
         
-        const weekDays = []
-        for (let i = 0; i < 7; i++) {
-            const day = new Date(weekStart)
-            day.setDate(weekStart.getDate() + i)
-            weekDays.push(day)
-        }
+        const days = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
+        const hours = Array.from({length: 14}, (_, i) => i + 8) // 8:00 to 21:00
         
         container.innerHTML = `
             <div class="calendar-navigation mb-3">
@@ -201,19 +229,8 @@ export class TutorLessons {
                 </div>
             </div>
             
-            <div class="calendar-grid">
-                <div class="calendar-header">
-                    ${weekDays.map(day => `
-                        <div class="calendar-header-day ${this.isToday(day) ? 'today' : ''}">
-                            <div class="day-name">${this.getDayName(day)}</div>
-                            <div class="day-date">${day.getDate()}.${(day.getMonth() + 1).toString().padStart(2, '0')}</div>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                <div class="calendar-body">
-                    ${weekDays.map(day => this.renderDayColumn(day)).join('')}
-                </div>
+            <div class="hourly-grid">
+                ${this.renderHourlyGrid(weekStart, days, hours)}
             </div>
             
             <div class="mt-4">
@@ -241,6 +258,114 @@ export class TutorLessons {
             </div>
             
             ${this.renderCalendarStyles()}
+        `
+    }
+    
+    private renderHourLabels(hours: number[]): string {
+        // Add empty space for day headers row
+        let labels = '<div class="hour-label" style="height: 49px;"></div>'
+        
+        // Add hour labels
+        hours.forEach(hour => {
+            labels += `<div class="hour-label">${hour}:00</div>`
+        })
+        
+        return labels
+    }
+    
+    private renderHourlyGrid(weekStart: Date, days: string[], hours: number[]): string {
+        let grid = '<div class="hour-header"></div>' // Empty top-left corner
+        
+        // Day headers - natural CSS grid flow (like HourlyAvailabilityCalendar)
+        for (let d = 0; d < 7; d++) {
+            const date = new Date(weekStart)
+            date.setDate(weekStart.getDate() + d)
+            const isToday = this.isToday(date)
+            
+            grid += `
+                <div class="day-header ${isToday ? 'today' : ''}">
+                    <div>${days[d]}</div>
+                    <div class="small">${date.getDate()}.${(date.getMonth() + 1).toString().padStart(2, '0')}</div>
+                </div>
+            `
+        }
+        
+        // Hour rows - natural CSS grid flow (like HourlyAvailabilityCalendar)
+        for (const hour of hours) {
+            // Hour label
+            grid += `<div class="hour-header">${hour}:00</div>`
+            
+            // Hour cells for each day
+            for (let d = 0; d < 7; d++) {
+                const date = new Date(weekStart)
+                date.setDate(weekStart.getDate() + d)
+                const dateStr = formatDate(date)
+                
+                // Find lesson for this date and hour
+                const lesson = this.lessons.find(l => {
+                    // Convert UTC to local time FIRST, then extract date
+                    let lessonDateStr = l.lesson_date
+                    
+                    if (lessonDateStr.includes('T')) {
+                        // For UTC timestamps like "2025-08-07T22:00:00.000000Z"
+                        // Convert to local Date object first
+                        const lessonDateObj = new Date(lessonDateStr)
+                        // Format to local date string
+                        lessonDateStr = formatDate(lessonDateObj)
+                    }
+                    
+                    // Handle different time formats
+                    let lessonTime = l.start_time
+                    if (lessonTime.includes(' ')) {
+                        lessonTime = lessonTime.split(' ')[1]
+                    }
+                    if (lessonTime.length > 5) {
+                        lessonTime = lessonTime.substring(0, 5)
+                    }
+                    
+                    const lessonHour = lessonTime.split(':')[0]
+                    return lessonDateStr === dateStr && parseInt(lessonHour) === hour
+                })
+                
+                if (lesson) {
+                    grid += this.renderLessonCell(lesson)
+                } else {
+                    grid += `<div class="hour-cell empty"></div>`
+                }
+            }
+        }
+        
+        return grid
+    }
+    
+    private renderLessonCell(lesson: any): string {
+        const statusClass = this.getStatusClass(lesson.status)
+        const canModify = lesson.status === 'scheduled' && this.canModifyLesson(lesson)
+        
+        return `
+            <div class="hour-cell lesson ${statusClass}" data-lesson-id="${lesson.id}">
+                <div class="lesson-time">${this.formatTime(lesson.start_time)} - ${this.formatTime(lesson.end_time)}</div>
+                <div class="lesson-student">
+                    <i class="bi bi-person me-1"></i>${lesson.student?.name || 'Student'}
+                </div>
+                ${lesson.topic ? `<div class="lesson-topic small">${lesson.topic}</div>` : ''}
+                <div class="lesson-actions">
+                    <button class="btn btn-sm btn-outline-primary" onclick="TutorLessons.viewDetails(${lesson.id})" title="Szczegóły">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    ${canModify ? `
+                        <button class="btn btn-sm btn-success" onclick="TutorLessons.completeLesson(${lesson.id})" title="Oznacz jako zakończoną">
+                            <i class="bi bi-check"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="TutorLessons.markNoShow(${lesson.id})" title="Nieobecność">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="TutorLessons.cancelLesson(${lesson.id})" title="Anuluj">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
         `
     }
     
@@ -421,137 +546,174 @@ export class TutorLessons {
     private renderCalendarStyles(): string {
         return `
             <style>
-                .calendar-grid {
+                .hourly-grid {
+                    display: grid;
+                    grid-template-columns: 80px repeat(7, 1fr);
+                    gap: 1px;
+                    background-color: #dee2e6;
                     border: 1px solid #dee2e6;
                     border-radius: 8px;
                     overflow: hidden;
                 }
                 
-                .calendar-header {
-                    display: grid;
-                    grid-template-columns: repeat(7, 1fr);
-                    background: #f8f9fa;
+                .hour-header, .day-header, .hour-cell {
+                    background-color: white;
+                    padding: 8px;
+                    text-align: center;
+                    user-select: none;
+                }
+                
+                .hour-header {
+                    background-color: #f8f9fa;
+                    font-weight: 500;
+                    color: #495057;
+                    text-align: right;
+                    padding-right: 12px;
+                }
+                
+                .day-header {
+                    background-color: #f8f9fa;
+                    font-weight: bold;
+                    color: #495057;
+                    padding: 12px 8px;
                     border-bottom: 2px solid #dee2e6;
                 }
                 
-                .calendar-header-day {
-                    padding: 15px;
-                    text-align: center;
-                    border-right: 1px solid #dee2e6;
+                .day-header.today {
+                    background-color: #e3f2fd;
+                    color: #1976d2;
                 }
                 
-                .calendar-header-day:last-child {
-                    border-right: none;
-                }
-                
-                .calendar-header-day.today {
-                    background: #e3f2fd;
-                    font-weight: bold;
-                }
-                
-                .day-name {
-                    font-weight: bold;
-                    color: #495057;
-                }
-                
-                .day-date {
-                    color: #6c757d;
-                    font-size: 0.9em;
-                }
-                
-                .calendar-body {
-                    display: grid;
-                    grid-template-columns: repeat(7, 1fr);
-                    min-height: 600px;
-                }
-                
-                .day-column {
-                    border-right: 1px solid #dee2e6;
-                    display: flex;
-                    flex-direction: column;
-                }
-                
-                .day-column:last-child {
-                    border-right: none;
-                }
-                
-                .time-slot {
-                    flex: 1;
-                    border-bottom: 1px solid #e9ecef;
-                    padding: 5px;
-                    min-height: 60px;
+                .hour-cell {
+                    cursor: pointer;
+                    transition: all 0.2s;
                     position: relative;
+                    min-height: 40px;
                 }
                 
-                .time-slot.empty {
+                .hour-cell.empty {
                     background: #fff;
                 }
                 
-                .time-slot.lesson {
+                .hour-cell.lesson {
                     background: #e8f4fd;
-                    border-left: 4px solid #2196f3;
+                    border: 1px solid #2196f3;
                     cursor: pointer;
                     transition: all 0.2s;
                 }
                 
-                .time-slot.lesson:hover {
+                .hour-cell.lesson:hover {
                     background: #d1e7fd;
                 }
                 
-                .time-slot.lesson.completed {
+                .hour-cell.lesson.completed {
                     background: #d4edda;
-                    border-left-color: #28a745;
+                    border-color: #28a745;
                 }
                 
-                .time-slot.lesson.cancelled {
+                .hour-cell.lesson.cancelled {
                     background: #f8d7da;
-                    border-left-color: #dc3545;
+                    border-color: #dc3545;
                     opacity: 0.7;
                 }
                 
-                .time-slot.lesson.no_show {
+                .hour-cell.lesson.no-show {
                     background: #fff3cd;
-                    border-left-color: #ffc107;
+                    border-color: #ffc107;
                 }
                 
                 .lesson-time {
                     font-weight: bold;
-                    font-size: 0.85em;
+                    font-size: 0.75em;
                     color: #495057;
+                    line-height: 1;
                 }
                 
                 .lesson-student {
-                    font-size: 0.85em;
+                    font-size: 0.7em;
                     color: #6c757d;
                     margin-top: 2px;
+                    line-height: 1;
                 }
                 
                 .lesson-topic {
                     font-style: italic;
                     color: #6c757d;
+                    font-size: 0.65em;
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
+                    margin-top: 1px;
                 }
                 
                 .lesson-actions {
                     position: absolute;
-                    bottom: 5px;
-                    right: 5px;
+                    bottom: 2px;
+                    right: 2px;
                     display: none;
+                    gap: 2px;
                 }
                 
-                .time-slot.lesson:hover .lesson-actions {
+                .hour-cell.lesson:hover .lesson-actions {
                     display: flex;
-                    gap: 5px;
                 }
                 
                 .lesson-actions .btn {
-                    padding: 2px 6px;
-                    font-size: 0.75em;
+                    padding: 1px 3px;
+                    font-size: 0.6em;
+                    line-height: 1;
                 }
             </style>
         `
+    }
+    
+    private filterFutureLessons(lessons: any[]): any[] {
+        const now = new Date()
+        const currentDate = now.toISOString().split('T')[0] // YYYY-MM-DD format
+        const currentTime = now.getHours() * 60 + now.getMinutes() // Minutes since midnight
+        
+        
+        return lessons.filter(lesson => {
+            try {
+                // Parse lesson date
+                let lessonDateStr = lesson.lesson_date
+                if (lessonDateStr.includes('T')) {
+                    lessonDateStr = lessonDateStr.split('T')[0]
+                }
+                
+                // Parse lesson start time
+                let startTimeStr = lesson.start_time
+                if (startTimeStr.includes(' ')) {
+                    startTimeStr = startTimeStr.split(' ')[1]
+                }
+                if (startTimeStr.length > 5) {
+                    startTimeStr = startTimeStr.substring(0, 5)
+                }
+                
+                const [startHour, startMinute] = startTimeStr.split(':').map(Number)
+                const lessonStartTime = startHour * 60 + startMinute // Minutes since midnight
+                
+                
+                // If lesson is on a future date, always include it
+                if (lessonDateStr > currentDate) {
+                    return true
+                }
+                
+                // If lesson is on a past date, exclude it
+                if (lessonDateStr < currentDate) {
+                    return false
+                }
+                
+                // If lesson is today, only include if it hasn't started yet
+                // Add small buffer before the lesson start time
+                const bufferMinutes = 5
+                return lessonStartTime > (currentTime + bufferMinutes)
+                
+            } catch (error) {
+                console.warn('Error parsing lesson time:', lesson, error)
+                return true // Include if we can't parse (safer to show than hide)
+            }
+        })
     }
     
     // Helper methods
@@ -599,7 +761,8 @@ export class TutorLessons {
         
         const lessonDateTime = new Date(`${lessonDateStr}T${startTimeStr}`)
         const now = new Date()
-        return lessonDateTime <= now
+        // Future lessons can be modified, past lessons cannot
+        return lessonDateTime > now
     }
     
     private getWeekLessonsCount(weekStart: Date, status?: string): number {
@@ -709,7 +872,7 @@ export class TutorLessons {
         if (!confirm('Czy na pewno chcesz oznaczyć tę lekcję jako zakończoną?')) return
         
         try {
-            const response = await api.put<{success: boolean, message?: string}>(`/tutor/lessons/${lessonId}/complete`, {})
+            const response = await LessonService.updateLessonStatus(lessonId, { status: 'completed' })
             
             if (response.success) {
                 document.dispatchEvent(new CustomEvent('notification:show', {
@@ -739,7 +902,7 @@ export class TutorLessons {
         if (!confirm('Czy na pewno chcesz oznaczyć nieobecność studenta?')) return
         
         try {
-            const response = await api.put<{success: boolean, message?: string}>(`/tutor/lessons/${lessonId}/no-show`, {})
+            const response = await LessonService.updateLessonStatus(lessonId, { status: 'no_show_student' })
             
             if (response.success) {
                 document.dispatchEvent(new CustomEvent('notification:show', {
@@ -769,9 +932,7 @@ export class TutorLessons {
         if (!confirm('Czy na pewno chcesz anulować tę lekcję?')) return
         
         try {
-            const response = await api.put<{success: boolean, message?: string}>(`/tutor/lessons/${lessonId}/cancel`, {
-                reason: 'Anulowane przez lektora'
-            })
+            const response = await LessonService.cancelTutorLesson(lessonId, 'Anulowane przez lektora')
             
             if (response.success) {
                 document.dispatchEvent(new CustomEvent('notification:show', {

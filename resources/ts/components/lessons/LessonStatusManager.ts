@@ -1,4 +1,4 @@
-import { api } from '@services/ApiService'
+import { LessonService } from '@services/LessonService'
 
 interface StatusOption {
     value: string
@@ -21,12 +21,16 @@ export class LessonStatusManager {
      * Get available status options based on user role
      */
     private async getStatusOptions(): Promise<Record<string, string>> {
-        try {
-            const response = await api.get<{ success: boolean, data: Record<string, string> }>('/lessons/status-options')
-            return response.data || {}
-        } catch (error) {
-            console.error('Error fetching status options:', error)
-            return {}
+        // TODO: Add getStatusOptions method to LessonService when backend endpoint is ready
+        // For now, return static options
+        return {
+            scheduled: 'Zaplanowana',
+            in_progress: 'W trakcie',
+            completed: 'Zakończona',
+            cancelled: 'Anulowana',
+            no_show_student: 'Student nieobecny',
+            no_show_tutor: 'Lektor nieobecny',
+            technical_issues: 'Problemy techniczne'
         }
     }
 
@@ -35,7 +39,7 @@ export class LessonStatusManager {
      */
     private async updateStatus(newStatus: string, reason?: string): Promise<void> {
         try {
-            const response = await api.put(`/lessons/${this.lessonId}/status`, {
+            const response = await LessonService.updateLessonStatus(this.lessonId, {
                 status: newStatus,
                 reason: reason
             })

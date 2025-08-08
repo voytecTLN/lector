@@ -1,4 +1,4 @@
-// resources/ts/components/tutors/TutorForm.ts
+// resources/ts/components/forms/TutorForm.ts
 import type { RouteComponent } from '@router/routes'
 import { TutorService } from '@services/TutorService'
 import type { CreateTutorRequest, UpdateTutorRequest, User } from '@/types/models'
@@ -363,7 +363,7 @@ export class TutorForm implements RouteComponent {
         } catch (error) {
             console.error('Failed to load tutor data:', error)
             this.showError('Nie udało się załadować danych lektora')
-            navigate.to('/admin/dashboard?section=lektorzy')
+            await navigate.to('/admin/dashboard?section=lektorzy')
         }
     }
 
@@ -454,7 +454,7 @@ export class TutorForm implements RouteComponent {
             }
 
             // Redirect to tutor list
-            navigate.to('/admin/dashboard?section=lektorzy')
+            await navigate.to('/admin/dashboard?section=lektorzy')
 
         } catch (error: any) {
             console.error('Form submission error:', error)

@@ -56,9 +56,29 @@ class LessonService
                 'status' => Lesson::STATUS_SCHEDULED
             ]);
             
-            // Update availability slot
+            // Update availability slot(s)
             $hoursToBook = ceil($data['duration_minutes'] / 60);
-            $availabilitySlot->increment('hours_booked', $hoursToBook);
+            
+            // Dla lekcji 60-minutowych, zaznacz slot jako zajęty
+            if ($data['duration_minutes'] === 60) {
+                $availabilitySlot->bookHours(1);
+            } else {
+                // Dla dłuższych lekcji, zaznacz wszystkie potrzebne sloty
+                $lessonStartHour = (int) date('H', strtotime($data['start_time']));
+                $lessonEndHour = $lessonStartHour + ($data['duration_minutes'] / 60);
+                
+                for ($hour = $lessonStartHour; $hour < $lessonEndHour; $hour++) {
+                    $slot = TutorAvailabilitySlot::where('tutor_id', $tutor->id)
+                        ->where('date', $data['lesson_date'])
+                        ->where('start_hour', $hour)
+                        ->where('end_hour', $hour + 1)
+                        ->first();
+                        
+                    if ($slot) {
+                        $slot->bookHours(1);
+                    }
+                }
+            }
             
             // Deduct hours from package
             $packageAssignment->decrement('hours_remaining', 1);
@@ -72,39 +92,52 @@ class LessonService
      */
     public function getAvailableTimeSlots(int $tutorId, string $date): array
     {
-        $availabilitySlot = TutorAvailabilitySlot::where('tutor_id', $tutorId)
+        // Pobierz wszystkie dostępne sloty godzinowe dla tego dnia
+        $availabilitySlots = TutorAvailabilitySlot::where('tutor_id', $tutorId)
             ->where('date', $date)
             ->where('is_available', true)
-            ->first();
+            ->orderBy('start_hour')
+            ->get();
             
-        if (!$availabilitySlot) {
+        if ($availabilitySlots->isEmpty()) {
             return [];
         }
         
-        // Get booked lessons for this date
+        // Get booked lessons for this date (dla dodatkowej weryfikacji)
         $bookedLessons = Lesson::where('tutor_id', $tutorId)
             ->where('lesson_date', $date)
-            ->where('status', Lesson::STATUS_SCHEDULED)
+            ->whereIn('status', [Lesson::STATUS_SCHEDULED, Lesson::STATUS_IN_PROGRESS])
             ->orderBy('start_time')
             ->get();
         
-        // Generate available slots based on time_slot type
+        // Konwertuj sloty na format odpowiedzi
         $slots = [];
-        if ($availabilitySlot->time_slot === 'morning') {
-            $slots = $this->generateTimeSlots('08:00', '16:00');
-        } elseif ($availabilitySlot->time_slot === 'afternoon') {
-            $slots = $this->generateTimeSlots('14:00', '22:00');
+        foreach ($availabilitySlots as $slot) {
+            $startTime = sprintf('%02d:00', $slot->start_hour);
+            $endTime = sprintf('%02d:00', $slot->end_hour);
+            
+            // Dodatkowa weryfikacja z istniejącymi lekcjami
+            $isBooked = false;
+            foreach ($bookedLessons as $lesson) {
+                $lessonStartHour = (int) date('H', strtotime($lesson->start_time));
+                $lessonEndHour = (int) date('H', strtotime($lesson->end_time));
+                
+                if ($slot->start_hour < $lessonEndHour && $slot->end_hour > $lessonStartHour) {
+                    $isBooked = true;
+                    break;
+                }
+            }
+            
+            if (!$isBooked) {
+                $slots[] = [
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'display' => $startTime . ' - ' . $endTime
+                ];
+            }
         }
         
-        // Remove booked slots
-        foreach ($bookedLessons as $lesson) {
-            $startTime = Carbon::parse($lesson->start_time)->format('H:i');
-            $slots = array_filter($slots, function($slot) use ($startTime) {
-                return $slot['start_time'] !== $startTime;
-            });
-        }
-        
-        return array_values($slots);
+        return $slots;
     }
     
     /**
@@ -130,8 +163,8 @@ class LessonService
             ->forStudent($studentId);
             
         return match($type) {
-            'upcoming' => $query->upcoming()->get(),
-            'past' => $query->past()->get(),
+            'upcoming' => $this->applyUpcomingFilter($query)->get(),
+            'past' => $this->applyPastFilter($query)->get(),
             'scheduled' => $query->scheduled()->get(),
             'completed' => $query->completed()->get(),
             'cancelled' => $query->cancelled()->get(),
@@ -150,8 +183,8 @@ class LessonService
             ->forTutor($tutorId);
             
         return match($type) {
-            'upcoming' => $query->upcoming()->get(),
-            'past' => $query->past()->get(),
+            'upcoming' => $this->applyUpcomingFilter($query)->get(),
+            'past' => $this->applyPastFilter($query)->get(),
             'scheduled' => $query->scheduled()->get(),
             'completed' => $query->completed()->get(),
             'cancelled' => $query->cancelled()->get(),
@@ -184,17 +217,15 @@ class LessonService
      */
     public function getUpcomingLessons(int $userId, string $role, int $limit = 5): Collection
     {
-        $query = Lesson::with(['student', 'tutor', 'tutor.tutorProfile'])
-            ->upcoming()
-            ->limit($limit);
-            
+        $query = Lesson::with(['student', 'tutor', 'tutor.tutorProfile']);
+        
         if ($role === 'student') {
             $query->forStudent($userId);
         } elseif ($role === 'tutor') {
             $query->forTutor($userId);
         }
         
-        return $query->get();
+        return $this->applyUpcomingFilter($query)->limit($limit)->get();
     }
     
     /**
@@ -279,21 +310,61 @@ class LessonService
     
     private function validateTutorAvailability(int $tutorId, string $date, string $startTime, int $durationMinutes): TutorAvailabilitySlot
     {
-        $availabilitySlot = TutorAvailabilitySlot::where('tutor_id', $tutorId)
-            ->where('date', $date)
-            ->where('is_available', true)
-            ->first();
+        // Konwertuj czas na godziny
+        $lessonStartHour = (int) date('H', strtotime($startTime));
+        // Dla 60 minut, po prostu dodaj 1 godzinę
+        $lessonEndHour = $lessonStartHour + 1;
+        
+        \Log::info('validateTutorAvailability - searching for slot', [
+            'tutor_id' => $tutorId,
+            'date' => $date,
+            'start_time' => $startTime,
+            'lesson_start_hour' => $lessonStartHour,
+            'lesson_end_hour' => $lessonEndHour,
+            'duration_minutes' => $durationMinutes
+        ]);
+        
+        // Dla lekcji 60-minutowych, szukamy dokładnie pasującego slotu
+        if ($durationMinutes === 60) {
+            $availabilitySlot = TutorAvailabilitySlot::where('tutor_id', $tutorId)
+                ->where('date', $date)
+                ->where('start_hour', $lessonStartHour)
+                ->where('end_hour', $lessonEndHour)
+                ->where('is_available', true)
+                ->first();
+                
+            if (!$availabilitySlot) {
+                \Log::error('Slot not found', [
+                    'query' => [
+                        'tutor_id' => $tutorId,
+                        'date' => $date,
+                        'start_hour' => $lessonStartHour,
+                        'end_hour' => $lessonEndHour,
+                        'is_available' => true
+                    ]
+                ]);
+                throw new \Exception('Lektor nie jest dostępny w wybranym terminie');
+            }
+        } else {
+            // Dla dłuższych lekcji, sprawdź czy wszystkie potrzebne sloty są dostępne
+            $requiredSlots = [];
+            for ($hour = $lessonStartHour; $hour < $lessonEndHour; $hour++) {
+                $slot = TutorAvailabilitySlot::where('tutor_id', $tutorId)
+                    ->where('date', $date)
+                    ->where('start_hour', $hour)
+                    ->where('end_hour', $hour + 1)
+                    ->where('is_available', true)
+                    ->first();
+                    
+                if (!$slot) {
+                    throw new \Exception('Lektor nie jest dostępny przez cały czas trwania lekcji');
+                }
+                
+                $requiredSlots[] = $slot;
+            }
             
-        if (!$availabilitySlot) {
-            throw new \Exception('Lektor nie jest dostępny w wybranym dniu');
-        }
-        
-        // Check if there are enough hours available
-        $hoursNeeded = ceil($durationMinutes / 60);
-        $maxHours = 8; // 8 hours per slot
-        
-        if ($availabilitySlot->hours_booked + $hoursNeeded > $maxHours) {
-            throw new \Exception('Lektor nie ma wystarczająco dostępnych godzin w wybranym dniu');
+            // Zwróć pierwszy slot (dla kompatybilności)
+            $availabilitySlot = $requiredSlots[0];
         }
         
         return $availabilitySlot;
@@ -362,5 +433,37 @@ class LessonService
         }
         
         return $slots;
+    }
+    
+    /**
+     * Apply upcoming lessons filter (future lessons including today's lessons that haven't started)
+     */
+    private function applyUpcomingFilter($query)
+    {
+        return $query->where(function($q) {
+                    $q->where('lesson_date', '>', now()->toDateString())
+                      ->orWhere(function($q2) {
+                          $q2->where('lesson_date', '=', now()->toDateString())
+                             ->whereTime('start_time', '>', now()->subMinutes(15)->toTimeString());
+                      });
+                })
+                ->whereIn('status', [Lesson::STATUS_SCHEDULED, Lesson::STATUS_IN_PROGRESS])
+                ->orderBy('lesson_date')
+                ->orderBy('start_time');
+    }
+    
+    /**
+     * Apply past lessons filter (past lessons including today's lessons that have ended)
+     */
+    private function applyPastFilter($query)
+    {
+        return $query->where(function($q) {
+            $q->where('lesson_date', '<', now()->toDateString())
+              ->orWhere(function($q2) {
+                  $q2->where('lesson_date', '=', now()->toDateString())
+                     ->whereTime('end_time', '<', now()->toTimeString());
+              });
+        })->orderBy('lesson_date', 'desc')
+          ->orderBy('start_time', 'desc');
     }
 }

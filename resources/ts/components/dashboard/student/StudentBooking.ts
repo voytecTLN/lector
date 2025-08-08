@@ -1,4 +1,4 @@
-import { api } from '@services/ApiService'
+import { BookingService } from '@services/BookingService'
 import { formatDate } from '@utils/date'
 
 export class StudentBooking {
@@ -10,11 +10,13 @@ export class StudentBooking {
     
     public async getTutorBookingContent(tutorId: string): Promise<string> {
         try {
-            const response = await api.get<{success: boolean, data: any, message?: string}>(`/student/tutor/${tutorId}`)
-            this.tutor = response.data
+            this.tutor = await BookingService.getTutorForBooking(tutorId)
             
-            // Load tutor availability data
+            // Load tutor availability data first
             await this.loadTutorAvailability(tutorId)
+            
+            // Now render the calendar with availability data
+            const calendarHTML = this.renderCalendar()
             
             return `
                 <div class="student-content-area">
@@ -68,8 +70,19 @@ export class StudentBooking {
                                     </div>
                                 </div>
                                 
-                                <div class="calendar-grid">
-                                    ${this.renderCalendar()}
+                                <div class="calendar-wrapper">
+                                    <div class="calendar-header-row">
+                                        <div class="calendar-header-day">PN</div>
+                                        <div class="calendar-header-day">WT</div>
+                                        <div class="calendar-header-day">ŚR</div>
+                                        <div class="calendar-header-day">CZ</div>
+                                        <div class="calendar-header-day">PT</div>
+                                        <div class="calendar-header-day">SB</div>
+                                        <div class="calendar-header-day">ND</div>
+                                    </div>
+                                    <div class="calendar-grid">
+                                        ${calendarHTML}
+                                    </div>
                                 </div>
                                 
                                 <div id="time-slots-container" class="mt-4" style="display: none;">
@@ -137,12 +150,20 @@ export class StudentBooking {
     private async loadTutorAvailability(tutorId: string): Promise<void> {
         // Load availability for all visible days (4 weeks)
         const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        // Get the start of the current week (Monday) - same calculation as in renderCalendar
+        const currentDay = today.getDay()
+        const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1
+        const weekStart = new Date(today)
+        weekStart.setDate(today.getDate() - daysFromMonday)
+        
         const promises = []
         
         for (let week = 0; week < 4; week++) {
             for (let day = 0; day < 7; day++) {
-                // Use explicit date construction to avoid timezone issues
-                const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (week * 7) + day)
+                // Calculate date starting from Monday - same as renderCalendar
+                const date = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + (week * 7) + day)
                 
                 if (date >= today) { // Only load for current and future dates
                     const dateStr = formatDate(date)
@@ -153,17 +174,13 @@ export class StudentBooking {
         
         // Wait for all requests to complete
         await Promise.all(promises)
-        
-        // Re-render calendar with updated availability data
-        this.renderCalendarWithAvailability()
     }
     
     private async loadAvailabilityForDate(tutorId: string, date: string): Promise<void> {
         try {
-            const response = await api.get<{success: boolean, data: {slots: any[]}, message?: string}>(`/student/lessons/available-slots?tutor_id=${tutorId}&date=${date}`)
+            const slots = await BookingService.getAvailableSlots(tutorId, date)
             
-            if (response.success && response.data?.slots) {
-                const slots = response.data.slots
+            if (slots && slots.length >= 0) {
                 
                 // Store availability data for color coding
                 const availability = {
@@ -209,19 +226,17 @@ export class StudentBooking {
         const today = new Date()
         today.setHours(0, 0, 0, 0)
         
-        // Render calendar header
-        const daysOfWeek = ['PN', 'WT', 'ŚR', 'CZ', 'PT', 'SB', 'ND']
-        weeks.push(`
-            <div class="calendar-header">
-                ${daysOfWeek.map(day => `<div class="calendar-header-day">${day}</div>`).join('')}
-            </div>
-        `)
+        // Get the start of the current week (Monday)
+        const currentDay = today.getDay()
+        const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1
+        const weekStart = new Date(today)
+        weekStart.setDate(today.getDate() - daysFromMonday)
         
         // Render 4 weeks of calendar
         for (let week = 0; week < 4; week++) {
             for (let day = 0; day < 7; day++) {
-                // Use a more explicit date construction to avoid timezone issues
-                const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (week * 7) + day)
+                // Calculate date starting from Monday
+                const date = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + (week * 7) + day)
                 
                 const dateStr = formatDate(date)
                 const isPast = date < today
@@ -264,9 +279,6 @@ export class StudentBooking {
                 
                 weeks.push(`
                     <div class="${dayClass}" data-date="${dateStr}">
-                        <div class="calendar-day-header">
-                            ${this.getDayName(date.getDay())}
-                        </div>
                         <div class="calendar-day-date">
                             ${date.getDate()}.${(date.getMonth() + 1).toString().padStart(2, '0')}
                         </div>
@@ -318,18 +330,16 @@ export class StudentBooking {
             if (!tutorId) return
             
             // Check if we already have availability data for this date
-            let slots = []
+            let slots: any[] = []
             if (this.tutorAvailability.has(date)) {
                 const availability = this.tutorAvailability.get(date)
                 if (availability?.is_available) {
                     // Get fresh slots data for this specific date
-                    const response = await api.get<{success: boolean, data: {slots: any[]}, message?: string}>(`/student/lessons/available-slots?tutor_id=${tutorId}&date=${date}`)
-                    slots = response.data?.slots || []
+                    slots = await BookingService.getAvailableSlots(tutorId, date)
                 }
             } else {
                 // Load availability if not already loaded
-                const response = await api.get<{success: boolean, data: {slots: any[]}, message?: string}>(`/student/lessons/available-slots?tutor_id=${tutorId}&date=${date}`)
-                slots = response.data?.slots || []
+                slots = await BookingService.getAvailableSlots(tutorId, date)
                 
                 // Store availability data for color coding
                 const availability = {
@@ -347,10 +357,12 @@ export class StudentBooking {
             console.log('Final slots to use:', slots)
             
             if (slots && slots.length > 0) {
-                this.availableSlots = slots
+                // Filter out past time slots if this is today
+                const filteredSlots = this.filterPastTimeSlots(slots, date)
+                this.availableSlots = filteredSlots
                 
                 if (timeSlots) {
-                    timeSlots.innerHTML = slots.map((slot: any) => 
+                    timeSlots.innerHTML = filteredSlots.map((slot: any) => 
                         `<button class="btn btn-outline-primary time-slot-btn" 
                                 data-start-time="${slot.start_time}" 
                                 data-end-time="${slot.end_time}">
@@ -381,6 +393,35 @@ export class StudentBooking {
                 `
             }
         }
+    }
+    
+    private filterPastTimeSlots(slots: any[], date: string): any[] {
+        const today = new Date()
+        const currentDate = formatDate(today)
+        
+        // If not today, return all slots
+        if (date !== currentDate) {
+            return slots
+        }
+        
+        // If today, filter out past times
+        const currentTime = new Date()
+        const currentHour = currentTime.getHours()
+        const currentMinutes = currentTime.getMinutes()
+        
+        return slots.filter((slot: any) => {
+            const slotTime = slot.start_time.split(':')
+            const slotHour = parseInt(slotTime[0])
+            const slotMinutes = parseInt(slotTime[1] || '0')
+            
+            // Allow slots that start at least 1 hour from now
+            if (slotHour > currentHour + 1) {
+                return true
+            } else if (slotHour === currentHour + 1) {
+                return slotMinutes >= currentMinutes
+            }
+            return false
+        })
     }
     
     private selectTimeSlot(button: HTMLElement): void {
@@ -424,16 +465,22 @@ export class StudentBooking {
         confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Rezerwowanie...'
         
         try {
+            // Calculate end time (lessons are 1 hour = 60 minutes)
+            const startTime = this.selectedTime
+            const startHour = parseInt(startTime.split(':')[0])
+            const endTime = `${(startHour + 1).toString().padStart(2, '0')}:00`
+            
             const bookingData = {
                 tutor_id: parseInt(tutorId),
                 lesson_date: this.selectedDate,
-                start_time: this.selectedTime,
+                start_time: startTime,
+                end_time: endTime,
                 duration_minutes: 60,
-                lesson_type: 'individual'
+                lesson_type: 'individual' as const
             }
             
             
-            const response = await api.post<{success: boolean, message?: string, data?: any}>('/student/lessons/book', bookingData)
+            const response = await BookingService.bookLesson(bookingData)
             
             if (response.success) {
                 // Show success message
@@ -562,15 +609,22 @@ export class StudentBooking {
                     max-width: 100%;
                 }
                 
+                .calendar-wrapper {
+                    width: 100%;
+                }
+                
+                .calendar-header-row {
+                    display: grid;
+                    grid-template-columns: repeat(7, 1fr);
+                    gap: 10px;
+                    margin-bottom: 10px;
+                }
+                
                 .calendar-grid {
                     display: grid;
                     grid-template-columns: repeat(7, 1fr);
                     gap: 10px;
                     margin-bottom: 20px;
-                }
-                
-                .calendar-header {
-                    display: contents;
                 }
                 
                 .calendar-header-day {

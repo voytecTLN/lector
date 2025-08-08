@@ -4,6 +4,8 @@ import { TutorService } from '@services/TutorService'
 import type { User } from '@/types/models'
 import { navigate } from '@/utils/navigation'
 import { AvailabilityCalendarReadonly } from '@components/tutor/AvailabilityCalendarReadonly'
+import { TutorStudents } from '@components/dashboard/tutor/TutorStudents'
+import { TutorLessons } from '@components/dashboard/tutor/TutorLessons'
 
 export class TutorDetails implements RouteComponent {
     private tutorService: TutorService
@@ -12,6 +14,8 @@ export class TutorDetails implements RouteComponent {
     private tutor: User | null = null
     private activeTab: string = 'profile'
     private availabilityCalendar: AvailabilityCalendarReadonly | null = null
+    private tutorStudents: TutorStudents | null = null
+    private tutorLessons: TutorLessons | null = null
 
     constructor() {
         this.tutorService = new TutorService()
@@ -89,11 +93,13 @@ export class TutorDetails implements RouteComponent {
                                         <i class="bi bi-book me-1"></i> Lekcje
                                     </button>
                                 </li>
+                                <!--
                                 <li class="nav-item">
                                     <button class="nav-link" type="button" data-tab="statistics">
                                         <i class="bi bi-graph-up me-1"></i> Statystyki
                                     </button>
                                 </li>
+                                -->
                             </ul>
                         </div>
                         <div class="card-body" id="tab-content">
@@ -118,6 +124,12 @@ export class TutorDetails implements RouteComponent {
         if (this.availabilityCalendar) {
             this.availabilityCalendar.unmount()
             this.availabilityCalendar = null
+        }
+        if (this.tutorStudents) {
+            this.tutorStudents = null
+        }
+        if (this.tutorLessons) {
+            this.tutorLessons = null
         }
     }
 
@@ -242,10 +254,16 @@ export class TutorDetails implements RouteComponent {
         const tabContent = this.container?.querySelector('#tab-content')
         if (!tabContent) return
 
-        // Clean up previous calendar if exists
+        // Clean up previous components if they exist
         if (this.availabilityCalendar) {
             this.availabilityCalendar.unmount()
             this.availabilityCalendar = null
+        }
+        if (this.tutorStudents) {
+            this.tutorStudents = null
+        }
+        if (this.tutorLessons) {
+            this.tutorLessons = null
         }
 
         switch (tab) {
@@ -424,27 +442,21 @@ export class TutorDetails implements RouteComponent {
     }
 
     private getStudentsContent(): string {
-        const profile = this.tutor?.tutor_profile
-        return `
-            <div class="text-center py-5">
-                <i class="bi bi-people display-1 text-muted"></i>
-                <h4 class="mt-3">Uczniowie</h4>
-                <p class="text-muted">Lista uczniów: ${profile?.total_students || 0}</p>
-                <p class="text-muted">Funkcjonalność będzie dostępna wkrótce</p>
-            </div>
-        `
+        if (!this.tutorStudents) {
+            this.tutorStudents = new TutorStudents(this.tutorId || undefined)
+        }
+        
+        // Return the students content from TutorStudents component
+        return this.tutorStudents.getStudentsContent()
     }
 
     private getLessonsContent(): string {
-        const profile = this.tutor?.tutor_profile
-        return `
-            <div class="text-center py-5">
-                <i class="bi bi-book display-1 text-muted"></i>
-                <h4 class="mt-3">Lekcje</h4>
-                <p class="text-muted">Przeprowadzone lekcje: ${profile?.total_lessons || 0}</p>
-                <p class="text-muted">Historia lekcji będzie dostępna wkrótce</p>
-            </div>
-        `
+        if (!this.tutorLessons) {
+            this.tutorLessons = new TutorLessons(this.tutorId || undefined)
+        }
+        
+        // Return the lessons content from TutorLessons component
+        return this.tutorLessons.getCalendarContent()
     }
 
     private getStatisticsContent(): string {

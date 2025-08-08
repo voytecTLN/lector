@@ -329,4 +329,96 @@ export class StudentService {
             throw error
         }
     }
+
+    /**
+     * Get student profile for editing
+     */
+    async getProfile(): Promise<{
+        id: number;
+        name: string;
+        email: string;
+        phone?: string;
+        birth_date?: string;
+        city?: string;
+        country?: string;
+        student_profile?: {
+            learning_languages?: string[];
+            learning_goals?: string[];
+            current_levels?: { [key: string]: string };
+        };
+    }> {
+        try {
+            console.log('👤 StudentService: Getting student profile')
+
+            const response = await api.get<{ success: boolean, data: {
+                id: number;
+                name: string;
+                email: string;
+                phone?: string;
+                birth_date?: string;
+                city?: string;
+                country?: string;
+                student_profile?: {
+                    learning_languages?: string[];
+                    learning_goals?: string[];
+                    current_levels?: { [key: string]: string };
+                };
+            } }>('/student/profile')
+            
+            return response.data
+
+        } catch (error) {
+            console.error('❌ Get student profile error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Update student profile
+     */
+    async updateProfile(data: any): Promise<any> {
+        try {
+            console.log('✏️ StudentService: Updating student profile')
+
+            const response = await api.put<{ success: boolean, data: any }>('/student/profile', data)
+
+            return response.data
+
+        } catch (error) {
+            console.error('❌ Update student profile error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get dashboard statistics for student
+     */
+    async getDashboardStats(): Promise<any> {
+        try {
+            console.log('📊 StudentService: Getting dashboard stats')
+
+            const response = await api.get<{ success: boolean, data: any }>('/student/dashboard-stats')
+
+            return response.data || response
+
+        } catch (error) {
+            console.error('❌ Get dashboard stats error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get all students - alias for internal use
+     */
+    async getAllStudents(): Promise<any[]> {
+        try {
+            const response = await api.get<{ success: boolean, data: any[] }>('/students')
+            return response.data || []
+        } catch (error) {
+            console.error('❌ Get all students error:', error)
+            throw error
+        }
+    }
 }
+
+export const studentService = new StudentService()

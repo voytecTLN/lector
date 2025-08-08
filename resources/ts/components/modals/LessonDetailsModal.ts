@@ -1,5 +1,5 @@
 import Swal from 'sweetalert2'
-import { api } from '../../services/ApiService'
+import { LessonService } from '../../services/LessonService'
 import { authService } from '../../services/AuthService'
 import { MeetingButton } from '../video/MeetingButton'
 
@@ -80,18 +80,14 @@ export class LessonDetailsModal {
             }
             
             // Pobierz szczegóły lekcji
-            const response = await api.get<{ success: boolean; data: { lesson: LessonDetails } }>(endpoint)
+            const response = await LessonService.getLessonDetails(lessonId)
             
-            // ApiService może zwrócić pusty obiekt jeśli był błąd 403/404/500
+            // Check if response is valid
             if (!response || Object.keys(response).length === 0) {
                 throw new Error('Nie udało się pobrać szczegółów lekcji. Sprawdź uprawnienia.')
             }
             
-            if (!response.success || !response.data) {
-                throw new Error('Nie udało się pobrać szczegółów lekcji')
-            }
-
-            const lesson = response.data.lesson
+            const lesson = response.lesson || response
             
             // Przygotuj HTML z szczegółami
             const html = await this.buildDetailsHtml(lesson)
@@ -357,7 +353,8 @@ export class LessonDetailsModal {
     private static getActionButton(lesson: LessonDetails): string {
         if (lesson.status === 'scheduled') {
             return 'Anuluj lekcję'
-        } else if (lesson.status === 'completed' && !lesson.student_rating) {
+        }
+        else if (lesson.status === 'completed' && !lesson.student_rating) {
             return 'Oceń lekcję'
         }
         return ''

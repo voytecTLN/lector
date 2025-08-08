@@ -1,4 +1,4 @@
-import { api } from '@services/ApiService'
+import { LessonService } from '@services/LessonService'
 import Swal from 'sweetalert2'
 
 export class StudentLessons {
@@ -30,9 +30,10 @@ export class StudentLessons {
     
     private async loadUpcomingLessons(): Promise<void> {
         try {
-            const response = await api.get<any>('/student/lessons/my-lessons?type=upcoming')
-            const lessons = response.data?.lessons || []
+            const response = await LessonService.getStudentLessons('upcoming')
+            const lessons = response.lessons || []
             
+            // Backend now properly filters upcoming lessons
             this.renderUpcomingLessons(lessons)
         } catch (error) {
             console.error('Error loading upcoming lessons:', error)
@@ -244,8 +245,8 @@ export class StudentLessons {
     
     private async loadLessonHistory(): Promise<void> {
         try {
-            const response = await api.get<any>('/student/lessons/my-lessons?type=past')
-            const lessons = response.data?.lessons || []
+            const response = await LessonService.getStudentLessons('past')
+            const lessons = response.lessons || []
             
             this.renderLessonHistory(lessons)
         } catch (error) {
@@ -402,9 +403,7 @@ export class StudentLessons {
         })
         
         try {
-            const response = await api.put<{success: boolean, message?: string}>(`/student/lessons/${lessonId}/cancel`, {
-                reason: formValues.reason
-            })
+            const response = await LessonService.cancelStudentLesson(lessonId, formValues.reason)
             
             if (response.success) {
                 await Swal.fire({
@@ -550,7 +549,7 @@ export class StudentLessons {
         })
         
         try {
-            const response = await api.post<{success: boolean, message?: string}>(`/student/lessons/${lessonId}/feedback`, {
+            const response = await LessonService.addStudentFeedback(lessonId, {
                 rating: formValues.rating,
                 feedback: formValues.feedback
             })
@@ -603,8 +602,8 @@ export class StudentLessons {
 
     public async getUpcomingLessonsPreview(): Promise<string> {
         try {
-            const response = await api.get<any>('/student/lessons/my-lessons?type=upcoming&limit=3')
-            const lessons = response.data?.lessons || []
+            const response = await LessonService.getStudentLessons('upcoming', 3)
+            const lessons = response.lessons || []
             
             if (lessons.length === 0) {
                 return `

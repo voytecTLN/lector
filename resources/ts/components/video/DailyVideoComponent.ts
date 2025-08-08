@@ -1,15 +1,9 @@
 import { api } from '@services/ApiService'
 import { authService } from '@services/AuthService'
 import Swal from 'sweetalert2'
+import type { MeetingStatus } from '@/types/models'
 
-interface MeetingStatus {
-    has_room: boolean
-    is_active: boolean
-    can_start: boolean
-    can_join: boolean
-    room_url: string | null
-    meeting_started_at: string | null
-    meeting_ended_at: string | null
+interface ExtendedMeetingStatus extends MeetingStatus {
     active_participants: Array<{
         id: number
         name: string
@@ -82,7 +76,7 @@ export class DailyVideoComponent {
         
         if (status.is_active && status.can_join) {
             // Spotkanie aktywne - pokaż przycisk dołączenia
-            this.renderJoinInterface(wrapper, status)
+            this.renderJoinInterface(wrapper, status as ExtendedMeetingStatus)
         } else if (status.has_room && status.can_start) {
             // Pokój istnieje i lektor może dołączyć
             this.renderRejoinInterface(wrapper, status)
@@ -153,9 +147,9 @@ export class DailyVideoComponent {
         })
     }
 
-    private renderJoinInterface(wrapper: HTMLElement, status: MeetingStatus): void {
+    private renderJoinInterface(wrapper: HTMLElement, status: ExtendedMeetingStatus): void {
         const participantsList = status.active_participants
-            .map(p => {
+            .map((p: any) => {
                 const roleIcon = p.role === 'tutor' ? 'bi-mortarboard' : 'bi-person'
                 const roleColor = p.role === 'tutor' ? 'text-primary' : 'text-info'
                 return `

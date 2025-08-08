@@ -1,20 +1,24 @@
-// resources/ts/components/admins/AdminForm.ts
+// resources/ts/components/forms/AdminForm.ts
 import type { RouteComponent } from '@router/routes'
-import { AdminService } from '@services/AdminService'
+import { adminService } from '@services/AdminService'
 import type { CreateAdminRequest, UpdateAdminRequest, User } from '@/types/models'
 import { navigate } from '@/utils/navigation'
+import { FormValidationHandler } from '@/utils/FormValidationHandler'
+import { NotificationService } from '@/utils/NotificationService'
+import { PasswordValidator } from '@/utils/PasswordValidator'
+import { FormDataParser } from '@/utils/FormDataParser'
+import { LoadingStateManager } from '@/utils/LoadingStateManager'
 
 export class AdminForm implements RouteComponent {
-    private adminService: AdminService
     private form: HTMLFormElement | null = null
     private container: HTMLElement | null = null
     private isEditMode: boolean = false
     private adminId: number | null = null
     private admin: User | null = null
+    private validationHandler: FormValidationHandler | null = null
+    private passwordValidator: PasswordValidator | null = null
+    private loadingManager: LoadingStateManager | null = null
 
-    constructor() {
-        this.adminService = new AdminService()
-    }
 
     async render(): Promise<HTMLElement> {
         const el = document.createElement('div')
@@ -61,34 +65,18 @@ export class AdminForm implements RouteComponent {
         return el
     }
 
-    private handleValidationError(event: CustomEvent): void {
-        const { errors } = event.detail
-
-        // Reset previous errors
-        this.form?.querySelectorAll('.is-invalid').forEach(el => {
-            el.classList.remove('is-invalid')
-        })
-        this.form?.querySelectorAll('.invalid-feedback').forEach(el => el.remove())
-
-        // Display new errors
-        for (const [field, messages] of Object.entries(errors)) {
-            const input = this.form?.querySelector(`[name="${field}"]`)
-            if (input) {
-                input.classList.add('is-invalid')
-
-                const feedback = document.createElement('div')
-                feedback.className = 'invalid-feedback'
-                feedback.textContent = Array.isArray(messages) ? messages[0] : String(messages)
-
-                input.parentElement?.appendChild(feedback)
-            }
-        }
-    }
 
     async mount(container: HTMLElement): Promise<void> {
-        document.addEventListener('form:validationError', this.handleValidationError.bind(this) as EventListener)
         this.container = container
         this.form = container.querySelector('#admin-form')
+
+        // Initialize utilities
+        if (this.form) {
+            this.validationHandler = new FormValidationHandler(this.form)
+            this.passwordValidator = new PasswordValidator(this.form, { isEditMode: this.isEditMode })
+        }
+
+        this.loadingManager = LoadingStateManager.simple(container, '#form-loading', '#admin-form')
 
         if (this.isEditMode && this.adminId) {
             await this.loadAdminData()
@@ -98,10 +86,14 @@ export class AdminForm implements RouteComponent {
     }
 
     unmount(): void {
-        document.removeEventListener('form:validationError', this.handleValidationError.bind(this) as EventListener)
+        this.validationHandler?.destroy()
+        this.passwordValidator?.destroy()
         this.container = null
         this.form = null
         this.admin = null
+        this.validationHandler = null
+        this.passwordValidator = null
+        this.loadingManager = null
     }
 
     private generateFormHTML(): string {
@@ -226,27 +218,18 @@ export class AdminForm implements RouteComponent {
         if (!this.adminId) return
 
         try {
-            const loadingDiv = this.container?.querySelector('#form-loading')
-            const form = this.container?.querySelector('#admin-form')
+            this.loadingManager?.showLoading()
 
-            this.admin = await this.adminService.getAdminById(this.adminId)
+            this.admin = await adminService.getAdminById(this.adminId)
 
-            // Hide loading, show form
-            loadingDiv?.classList.add('d-none')
-            form?.classList.remove('d-none')
-
+            this.loadingManager?.showContent()
             this.fillFormWithAdminData(this.admin)
             this.setupForm()
 
         } catch (error) {
             console.error('Failed to load admin:', error)
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'error',
-                    message: 'Nie udało się załadować danych administratora'
-                }
-            }))
-            navigate.to('/admin/dashboard?section=administratorzy')
+            NotificationService.error('Nie udało się załadować danych administratora')
+            await navigate.to('/admin/dashboard?section=administratorzy')
         }
     }
 
@@ -268,25 +251,8 @@ export class AdminForm implements RouteComponent {
 
         // Form submit
         this.form.addEventListener('submit', this.handleSubmit.bind(this))
-
-        // Password validation for edit mode
-        if (this.isEditMode) {
-            const passwordInput = this.form.querySelector('[name="password"]') as HTMLInputElement
-            const confirmInput = this.form.querySelector('[name="password_confirmation"]') as HTMLInputElement
-
-            const validatePasswords = () => {
-                if (passwordInput.value && !confirmInput.value) {
-                    confirmInput.setCustomValidity('Potwierdź hasło')
-                } else if (passwordInput.value !== confirmInput.value) {
-                    confirmInput.setCustomValidity('Hasła muszą być identyczne')
-                } else {
-                    confirmInput.setCustomValidity('')
-                }
-            }
-
-            passwordInput?.addEventListener('input', validatePasswords)
-            confirmInput?.addEventListener('input', validatePasswords)
-        }
+        
+        // Password validation is already handled by PasswordValidator
     }
 
     private async handleSubmit(e: Event): Promise<void> {
@@ -295,72 +261,33 @@ export class AdminForm implements RouteComponent {
         if (!this.form) return
 
         const submitButton = this.form.querySelector('#submit-button') as HTMLButtonElement
-        submitButton.disabled = true
-        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Przetwarzanie...'
+        const buttonLoader = LoadingStateManager.forButton(submitButton, 'Przetwarzanie...')
+        
+        buttonLoader.setLoading(true)
 
         try {
             const formData = new FormData(this.form)
-            const adminData = this.parseFormData(formData)
+            const adminData = FormDataParser.parseUserForm(formData, this.isEditMode)
 
             if (this.isEditMode && this.adminId) {
-                await this.adminService.updateAdmin(this.adminId, adminData as UpdateAdminRequest)
-                navigate.to(`/admin/dashboard?section=admin-details&admin_id=${this.adminId}`)
+                await adminService.updateAdmin(this.adminId, adminData as UpdateAdminRequest)
+                NotificationService.updated('Administrator')
+                await navigate.to(`/admin/dashboard?section=admin-details&admin_id=${this.adminId}`)
             } else {
-                const admin = await this.adminService.createAdmin(adminData as CreateAdminRequest)
-                navigate.to(`/admin/dashboard?section=admin-details&admin_id=${admin.id}`)
+                const admin = await adminService.createAdmin(adminData as CreateAdminRequest)
+                NotificationService.created('Administrator')
+                await navigate.to(`/admin/dashboard?section=admin-details&admin_id=${admin.id}`)
             }
 
         } catch (error: any) {
             console.error('Form submission error:', error)
 
             if (error.name !== 'ValidationError') {
-                document.dispatchEvent(new CustomEvent('notification:show', {
-                    detail: {
-                        type: 'error',
-                        message: 'Wystąpił błąd podczas zapisywania danych'
-                    }
-                }))
+                NotificationService.error('Wystąpił błąd podczas zapisywania danych')
             }
         } finally {
-            submitButton.disabled = false
-            submitButton.innerHTML = `<i class="bi bi-check-circle me-1"></i> ${this.isEditMode ? 'Zapisz zmiany' : 'Utwórz administratora'}`
+            buttonLoader.setLoading(false)
         }
     }
 
-    private parseFormData(formData: FormData): CreateAdminRequest | UpdateAdminRequest {
-        const data: any = {}
-
-        // Basic fields
-        const fields = ['name', 'email', 'password', 'phone', 'birth_date', 'city', 'status']
-        fields.forEach(field => {
-            const value = formData.get(field)
-            if (value !== null && value !== '') {
-                data[field] = value
-            }
-        })
-
-        // For edit mode, handle password properly
-        if (this.isEditMode) {
-            if (!data.password) {
-                // If no password, remove both fields
-                delete data.password
-                delete data.password_confirmation
-            } else {
-                // If password exists, always add password_confirmation
-                data.password_confirmation = formData.get('password_confirmation') || ''
-            }
-        } else {
-            // For create mode, always include password_confirmation if password exists
-            if (data.password) {
-                data.password_confirmation = formData.get('password_confirmation') || ''
-            }
-        }
-
-        // Set default country
-        if (!data.country) {
-            data.country = 'Polska'
-        }
-
-        return data
-    }
 }
