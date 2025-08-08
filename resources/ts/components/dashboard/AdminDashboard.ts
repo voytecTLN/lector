@@ -1,7 +1,7 @@
 // resources/ts/components/dashboard/AdminDashboard.ts
 import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
-import { api } from '@services/ApiService'
+import { adminService } from "@services/AdminService";
 import { navigate } from "@utils/navigation";
 import { AdminLessons } from './admin/AdminLessons'
 import { LessonDetailsModal } from '../modals/LessonDetailsModal'
@@ -1007,9 +1007,9 @@ export class AdminDashboard implements RouteComponent {
             // dodaj inne pola według API
             *}
              */
-            const response = await api.get('/admin/dashboard-stats')
-            // return response.data || {}
-            return (response as any).data || {}
+            const stats = await adminService.getDashboardStats()
+            // return stats || {}
+            return stats || {}
         } catch (error) {
             console.error('Failed to fetch dashboard stats:', error)
             return {}

@@ -5,6 +5,7 @@ import { FormValidationHandler } from '@/utils/FormValidationHandler'
 import { NotificationService } from '@/utils/NotificationService'
 import { PasswordValidator } from '@/utils/PasswordValidator'
 import { LoadingStateManager } from '@/utils/LoadingStateManager'
+import { LanguageUtils } from '@/utils/LanguageUtils'
 
 export interface TutorProfile {
     id: number;
@@ -268,30 +269,7 @@ export class TutorProfileEdit implements RouteComponent {
     }
 
     private generateLanguageCheckboxes(): string {
-        const languages = [
-            { value: 'english', label: 'Angielski' },
-            { value: 'german', label: 'Niemiecki' },
-            { value: 'french', label: 'Francuski' },
-            { value: 'spanish', label: 'Hiszpański' },
-            { value: 'italian', label: 'Włoski' },
-            { value: 'portuguese', label: 'Portugalski' },
-            { value: 'russian', label: 'Rosyjski' },
-            { value: 'chinese', label: 'Chiński' },
-            { value: 'japanese', label: 'Japoński' }
-        ]
-
-        return languages.map(lang => `
-            <div class="col-md-6">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" 
-                           name="teaching_languages[]" value="${lang.value}" 
-                           id="teach-${lang.value}">
-                    <label class="form-check-label" for="teach-${lang.value}">
-                        ${lang.label}
-                    </label>
-                </div>
-            </div>
-        `).join('')
+        return LanguageUtils.generateLanguageCheckboxes([], 'teaching_languages')
     }
 
     private generateSpecializationCheckboxes(): string {

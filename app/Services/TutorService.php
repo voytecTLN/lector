@@ -460,6 +460,54 @@ class TutorService
     /**
      * Get students for a tutor with proper relationships
      */
+    /**
+     * Get students for specific tutor (used by admin)
+     */
+    public function getStudentsForTutor(int $tutorId, string $query = '', string $statusFilter = 'all', string $languageFilter = ''): array
+    {
+        // Reuse the same logic as getMyStudents
+        $filters = [];
+        if ($query) {
+            $filters['search'] = $query;
+        }
+        if ($statusFilter && $statusFilter !== 'all') {
+            $filters['status'] = $statusFilter;
+        }
+        if ($languageFilter) {
+            $filters['language'] = $languageFilter;
+        }
+        
+        return $this->getMyStudents($tutorId, $filters);
+    }
+    
+    /**
+     * Get student statistics for specific tutor
+     */
+    public function getStudentStats(int $tutorId): array
+    {
+        $activeCount = User::where('role', 'student')
+            ->where('status', 'active')
+            ->whereHas('studentLessons', function ($query) use ($tutorId) {
+                $query->where('tutor_id', $tutorId);
+            })
+            ->count();
+            
+        $inactiveCount = User::where('role', 'student')
+            ->where('status', '!=', 'active')
+            ->whereHas('studentLessons', function ($query) use ($tutorId) {
+                $query->where('tutor_id', $tutorId);
+            })
+            ->count();
+            
+        $totalCount = $activeCount + $inactiveCount;
+        
+        return [
+            'total' => $totalCount,
+            'active' => $activeCount,
+            'inactive' => $inactiveCount
+        ];
+    }
+
     public function getMyStudents(int $tutorId, array $filters = []): array
     {
         // Get students who have lessons with this tutor using proper relationships

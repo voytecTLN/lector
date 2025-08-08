@@ -1,5 +1,5 @@
-import { api } from '@services/ApiService'
 import { authService } from '@services/AuthService'
+import { studentService } from '@services/StudentService'
 import { StudentLessons } from './student/StudentLessons'
 import { StudentBooking } from './student/StudentBooking'
 import { StudentTutors } from './student/StudentTutors'
@@ -362,7 +362,7 @@ export class StudentDashboard implements RouteComponent {
                 }
                 
                 try {
-                    const response = await api.put<{success: boolean, message?: string}>('/student/profile', formData)
+                    const response = await studentService.updateProfile(formData)
                     
                     if (response.success) {
                         document.dispatchEvent(new CustomEvent('notification:show', {
@@ -393,8 +393,7 @@ export class StudentDashboard implements RouteComponent {
 
     private async loadUserInfo(): Promise<void> {
         try {
-            const response = await api.get<any>('/student/profile')
-            const user = response.data
+            const user = await studentService.getProfile()
             if (user) {
                 const usernameElement = document.querySelector('.student-username') as HTMLElement
                 if (usernameElement) {
@@ -423,8 +422,7 @@ export class StudentDashboard implements RouteComponent {
 
     private async getDashboardContent(): Promise<string> {
         try {
-            const response = await api.get<any>('/student/dashboard-stats')
-            const stats = response.data || {}
+            const stats = await studentService.getDashboardStats() || {}
             
             return `
                 <div class="student-content-area">
@@ -528,8 +526,7 @@ export class StudentDashboard implements RouteComponent {
 
     private async getProfileContent(): Promise<string> {
         try {
-            const response = await api.get<any>('/student/profile')
-            const user = response.data
+            const user = await studentService.getProfile()
             const profile = user?.student_profile || {}
             
             return `
@@ -721,8 +718,8 @@ export class StudentDashboard implements RouteComponent {
 
     private async getPackageContent(): Promise<string> {
         try {
-            const response = await api.get<any>('/student/profile')
-            const packages = response.data?.active_package_assignments || []
+            const profile = await studentService.getProfile()
+            const packages = (profile as any)?.active_package_assignments || []
             
             if (packages.length === 0) {
                 return `
@@ -845,7 +842,7 @@ export class StudentDashboard implements RouteComponent {
     private async handleLogout(): Promise<void> {
         try {
             // Call logout API
-            await api.post('/auth/logout')
+            await authService.logout()
             
             // Clear any stored tokens/data
             localStorage.removeItem('auth_token')

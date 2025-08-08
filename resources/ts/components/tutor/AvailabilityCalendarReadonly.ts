@@ -1,25 +1,11 @@
 // resources/ts/components/tutor/AvailabilityCalendarReadonly.ts
 import { api } from '@/services/ApiService'
 import { formatDate } from '@/utils/date'
-
-interface AvailabilitySlot {
-    id?: number
-    date: string
-    time_slot: 'morning' | 'afternoon'
-    is_available: boolean
-    hours_booked: number
-}
-
-interface WeeklyStats {
-    weekStart: string
-    totalHours: number
-    limit: number
-    remaining: number
-}
+import type { AvailabilitySlot, WeeklyStats } from '@/types/models'
 
 export class AvailabilityCalendarReadonly {
     private container: HTMLElement | null = null
-    private slots: Map<string, AvailabilitySlot> = new Map()
+    private slots: Map<string, AvailabilitySlot[]> = new Map()
     private tutorId: number
     private weeklyLimit: number = 40
 
@@ -55,10 +41,18 @@ export class AvailabilityCalendarReadonly {
                 this.slots.clear()
                 response.slots.forEach((slot: AvailabilitySlot) => {
                     const slotDate = typeof slot.date === 'string' ? slot.date : formatDate(new Date(slot.date))
-                    this.slots.set(slotDate, {
+                    
+                    // Get existing slots for this date or initialize empty array
+                    const existingSlots = this.slots.get(slotDate) || []
+                    
+                    // Add the new slot to the array
+                    existingSlots.push({
                         ...slot,
                         date: slotDate
                     })
+                    
+                    // Update the map with the updated array
+                    this.slots.set(slotDate, existingSlots)
                 })
                 this.render()
             }
@@ -74,16 +68,22 @@ export class AvailabilityCalendarReadonly {
             <div class="availability-calendar-readonly">
                 <div class="calendar-legend mb-4">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="legend-item">
-                                <span class="legend-box morning"></span>
-                                <span>Rano (8:00 - 16:00)</span>
+                                <span class="legend-box available"></span>
+                                <span>Dostępny slot</span>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="legend-item">
-                                <span class="legend-box afternoon"></span>
-                                <span>Popołudnie (14:00 - 22:00)</span>
+                                <span class="legend-box booked"></span>
+                                <span>Zarezerwowane</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="legend-item">
+                                <span class="legend-box unavailable"></span>
+                                <span>Niedostępny</span>
                             </div>
                         </div>
                     </div>
@@ -122,14 +122,9 @@ export class AvailabilityCalendarReadonly {
                     opacity: 0.5;
                 }
 
-                .calendar-day.has-morning {
-                    background: #e3f2fd;
-                    border-color: #2196f3;
-                }
-
-                .calendar-day.has-afternoon {
-                    background: #fff3e0;
-                    border-color: #ff9800;
+                .calendar-day.has-availability {
+                    background: #f8fff9;
+                    border-color: #28a745;
                 }
 
                 .calendar-day-header {
@@ -148,6 +143,13 @@ export class AvailabilityCalendarReadonly {
                     font-size: 0.8em;
                 }
 
+                .time-slots-display {
+                    margin-top: 8px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 2px;
+                }
+
                 .slot-badge {
                     display: inline-block;
                     padding: 2px 8px;
@@ -156,14 +158,28 @@ export class AvailabilityCalendarReadonly {
                     margin-top: 4px;
                 }
 
-                .slot-badge.morning {
-                    background: #2196f3;
-                    color: white;
+                .time-slot {
+                    background: #f0f0f0;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    padding: 2px 6px;
+                    margin: 1px;
+                    font-size: 0.7rem;
+                    display: inline-block;
+                    min-width: 45px;
+                    text-align: center;
                 }
 
-                .slot-badge.afternoon {
-                    background: #ff9800;
-                    color: white;
+                .time-slot.available {
+                    background: #d4edda;
+                    border-color: #c3e6cb;
+                    color: #155724;
+                }
+
+                .time-slot.booked {
+                    background: #f8d7da;
+                    border-color: #f5c6cb;
+                    color: #721c24;
                 }
 
                 .legend-box {
@@ -175,12 +191,16 @@ export class AvailabilityCalendarReadonly {
                     vertical-align: middle;
                 }
 
-                .legend-box.morning {
-                    background: #2196f3;
+                .legend-box.available {
+                    background: #28a745;
                 }
 
-                .legend-box.afternoon {
-                    background: #ff9800;
+                .legend-box.booked {
+                    background: #dc3545;
+                }
+
+                .legend-box.unavailable {
+                    background: #6c757d;
                 }
 
                 .weekly-summary {
@@ -238,12 +258,11 @@ export class AvailabilityCalendarReadonly {
                 
                 const dateStr = formatDate(date)
                 const isPast = date < today
-                const slot = this.slots.get(dateStr)
+                const daySlots = this.getDaySlotsGrouped(dateStr)
                 
                 let dayClass = 'calendar-day'
                 if (isPast) dayClass += ' past'
-                if (slot?.time_slot === 'morning') dayClass += ' has-morning'
-                if (slot?.time_slot === 'afternoon') dayClass += ' has-afternoon'
+                if (daySlots.length > 0) dayClass += ' has-availability'
 
                 weeks.push(`
                     <div class="${dayClass}">
@@ -253,24 +272,45 @@ export class AvailabilityCalendarReadonly {
                         <div class="calendar-day-date">
                             ${date.getDate()}.${(date.getMonth() + 1).toString().padStart(2, '0')}
                         </div>
-                        ${slot ? `
-                            <div class="time-slot-display">
-                                ${slot.time_slot === 'morning' 
-                                    ? '<span class="slot-badge morning">Rano</span>'
-                                    : '<span class="slot-badge afternoon">Popołudnie</span>'}
-                                ${slot.hours_booked > 0 ? `
-                                    <div class="text-muted small mt-1">
-                                        Zarezerwowane: ${slot.hours_booked}h
-                                    </div>
-                                ` : ''}
-                            </div>
-                        ` : ''}
+                        <div class="time-slots-display">
+                            ${daySlots.length > 0 ? this.renderDayTimeSlots(daySlots) : `
+                                <div class="text-muted small mt-2">
+                                    Lektor nie ustawił dostępności
+                                </div>
+                            `}
+                        </div>
                     </div>
                 `)
             }
         }
 
         return weeks.join('')
+    }
+
+    private getDaySlotsGrouped(dateStr: string): AvailabilitySlot[] {
+        // Get slots for this specific date
+        const daySlots = this.slots.get(dateStr) || []
+        // Sort by start hour
+        return daySlots.sort((a, b) => (a.start_hour || 0) - (b.start_hour || 0))
+    }
+
+
+    private renderDayTimeSlots(slots: AvailabilitySlot[]): string {
+        return slots.map(slot => {
+            const startHour = slot.start_hour || 0
+            const endHour = slot.end_hour || startHour + 1
+            const isBooked = (slot.hours_booked || 0) > 0
+            const isAvailable = slot.is_available && !isBooked
+            
+            let slotClass = 'time-slot'
+            if (isBooked) {
+                slotClass += ' booked'
+            } else if (isAvailable) {
+                slotClass += ' available'
+            }
+            
+            return `<span class="${slotClass}" title="${isBooked ? 'Zarezerwowane' : isAvailable ? 'Dostępne' : 'Niedostępne'}">${startHour.toString().padStart(2, '0')}:00</span>`
+        }).join('')
     }
 
     private renderWeeklySummary(): string {
@@ -320,9 +360,13 @@ export class AvailabilityCalendarReadonly {
                 date.setDate(weekStart.getDate() + day)
                 const dateStr = formatDate(date)
                 
-                if (this.slots.has(dateStr)) {
-                    totalHours += 8
-                }
+                const daySlots = this.slots.get(dateStr) || []
+                // Count actual available slots (each slot is 1 hour)
+                daySlots.forEach(slot => {
+                    if (slot.is_available) {
+                        totalHours += 1
+                    }
+                })
             }
             
             stats.push({

@@ -5,26 +5,13 @@ import { FormValidationHandler } from '@/utils/FormValidationHandler'
 import { NotificationService } from '@/utils/NotificationService'
 import { PasswordValidator } from '@/utils/PasswordValidator'
 import { LoadingStateManager } from '@/utils/LoadingStateManager'
-
-export interface StudentProfile {
-    id: number;
-    name: string;
-    email: string;
-    phone?: string;
-    birth_date?: string;
-    city?: string;
-    country?: string;
-    student_profile?: {
-        learning_languages?: string[];
-        learning_goals?: string[];
-        current_levels?: { [key: string]: string };
-    };
-}
+import { LanguageUtils } from '@/utils/LanguageUtils'
+import type { User } from '@/types/models' // Use User interface from models
 
 export class StudentProfileEdit implements RouteComponent {
     private form: HTMLFormElement | null = null
     private container: HTMLElement | null = null
-    private profile: StudentProfile | null = null
+    private profile: any = null // Simple type for profile data
     private validationHandler: FormValidationHandler | null = null
     private passwordValidator: PasswordValidator | null = null
     private loadingManager: LoadingStateManager | null = null
@@ -214,19 +201,7 @@ export class StudentProfileEdit implements RouteComponent {
     }
 
     private generateLanguageCheckboxes(): string {
-        const languages = [
-            { value: 'english', label: 'Angielski' },
-            { value: 'german', label: 'Niemiecki' },
-            { value: 'french', label: 'Francuski' },
-            { value: 'spanish', label: 'Hiszpański' },
-            { value: 'italian', label: 'Włoski' },
-            { value: 'portuguese', label: 'Portugalski' },
-            { value: 'russian', label: 'Rosyjski' },
-            { value: 'chinese', label: 'Chiński' },
-            { value: 'japanese', label: 'Japoński' }
-        ]
-
-        return languages.map(lang => `
+        return LanguageUtils.SUPPORTED_LANGUAGES.map(lang => `
             <div class="col-md-6">
                 <div class="form-check">
                     <input class="form-check-input language-checkbox" type="checkbox" 
@@ -307,8 +282,8 @@ export class StudentProfileEdit implements RouteComponent {
         const fields = ['name', 'email', 'phone', 'birth_date', 'city', 'country']
         fields.forEach(field => {
             const input = this.form!.querySelector(`[name="${field}"]`) as HTMLInputElement
-            if (input && this.profile![field as keyof StudentProfile]) {
-                input.value = String(this.profile![field as keyof StudentProfile])
+            if (input && this.profile![field]) {
+                input.value = String(this.profile![field])
             }
         })
 
@@ -317,7 +292,7 @@ export class StudentProfileEdit implements RouteComponent {
 
         // Learning languages
         if (this.profile.student_profile?.learning_languages) {
-            this.profile.student_profile.learning_languages.forEach(lang => {
+            this.profile.student_profile.learning_languages.forEach((lang: string) => {
                 const checkbox = this.form!.querySelector(`[name="learning_languages[]"][value="${lang}"]`) as HTMLInputElement
                 if (checkbox) {
                     checkbox.checked = true
@@ -328,7 +303,7 @@ export class StudentProfileEdit implements RouteComponent {
 
         // Learning goals
         if (this.profile.student_profile?.learning_goals) {
-            this.profile.student_profile.learning_goals.forEach(goal => {
+            this.profile.student_profile.learning_goals.forEach((goal: string) => {
                 const checkbox = this.form!.querySelector(`[name="learning_goals[]"][value="${goal}"]`) as HTMLInputElement
                 if (checkbox) {
                     checkbox.checked = true
@@ -341,7 +316,7 @@ export class StudentProfileEdit implements RouteComponent {
             Object.entries(this.profile.student_profile.current_levels).forEach(([lang, level]) => {
                 const select = this.form!.querySelector(`[name="current_levels[${lang}]"]`) as HTMLSelectElement
                 if (select) {
-                    select.value = level
+                    select.value = String(level)
                 }
             })
         }
@@ -515,17 +490,6 @@ export class StudentProfileEdit implements RouteComponent {
     }
 
     private getLanguageLabel(language: string): string {
-        const labels: Record<string, string> = {
-            english: 'Angielski',
-            german: 'Niemiecki', 
-            french: 'Francuski',
-            spanish: 'Hiszpański',
-            italian: 'Włoski',
-            portuguese: 'Portugalski',
-            russian: 'Rosyjski',
-            chinese: 'Chiński',
-            japanese: 'Japoński'
-        }
-        return labels[language] || language
+        return LanguageUtils.getLanguageLabel(language)
     }
 }

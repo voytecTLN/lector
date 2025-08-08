@@ -1,30 +1,5 @@
-import { api } from '@services/ApiService'
-
-interface Material {
-    id: number
-    lesson_id: number | null
-    student_id: number
-    tutor_id: number
-    file_path: string
-    original_name: string
-    file_size: number
-    mime_type: string
-    is_active: boolean
-    version: number
-    uploaded_at: string
-    created_at: string
-    updated_at: string
-    is_image?: boolean
-    tutor?: {
-        id: number
-        name: string
-    }
-    lesson?: {
-        id: number
-        lesson_date: string
-        topic: string
-    }
-}
+import { MaterialService } from '@services/MaterialService'
+import type { Material } from '@/types/models'
 
 export class StudentMaterials {
     private materials: Material[] = []
@@ -89,8 +64,7 @@ export class StudentMaterials {
     
     private async loadMaterials(): Promise<void> {
         try {
-            const response = await api.get('/student/materials')
-            this.materials = (response as any).materials || []
+            this.materials = await MaterialService.getStudentMaterials()
             this.filteredMaterials = [...this.materials]
             
             this.renderMaterials()
@@ -326,8 +300,9 @@ export class StudentMaterials {
             loadingEl.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #fff; padding: 10px 20px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 9999;'
             document.body.appendChild(loadingEl)
             
-            // Get the file using API service
-            const { blob, filename } = await api.downloadFile(`/student/materials/${materialId}/download`)
+            // Get the file using Material service
+            const blob = await MaterialService.downloadMaterial(materialId)
+            const filename = `material_${materialId}`
             
             // Create blob URL and trigger download
             const url = window.URL.createObjectURL(blob)

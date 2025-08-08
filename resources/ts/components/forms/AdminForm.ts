@@ -1,6 +1,6 @@
 // resources/ts/components/forms/AdminForm.ts
 import type { RouteComponent } from '@router/routes'
-import { AdminService } from '@services/AdminService'
+import { adminService } from '@services/AdminService'
 import type { CreateAdminRequest, UpdateAdminRequest, User } from '@/types/models'
 import { navigate } from '@/utils/navigation'
 import { FormValidationHandler } from '@/utils/FormValidationHandler'
@@ -10,7 +10,6 @@ import { FormDataParser } from '@/utils/FormDataParser'
 import { LoadingStateManager } from '@/utils/LoadingStateManager'
 
 export class AdminForm implements RouteComponent {
-    private adminService: AdminService
     private form: HTMLFormElement | null = null
     private container: HTMLElement | null = null
     private isEditMode: boolean = false
@@ -20,9 +19,6 @@ export class AdminForm implements RouteComponent {
     private passwordValidator: PasswordValidator | null = null
     private loadingManager: LoadingStateManager | null = null
 
-    constructor() {
-        this.adminService = new AdminService()
-    }
 
     async render(): Promise<HTMLElement> {
         const el = document.createElement('div')
@@ -224,7 +220,7 @@ export class AdminForm implements RouteComponent {
         try {
             this.loadingManager?.showLoading()
 
-            this.admin = await this.adminService.getAdminById(this.adminId)
+            this.admin = await adminService.getAdminById(this.adminId)
 
             this.loadingManager?.showContent()
             this.fillFormWithAdminData(this.admin)
@@ -274,11 +270,11 @@ export class AdminForm implements RouteComponent {
             const adminData = FormDataParser.parseUserForm(formData, this.isEditMode)
 
             if (this.isEditMode && this.adminId) {
-                await this.adminService.updateAdmin(this.adminId, adminData as UpdateAdminRequest)
+                await adminService.updateAdmin(this.adminId, adminData as UpdateAdminRequest)
                 NotificationService.updated('Administrator')
                 await navigate.to(`/admin/dashboard?section=admin-details&admin_id=${this.adminId}`)
             } else {
-                const admin = await this.adminService.createAdmin(adminData as CreateAdminRequest)
+                const admin = await adminService.createAdmin(adminData as CreateAdminRequest)
                 NotificationService.created('Administrator')
                 await navigate.to(`/admin/dashboard?section=admin-details&admin_id=${admin.id}`)
             }

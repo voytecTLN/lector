@@ -389,4 +389,36 @@ export class StudentService {
             throw error
         }
     }
+
+    /**
+     * Get dashboard statistics for student
+     */
+    async getDashboardStats(): Promise<any> {
+        try {
+            console.log('📊 StudentService: Getting dashboard stats')
+
+            const response = await api.get<{ success: boolean, data: any }>('/student/dashboard-stats')
+
+            return response.data || response
+
+        } catch (error) {
+            console.error('❌ Get dashboard stats error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get all students - alias for internal use
+     */
+    async getAllStudents(): Promise<any[]> {
+        try {
+            const response = await api.get<{ success: boolean, data: any[] }>('/students')
+            return response.data || []
+        } catch (error) {
+            console.error('❌ Get all students error:', error)
+            throw error
+        }
+    }
 }
+
+export const studentService = new StudentService()

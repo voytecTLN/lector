@@ -607,4 +607,43 @@ class TutorController extends Controller
             ], 500);
         }
     }
+    
+    /**
+     * Get students for a specific tutor (admin endpoint)
+     */
+    public function getTutorStudents(Request $request, $tutorId)
+    {
+        try {
+            // Check if user is admin
+            if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'moderator') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+            
+            // Use the same logic as getStudents but for specific tutor
+            $query = request()->query('search', '');
+            $statusFilter = request()->query('status', 'all');
+            $languageFilter = request()->query('language', '');
+            
+            $students = $this->tutorService->getStudentsForTutor($tutorId, $query, $statusFilter, $languageFilter);
+            $stats = $this->tutorService->getStudentStats($tutorId);
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'students' => $students,
+                    'stats' => $stats
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Wystąpił błąd podczas pobierania studentów lektora',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

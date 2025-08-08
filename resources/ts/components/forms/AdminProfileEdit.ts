@@ -1,19 +1,15 @@
 // resources/ts/components/forms/AdminProfileEdit.ts
 import type { RouteComponent } from '@router/routes'
-import { AdminService } from '@services/AdminService'
+import { adminService } from '@services/AdminService'
 import type { UpdateAdminRequest, User } from '@/types/models'
 import { navigate } from '@/utils/navigation'
 
 export class AdminProfileEdit implements RouteComponent {
-    private adminService: AdminService
     private form: HTMLFormElement | null = null
     private container: HTMLElement | null = null
     private admin: User | null = null
     private adminId: number | null = null
 
-    constructor() {
-        this.adminService = new AdminService()
-    }
 
     async render(): Promise<HTMLElement> {
         const el = document.createElement('div')
@@ -255,7 +251,7 @@ export class AdminProfileEdit implements RouteComponent {
             const loadingDiv = this.container?.querySelector('#form-loading')
             const form = this.container?.querySelector('#admin-profile-form')
 
-            this.admin = await this.adminService.getAdminById(this.adminId)
+            this.admin = await adminService.getAdminById(this.adminId)
 
             // Hide loading, show form
             loadingDiv?.classList.add('d-none')
@@ -333,7 +329,7 @@ export class AdminProfileEdit implements RouteComponent {
             const formData = new FormData(this.form)
             const adminData = this.parseFormData(formData)
 
-            await this.adminService.updateAdmin(this.adminId, adminData as UpdateAdminRequest)
+            await adminService.updateAdmin(this.adminId, adminData as UpdateAdminRequest)
             
             this.showSuccess('Profil administratora został zaktualizowany')
             

@@ -1,10 +1,15 @@
-import { api } from '@services/ApiService'
+import { LessonService } from '@services/LessonService'
 import { formatDate } from '@utils/date'
 
 export class TutorLessons {
     private currentView: 'calendar' | 'list' = 'calendar'
     private currentWeekOffset = 0
     private lessons: any[] = []
+    private tutorId?: number // For admin view - when viewing specific tutor's lessons
+    
+    constructor(tutorId?: number) {
+        this.tutorId = tutorId
+    }
     
     public getUpcomingLessonsContent(): string {
         // Load upcoming lessons
@@ -64,8 +69,22 @@ export class TutorLessons {
     
     private async loadUpcomingLessons(): Promise<void> {
         try {
-            const response = await api.get<{success: boolean, data: {lessons: any[]}, message?: string}>('/tutor/lessons/upcoming')
-            const upcomingLessons = response.data?.lessons || []
+            let response
+            if (this.tutorId) {
+                // Admin view - get upcoming lessons for specific tutor using admin endpoint
+                response = await LessonService.getAdminLessons({ 
+                    tutor_id: this.tutorId.toString(),
+                    status: 'scheduled' // Only get scheduled lessons for upcoming view
+                })
+            } else {
+                // Tutor view - get own upcoming lessons
+                response = await LessonService.getTutorUpcomingLessons()
+            }
+            let upcomingLessons = response.lessons || []
+            
+            
+            // Backend now properly filters upcoming lessons (like StudentLessons)
+            // No frontend filtering needed
             
             const container = document.getElementById('upcoming-lessons-container')
             if (!container) return
@@ -83,7 +102,7 @@ export class TutorLessons {
             // Render upcoming lessons list
             container.innerHTML = `
                 <div class="row">
-                    ${upcomingLessons.map(lesson => this.renderUpcomingLessonCard(lesson)).join('')}
+                    ${upcomingLessons.map((lesson: any) => this.renderUpcomingLessonCard(lesson)).join('')}
                 </div>
             `
         } catch (error) {
@@ -129,7 +148,7 @@ export class TutorLessons {
         
         return `
             <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card h-100 lesson-card ${cardClass}" onclick="console.log('🎯 Lesson clicked:', ${lesson.id}, ${JSON.stringify(lesson).replace(/"/g, '&quot;')}); LessonDetailsModal.show(${lesson.id})" style="cursor: pointer; transition: transform 0.2s;">
+                <div class="card h-100 lesson-card ${cardClass}" onclick="LessonDetailsModal.show(${lesson.id})" style="cursor: pointer; transition: transform 0.2s;">
                     <div class="card-body">
                         <h5 class="card-title ${titleClass}">
                             <i class="bi bi-person-circle me-2"></i>
@@ -159,8 +178,18 @@ export class TutorLessons {
     
     private async loadLessons(): Promise<void> {
         try {
-            const response = await api.get<{success: boolean, data: {lessons: any[]}, message?: string}>('/tutor/lessons/my-lessons')
-            this.lessons = response.data?.lessons || []
+            let response
+            if (this.tutorId) {
+                // Admin view - get lessons for specific tutor
+                response = await LessonService.getAdminLessons({ 
+                    tutor_id: this.tutorId.toString() 
+                })
+            } else {
+                // Tutor view - get own lessons
+                response = await LessonService.getTutorLessons()
+            }
+            this.lessons = response.lessons || []
+            
             
             if (this.currentView === 'calendar') {
                 this.renderCalendarView()
@@ -178,8 +207,11 @@ export class TutorLessons {
         if (!container) return
         
         const today = new Date()
-        const weekStart = new Date(today)
-        weekStart.setDate(today.getDate() - today.getDay() + 1 + (this.currentWeekOffset * 7)) // Monday
+        const dayOfWeek = today.getDay()
+        const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) // Monday
+        const weekStart = new Date(today.setDate(diff))
+        weekStart.setDate(weekStart.getDate() + (this.currentWeekOffset * 7))
+        weekStart.setHours(0, 0, 0, 0)
         
         const days = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
         const hours = Array.from({length: 14}, (_, i) => i + 8) // 8:00 to 21:00
@@ -229,10 +261,22 @@ export class TutorLessons {
         `
     }
     
+    private renderHourLabels(hours: number[]): string {
+        // Add empty space for day headers row
+        let labels = '<div class="hour-label" style="height: 49px;"></div>'
+        
+        // Add hour labels
+        hours.forEach(hour => {
+            labels += `<div class="hour-label">${hour}:00</div>`
+        })
+        
+        return labels
+    }
+    
     private renderHourlyGrid(weekStart: Date, days: string[], hours: number[]): string {
         let grid = '<div class="hour-header"></div>' // Empty top-left corner
         
-        // Day headers
+        // Day headers - natural CSS grid flow (like HourlyAvailabilityCalendar)
         for (let d = 0; d < 7; d++) {
             const date = new Date(weekStart)
             date.setDate(weekStart.getDate() + d)
@@ -246,7 +290,7 @@ export class TutorLessons {
             `
         }
         
-        // Hour rows
+        // Hour rows - natural CSS grid flow (like HourlyAvailabilityCalendar)
         for (const hour of hours) {
             // Hour label
             grid += `<div class="hour-header">${hour}:00</div>`
@@ -259,9 +303,15 @@ export class TutorLessons {
                 
                 // Find lesson for this date and hour
                 const lesson = this.lessons.find(l => {
+                    // Convert UTC to local time FIRST, then extract date
                     let lessonDateStr = l.lesson_date
+                    
                     if (lessonDateStr.includes('T')) {
-                        lessonDateStr = lessonDateStr.split('T')[0]
+                        // For UTC timestamps like "2025-08-07T22:00:00.000000Z"
+                        // Convert to local Date object first
+                        const lessonDateObj = new Date(lessonDateStr)
+                        // Format to local date string
+                        lessonDateStr = formatDate(lessonDateObj)
                     }
                     
                     // Handle different time formats
@@ -617,6 +667,55 @@ export class TutorLessons {
         `
     }
     
+    private filterFutureLessons(lessons: any[]): any[] {
+        const now = new Date()
+        const currentDate = now.toISOString().split('T')[0] // YYYY-MM-DD format
+        const currentTime = now.getHours() * 60 + now.getMinutes() // Minutes since midnight
+        
+        
+        return lessons.filter(lesson => {
+            try {
+                // Parse lesson date
+                let lessonDateStr = lesson.lesson_date
+                if (lessonDateStr.includes('T')) {
+                    lessonDateStr = lessonDateStr.split('T')[0]
+                }
+                
+                // Parse lesson start time
+                let startTimeStr = lesson.start_time
+                if (startTimeStr.includes(' ')) {
+                    startTimeStr = startTimeStr.split(' ')[1]
+                }
+                if (startTimeStr.length > 5) {
+                    startTimeStr = startTimeStr.substring(0, 5)
+                }
+                
+                const [startHour, startMinute] = startTimeStr.split(':').map(Number)
+                const lessonStartTime = startHour * 60 + startMinute // Minutes since midnight
+                
+                
+                // If lesson is on a future date, always include it
+                if (lessonDateStr > currentDate) {
+                    return true
+                }
+                
+                // If lesson is on a past date, exclude it
+                if (lessonDateStr < currentDate) {
+                    return false
+                }
+                
+                // If lesson is today, only include if it hasn't started yet
+                // Add small buffer before the lesson start time
+                const bufferMinutes = 5
+                return lessonStartTime > (currentTime + bufferMinutes)
+                
+            } catch (error) {
+                console.warn('Error parsing lesson time:', lesson, error)
+                return true // Include if we can't parse (safer to show than hide)
+            }
+        })
+    }
+    
     // Helper methods
     
     private formatWeekRange(weekStart: Date): string {
@@ -662,7 +761,8 @@ export class TutorLessons {
         
         const lessonDateTime = new Date(`${lessonDateStr}T${startTimeStr}`)
         const now = new Date()
-        return lessonDateTime <= now
+        // Future lessons can be modified, past lessons cannot
+        return lessonDateTime > now
     }
     
     private getWeekLessonsCount(weekStart: Date, status?: string): number {
@@ -772,7 +872,7 @@ export class TutorLessons {
         if (!confirm('Czy na pewno chcesz oznaczyć tę lekcję jako zakończoną?')) return
         
         try {
-            const response = await api.put<{success: boolean, message?: string}>(`/tutor/lessons/${lessonId}/complete`, {})
+            const response = await LessonService.updateLessonStatus(lessonId, { status: 'completed' })
             
             if (response.success) {
                 document.dispatchEvent(new CustomEvent('notification:show', {
@@ -802,7 +902,7 @@ export class TutorLessons {
         if (!confirm('Czy na pewno chcesz oznaczyć nieobecność studenta?')) return
         
         try {
-            const response = await api.put<{success: boolean, message?: string}>(`/tutor/lessons/${lessonId}/no-show`, {})
+            const response = await LessonService.updateLessonStatus(lessonId, { status: 'no_show_student' })
             
             if (response.success) {
                 document.dispatchEvent(new CustomEvent('notification:show', {
@@ -832,9 +932,7 @@ export class TutorLessons {
         if (!confirm('Czy na pewno chcesz anulować tę lekcję?')) return
         
         try {
-            const response = await api.put<{success: boolean, message?: string}>(`/tutor/lessons/${lessonId}/cancel`, {
-                reason: 'Anulowane przez lektora'
-            })
+            const response = await LessonService.cancelTutorLesson(lessonId, 'Anulowane przez lektora')
             
             if (response.success) {
                 document.dispatchEvent(new CustomEvent('notification:show', {

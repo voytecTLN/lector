@@ -444,10 +444,10 @@ class LessonService
                     $q->where('lesson_date', '>', now()->toDateString())
                       ->orWhere(function($q2) {
                           $q2->where('lesson_date', '=', now()->toDateString())
-                             ->whereTime('start_time', '>', now()->toTimeString());
+                             ->whereTime('start_time', '>', now()->subMinutes(15)->toTimeString());
                       });
                 })
-                ->whereIn('status', [Lesson::STATUS_SCHEDULED, Lesson::STATUS_IN_PROGRESS, Lesson::STATUS_COMPLETED])
+                ->whereIn('status', [Lesson::STATUS_SCHEDULED, Lesson::STATUS_IN_PROGRESS])
                 ->orderBy('lesson_date')
                 ->orderBy('start_time');
     }

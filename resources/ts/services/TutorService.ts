@@ -279,4 +279,90 @@ export class TutorService {
             throw error
         }
     }
+
+    /**
+     * Get all tutors - for admin use
+     */
+    async getAllTutors(): Promise<any[]> {
+        try {
+            const response = await api.get<{ success: boolean, data: any[] }>('/tutors')
+            return response.data || []
+        } catch (error) {
+            console.error('❌ Get all tutors error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get tutor's students with filters and stats
+     */
+    async getStudents(filters?: {
+        status?: string
+        search?: string
+        language?: string
+    }): Promise<{students: any[], stats: any}> {
+        try {
+            const params = new URLSearchParams()
+            if (filters?.status && filters.status !== 'all') params.append('status', filters.status)
+            if (filters?.search) params.append('search', filters.search)
+            if (filters?.language) params.append('language', filters.language)
+            
+            const response = await api.get<{success: boolean, data: {students: any[], stats: any}}>(`/tutor/students?${params.toString()}`)
+            return response.data || {students: [], stats: {}}
+        } catch (error) {
+            console.error('❌ Get tutor students error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get students for a specific tutor (admin view)
+     */
+    async getStudentsForTutor(tutorId: number, filters?: {
+        status?: string
+        search?: string
+        language?: string
+    }): Promise<{students: any[], stats: any}> {
+        try {
+            const params = new URLSearchParams()
+            if (filters?.status && filters.status !== 'all') params.append('status', filters.status)
+            if (filters?.search) params.append('search', filters.search)
+            if (filters?.language) params.append('language', filters.language)
+            
+            const response = await api.get<{success: boolean, data: {students: any[], stats: any}}>(`/admin/tutors/${tutorId}/students?${params.toString()}`)
+            return response.data || {students: [], stats: {}}
+        } catch (error) {
+            console.error('❌ Get tutor students for admin error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get single student details for tutor
+     */
+    async getStudentById(studentId: number): Promise<any> {
+        try {
+            const response = await api.get<{success: boolean, data: {student: any}}>(`/tutor/students/${studentId}`)
+            return response.data?.student || response
+        } catch (error) {
+            console.error('❌ Get student by ID error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get materials for specific student
+     */
+    async getStudentMaterials(studentId: number): Promise<any[]> {
+        try {
+            const response = await api.get(`/tutor/students/${studentId}/materials`)
+            const responseData = response as any
+            return responseData.materials || responseData.data?.materials || []
+        } catch (error) {
+            console.error('❌ Get student materials error:', error)
+            throw error
+        }
+    }
 }
+
+export const tutorService = new TutorService()

@@ -150,6 +150,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::middleware('role:admin')->group(function () {
             Route::prefix('admin')->group(function () {
                 Route::get('/dashboard-stats', [DashboardController::class, 'adminStats']);
+                
+                // Admin tutor management endpoints
+                Route::get('/tutors/{tutorId}/students', [TutorController::class, 'getTutorStudents'])
+                    ->name('api.admin.tutors.students');
 
                 // NOWE - podstawowe zarządzanie (przekierowania)
                 Route::get('/students', function() {

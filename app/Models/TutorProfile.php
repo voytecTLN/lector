@@ -219,9 +219,24 @@ class TutorProfile extends Model
 
     public function updateRating(float $newRating, int $totalRatings): void
     {
+        // Validate rating range (1-5)
+        if ($newRating < 1 || $newRating > 5) {
+            \Log::warning('Invalid rating value provided to updateRating', [
+                'rating' => $newRating,
+                'tutor_profile_id' => $this->id
+            ]);
+            return;
+        }
+
         // Calculate new average rating
         $this->average_rating = round($newRating, 2);
         $this->save();
+        
+        \Log::info('Tutor rating updated', [
+            'tutor_profile_id' => $this->id,
+            'new_rating' => $this->average_rating,
+            'total_ratings' => $totalRatings
+        ]);
     }
 
     public function addStudent(): void

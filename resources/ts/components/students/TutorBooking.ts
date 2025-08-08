@@ -1,6 +1,6 @@
 // resources/ts/components/students/TutorBooking.ts
 import type { RouteComponent } from '@router/routes'
-import { api } from '@services/ApiService'
+import { BookingService } from '@services/BookingService'
 import { navigate } from "@utils/navigation"
 
 export class TutorBooking implements RouteComponent {
@@ -18,8 +18,7 @@ export class TutorBooking implements RouteComponent {
         
         try {
             // Fetch tutor data using public endpoint
-            const tutorResponse = await api.get<any>(`/tutors/${this.tutorId}/public`)
-            const tutor = tutorResponse
+            const tutor = await BookingService.getTutorPublicProfile(this.tutorId)
             
             el.innerHTML = `
                 <nav aria-label="breadcrumb">

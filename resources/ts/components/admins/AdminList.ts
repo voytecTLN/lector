@@ -1,11 +1,10 @@
 // resources/ts/components/admins/AdminList.ts
 import type { RouteComponent } from '@router/routes'
-import { AdminService } from '@services/AdminService'
+import { adminService } from '@services/AdminService'
 import type { User, PaginatedResponse, AdminFilters } from '@/types/models'
 import { navigate } from '@/utils/navigation'
 
 export class AdminList implements RouteComponent {
-    private adminService: AdminService
     private container: HTMLElement | null = null
     private admins: User[] = []
     private currentPage: number = 1
@@ -20,9 +19,6 @@ export class AdminList implements RouteComponent {
         per_page: 15
     }
 
-    constructor() {
-        this.adminService = new AdminService()
-    }
 
     async render(): Promise<HTMLElement> {
         const el = document.createElement('div')
@@ -255,7 +251,7 @@ export class AdminList implements RouteComponent {
         this.showLoading(true)
 
         try {
-            const response = await this.adminService.getAdmins(this.filters)
+            const response = await adminService.getAdmins(this.filters)
             this.admins = response.data
             this.currentPage = response.current_page
             this.totalPages = response.last_page
@@ -274,7 +270,7 @@ export class AdminList implements RouteComponent {
 
     private async loadStats(): Promise<void> {
         try {
-            const stats = await this.adminService.getAdminStats()
+            const stats = await adminService.getAdminStats()
             this.updateStatsCards(stats)
         } catch (error) {
             console.error('Failed to load admin stats:', error)

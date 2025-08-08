@@ -256,3 +256,124 @@ export class ValidationError extends Error {
     this.errors = errors
   }
 }
+
+// Availability and Calendar interfaces
+export interface AvailabilitySlot {
+  id?: number
+  date: string
+  time_slot: 'morning' | 'afternoon'
+  start_hour?: number
+  end_hour?: number
+  is_available: boolean
+  hours_booked: number
+}
+
+export interface WeeklyStats {
+  weekStart: string
+  totalHours: number
+  limit: number
+  remaining: number
+}
+
+// Video Meeting interfaces
+export interface MeetingStatus {
+  has_room: boolean
+  is_active: boolean
+  can_start: boolean
+  can_join: boolean
+  room_url: string | null
+  meeting_started_at: string | null
+  meeting_ended_at: string | null
+}
+
+// Lesson related interfaces
+export interface Lesson {
+  id: number
+  student_id: number
+  tutor_id: number
+  lesson_date: string
+  start_time: string
+  end_time: string
+  duration_minutes: number
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'no_show_student' | 'no_show_tutor' | 'technical_issues'
+  language: string
+  lesson_type: 'individual' | 'group' | 'intensive' | 'conversation'
+  topic?: string
+  notes?: string
+  price?: number
+  is_paid?: boolean
+  student_rating?: number
+  student_feedback?: string
+  cancelled_at?: string
+  cancelled_by?: string
+  cancellation_reason?: string
+  tutor?: {
+    id: number
+    name: string
+    email: string
+  }
+  student?: {
+    id: number
+    name: string
+    email: string
+  }
+  package_assignment?: {
+    id: number
+    package: {
+      id: number
+      name: string
+      lesson_type: string
+      lessons_total: number
+    }
+  }
+}
+
+// Booking interfaces
+export interface BookingSlot {
+  time: string
+  available: boolean
+  lesson_id?: number
+}
+
+// Dashboard Statistics interfaces
+export interface DashboardStats {
+  totalStudents?: number
+  totalTutors?: number
+  totalLessons?: number
+  totalRevenue?: number
+  activeStudents?: number
+  activeTutors?: number
+  lessonsThisWeek?: number
+  lessonsThisMonth?: number
+  upcomingLessons?: number
+  completedLessons?: number
+  cancelledLessons?: number
+  revenueThisMonth?: number
+}
+
+// Material interfaces
+export interface Material {
+  id: number
+  lesson_id?: number
+  student_id: number
+  tutor_id: number
+  file_path: string
+  original_name: string
+  file_size: number
+  mime_type: string
+  is_active: boolean
+  version: number
+  uploaded_at: string
+  created_at: string
+  updated_at: string
+  is_image?: boolean
+  tutor?: {
+    id: number
+    name: string
+  }
+  lesson?: {
+    id: number
+    lesson_date: string
+    topic: string
+  }
+}

@@ -1,15 +1,6 @@
 import { api } from '@services/ApiService'
 import { authService } from '@services/AuthService'
-
-interface MeetingStatus {
-    has_room: boolean
-    is_active: boolean
-    can_start: boolean
-    can_join: boolean
-    room_url: string | null
-    meeting_started_at: string | null
-    meeting_ended_at: string | null
-}
+import type { MeetingStatus } from '@/types/models'
 
 export class MeetingButton {
     private lessonId: number

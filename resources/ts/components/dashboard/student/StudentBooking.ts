@@ -1,4 +1,4 @@
-import { api } from '@services/ApiService'
+import { BookingService } from '@services/BookingService'
 import { formatDate } from '@utils/date'
 
 export class StudentBooking {
@@ -10,8 +10,7 @@ export class StudentBooking {
     
     public async getTutorBookingContent(tutorId: string): Promise<string> {
         try {
-            const response = await api.get<{success: boolean, data: any, message?: string}>(`/student/tutor/${tutorId}`)
-            this.tutor = response.data
+            this.tutor = await BookingService.getTutorForBooking(tutorId)
             
             // Load tutor availability data first
             await this.loadTutorAvailability(tutorId)
@@ -179,10 +178,9 @@ export class StudentBooking {
     
     private async loadAvailabilityForDate(tutorId: string, date: string): Promise<void> {
         try {
-            const response = await api.get<{success: boolean, data: {slots: any[]}, message?: string}>(`/student/lessons/available-slots?tutor_id=${tutorId}&date=${date}`)
+            const slots = await BookingService.getAvailableSlots(tutorId, date)
             
-            if (response.success && response.data?.slots) {
-                const slots = response.data.slots
+            if (slots && slots.length >= 0) {
                 
                 // Store availability data for color coding
                 const availability = {
@@ -332,18 +330,16 @@ export class StudentBooking {
             if (!tutorId) return
             
             // Check if we already have availability data for this date
-            let slots = []
+            let slots: any[] = []
             if (this.tutorAvailability.has(date)) {
                 const availability = this.tutorAvailability.get(date)
                 if (availability?.is_available) {
                     // Get fresh slots data for this specific date
-                    const response = await api.get<{success: boolean, data: {slots: any[]}, message?: string}>(`/student/lessons/available-slots?tutor_id=${tutorId}&date=${date}`)
-                    slots = response.data?.slots || []
+                    slots = await BookingService.getAvailableSlots(tutorId, date)
                 }
             } else {
                 // Load availability if not already loaded
-                const response = await api.get<{success: boolean, data: {slots: any[]}, message?: string}>(`/student/lessons/available-slots?tutor_id=${tutorId}&date=${date}`)
-                slots = response.data?.slots || []
+                slots = await BookingService.getAvailableSlots(tutorId, date)
                 
                 // Store availability data for color coding
                 const availability = {
@@ -361,10 +357,12 @@ export class StudentBooking {
             console.log('Final slots to use:', slots)
             
             if (slots && slots.length > 0) {
-                this.availableSlots = slots
+                // Filter out past time slots if this is today
+                const filteredSlots = this.filterPastTimeSlots(slots, date)
+                this.availableSlots = filteredSlots
                 
                 if (timeSlots) {
-                    timeSlots.innerHTML = slots.map((slot: any) => 
+                    timeSlots.innerHTML = filteredSlots.map((slot: any) => 
                         `<button class="btn btn-outline-primary time-slot-btn" 
                                 data-start-time="${slot.start_time}" 
                                 data-end-time="${slot.end_time}">
@@ -395,6 +393,35 @@ export class StudentBooking {
                 `
             }
         }
+    }
+    
+    private filterPastTimeSlots(slots: any[], date: string): any[] {
+        const today = new Date()
+        const currentDate = formatDate(today)
+        
+        // If not today, return all slots
+        if (date !== currentDate) {
+            return slots
+        }
+        
+        // If today, filter out past times
+        const currentTime = new Date()
+        const currentHour = currentTime.getHours()
+        const currentMinutes = currentTime.getMinutes()
+        
+        return slots.filter((slot: any) => {
+            const slotTime = slot.start_time.split(':')
+            const slotHour = parseInt(slotTime[0])
+            const slotMinutes = parseInt(slotTime[1] || '0')
+            
+            // Allow slots that start at least 1 hour from now
+            if (slotHour > currentHour + 1) {
+                return true
+            } else if (slotHour === currentHour + 1) {
+                return slotMinutes >= currentMinutes
+            }
+            return false
+        })
     }
     
     private selectTimeSlot(button: HTMLElement): void {
@@ -438,16 +465,22 @@ export class StudentBooking {
         confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Rezerwowanie...'
         
         try {
+            // Calculate end time (lessons are 1 hour = 60 minutes)
+            const startTime = this.selectedTime
+            const startHour = parseInt(startTime.split(':')[0])
+            const endTime = `${(startHour + 1).toString().padStart(2, '0')}:00`
+            
             const bookingData = {
                 tutor_id: parseInt(tutorId),
                 lesson_date: this.selectedDate,
-                start_time: this.selectedTime,
+                start_time: startTime,
+                end_time: endTime,
                 duration_minutes: 60,
-                lesson_type: 'individual'
+                lesson_type: 'individual' as const
             }
             
             
-            const response = await api.post<{success: boolean, message?: string, data?: any}>('/student/lessons/book', bookingData)
+            const response = await BookingService.bookLesson(bookingData)
             
             if (response.success) {
                 // Show success message

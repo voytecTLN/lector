@@ -100,14 +100,35 @@ class TutorAvailabilitySlot extends Model
 
     public function bookHours(int $hours = 1): bool
     {
+        \Log::info("TutorAvailabilitySlot::bookHours called", [
+            'slot_id' => $this->id,
+            'tutor_id' => $this->tutor_id,
+            'date' => $this->date,
+            'start_hour' => $this->start_hour,
+            'is_available' => $this->is_available,
+            'current_hours_booked' => $this->hours_booked,
+            'hours_to_book' => $hours
+        ]);
+        
         if (!$this->is_available || $this->hours_booked > 0) {
+            \Log::warning("Cannot book hours - slot not available or already booked", [
+                'is_available' => $this->is_available,
+                'hours_booked' => $this->hours_booked
+            ]);
             return false;
         }
 
         $this->hours_booked = 1;
         // Note: We keep is_available = true so the slot shows as "taken" but still visible
         
-        return $this->save();
+        $result = $this->save();
+        
+        \Log::info("TutorAvailabilitySlot::bookHours completed", [
+            'success' => $result,
+            'new_hours_booked' => $this->hours_booked
+        ]);
+        
+        return $result;
     }
 
     public function releaseHours(int $hours = 1): bool

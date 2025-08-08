@@ -238,11 +238,14 @@ class Lesson extends Model
                 ->whereNotNull('student_rating')
                 ->avg('student_rating');
             
-            $this->tutor->tutorProfile->updateRating($avgRating, 
-                $this->tutor->tutorProfile->user->lessons()
-                    ->whereNotNull('student_rating')
-                    ->count()
-            );
+            // Only update if we have a valid average rating
+            if ($avgRating !== null) {
+                $this->tutor->tutorProfile->updateRating((float) $avgRating, 
+                    $this->tutor->tutorProfile->user->lessons()
+                        ->whereNotNull('student_rating')
+                        ->count()
+                );
+            }
         }
     }
 

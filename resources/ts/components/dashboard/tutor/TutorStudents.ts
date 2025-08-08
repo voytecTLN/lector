@@ -1,4 +1,5 @@
-import { api } from '@services/ApiService'
+import { tutorService } from '@services/TutorService'
+import { MaterialService } from '@services/MaterialService'
 
 interface TutorStudent {
     id: number
@@ -27,10 +28,23 @@ interface TutorStudent {
 }
 
 export class TutorStudents {
+    private tutorId?: number // For admin view - when viewing specific tutor's students
     private currentFilter = {
         status: 'all',
         search: '',
         language: ''
+    }
+    
+    constructor(tutorId?: number) {
+        // Defensive check - in case tutorId is passed as function by mistake
+        if (typeof tutorId === 'function') {
+            console.error('TutorStudents constructor received function instead of number:', tutorId)
+            this.tutorId = undefined
+        } else {
+            this.tutorId = tutorId
+        }
+        // Set as global instance for static methods
+        (window as any).currentTutorStudentsInstance = this
     }
     
     public getStudentsContent(): string {
@@ -165,9 +179,56 @@ export class TutorStudents {
             if (this.currentFilter.search) params.append('search', this.currentFilter.search)
             if (this.currentFilter.language) params.append('language', this.currentFilter.language)
             
-            const response = await api.get<{success: boolean, data: {students: TutorStudent[], stats: any}, message?: string}>(`/tutor/students?${params.toString()}`)
-            const students = response.data?.students || []
-            const stats = response.data?.stats || {}
+            let result
+            if (this.tutorId) {
+                // Admin view - get students for specific tutor
+                result = await tutorService.getStudentsForTutor(this.tutorId, {
+                    status: this.currentFilter.status,
+                    search: this.currentFilter.search,
+                    language: this.currentFilter.language
+                })
+            } else {
+                // Tutor view - get own students
+                result = await tutorService.getStudents({
+                    status: this.currentFilter.status,
+                    search: this.currentFilter.search,
+                    language: this.currentFilter.language
+                })
+            }
+            
+            // Handle nested response structure
+            // The API returns { students: { students: [...], stats: {...} } }
+            // We need to extract the actual arrays and objects
+            let students: TutorStudent[] = []
+            let stats: any = {}
+            
+            if (result.students && typeof result.students === 'object' && !Array.isArray(result.students)) {
+                // Handle double-nested structure when students is an object
+                const nestedData = result.students as any
+                if ('students' in nestedData) {
+                    students = Array.isArray(nestedData.students) ? nestedData.students : []
+                    stats = nestedData.stats || result.stats || {}
+                } else {
+                    // If students is an object but doesn't have nested students, use stats from result
+                    stats = result.stats || {}
+                }
+            } else if (Array.isArray(result.students)) {
+                // Handle direct array
+                students = result.students
+                stats = result.stats || {}
+            } else {
+                // Fallback
+                students = []
+                stats = result.stats || {}
+            }
+            
+            console.log('🔍 API Response Debug:', {
+                result,
+                extractedStudents: students,
+                studentsType: typeof students,
+                isArray: Array.isArray(students),
+                stats
+            })
             
             this.updateStats(stats)
             this.renderStudents(students)
@@ -192,6 +253,15 @@ export class TutorStudents {
     private renderStudents(students: TutorStudent[]): void {
         const container = document.getElementById('students-container')
         if (!container) return
+        
+        console.log('🎯 renderStudents called with:', students, 'Type:', typeof students, 'IsArray:', Array.isArray(students))
+        
+        // Defensive check - ensure students is array
+        if (!Array.isArray(students)) {
+            console.error('❌ students is not an array:', students)
+            this.renderError()
+            return
+        }
         
         if (students.length === 0) {
             container.innerHTML = `
@@ -321,27 +391,29 @@ export class TutorStudents {
     }
     
     // Static methods for global access
-    static instance = new TutorStudents()
+    static instance = new TutorStudents(undefined) // Fix: pass undefined for regular tutor view
     
     static applyFilters(): void {
+        // Get the current instance from the global scope or create a new one
+        const instance = (window as any).currentTutorStudentsInstance || this.instance
+        
         const statusFilter = (document.getElementById('status-filter') as HTMLSelectElement)?.value
         const searchFilter = (document.getElementById('search-filter') as HTMLInputElement)?.value
         const languageFilter = (document.getElementById('language-filter') as HTMLSelectElement)?.value
         
-        this.instance.currentFilter = {
+        instance.currentFilter = {
             status: statusFilter || 'all',
             search: searchFilter || '',
             language: languageFilter || ''
         }
         
-        this.instance.loadStudents()
+        instance.loadStudents()
     }
     
     static async viewStudentDetails(studentId: number): Promise<void> {
         // Open student details modal/page
         try {
-            const response = await api.get<{success: boolean, data: {student: TutorStudent}}>(`/tutor/students/${studentId}`)
-            const student = response.data?.student
+            const student = await tutorService.getStudentById(studentId)
             
             if (student) {
                 this.showStudentDetailsModal(student)
@@ -466,9 +538,7 @@ export class TutorStudents {
     static async showMaterialsModal(studentId: number): Promise<void> {
         try {
             // Get student data
-            const response = await api.get(`/tutor/students/${studentId}`)
-            const responseData = response as any
-            const student = responseData.data?.student || responseData.student || { name: 'Student' }
+            const student = await tutorService.getStudentById(studentId) || { name: 'Student' }
             
             const modalHtml = `
                 <div class="modal fade" id="materialsModal" tabindex="-1">
@@ -543,9 +613,7 @@ export class TutorStudents {
     
     private static async loadMaterials(studentId: number): Promise<void> {
         try {
-            const response = await api.get(`/tutor/students/${studentId}/materials`)
-            const responseData = response as any
-            const materials = responseData.materials || responseData.data?.materials || []
+            const materials = await tutorService.getStudentMaterials(studentId)
             
             const container = document.getElementById('materialsContainer')
             if (!container) return
@@ -573,7 +641,8 @@ export class TutorStudents {
                             <i class="bi bi-download"></i>
                         </button>
                         <button class="btn btn-sm ${material.is_active ? 'btn-success' : 'btn-outline-secondary'}" 
-                                onclick="TutorStudents.toggleMaterialActive(${material.id}, ${studentId})">
+                                onclick="TutorStudents.toggleMaterialActive(${material.id}, ${studentId})"
+                                title="${material.is_active ? 'Materiał aktywny' : 'Materiał nieaktywny'}">
                             <i class="bi bi-check-circle"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-danger" onclick="TutorStudents.deleteMaterial(${material.id}, ${studentId})">
@@ -627,7 +696,7 @@ export class TutorStudents {
         
         try {
             // Upload with simulated progress
-            const uploadPromise = api.post('/materials/upload', formData)
+            const uploadPromise = MaterialService.uploadMaterialToAPI(formData)
             
             // Simulate progress for better UX
             let currentProgress = 0
@@ -677,7 +746,7 @@ export class TutorStudents {
     
     private static async toggleMaterialActive(materialId: number, studentId: number): Promise<void> {
         try {
-            await api.put(`/materials/${materialId}/toggle-active`, {})
+            await MaterialService.toggleMaterialActive(materialId)
             await TutorStudents.loadMaterials(studentId)
         } catch (error) {
             console.error('Error toggling material:', error)
@@ -688,7 +757,7 @@ export class TutorStudents {
         if (!confirm('Czy na pewno chcesz usunąć ten materiał?')) return
         
         try {
-            await api.delete(`/materials/${materialId}`)
+            await MaterialService.deleteMaterial(materialId)
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: { type: 'success', message: 'Materiał został usunięty', duration: 3000 }
             }))

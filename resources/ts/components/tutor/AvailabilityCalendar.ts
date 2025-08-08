@@ -1,20 +1,6 @@
 import { api } from '@/services/ApiService'
 import { formatDate } from '@/utils/date'
-
-interface AvailabilitySlot {
-    id?: number
-    date: string
-    time_slot: 'morning' | 'afternoon'
-    is_available: boolean
-    hours_booked: number
-}
-
-interface WeeklyStats {
-    weekStart: string
-    totalHours: number
-    limit: number
-    remaining: number
-}
+import type { AvailabilitySlot, WeeklyStats } from '@/types/models'
 
 export class AvailabilityCalendar {
     private container: HTMLElement | null = null
