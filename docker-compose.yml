@@ -74,6 +74,15 @@ services:
     networks:
       - tutoring_network
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: tutoring_mailhog_dev
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web interface
+    networks:
+      - tutoring_network
+
 volumes:
   mysql_data:
 

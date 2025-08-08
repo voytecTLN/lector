@@ -12,6 +12,12 @@ use Illuminate\Database\Eloquent\Collection;
 
 class LessonService
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     /**
      * Book a lesson for a student
      */
@@ -83,6 +89,12 @@ class LessonService
             // Deduct hours from package
             $packageAssignment->decrement('hours_remaining', 1);
             
+            // Load relationships for email
+            $lesson->load(['student', 'tutor']);
+            
+            // Send booking confirmation emails
+            $this->notificationService->sendLessonBookingConfirmation($lesson);
+            
             return $lesson;
         });
     }
@@ -151,7 +163,20 @@ class LessonService
             throw new \Exception('Lekcja nie może zostać anulowana (mniej niż 12 godzin przed rozpoczęciem)');
         }
         
-        return $lesson->cancel($cancelledBy, $reason);
+        $result = $lesson->cancel($cancelledBy, $reason);
+        
+        if ($result) {
+            // Load relationships for email
+            $lesson->load(['student', 'tutor']);
+            
+            // Get the user who cancelled
+            $cancelledByUser = User::find($cancelledBy);
+            
+            // Send cancellation notices
+            $this->notificationService->sendLessonCancellationNotice($lesson, $cancelledByUser, $reason);
+        }
+        
+        return $result;
     }
     
     /**
