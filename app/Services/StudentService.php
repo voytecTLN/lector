@@ -45,8 +45,26 @@ class StudentService
 
             // 3. Assign package if provided
             if (!empty($data['package_id'])) {
+                \Log::info('📦 StudentService: Assigning package to student', [
+                    'user_id' => $user->id,
+                    'package_id' => $data['package_id'],
+                    'package_id_type' => gettype($data['package_id'])
+                ]);
+                
                 $packageService = app(\App\Services\PackageService::class);
-                $packageService->assignPackageToStudent($user->id, $data['package_id']);
+                $result = $packageService->assignPackageToStudent($user->id, $data['package_id']);
+                
+                \Log::info('📦 StudentService: Package assignment result', [
+                    'result' => $result,
+                    'user_id' => $user->id,
+                    'package_id' => $data['package_id']
+                ]);
+            } else {
+                \Log::info('📦 StudentService: No package assignment', [
+                    'package_id_value' => $data['package_id'] ?? 'not_set',
+                    'package_id_empty' => empty($data['package_id']),
+                    'all_data_keys' => array_keys($data)
+                ]);
             }
 
             // 4. Send welcome email (skip for imports)

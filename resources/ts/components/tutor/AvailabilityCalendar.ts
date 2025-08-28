@@ -36,6 +36,7 @@ export class AvailabilityCalendar {
             const response = await api.get<any>(`/tutor/availability-slots?${params.toString()}`)
             
             console.log('Loaded availability slots:', response)
+            console.log('Raw slots data:', response.slots)
 
             if (response.slots) {
                 this.slots.clear()
@@ -281,6 +282,18 @@ export class AvailabilityCalendar {
                 .hours-fill.danger {
                     background: #dc3545;
                 }
+
+                .withdraw-btn {
+                    font-size: 0.75rem;
+                    padding: 2px 6px;
+                    border-radius: 3px;
+                    transition: all 0.2s;
+                }
+
+                .withdraw-btn:hover {
+                    background-color: #c82333;
+                    border-color: #bd2130;
+                }
             </style>
         `
 
@@ -370,6 +383,14 @@ export class AvailabilityCalendar {
                             ${slot && slot.hours_booked > 0 ? `
                                 <div class="mt-2 text-muted small">
                                     Zarezerwowane: ${slot.hours_booked}h
+                                </div>
+                            ` : slot ? `
+                                <div class="mt-2">
+                                    <button class="btn btn-danger btn-sm withdraw-btn" 
+                                            data-slot-id="${slot.id}" 
+                                            data-date="${slot.date}">
+                                        <i class="bi bi-x-circle me-1"></i> Wycofaj
+                                    </button>
                                 </div>
                             ` : ''}
                         ` : ''}
@@ -474,6 +495,19 @@ export class AvailabilityCalendar {
             this.selectedSlots.clear()
             this.render()
         })
+
+        // Withdraw buttons
+        this.container?.querySelectorAll('.withdraw-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault()
+                const target = e.target as HTMLElement
+                const button = target.closest('.withdraw-btn') as HTMLButtonElement
+                const slotId = parseInt(button.dataset.slotId!)
+                const date = button.dataset.date!
+                
+                this.withdrawSlot(slotId, date)
+            })
+        })
     }
 
     private toggleSlot(date: string, slot: 'morning' | 'afternoon'): void {
@@ -521,6 +555,41 @@ export class AvailabilityCalendar {
         } catch (error: any) {
             console.error('Failed to save availability:', error)
             this.showNotification('error', error.message || 'Błąd podczas zapisywania dostępności')
+        }
+    }
+
+    private async withdrawSlot(slotId: number, date: string): Promise<void> {
+        // Import SweetAlert2 for confirmation dialog
+        const { default: Swal } = await import('sweetalert2')
+
+        const result = await Swal.fire({
+            title: 'Czy na pewno chcesz wycofać dostępność?',
+            html: `
+                <p>Dostępność na dzień <strong>${new Date(date).toLocaleDateString('pl-PL')}</strong> zostanie usunięta.</p>
+                <p class="text-muted">Ta operacja nie może być cofnięta.</p>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Tak, wycofaj',
+            cancelButtonText: 'Anuluj'
+        })
+
+        if (!result.isConfirmed) return
+
+        try {
+            await api.delete(`/tutor/availability-slots/${slotId}`)
+            
+            this.showNotification('success', 'Dostępność została wycofana')
+            
+            // Reload availability data
+            await this.loadAvailability()
+            
+        } catch (error: any) {
+            console.error('Failed to withdraw slot:', error)
+            const message = error.response?.data?.message || 'Wystąpił błąd podczas wycofywania dostępności'
+            this.showNotification('error', message)
         }
     }
 

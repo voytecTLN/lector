@@ -27,8 +27,8 @@ export class ApiService {
   }
 
   async request<T>(endpoint: string, options: RequestInit & { responseType?: 'json' | 'blob' } = {}, retryCount: number = 0): Promise<T> {
-    // Najpierw pobierz CSRF cookie dla Sanctum (tylko jeśli potrzebne)
-    if (!this.csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method?.toUpperCase() || 'GET')) {
+    // Pobierz CSRF cookie dla Sanctum dla wszystkich requestów uwierzytelnionych
+    if (!this.csrfToken) {
       await this.refreshCSRF()
     }
 

@@ -1,18 +1,15 @@
-# Laravel
+# ============================================================================
+# Laravel + TypeScript SPA - Platforma Lektorów
+# ============================================================================
+
+# ── Laravel Framework ──
 /vendor
 /node_modules
 /public/hot
 /public/build
 /build
 
-# Documentation
-/docsmd/
-
-# Deployment required
-index.php
-composer.phar
-deploy.sh
-
+# ── Laravel Storage & Cache ──
 /bootstrap/cache/*
 !/bootstrap/cache/.gitkeep
 
@@ -26,6 +23,7 @@ deploy.sh
 /storage/logs/*
 !/storage/logs/.gitkeep
 
+# ── File Uploads (Materials & Documents) ──
 # Materials storage (keep structure, ignore files)
 /storage/app/materials/*/*
 !/storage/app/materials/.gitkeep
@@ -34,33 +32,47 @@ deploy.sh
 /storage/app/temp/*
 !/storage/app/temp/.gitkeep
 
+# ── Environment & Configuration ──
 .env
+Makefile
 
+# ── Build & Development Tools ──
 # TypeScript
 *.tsbuildinfo
+*.js
 
+# ── System & OS Files ──
 # Docker & OS
 .docker/
 .DS_Store
 Thumbs.db
 
+# ── IDE & Editor ──
 # IDE
 .vscode/
 .idea/
 
-# Claude Code
-.claude/settings.local.json
-CLAUDE.local.md
-CLAUDE.md
-
-*.js
-Makefile
-
+# ── Testing ──
 # Test files
 test_*.html
 test_*.php
 
+# ── Deployment ──
+# Deployment required
+index.php
+composer.phar
+deploy.sh
+
+# ── Symlinks & Temporary ──
 # Symlinks
 /public/storage
 
+# ── Documentation & AI Tools ──
+# Claude Code
+.claude/settings.local.json
+CLAUDE.md
+CLAUDE.local.md
+
+# Documentation (temporary)
+docs
 daily-debug.log
