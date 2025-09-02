@@ -243,7 +243,7 @@ export class ApiService {
     }
   }
 
-  async get<T>(endpoint: string, params?: any, config?: RequestInit): Promise<T> {
+  async get<T>(endpoint: string, params?: any, config?: RequestInit & { responseType?: 'json' | 'blob' }): Promise<T> {
     // Add query parameters to the endpoint if provided
     if (params && Object.keys(params).length > 0) {
       const queryString = new URLSearchParams(params).toString()
