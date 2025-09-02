@@ -1,7 +1,7 @@
 import Swal from 'sweetalert2'
-import { LessonService } from '../../services/LessonService'
-import { authService } from '../../services/AuthService'
-import { MeetingButton } from '../video/MeetingButton'
+import {LessonService} from '@services/LessonService'
+import {authService} from '@services/AuthService'
+import {MeetingButton} from '../video/MeetingButton'
 
 interface LessonDetails {
     id: number
@@ -68,17 +68,6 @@ export class LessonDetailsModal {
                 }
             })
 
-            // Pobierz rolę użytkownika z authService
-            const user = await authService.getCurrentUser()
-            const userRole = user?.role || 'student'
-            let endpoint = `/student/lessons/${lessonId}`
-            
-            if (userRole === 'admin') {
-                endpoint = `/lessons/${lessonId}`
-            } else if (userRole === 'tutor') {
-                endpoint = `/tutor/lessons/${lessonId}`
-            }
-            
             // Pobierz szczegóły lekcji
             const response = await LessonService.getLessonDetails(lessonId)
             
@@ -87,21 +76,26 @@ export class LessonDetailsModal {
                 throw new Error('Nie udało się pobrać szczegółów lekcji. Sprawdź uprawnienia.')
             }
             
-            const lesson = response.lesson || response
+            // Handle different response structures
+            const lesson = response.lesson || response.data?.lesson || response
             
             // Przygotuj HTML z szczegółami
             const html = await this.buildDetailsHtml(lesson)
+            
+            // Get action button text and color
+            const actionButtonText = await this.getActionButton(lesson)
+            const actionButtonColor = await this.getActionButtonColor(lesson)
             
             // Pokaż modal ze szczegółami
             await Swal.fire({
                 title: `Szczegóły lekcji #${lessonId}`,
                 html: html,
                 width: '600px',
-                showCancelButton: true,
+                showCancelButton: actionButtonText !== '',
                 confirmButtonText: 'Zamknij',
-                cancelButtonText: this.getActionButton(lesson),
+                cancelButtonText: actionButtonText,
                 confirmButtonColor: '#3085d6',
-                cancelButtonColor: this.getActionButtonColor(lesson),
+                cancelButtonColor: actionButtonColor,
                 customClass: {
                     container: 'lesson-details-modal',
                     popup: 'lesson-details-popup',
@@ -159,41 +153,41 @@ export class LessonDetailsModal {
 
         const getStatusBadge = (status: string) => {
             const statusMap: Record<string, { text: string; class: string }> = {
-                scheduled: { text: 'Zaplanowana', class: 'bg-blue-100 text-blue-800' },
-                completed: { text: 'Zakończona', class: 'bg-green-100 text-green-800' },
-                cancelled: { text: 'Anulowana', class: 'bg-red-100 text-red-800' },
-                no_show: { text: 'Nieobecność', class: 'bg-yellow-100 text-yellow-800' }
+                scheduled: { text: 'Zaplanowana', class: 'badge bg-primary' },
+                completed: { text: 'Zakończona', class: 'badge bg-success' },
+                cancelled: { text: 'Anulowana', class: 'badge bg-danger' },
+                no_show: { text: 'Nieobecność', class: 'badge bg-warning text-dark' }
             }
-            const statusInfo = statusMap[status] || { text: status, class: 'bg-gray-100 text-gray-800' }
-            return `<span class="px-2 py-1 text-xs font-medium rounded-full ${statusInfo.class}">${statusInfo.text}</span>`
+            const statusInfo = statusMap[status] || { text: status, class: 'badge bg-secondary' }
+            return `<span class="${statusInfo.class}">${statusInfo.text}</span>`
         }
 
         const getPaymentBadge = (isPaid: boolean) => {
             if (isPaid) {
-                return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Opłacona</span>'
+                return '<span class="badge bg-success">Opłacona</span>'
             }
-            return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Nieopłacona</span>'
+            return '<span class="badge bg-warning text-dark">Nieopłacona</span>'
         }
 
-        let html = `
+        return `
             <div class="lesson-details">
                 <div class="mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Informacje o lekcji</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <p class="text-sm text-gray-600">Data:</p>
-                            <p class="font-medium">${formatDate(lesson.lesson_date)}</p>
+                    <h3 class="h5 mb-4">Informacje o lekcji</h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <p class="text-muted small mb-1">Data:</p>
+                            <p class="fw-bold">${formatDate(lesson.lesson_date)}</p>
                         </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Godzina:</p>
-                            <p class="font-medium">${formatTime(lesson.start_time)} - ${formatTime(lesson.end_time)}</p>
+                        <div class="col-md-6">
+                            <p class="text-muted small mb-1">Godzina:</p>
+                            <p class="fw-bold">${formatTime(lesson.start_time)} - ${formatTime(lesson.end_time)}</p>
                         </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Czas trwania:</p>
-                            <p class="font-medium">${lesson.duration_minutes} minut</p>
+                        <div class="col-md-6">
+                            <p class="text-muted small mb-1">Czas trwania:</p>
+                            <p class="fw-bold">${lesson.duration_minutes} minut</p>
                         </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Status:</p>
+                        <div class="col-md-6">
+                            <p class="text-muted small mb-1">Status:</p>
                             <p>${getStatusBadge(lesson.status)}</p>
                         </div>
                     </div>
@@ -202,47 +196,47 @@ export class LessonDetailsModal {
                 ${await this.buildMeetingSection(lesson)}
 
                 <div class="mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Szczegóły zajęć</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <p class="text-sm text-gray-600">Język:</p>
-                            <p class="font-medium">${lesson.language}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Typ lekcji:</p>
-                            <p class="font-medium">${lesson.lesson_type === 'individual' ? 'Indywidualna' : 'Grupowa'}</p>
+                    <h3 class="h5 mb-4">Szczegóły zajęć</h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <p class="text-muted small mb-1">Typ lekcji:</p>
+                            <p class="fw-bold">${lesson.lesson_type === 'individual' ? 'Indywidualna' : 'Grupowa'}</p>
                         </div>
                         ${lesson.topic ? `
-                        <div class="col-span-2">
-                            <p class="text-sm text-gray-600">Temat:</p>
-                            <p class="font-medium">${lesson.topic}</p>
+                        <div class="col-12">
+                            <p class="text-muted small mb-1">Temat:</p>
+                            <p class="fw-bold">${lesson.topic}</p>
                         </div>
                         ` : ''}
                         ${lesson.notes ? `
-                        <div class="col-span-2">
-                            <p class="text-sm text-gray-600">Notatki:</p>
-                            <p class="font-medium">${lesson.notes}</p>
+                        <div class="col-12">
+                            <p class="text-muted small mb-1">Notatki:</p>
+                            <p class="fw-bold">${lesson.notes}</p>
                         </div>
                         ` : ''}
                     </div>
                 </div>
 
                 <div class="mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Lektor</h3>
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <p class="font-medium">${lesson.tutor.name}</p>
-                        <p class="text-sm text-gray-600">${lesson.tutor.email}</p>
-                        ${lesson.tutor.tutor_profile ? `
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-600">Języki: ${lesson.tutor.tutor_profile.languages.join(', ')}</p>
-                                <!-- <p class="text-sm text-gray-600">Stawka: ${lesson.tutor.tutor_profile.hourly_rate} zł/h</p> -->
+                    <h3 class="h5 mb-4">Lektor</h3>
+                    <div class="bg-light p-4 rounded">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="fw-bold mb-1">${lesson.tutor.name}</p>
+                                <p class="text-muted small mb-0">${lesson.tutor.email}</p>
+                                ${lesson.tutor.tutor_profile ? `
+                                    <div class="mt-2">
+                                        <p class="text-muted small mb-0">Języki: ${lesson.tutor.tutor_profile.languages.join(', ')}</p>
+                                    </div>
+                                ` : ''}
                             </div>
-                        ` : ''}
+                            ${await this.getTutorProfileButton(lesson)}
+                        </div>
                     </div>
                 </div>
 
                 <div class="mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Pakiet</h3>
+                    <h3 class="h5 mb-4">Pakiet</h3>
                     <!-- <div class="grid grid-cols-2 gap-4">
                         <div>
                             <p class="text-sm text-gray-600">Cena:</p>
@@ -264,12 +258,12 @@ export class LessonDetailsModal {
 
                 ${lesson.status === 'cancelled' ? `
                 <div class="mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Informacje o anulowaniu</h3>
-                    <div class="bg-red-50 p-4 rounded-lg">
-                        <p class="text-sm text-gray-600">Anulowana przez: ${lesson.cancelled_by}</p>
-                        <p class="text-sm text-gray-600">Data anulowania: ${formatDate(lesson.cancelled_at!)}</p>
+                    <h3 class="h5 mb-4">Informacje o anulowaniu</h3>
+                    <div class="alert alert-danger">
+                        <p class="mb-1"><strong>Anulowana przez:</strong> ${lesson.cancelled_by}</p>
+                        <p class="mb-1"><strong>Data anulowania:</strong> ${formatDate(lesson.cancelled_at!)}</p>
                         ${lesson.cancellation_reason ? `
-                            <p class="text-sm text-gray-600 mt-2">Powód: ${lesson.cancellation_reason}</p>
+                            <p class="mb-0"><strong>Powód:</strong> ${lesson.cancellation_reason}</p>
                         ` : ''}
                     </div>
                 </div>
@@ -277,22 +271,37 @@ export class LessonDetailsModal {
 
                 ${lesson.student_rating ? `
                 <div class="mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Twoja ocena</h3>
-                    <div class="bg-green-50 p-4 rounded-lg">
-                        <div class="flex items-center mb-2">
-                            <span class="text-yellow-400">${'★'.repeat(lesson.student_rating)}${'☆'.repeat(5 - lesson.student_rating)}</span>
-                            <span class="ml-2 font-medium">${lesson.student_rating}/5</span>
+                    <h3 class="h5 mb-4">Twoja ocena</h3>
+                    <div class="alert alert-success">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="text-warning">${'★'.repeat(lesson.student_rating)}${'☆'.repeat(5 - lesson.student_rating)}</span>
+                            <span class="ms-2 fw-bold">${lesson.student_rating}/5</span>
                         </div>
                         ${lesson.student_feedback ? `
-                            <p class="text-sm text-gray-700">${lesson.student_feedback}</p>
+                            <p class="mb-0">${lesson.student_feedback}</p>
                         ` : ''}
                     </div>
                 </div>
                 ` : ''}
             </div>
         `
+    }
 
-        return html
+    private static async getTutorProfileButton(lesson: LessonDetails): Promise<string> {
+        const user = await authService.getCurrentUser()
+        
+        // Show profile button only for students
+        if (user?.role === 'student') {
+            return `
+                <a href="#/student/dashboard?section=tutor-profile&tutor_id=${lesson.tutor.id}" 
+                   class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-person me-1"></i>
+                    Profil
+                </a>
+            `
+        }
+        
+        return ''
     }
 
     private static async buildMeetingSection(lesson: LessonDetails): Promise<string> {
@@ -335,14 +344,16 @@ export class LessonDetailsModal {
         }
 
         return `
-            <div class="mb-6 p-4 bg-blue-50 rounded-lg">
-                <h3 class="text-lg font-semibold mb-3 flex items-center">
-                    <i class="fas fa-video mr-2"></i>
+            <div class="mb-6 p-4 bg-info bg-opacity-10 rounded">
+                <h3 class="h5 mb-3 d-flex align-items-center">
+                    <i class="bi bi-camera-video me-2"></i>
                     Spotkanie online
                 </h3>
                 <div id="meeting-button-container" class="text-center">
-                    <div class="text-gray-500">
-                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                    <div class="text-muted">
+                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
                         Sprawdzanie statusu spotkania...
                     </div>
                 </div>
@@ -350,22 +361,31 @@ export class LessonDetailsModal {
         `
     }
 
-    private static getActionButton(lesson: LessonDetails): string {
+    private static async getActionButton(lesson: LessonDetails): Promise<string> {
         if (lesson.status === 'scheduled') {
             return 'Anuluj lekcję'
         }
-        else if (lesson.status === 'completed' && !lesson.student_rating) {
+        
+        // Only show rating option for students
+        const user = await authService.getCurrentUser()
+        if (user?.role === 'student' && lesson.status === 'completed' && !lesson.student_rating) {
             return 'Oceń lekcję'
         }
+        
         return ''
     }
 
-    private static getActionButtonColor(lesson: LessonDetails): string {
+    private static async getActionButtonColor(lesson: LessonDetails): Promise<string> {
         if (lesson.status === 'scheduled') {
             return '#dc2626' // red
-        } else if (lesson.status === 'completed' && !lesson.student_rating) {
+        }
+        
+        // Only show green for rating if user is student
+        const user = await authService.getCurrentUser()
+        if (user?.role === 'student' && lesson.status === 'completed' && !lesson.student_rating) {
             return '#10b981' // green
         }
+        
         return '#6b7280' // gray
     }
 

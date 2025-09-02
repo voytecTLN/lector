@@ -66,7 +66,7 @@ export class HomePage implements RouteComponent {
                             <div class="lecturer-avatar">👩‍🏫</div>
                             <div class="lecturer-info">
                                 <div class="lecturer-name">Anna Kowalska</div>
-                                <div class="lecturer-languages">Angielski, Niemiecki</div>
+                                <div class="lecturer-languages">Angielski</div>
                                 <div class="lecturer-rating">
                                     <span class="stars">⭐⭐⭐⭐⭐</span>
                                     <span>5.0 (124 opinii)</span>
@@ -78,7 +78,7 @@ export class HomePage implements RouteComponent {
                             <div class="lecturer-avatar">👨‍🏫</div>
                             <div class="lecturer-info">
                                 <div class="lecturer-name">Piotr Novak</div>
-                                <div class="lecturer-languages">Francuski, Hiszpański</div>
+                                <div class="lecturer-languages">Niemiecki</div>
                                 <div class="lecturer-rating">
                                     <span class="stars">⭐⭐⭐⭐⭐</span>
                                     <span>4.9 (89 opinii)</span>
@@ -90,7 +90,7 @@ export class HomePage implements RouteComponent {
                             <div class="lecturer-avatar">👩‍🏫</div>
                             <div class="lecturer-info">
                                 <div class="lecturer-name">Maria Silva</div>
-                                <div class="lecturer-languages">Włoski, Portugalski</div>
+                                <div class="lecturer-languages">Hiszpański</div>
                                 <div class="lecturer-rating">
                                     <span class="stars">⭐⭐⭐⭐⭐</span>
                                     <span>4.8 (76 opinii)</span>

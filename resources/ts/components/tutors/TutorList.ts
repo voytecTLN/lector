@@ -22,7 +22,7 @@ export class TutorList implements RouteComponent {
         is_verified: undefined,
         is_accepting_students: undefined,
         page: 1,
-        per_page: 15
+        per_page: 100
     }
 
     constructor() {
@@ -77,7 +77,6 @@ export class TutorList implements RouteComponent {
                                     <option value="german">Niemiecki</option>
                                     <option value="french">Francuski</option>
                                     <option value="spanish">Hiszpański</option>
-                                    <option value="italian">Włoski</option>
                                 </select>
                             </div>
                             <div class="col-md-2">
@@ -528,7 +527,7 @@ export class TutorList implements RouteComponent {
             is_verified: undefined,
             is_accepting_students: undefined,
             page: 1,
-            per_page: 15
+            per_page: 100
         }
 
         // Reset form elements

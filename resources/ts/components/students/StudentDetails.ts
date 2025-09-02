@@ -313,9 +313,17 @@ export class StudentDetails implements RouteComponent {
         }
                 </div>
                 
-                <div>
+                <div class="mb-4">
                     <label class="form-label text-muted">Preferowany harmonogram</label>
                     <p class="text-muted mb-0">🔧 Funkcja harmonogramu będzie dostępna wkrótce</p>
+                </div>
+                
+                <div>
+                    <label class="form-label text-muted">Opis/Bio</label>
+                    ${profile?.bio 
+                        ? `<div class="bg-light p-3 rounded">${profile.bio.replace(/\n/g, '<br>')}</div>`
+                        : '<p class="text-muted mb-0">Brak opisu</p>'
+                    }
                 </div>
             </div>
         </div>
@@ -1095,6 +1103,68 @@ export class StudentDetails implements RouteComponent {
         }
     }
 
+    public async detachPackage(assignmentId: number): Promise<void> {
+        try {
+            // Find assignment in current data
+            const assignment = this.student?.active_package_assignments?.find(a => a.id === assignmentId)
+            
+            if (!assignment) {
+                document.dispatchEvent(new CustomEvent('notification:show', {
+                    detail: {
+                        type: 'error',
+                        message: 'Nie znaleziono aktywnego przypisania pakietu'
+                    }
+                }))
+                return
+            }
+
+            // Import SweetAlert2 for confirmation dialog
+            const { default: Swal } = await import('sweetalert2')
+
+            const result = await Swal.fire({
+                title: 'Czy na pewno chcesz odpiąć pakiet?',
+                html: `
+                    <p>Pakiet <strong>${assignment.package?.name || 'Nieznany'}</strong> zostanie odpięty od studenta.</p>
+                    <p class="text-muted">Student: <strong>${this.student?.name}</strong></p>
+                    <p class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i> Ta operacja nie może być cofnięta.</p>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Tak, odepnij',
+                cancelButtonText: 'Anuluj'
+            })
+
+            if (!result.isConfirmed) return
+
+            // Call API to detach package
+            const { api } = await import('@services/ApiService')
+            await api.delete(`/packages/assignments/${assignmentId}`)
+
+            await Swal.fire({
+                title: 'Sukces!',
+                text: 'Pakiet został odpięty od studenta.',
+                icon: 'success',
+                confirmButtonColor: '#28a745'
+            })
+
+            // Reload student data
+            await this.loadStudentData()
+
+        } catch (error: any) {
+            console.error('Error detaching package:', error)
+            const message = error.response?.data?.message || 'Wystąpił błąd podczas odpinania pakietu'
+            
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message
+                }
+            }))
+        }
+    }
+
     public async viewAssignmentDetails(assignmentId: number): Promise<void> {
         try {
             // Find assignment in current data (search in all assignments, not just active ones)
@@ -1248,6 +1318,9 @@ export class StudentDetails implements RouteComponent {
                             </div>
                         </div>
                         <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" id="detachPackageBtn" data-assignment-id="${assignment.id}">
+                                <i class="bi bi-x-circle me-1"></i> Odepnij pakiet
+                            </button>
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
                         </div>
                     </div>
@@ -1267,6 +1340,13 @@ export class StudentDetails implements RouteComponent {
         // Show modal
         const modal = new window.bootstrap.Modal(document.getElementById('assignmentDetailsModal'))
         modal.show()
+
+        // Add event listener for detach button
+        const detachBtn = document.getElementById('detachPackageBtn')
+        detachBtn?.addEventListener('click', async () => {
+            modal.hide()  // Close the modal first
+            await this.detachPackage(assignment.id)
+        })
 
         // Cleanup on modal close
         document.getElementById('assignmentDetailsModal')?.addEventListener('hidden.bs.modal', () => {

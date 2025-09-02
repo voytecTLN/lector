@@ -69,7 +69,7 @@ export class ApiService {
       const response = await fetch(`${this.baseURL}${endpoint}`, {
         ...options,
         headers: finalHeaders,
-        credentials: 'same-origin' // Ważne dla Laravel Sanctum
+        credentials: 'include' // Changed from 'same-origin' to 'include' for better session handling
       })
 
       console.log(`📡 API Response: ${response.status} ${response.statusText}`)
@@ -88,6 +88,29 @@ export class ApiService {
       // Handle different response types
       if (options.responseType === 'blob') {
         if (!response.ok) {
+          // Check if it's a redirect to login (session expired)
+          if (response.status === 302 || response.redirected) {
+            // Session expired, trigger logout
+            localStorage.removeItem('auth_token')
+            localStorage.removeItem('auth_user')
+            localStorage.removeItem('auth_permissions')
+            
+            document.dispatchEvent(new CustomEvent('notification:show', {
+              detail: {
+                type: 'warning',
+                message: 'Twoja sesja wygasła. Zaloguj się ponownie.',
+                duration: 6000
+              }
+            }))
+            
+            document.dispatchEvent(new CustomEvent('auth:change', {
+              detail: { type: 'logout', isAuthenticated: false, user: null }
+            }))
+            
+            navigateTo('/#/login')
+            throw new Error('Session expired')
+          }
+          
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
         const blob = await response.blob()
@@ -103,10 +126,18 @@ export class ApiService {
       console.log('Response OK:', response.ok)
       
       if (!contentType || !contentType.includes('application/json')) {
-        console.log('⚠️ Content-Type is not JSON, returning empty object')
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
+        
+        // Check if it's CSV or other binary content
+        if (contentType && (contentType.includes('text/csv') || contentType.includes('application/octet-stream'))) {
+          console.log('📄 Returning blob for CSV/binary content')
+          const blob = await response.blob()
+          return blob as T
+        }
+        
+        console.log('⚠️ Content-Type is not JSON, returning empty object')
         // Zwróć pustą odpowiedź jeśli nie ma JSON
         return {} as T
       }
@@ -157,6 +188,10 @@ export class ApiService {
 
         // Unauthorized - wyczyść auth data
         if (response.status === 401) {
+          console.error('⚠️ 401 Unauthorized detected for:', endpoint)
+          console.error('Response status:', response.status)
+          console.error('Response headers:', Object.fromEntries(response.headers.entries()))
+          
           localStorage.removeItem('auth_token')
           localStorage.removeItem('auth_user')
           localStorage.removeItem('auth_permissions')
@@ -245,7 +280,7 @@ export class ApiService {
 
       await fetch('/sanctum/csrf-cookie', {
         method: 'GET',
-        credentials: 'same-origin',
+        credentials: 'include',
         headers: {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'

@@ -178,6 +178,21 @@ export class StudentForm implements RouteComponent {
                 </div>
             </div>
 
+            <!-- Bio/Opis -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">O studencie</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Opis/Bio</label>
+                        <textarea name="bio" class="form-control" rows="4" 
+                                  placeholder="Krótki opis studenta, zainteresowania, motywacja do nauki..."></textarea>
+                        <div class="form-text">Opcjonalny opis studenta widoczny dla lektora</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Języki i poziomy -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -253,11 +268,6 @@ export class StudentForm implements RouteComponent {
             { value: 'german', label: 'Niemiecki' },
             { value: 'french', label: 'Francuski' },
             { value: 'spanish', label: 'Hiszpański' },
-            { value: 'italian', label: 'Włoski' },
-            { value: 'portuguese', label: 'Portugalski' },
-            { value: 'russian', label: 'Rosyjski' },
-            { value: 'chinese', label: 'Chiński' },
-            { value: 'japanese', label: 'Japoński' }
         ]
 
         return languages.map(lang => `
@@ -347,14 +357,29 @@ export class StudentForm implements RouteComponent {
     private fillFormWithStudentData(student: User): void {
         if (!this.form) return
 
-        // Basic fields
-        const fields = ['name', 'email', 'phone', 'birth_date', 'city', 'status']
+        // Basic fields (excluding birth_date which needs special handling)
+        const fields = ['name', 'email', 'phone', 'city', 'status']
         fields.forEach(field => {
             const input = this.form!.querySelector(`[name="${field}"]`) as HTMLInputElement
             if (input && student[field as keyof User]) {
                 input.value = String(student[field as keyof User])
             }
         })
+
+        // Special handling for birth_date field
+        const birthDateInput = this.form!.querySelector('[name="birth_date"]') as HTMLInputElement
+        if (birthDateInput && student.birth_date) {
+            // Ensure the date is in YYYY-MM-DD format for HTML date inputs
+            const dateValue = student.birth_date.toString().split('T')[0] // Remove time part if present
+            birthDateInput.value = dateValue
+            console.log('Setting birth_date:', dateValue, 'from original:', student.birth_date)
+        }
+
+        // Bio field
+        const bioField = this.form!.querySelector('[name="bio"]') as HTMLTextAreaElement
+        if (bioField && student.student_profile?.bio) {
+            bioField.value = student.student_profile.bio
+        }
 
         // Languages and levels
         if (student.student_profile?.learning_languages) {
@@ -651,11 +676,6 @@ export class StudentForm implements RouteComponent {
             german: 'niemieckiego',
             french: 'francuskiego',
             spanish: 'hiszpańskiego',
-            italian: 'włoskiego',
-            portuguese: 'portugalskiego',
-            russian: 'rosyjskiego',
-            chinese: 'chińskiego',
-            japanese: 'japońskiego'
         }
         return labels[language] || language
     }

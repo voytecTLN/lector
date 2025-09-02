@@ -8,12 +8,7 @@ export class LanguageUtils {
         { value: 'english', label: 'Angielski' },
         { value: 'german', label: 'Niemiecki' },
         { value: 'french', label: 'Francuski' },
-        { value: 'spanish', label: 'Hiszpański' },
-        { value: 'italian', label: 'Włoski' },
-        { value: 'portuguese', label: 'Portugalski' },
-        { value: 'russian', label: 'Rosyjski' },
-        { value: 'chinese', label: 'Chiński' },
-        { value: 'japanese', label: 'Japoński' }
+        { value: 'spanish', label: 'Hiszpański' }
     ]
 
     static getLanguageLabel(value: string): string {

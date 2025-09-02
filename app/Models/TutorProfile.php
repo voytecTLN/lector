@@ -76,11 +76,6 @@ class TutorProfile extends Model
         'german' => 'Niemiecki',
         'french' => 'Francuski',
         'spanish' => 'Hiszpański',
-        'italian' => 'Włoski',
-        'portuguese' => 'Portugalski',
-        'russian' => 'Rosyjski',
-        'chinese' => 'Chiński',
-        'japanese' => 'Japoński'
     ];
 
     // Specialization constants

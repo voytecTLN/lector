@@ -189,4 +189,24 @@ class PackageController extends Controller
             'packages' => $packages
         ]);
     }
+
+    /**
+     * Detach package assignment from student
+     */
+    public function detachAssignment(int $assignmentId): JsonResponse
+    {
+        try {
+            $this->packageService->detachAssignment($assignmentId);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Pakiet został odpięty od studenta'
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nie udało się odpiąć pakietu: ' . $e->getMessage()
+            ], 422);
+        }
+    }
 }

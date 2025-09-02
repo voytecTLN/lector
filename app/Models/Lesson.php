@@ -118,6 +118,11 @@ class Lesson extends Model
     {
         return $this->belongsTo(User::class, 'status_updated_by');
     }
+    
+    public function cancelledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
 
     public function meetingSessions(): HasMany
     {

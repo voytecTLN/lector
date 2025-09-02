@@ -129,6 +129,21 @@ class LessonServiceClass {
         return response.data || response
     }
 
+    async getStatusHistory(lessonId: number): Promise<any> {
+        console.log('LessonService.getStatusHistory called with lessonId:', lessonId)
+        const url = `/lessons/${lessonId}/status-history`
+        console.log('Fetching from URL:', url)
+        
+        try {
+            const response = await api.get<LessonResponse>(url)
+            console.log('API response:', response)
+            return response.data || response
+        } catch (error) {
+            console.error('Error fetching status history:', error)
+            throw error
+        }
+    }
+
     async exportLessons(format: 'csv' | 'pdf' = 'csv', filters?: any): Promise<Blob> {
         const params = new URLSearchParams({ format })
         if (filters) {

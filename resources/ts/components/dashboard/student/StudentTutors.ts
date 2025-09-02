@@ -1,4 +1,4 @@
-import { api } from '@services/ApiService'
+import { studentService } from '@services/StudentService'
 
 export class StudentTutors {
     private tutors: any[] = []
@@ -6,11 +6,7 @@ export class StudentTutors {
     
     public async getBookLessonContent(): Promise<string> {
         try {
-            const response = await api.get<{success: boolean, data: any[], message?: string}>('/student/tutors-available')
-            console.log('API Response:', response) // Debug log
-            
-            // Extract tutors from proper Laravel response format
-            this.tutors = response.data || []
+            this.tutors = await studentService.getAvailableTutors()
             this.filteredTutors = [...this.tutors]
             
             console.log('Tutors loaded:', this.tutors) // Debug log
@@ -70,11 +66,6 @@ export class StudentTutors {
                                 <option value="german">Niemiecki</option>
                                 <option value="french">Francuski</option>
                                 <option value="spanish">Hiszpański</option>
-                                <option value="italian">Włoski</option>
-                                <option value="portuguese">Portugalski</option>
-                                <option value="russian">Rosyjski</option>
-                                <option value="chinese">Chiński</option>
-                                <option value="japanese">Japoński</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -206,8 +197,7 @@ export class StudentTutors {
     
     public async getTutorProfileContent(tutorId: string): Promise<string> {
         try {
-            const response = await api.get<{success: boolean, data: any, message?: string}>(`/student/tutor/${tutorId}`)
-            const tutor = response.data
+            const tutor = await studentService.getTutorProfile(Number(tutorId))
             const profile = tutor.tutor_profile || {}
             
             // Format hourly rate
@@ -218,6 +208,7 @@ export class StudentTutors {
             // Format statistics
             const stats = `
                 <div class="row text-center mb-3">
+                    <!--
                     <div class="col-4">
                         <div class="small text-muted">Przeprowadzone lekcje</div>
                         <div class="fw-bold">${profile.total_lessons || 0}</div>
@@ -226,6 +217,7 @@ export class StudentTutors {
                         <div class="small text-muted">Liczba uczniów</div>
                         <div class="fw-bold">${profile.total_students || 0}</div>
                     </div>
+                    -->
                     <div class="col-4">
                         <div class="small text-muted">Doświadczenie</div>
                         <div class="fw-bold">${profile.years_experience || 0} lat</div>
@@ -415,11 +407,6 @@ export class StudentTutors {
             'german': 'Niemiecki',
             'french': 'Francuski',
             'spanish': 'Hiszpański',
-            'italian': 'Włoski',
-            'portuguese': 'Portugalski',
-            'russian': 'Rosyjski',
-            'chinese': 'Chiński',
-            'japanese': 'Japoński'
         }
         return languages[code] || code
     }

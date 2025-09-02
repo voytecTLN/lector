@@ -125,6 +125,21 @@ export class StudentProfileEdit implements RouteComponent {
                 </div>
             </div>
 
+            <!-- Bio/Opis -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">O mnie</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Opis/Bio</label>
+                        <textarea name="bio" class="form-control" rows="4" 
+                                  placeholder="Opisz swoje zainteresowania, motywację do nauki języka, cel nauki..."></textarea>
+                        <div class="form-text">Ten opis pomoże lektorowi lepiej dostosować lekcje do Twoich potrzeb</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Password Change -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -278,14 +293,29 @@ export class StudentProfileEdit implements RouteComponent {
     private fillForm(): void {
         if (!this.form || !this.profile) return
 
-        // Basic fields
-        const fields = ['name', 'email', 'phone', 'birth_date', 'city', 'country']
+        // Basic fields (excluding birth_date which needs special handling)
+        const fields = ['name', 'email', 'phone', 'city', 'country']
         fields.forEach(field => {
             const input = this.form!.querySelector(`[name="${field}"]`) as HTMLInputElement
             if (input && this.profile![field]) {
                 input.value = String(this.profile![field])
             }
         })
+
+        // Special handling for birth_date field
+        const birthDateInput = this.form!.querySelector('[name="birth_date"]') as HTMLInputElement
+        if (birthDateInput && this.profile!.birth_date) {
+            // Ensure the date is in YYYY-MM-DD format for HTML date inputs
+            const dateValue = this.profile!.birth_date.toString().split('T')[0] // Remove time part if present
+            birthDateInput.value = dateValue
+            console.log('Setting birth_date:', dateValue, 'from original:', this.profile!.birth_date)
+        }
+
+        // Bio field
+        const bioField = this.form!.querySelector('[name="bio"]') as HTMLTextAreaElement
+        if (bioField && this.profile.student_profile?.bio) {
+            bioField.value = this.profile.student_profile.bio
+        }
 
         // Update avatar
         this.updateAvatar()

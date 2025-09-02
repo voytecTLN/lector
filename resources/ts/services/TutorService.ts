@@ -132,12 +132,7 @@ export class TutorService {
             { value: 'english', label: 'Angielski' },
             { value: 'german', label: 'Niemiecki' },
             { value: 'french', label: 'Francuski' },
-            { value: 'spanish', label: 'Hiszpański' },
-            { value: 'italian', label: 'Włoski' },
-            { value: 'portuguese', label: 'Portugalski' },
-            { value: 'russian', label: 'Rosyjski' },
-            { value: 'chinese', label: 'Chiński' },
-            { value: 'japanese', label: 'Japoński' }
+            { value: 'spanish', label: 'Hiszpański' }
         ]
     }
 
@@ -360,6 +355,19 @@ export class TutorService {
             return responseData.materials || responseData.data?.materials || []
         } catch (error) {
             console.error('❌ Get student materials error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get public tutor profile (for students)
+     */
+    async getPublicTutorProfile(tutorId: number): Promise<any> {
+        try {
+            const response = await api.get<any>(`/tutors/${tutorId}/public`)
+            return response
+        } catch (error) {
+            console.error('❌ Get public tutor profile error:', error)
             throw error
         }
     }

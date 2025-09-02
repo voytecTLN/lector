@@ -167,10 +167,6 @@ export class MeetingPage implements RouteComponent {
                                             <span class="fw-medium">${lesson.student.name}</span>
                                         </div>
                                     </div>
-                                    <div class="mb-3">
-                                        <small class="text-muted d-block">Język</small>
-                                        <span class="fw-medium">${lesson.language}</span>
-                                    </div>
                                     ${lesson.topic ? `
                                     <div>
                                         <small class="text-muted d-block">Temat</small>

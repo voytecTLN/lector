@@ -209,6 +209,14 @@ export class StudentDashboard implements RouteComponent {
                         this.navigateToSection('historia')
                     } else if (action === 'goto-nadchodzace') {
                         this.navigateToSection('nadchodzace')
+                    } else if (action === 'book-lesson') {
+                        // Get tutor ID from button and navigate to booking
+                        const tutorId = actionBtn.getAttribute('data-tutor-id')
+                        if (tutorId) {
+                            this.updateURL(`tutor-booking&tutor_id=${tutorId}`)
+                            this.setActiveNavLink('rezerwuj')
+                            this.loadContent('tutor-booking')
+                        }
                     }
                 }
             })
@@ -411,11 +419,6 @@ export class StudentDashboard implements RouteComponent {
             'german': 'Niemiecki', 
             'french': 'Francuski',
             'spanish': 'Hiszpański',
-            'italian': 'Włoski',
-            'portuguese': 'Portugalski',
-            'russian': 'Rosyjski',
-            'chinese': 'Chiński',
-            'japanese': 'Japoński'
         }
         return languages[code] || code
     }
@@ -619,14 +622,6 @@ export class StudentDashboard implements RouteComponent {
                                                                     <div class="form-check">
                                                                         <input class="form-check-input" type="checkbox" value="spanish" id="lang_spanish" ${profile?.learning_languages?.includes('spanish') ? 'checked' : ''}>
                                                                         <label class="form-check-label" for="lang_spanish">Hiszpański</label>
-                                                                    </div>
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input" type="checkbox" value="italian" id="lang_italian" ${profile?.learning_languages?.includes('italian') ? 'checked' : ''}>
-                                                                        <label class="form-check-label" for="lang_italian">Włoski</label>
-                                                                    </div>
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input" type="checkbox" value="russian" id="lang_russian" ${profile?.learning_languages?.includes('russian') ? 'checked' : ''}>
-                                                                        <label class="form-check-label" for="lang_russian">Rosyjski</label>
                                                                     </div>
                                                                 </div>
                                                             </div>

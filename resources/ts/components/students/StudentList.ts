@@ -18,7 +18,7 @@ export class StudentList implements RouteComponent {
     private filters: StudentFilters = {
         status: undefined,
         page: 1,
-        per_page: 10
+        per_page: 100
     }
     private pagination: PaginatedResponse<(User & { hour_package: HourPackage })[]> | null = null
     private container: HTMLElement | null = null
@@ -462,7 +462,7 @@ export class StudentList implements RouteComponent {
         this.filters = {
             status: undefined,
             page: 1,
-            per_page: 10
+            per_page: 100
         }
 
         const form = this.container?.querySelector('#student-filters') as HTMLFormElement

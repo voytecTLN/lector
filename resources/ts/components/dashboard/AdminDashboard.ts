@@ -113,6 +113,12 @@ export class AdminDashboard implements RouteComponent {
                             Logowania
                         </a>
                     </li>
+                    <li class="admin-nav-item">
+                        <a href="#logi-dostepnosci" class="admin-nav-link" data-section="logi-dostepnosci">
+                            <span class="admin-nav-icon">📅</span>
+                            Logi dostępności
+                        </a>
+                    </li>
 
                     <div class="admin-nav-section">System</div>
 
@@ -475,6 +481,30 @@ export class AdminDashboard implements RouteComponent {
                             <div class="alert alert-danger">
                                 <h4>Błąd ładowania</h4>
                                 <p>Nie udało się załadować komponentu logów systemowych.</p>
+                            </div>
+                        </div>
+                    `
+                })
+                break
+
+            case 'logi-dostepnosci':
+                pageTitle.textContent = 'Logi Dostępności'
+                contentArea.innerHTML = this.getAvailabilityLogsContent()
+                
+                // Mount AdminAvailabilityLogs component
+                import('../admin/AdminAvailabilityLogs').then(async (module) => {
+                    const availabilityLogs = new module.AdminAvailabilityLogs()
+                    const container = contentArea.querySelector('#availability-logs-container') as HTMLElement
+                    if (container) {
+                        await availabilityLogs.mount(container)
+                    }
+                }).catch(error => {
+                    console.error('Error loading AdminAvailabilityLogs:', error)
+                    contentArea.innerHTML = `
+                        <div class="admin-content-area">
+                            <div class="alert alert-danger">
+                                <h4>Błąd ładowania</h4>
+                                <p>Nie udało się załadować komponentu logów dostępności.</p>
                             </div>
                         </div>
                     `
@@ -907,6 +937,14 @@ export class AdminDashboard implements RouteComponent {
         return `
             <div class="admin-content-area" id="login-logs-container">
                 <!-- AdminLoginLogs component will be mounted here -->
+            </div>
+        `
+    }
+
+    private getAvailabilityLogsContent(): string {
+        return `
+            <div class="admin-content-area" id="availability-logs-container">
+                <!-- AdminAvailabilityLogs component will be mounted here -->
             </div>
         `
     }
