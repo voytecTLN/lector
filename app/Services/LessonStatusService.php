@@ -152,29 +152,85 @@ class LessonStatusService
     {
         // For now, return current status info
         // In future, implement a separate status_history table
-        $lesson = Lesson::with(['statusUpdatedBy'])->findOrFail($lessonId);
+        $lesson = Lesson::with(['statusUpdatedBy', 'tutor', 'student', 'cancelledBy'])->findOrFail($lessonId);
 
         $history = [];
 
-        // Add current status
-        if ($lesson->status_updated_by) {
+        // Add current status if it was updated by a user
+        if ($lesson->status_updated_by && $lesson->status_updated_at) {
             $history[] = [
                 'status' => $lesson->status,
-                'reason' => $lesson->status_reason,
+                'reason' => $lesson->status_reason ?: $this->getDefaultReasonForStatus($lesson->status),
                 'changed_by' => $lesson->statusUpdatedBy->name,
-                'changed_at' => $lesson->status_updated_at,
+                'changed_at' => $lesson->status_updated_at->toIso8601String(),
+            ];
+        }
+        
+        // Add cancelled status if lesson was cancelled
+        if ($lesson->status === 'cancelled' && $lesson->cancelled_at) {
+            // Only add if not already added above
+            if (empty($history) || $history[count($history) - 1]['status'] !== 'cancelled') {
+                $cancelledBy = 'System';
+                if ($lesson->cancelled_by && $lesson->cancelledBy) {
+                    $cancelledBy = $lesson->cancelledBy->name;
+                }
+                
+                $history[] = [
+                    'status' => 'cancelled',
+                    'reason' => $lesson->cancellation_reason ?: 'Lekcja została anulowana',
+                    'changed_by' => $cancelledBy,
+                    'changed_at' => $lesson->cancelled_at->toIso8601String(),
+                ];
+            }
+        }
+        
+        // If status is not scheduled and we have no history, add current status
+        if (empty($history) && $lesson->status !== 'scheduled') {
+            // Generate simulated history based on current status
+            $statusReasons = [
+                'completed' => 'Lekcja została zakończona',
+                'in_progress' => 'Lekcja została rozpoczęta',
+                'cancelled' => 'Lekcja została anulowana',
+                'no_show_student' => 'Student nie pojawił się na lekcji',
+                'no_show_tutor' => 'Lektor nie pojawił się na lekcji',
+                'technical_issues' => 'Wystąpiły problemy techniczne'
+            ];
+            
+            $history[] = [
+                'status' => $lesson->status,
+                'reason' => $statusReasons[$lesson->status] ?? 'Status zmieniony',
+                'changed_by' => 'System',
+                'changed_at' => $lesson->updated_at->toIso8601String(),
             ];
         }
 
-        // Add initial status
+        // Always add initial creation status
         $history[] = [
             'status' => 'scheduled',
-            'reason' => 'Lesson created',
+            'reason' => 'Lekcja została zaplanowana',
             'changed_by' => 'System',
-            'changed_at' => $lesson->created_at,
+            'changed_at' => $lesson->created_at->toIso8601String(),
         ];
 
+        // Return in chronological order (oldest first)
         return array_reverse($history);
+    }
+    
+    /**
+     * Get default reason for status
+     */
+    private function getDefaultReasonForStatus(string $status): string
+    {
+        return match($status) {
+            self::STATUS_SCHEDULED => 'Lekcja zaplanowana',
+            self::STATUS_IN_PROGRESS => 'Lekcja rozpoczęta',
+            self::STATUS_COMPLETED => 'Lekcja zakończona',
+            self::STATUS_CANCELLED => 'Lekcja anulowana',
+            self::STATUS_NO_SHOW_STUDENT => 'Student nieobecny',
+            self::STATUS_NO_SHOW_TUTOR => 'Lektor nieobecny',
+            self::STATUS_TECHNICAL_ISSUES => 'Problemy techniczne',
+            default => 'Status zmieniony'
+        };
     }
 
     /**

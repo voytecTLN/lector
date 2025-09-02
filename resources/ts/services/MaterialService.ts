@@ -36,20 +36,13 @@ class MaterialServiceClass {
     }
 
     async downloadMaterial(materialId: number): Promise<Blob> {
-        // Use fetch directly for blob response
-        const response = await fetch(`/api/materials/${materialId}/download`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-                'Accept': 'application/octet-stream',
-            },
-        })
-
-        if (!response.ok) {
-            throw new Error('Download failed')
+        try {
+            const result = await api.downloadFile(`/student/materials/${materialId}/download`)
+            return result.blob
+        } catch (error) {
+            console.error('Download error:', error)
+            throw error
         }
-
-        return await response.blob()
     }
 
     async deleteMaterial(materialId: number): Promise<any> {

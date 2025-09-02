@@ -215,6 +215,8 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.packages.student');
                 Route::post('/deactivate-expired', [PackageController::class, 'deactivateExpired'])
                     ->name('api.packages.deactivate-expired');
+                Route::delete('/assignments/{assignmentId}', [PackageController::class, 'detachAssignment'])
+                    ->name('api.packages.detach-assignment');
             });
 
             // Tutor management routes
@@ -305,6 +307,18 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.admin.audit.stats');
                 Route::get('/model/{modelType}/{modelId}', [\App\Http\Controllers\AdminAuditController::class, 'getModelActivity'])
                     ->name('api.admin.audit.model');
+            });
+
+            // Availability logs routes
+            Route::prefix('availability-logs')->group(function () {
+                Route::get('/', [\App\Http\Controllers\AvailabilityLogsController::class, 'index'])
+                    ->name('api.admin.availability-logs.index');
+                Route::get('/stats', [\App\Http\Controllers\AvailabilityLogsController::class, 'stats'])
+                    ->name('api.admin.availability-logs.stats');
+                Route::get('/export', [\App\Http\Controllers\AvailabilityLogsController::class, 'export'])
+                    ->name('api.admin.availability-logs.export');
+                Route::get('/tutor/{tutorId}', [\App\Http\Controllers\AvailabilityLogsController::class, 'tutorLogs'])
+                    ->name('api.admin.availability-logs.tutor');
             });
 
             // Admin login logs routes

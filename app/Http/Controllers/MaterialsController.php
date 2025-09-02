@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class MaterialsController extends Controller
 {
@@ -113,40 +114,61 @@ class MaterialsController extends Controller
     /**
      * Download material
      */
-    public function download($material): StreamedResponse|JsonResponse
+    public function download($materialId): StreamedResponse|JsonResponse|BinaryFileResponse
     {
         try {
             $userId = Auth::id();
-            Log::info('Download request', ['material_id' => $material, 'user_id' => $userId]);
+            $user = Auth::user();
             
-            $material = $this->materialsService->downloadMaterial($material, $userId);
+            Log::info('Download request', [
+                'material_id' => $materialId, 
+                'user_id' => $userId,
+                'user_verified' => $user ? $user->hasVerifiedEmail() : false
+            ]);
             
-            Log::info('Material found', ['file_path' => $material->file_path, 'original_name' => $material->original_name]);
+            // Check if user is verified
+            if (!$user || !$user->hasVerifiedEmail()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Email verification required to download materials'
+                ], 403);
+            }
             
-            return Storage::download(
-                $material->file_path,
+            $material = $this->materialsService->downloadMaterial($materialId, $userId);
+            
+            Log::info('Material found', [
+                'file_path' => $material->file_path, 
+                'original_name' => $material->original_name,
+                'storage_exists' => Storage::exists($material->file_path)
+            ]);
+            
+            // Check if file exists
+            if (!Storage::exists($material->file_path)) {
+                throw new Exception('File not found in storage: ' . $material->file_path);
+            }
+            
+            // Get file content and return as response
+            $path = Storage::path($material->file_path);
+            
+            return response()->download(
+                $path,
                 $material->original_name,
                 [
-                    'Content-Type' => $material->mime_type,
-                    'Content-Disposition' => 'attachment; filename="' . $material->original_name . '"'
+                    'Content-Type' => $material->mime_type ?: 'application/octet-stream',
                 ]
             );
             
         } catch (Exception $e) {
             Log::error('Error downloading material', [
                 'error' => $e->getMessage(),
-                'material_id' => $material
+                'trace' => $e->getTraceAsString(),
+                'material_id' => $materialId
             ]);
-            
-            // For non-AJAX requests, redirect to login
-            if (!request()->ajax() && !request()->wantsJson()) {
-                return redirect('/login');
-            }
             
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage()
-            ], 404);
+            ], 500);
         }
     }
 

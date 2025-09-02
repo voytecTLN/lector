@@ -427,6 +427,34 @@ export class StudentService {
             throw error
         }
     }
+
+    /**
+     * Get available tutors for student
+     */
+    async getAvailableTutors(): Promise<any[]> {
+        try {
+            console.log('👨‍🏫 StudentService: Getting available tutors')
+            const response = await api.get<{success: boolean, data: any[]}>('/student/tutors-available')
+            return response.data || []
+        } catch (error) {
+            console.error('❌ Get available tutors error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get specific tutor profile for student view
+     */
+    async getTutorProfile(tutorId: number): Promise<any> {
+        try {
+            console.log('👨‍🏫 StudentService: Getting tutor profile:', tutorId)
+            const response = await api.get<{success: boolean, data: any}>(`/student/tutor/${tutorId}`)
+            return response.data
+        } catch (error) {
+            console.error('❌ Get tutor profile error:', error)
+            throw error
+        }
+    }
 }
 
 export const studentService = new StudentService()

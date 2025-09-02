@@ -40,7 +40,8 @@ class StudentService
                 'learning_languages' => $data['learning_languages'] ?? [],
                 'current_levels' => $data['current_levels'] ?? [],
                 'learning_goals' => $data['learning_goals'] ?? [],
-                'preferred_schedule' => $data['preferred_schedule'] ?? []
+                'preferred_schedule' => $data['preferred_schedule'] ?? [],
+                'bio' => $data['bio'] ?? null
             ]);
 
             // 3. Assign package if provided
@@ -107,6 +108,7 @@ class StudentService
                     'current_levels' => $data['current_levels'] ?? $user->studentProfile->current_levels,
                     'learning_goals' => $data['learning_goals'] ?? $user->studentProfile->learning_goals,
                     'preferred_schedule' => $data['preferred_schedule'] ?? $user->studentProfile->preferred_schedule,
+                    'bio' => $data['bio'] ?? $user->studentProfile->bio,
                 ]);
             }
 
@@ -154,7 +156,12 @@ class StudentService
 
         // Apply filters
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            if ($filters['status'] === 'unverified') {
+                // Special case for unverified - check email_verified_at
+                $query->whereNull('email_verified_at');
+            } else {
+                $query->where('status', $filters['status']);
+            }
         }
 
         if (!empty($filters['city'])) {

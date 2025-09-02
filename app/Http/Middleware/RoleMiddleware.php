@@ -8,13 +8,14 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class RoleMiddleware
 {
     /**
      * Handle an incoming request.
      */
-    public function handle(Request $request, Closure $next, string ...$roles): Response | JsonResponse | StreamedResponse
+    public function handle(Request $request, Closure $next, string ...$roles): Response | JsonResponse | StreamedResponse | BinaryFileResponse
     {
         $user = $request->user();
 

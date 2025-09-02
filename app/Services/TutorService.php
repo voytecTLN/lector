@@ -6,8 +6,10 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\TutorProfile;
 use App\Models\TutorAvailabilitySlot;
+use App\Models\TutorAvailabilityLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Exception;
 
@@ -423,6 +425,29 @@ class TutorService
                 }
             }
 
+            // Log availability changes
+            if (!empty($createdSlots)) {
+                foreach ($createdSlots as $slot) {
+                    TutorAvailabilityLog::create([
+                        'tutor_id' => $tutorId,
+                        'action' => $slot->wasRecentlyCreated ? 'added' : 'updated',
+                        'date' => $slot->date,
+                        'day_of_week' => null,
+                        'old_slots' => null,
+                        'new_slots' => [[
+                            'start_time' => str_pad($slot->start_hour, 2, '0', STR_PAD_LEFT) . ':00',
+                            'end_time' => str_pad($slot->end_hour, 2, '0', STR_PAD_LEFT) . ':00'
+                        ]],
+                        'description' => $slot->wasRecentlyCreated 
+                            ? "Dodano dostępność: {$slot->start_hour}:00 - {$slot->end_hour}:00"
+                            : "Zaktualizowano dostępność: {$slot->start_hour}:00 - {$slot->end_hour}:00",
+                        'ip_address' => request()->ip(),
+                        'user_agent' => request()->userAgent(),
+                        'changed_by' => Auth::id()
+                    ]);
+                }
+            }
+
             DB::commit();
 
             return [
@@ -772,6 +797,23 @@ class TutorService
             if ($slotDateTime->isPast()) {
                 throw new \Exception('Nie można wycofać dostępności z przeszłości');
             }
+
+            // Log the removal before deleting
+            TutorAvailabilityLog::create([
+                'tutor_id' => $tutorId,
+                'action' => 'deleted',
+                'date' => $slot->date,
+                'day_of_week' => null,
+                'old_slots' => [[
+                    'start_time' => str_pad($slot->start_hour, 2, '0', STR_PAD_LEFT) . ':00',
+                    'end_time' => str_pad($slot->end_hour, 2, '0', STR_PAD_LEFT) . ':00'
+                ]],
+                'new_slots' => null,
+                'description' => "Usunięto dostępność: {$slot->start_hour}:00 - {$slot->end_hour}:00",
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'changed_by' => Auth::id()
+            ]);
 
             // Remove the slot
             $slot->delete();

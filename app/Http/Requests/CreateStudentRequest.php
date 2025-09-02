@@ -151,6 +151,11 @@ class CreateStudentRequest extends FormRequest
                 'string',
                 'max:500'
             ],
+            'bio' => [
+                'nullable',
+                'string',
+                'max:1000'
+            ],
             'source' => [
                 'nullable',
                 'string',
@@ -225,6 +230,7 @@ class CreateStudentRequest extends FormRequest
             
             // Dodatkowe
             'notes.max' => 'Notatki mogą mieć maksymalnie :max znaków.',
+            'bio.max' => 'Opis może mieć maksymalnie :max znaków.',
             'source.in' => 'Nieprawidłowe źródło pozyskania.',
         ];
     }
@@ -248,6 +254,7 @@ class CreateStudentRequest extends FormRequest
             'learning_goals' => 'cele nauki',
             'preferred_schedule' => 'preferowany harmonogram',
             'notes' => 'notatki',
+            'bio' => 'opis',
             'source' => 'źródło',
         ];
     }

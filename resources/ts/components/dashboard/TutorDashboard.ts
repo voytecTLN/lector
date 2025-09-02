@@ -5,6 +5,7 @@ import {TutorProfileEdit} from '@components/forms/TutorProfileEdit'
 import {HourlyAvailabilityCalendar} from '@components/tutor/HourlyAvailabilityCalendar'
 import {TutorLessons} from './tutor/TutorLessons'
 import {TutorStudents} from './tutor/TutorStudents'
+import {TutorLessonHistory} from './tutor/TutorLessonHistory'
 import {LessonDetailsModal} from '../modals/LessonDetailsModal'
 
 export class TutorDashboard implements RouteComponent {
@@ -14,6 +15,7 @@ export class TutorDashboard implements RouteComponent {
     private refreshInterval: number | null = null
     private profileComponent: TutorProfileEdit | null = null
     private availabilityComponent: HourlyAvailabilityCalendar | null = null
+    private lessonHistoryComponent: TutorLessonHistory | null = null
 
     async render(): Promise<HTMLElement> {
         const user = authService.getUser()
@@ -61,6 +63,12 @@ export class TutorDashboard implements RouteComponent {
                             <a href="#" class="tutor-nav-link" data-section="students">
                                 <span class="tutor-nav-icon">👥</span>
                                 <span>Moi studenci</span>
+                            </a>
+                        </li>
+                        <li class="tutor-nav-item">
+                            <a href="#" class="tutor-nav-link" data-section="historia">
+                                <span class="tutor-nav-icon">📚</span>
+                                <span>Historia lekcji</span>
                             </a>
                         </li>
                         
@@ -211,6 +219,9 @@ export class TutorDashboard implements RouteComponent {
             this.availabilityComponent.unmount()
             this.availabilityComponent = null
         }
+        if (this.lessonHistoryComponent) {
+            this.lessonHistoryComponent = null
+        }
         
         switch (this.currentSection) {
             case 'dashboard':
@@ -232,6 +243,10 @@ export class TutorDashboard implements RouteComponent {
             case 'students':
                 if (titleEl) titleEl.textContent = 'Moi studenci'
                 this.loadStudentsContent()
+                break
+            case 'historia':
+                if (titleEl) titleEl.textContent = 'Historia lekcji'
+                this.loadLessonHistoryContent()
                 break
             case 'profile':
                 if (titleEl) titleEl.textContent = 'Mój profil'
@@ -445,6 +460,22 @@ export class TutorDashboard implements RouteComponent {
         
         const tutorStudents = new TutorStudents()
         contentDiv.innerHTML = tutorStudents.getStudentsContent()
+    }
+
+    private loadLessonHistoryContent(): void {
+        const contentDiv = this.container?.querySelector('#tutorContent')
+        if (!contentDiv) return
+        
+        // Clean up if exists
+        if (this.lessonHistoryComponent) {
+            this.lessonHistoryComponent = null
+        }
+        
+        this.lessonHistoryComponent = new TutorLessonHistory()
+        contentDiv.innerHTML = this.lessonHistoryComponent.getHistoryContent()
+        
+        // Set global instance for static methods
+        ;(window as any).currentTutorLessonHistoryInstance = this.lessonHistoryComponent
     }
 
     private async loadProfileContent(): Promise<void> {

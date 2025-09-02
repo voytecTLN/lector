@@ -27,6 +27,7 @@ export interface StudentProfile {
   current_levels: Record<string, string>
   learning_goals: string[]
   preferred_schedule: Record<string, any>
+  bio?: string
   created_at: string
   updated_at: string
 }

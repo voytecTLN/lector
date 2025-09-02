@@ -165,6 +165,12 @@ class UpdateStudentRequest extends FormRequest
                 'string',
                 'max:500'
             ],
+            'bio' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:1000'
+            ],
 
             // Package assignment
             'package_id' => [
@@ -211,6 +217,7 @@ class UpdateStudentRequest extends FormRequest
             'current_levels.*.in' => 'Nieprawidłowy poziom języka.',
             'learning_goals.*.in' => 'Nieprawidłowy cel nauki.',
             'notes.max' => 'Notatki mogą mieć maksymalnie :max znaków.',
+            'bio.max' => 'Opis może mieć maksymalnie :max znaków.',
         ];
     }
 
@@ -234,6 +241,7 @@ class UpdateStudentRequest extends FormRequest
             'learning_goals' => 'cele nauki',
             'preferred_schedule' => 'preferowany harmonogram',
             'notes' => 'notatki',
+            'bio' => 'opis',
         ];
     }
 

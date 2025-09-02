@@ -16,7 +16,8 @@ class StudentProfile extends Model
         'learning_languages',
         'current_levels',
         'learning_goals',
-        'preferred_schedule'
+        'preferred_schedule',
+        'bio'
     ];
 
     protected $casts = [

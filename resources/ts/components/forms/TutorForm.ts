@@ -440,6 +440,11 @@ export class TutorForm implements RouteComponent {
 
         if (element.type === 'checkbox') {
             (element as HTMLInputElement).checked = Boolean(value)
+        } else if (element.type === 'date' && value) {
+            // Special handling for date fields - ensure YYYY-MM-DD format
+            const dateValue = value.toString().split('T')[0] // Remove time part if present
+            element.value = dateValue
+            console.log(`Setting date field ${name}:`, dateValue, 'from original:', value)
         } else {
             element.value = value || ''
         }

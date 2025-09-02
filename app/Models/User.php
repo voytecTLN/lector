@@ -129,6 +129,14 @@ class User extends Authenticatable implements MustVerifyEmail
                     ->where('hours_remaining', '>', 0);
     }
 
+    /**
+     * Get availability logs for this tutor
+     */
+    public function availabilityLogs(): HasMany
+    {
+        return $this->hasMany(TutorAvailabilityLog::class, 'tutor_id');
+    }
+
     // Role checking methods
     public function isAdmin(): bool
     {

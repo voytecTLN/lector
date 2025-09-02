@@ -256,13 +256,17 @@ export class HourlyAvailabilityCalendar {
                 }
                 
                 .hour-cell:hover .tooltip-content,
-                .hour-cell.show-tooltip .tooltip-content,
-                .hour-cell.available .tooltip-content {
+                .hour-cell.show-tooltip .tooltip-content {
                     display: block;
                     top: -25px;
                     left: 50%;
                     transform: translateX(-50%);
                     z-index: 1000;
+                }
+
+                /* Adjust position for tooltips with buttons */
+                .hour-cell.available:hover .tooltip-content {
+                    top: -45px;
                 }
 
                 .tooltip-content .withdraw-btn {

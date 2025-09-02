@@ -67,6 +67,9 @@ export class StudentMaterials {
             this.materials = await MaterialService.getStudentMaterials()
             this.filteredMaterials = [...this.materials]
             
+            // Store materials data globally for download functionality
+            ;(window as any).studentMaterialsData = this.materials
+            
             this.renderMaterials()
             this.updateCount()
             this.populateTutorFilter()
@@ -135,11 +138,6 @@ export class StudentMaterials {
                             <button class="btn btn-sm btn-primary" data-action="download" data-material-id="${material.id}">
                                 <i class="bi bi-download me-1"></i>Pobierz
                             </button>
-                            ${material.is_image ? `
-                                <button class="btn btn-sm btn-outline-secondary" data-action="preview" data-material-id="${material.id}">
-                                    <i class="bi bi-eye me-1"></i>Podgląd
-                                </button>
-                            ` : ''}
                         </div>
                     </div>
                 </div>
@@ -300,9 +298,13 @@ export class StudentMaterials {
             loadingEl.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #fff; padding: 10px 20px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 9999;'
             document.body.appendChild(loadingEl)
             
+            // Find the material data to get the original filename
+            const materials = (window as any).studentMaterialsData || []
+            const material = materials.find((m: any) => m.id === materialId)
+            const filename = material?.original_name || `material_${materialId}`
+            
             // Get the file using Material service
             const blob = await MaterialService.downloadMaterial(materialId)
-            const filename = `material_${materialId}`
             
             // Create blob URL and trigger download
             const url = window.URL.createObjectURL(blob)

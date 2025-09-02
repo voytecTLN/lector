@@ -214,4 +214,24 @@ class PackageService
             ->where('expires_at', '<', now())
             ->update(['is_active' => false]);
     }
+
+    /**
+     * Detach (delete) package assignment from student
+     */
+    public function detachAssignment(int $assignmentId): bool
+    {
+        $assignment = PackageAssignment::findOrFail($assignmentId);
+        
+        // Check if there are any lessons using this package
+        $hasLessons = DB::table('lessons')
+            ->where('package_assignment_id', $assignmentId)
+            ->exists();
+            
+        if ($hasLessons) {
+            throw new Exception('Nie można odpiąć pakietu, który ma przypisane lekcje');
+        }
+        
+        // Delete the assignment
+        return $assignment->delete();
+    }
 }

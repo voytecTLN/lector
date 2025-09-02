@@ -120,6 +120,9 @@ export class StudentLessons {
                                         <li><a class="dropdown-item" href="#" onclick="StudentLessons.viewLessonDetails(${lesson.id})">
                                             <i class="bi bi-eye me-2"></i>Szczegóły
                                         </a></li>
+                                        <li><a class="dropdown-item" href="/student/dashboard?section=tutor-profile&tutor_id=${lesson.tutor_id}">
+                                            <i class="bi bi-person me-2"></i>Profil lektora
+                                        </a></li>
                                     </ul>
                                 </div>
                                 <div class="mt-2" id="meeting-button-${lesson.id}">
@@ -210,11 +213,6 @@ export class StudentLessons {
             'german': 'Niemiecki', 
             'french': 'Francuski',
             'spanish': 'Hiszpański',
-            'italian': 'Włoski',
-            'portuguese': 'Portugalski',
-            'russian': 'Rosyjski',
-            'chinese': 'Chiński',
-            'japanese': 'Japoński'
         }
         return languages[code] || code
     }
@@ -303,7 +301,6 @@ export class StudentLessons {
                                     </div>
                                     <div>
                                         <div class="fw-bold">${lesson.tutor?.name || 'Lektor'}</div>
-                                        <div class="small text-muted">${this.getLanguageName(lesson.language)}</div>
                                     </div>
                                 </div>
                             </div>

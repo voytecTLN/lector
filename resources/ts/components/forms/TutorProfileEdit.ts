@@ -12,6 +12,7 @@ export interface TutorProfile {
     name: string;
     email: string;
     phone?: string;
+    birth_date?: string;
     city?: string;
     tutor_profile?: {
         description?: string;
@@ -129,6 +130,10 @@ export class TutorProfileEdit implements RouteComponent {
                                     <input type="tel" name="phone" class="form-control">
                                 </div>
                                 <div class="col-md-6">
+                                    <label class="form-label">Data urodzenia</label>
+                                    <input type="date" name="birth_date" class="form-control">
+                                </div>
+                                <div class="col-md-6">
                                     <label class="form-label">Miasto</label>
                                     <input type="text" name="city" class="form-control">
                                 </div>
@@ -157,6 +162,7 @@ export class TutorProfileEdit implements RouteComponent {
                             <input type="number" name="years_experience" class="form-control" min="0" max="50">
                         </div>
                         
+                        <!--
                         <div class="col-md-4">
                             <label class="form-label">Stawka godzinowa (PLN)</label>
                             <div class="input-group">
@@ -164,6 +170,7 @@ export class TutorProfileEdit implements RouteComponent {
                                 <span class="input-group-text">zł/h</span>
                             </div>
                         </div>
+                        -->
                         
                         <div class="col-md-4">
                             <label class="form-label">Status</label>
@@ -318,7 +325,7 @@ export class TutorProfileEdit implements RouteComponent {
     private fillForm(): void {
         if (!this.form || !this.profile) return
 
-        // Basic fields
+        // Basic fields (excluding birth_date which needs special handling)
         const fields = ['name', 'email', 'phone', 'city']
         fields.forEach(field => {
             const input = this.form!.querySelector(`[name="${field}"]`) as HTMLInputElement
@@ -326,6 +333,15 @@ export class TutorProfileEdit implements RouteComponent {
                 input.value = String(this.profile![field as keyof TutorProfile])
             }
         })
+
+        // Special handling for birth_date field
+        const birthDateInput = this.form!.querySelector('[name="birth_date"]') as HTMLInputElement
+        if (birthDateInput && this.profile!.birth_date) {
+            // Ensure the date is in YYYY-MM-DD format for HTML date inputs
+            const dateValue = this.profile!.birth_date.toString().split('T')[0] // Remove time part if present
+            birthDateInput.value = dateValue
+            console.log('Setting birth_date:', dateValue, 'from original:', this.profile!.birth_date)
+        }
 
         // Update avatar
         this.updateAvatar()
@@ -558,7 +574,7 @@ export class TutorProfileEdit implements RouteComponent {
         const data: any = {}
 
         // Basic fields
-        const fields = ['name', 'phone', 'city']
+        const fields = ['name', 'phone', 'city', 'birth_date']
         fields.forEach(field => {
             const value = formData.get(field)
             if (value !== null && value !== '') {

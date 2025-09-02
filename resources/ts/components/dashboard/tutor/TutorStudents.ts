@@ -52,6 +52,24 @@ export class TutorStudents {
         this.loadStudents()
         
         return `
+            <style>
+                /* Ensure dropdown menus appear above other content */
+                .tutor-content-area .dropdown-menu {
+                    z-index: 1050 !important;
+                }
+                
+                /* Alternative: Make dropdowns open upward when near bottom */
+                .table-responsive {
+                    overflow: visible !important;
+                }
+                
+                /* For last rows in table, open dropdown upward */
+                .table tbody tr:nth-last-child(-n+3) .dropdown-menu {
+                    bottom: 100%;
+                    top: auto !important;
+                    margin-bottom: 0.125rem;
+                }
+            </style>
             <div class="tutor-content-area">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2>Moi studenci</h2>
@@ -158,7 +176,6 @@ export class TutorStudents {
                                 <option value="german">Niemiecki</option>
                                 <option value="french">Francuski</option>
                                 <option value="spanish">Hiszpański</option>
-                                <option value="italian">Włoski</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -291,7 +308,7 @@ export class TutorStudents {
                         </tr>
                     </thead>
                     <tbody>
-                        ${students.map(student => this.renderStudentRow(student)).join('')}
+                        ${students.map((student, index) => this.renderStudentRow(student, index, students.length)).join('')}
                     </tbody>
                 </table>
             </div>
@@ -300,7 +317,10 @@ export class TutorStudents {
         container.innerHTML = tableHtml
     }
     
-    private renderStudentRow(student: TutorStudent): string {
+    private renderStudentRow(student: TutorStudent, index: number, totalStudents: number): string {
+        // Use dropup for last 3 rows to prevent overflow
+        const isLastRows = index >= totalStudents - 3
+        const dropdownClass = isLastRows ? 'dropup' : 'dropdown'
         const initials = student.name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2)
         const packageInfo = student.active_package 
             ? `${student.active_package.name}<br><small class="text-muted">${student.active_package.hours_remaining}/${student.active_package.hours_total} godzin</small>`
@@ -351,7 +371,7 @@ export class TutorStudents {
                 <td><div class="small">${lastLesson}</div></td>
                 <td><div class="small">${nextLesson}</div></td>
                 <td>
-                    <div class="dropdown">
+                    <div class="${dropdownClass}">
                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             Akcje
                         </button>

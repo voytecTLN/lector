@@ -16,7 +16,7 @@ export class AdminList implements RouteComponent {
         status: undefined,
         city: '',
         page: 1,
-        per_page: 15
+        per_page: 100
     }
 
 
@@ -480,7 +480,7 @@ export class AdminList implements RouteComponent {
             status: undefined,
             city: '',
             page: 1,
-            per_page: 15
+            per_page: 100
         }
 
         // Reset form elements

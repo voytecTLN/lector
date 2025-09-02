@@ -43,25 +43,31 @@ export class StudentBooking {
                                 
                                 <div class="calendar-legend mb-3">
                                     <div class="row">
-                                        <div class="col-md-3">
+                                        <div class="col-md-4 col-sm-6 mb-2">
                                             <div class="legend-item">
                                                 <span class="legend-dot available">●</span>
                                                 <span>Dostępny</span>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-4 col-sm-6 mb-2">
                                             <div class="legend-item">
                                                 <span class="legend-dot partial">●</span>
                                                 <span>Częściowo zajęty</span>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-4 col-sm-6 mb-2">
                                             <div class="legend-item">
                                                 <span class="legend-dot full">●</span>
                                                 <span>Zajęty</span>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-4 col-sm-6 mb-2">
+                                            <div class="legend-item">
+                                                <span class="legend-dot unavailable">●</span>
+                                                <span>Niedostępny</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 col-sm-6 mb-2">
                                             <div class="legend-item">
                                                 <span class="legend-dot past">●</span>
                                                 <span>Przeszłość</span>
@@ -261,19 +267,27 @@ export class StudentBooking {
                     }
                 }
                 
-                // Show availability indicator if we have data
+                // Show availability indicator
                 let statusIndicator = ''
-                if (!isPast && availability) {
-                    if (availability.is_available) {
-                        if (availability.total_slots >= 6) {
-                            statusIndicator = '<div class="availability-indicator available">●</div>'
-                        } else if (availability.total_slots >= 3) {
-                            statusIndicator = '<div class="availability-indicator partial">●</div>'
-                        } else if (availability.total_slots > 0) {
-                            statusIndicator = '<div class="availability-indicator partial">●</div>'
+                if (!isPast) {
+                    if (availability) {
+                        if (availability.is_available) {
+                            if (availability.total_slots >= 6) {
+                                statusIndicator = '<div class="availability-indicator available">●</div>'
+                            } else if (availability.total_slots >= 3) {
+                                statusIndicator = '<div class="availability-indicator partial">●</div>'
+                            } else if (availability.total_slots > 0) {
+                                statusIndicator = '<div class="availability-indicator partial">●</div>'
+                            } else {
+                                statusIndicator = '<div class="availability-indicator full">●</div>'
+                            }
                         } else {
-                            statusIndicator = '<div class="availability-indicator full">●</div>'
+                            // No availability for this day
+                            statusIndicator = '<div class="availability-indicator unavailable">●</div>'
                         }
+                    } else {
+                        // Data not loaded yet - show loading state
+                        statusIndicator = '<div class="availability-indicator loading">○</div>'
                     }
                 }
                 
@@ -666,6 +680,10 @@ export class StudentBooking {
                     color: #dc3545;
                 }
                 
+                .legend-dot.unavailable {
+                    color: #dc3545;
+                }
+                
                 .legend-dot.past {
                     color: #6c757d;
                 }
@@ -771,6 +789,15 @@ export class StudentBooking {
                 
                 .availability-indicator.full {
                     color: #dc3545;
+                }
+                
+                .availability-indicator.unavailable {
+                    color: #dc3545;
+                }
+                
+                .availability-indicator.loading {
+                    color: #6c757d;
+                    opacity: 0.5;
                 }
                 
                 .time-slot-btn {
