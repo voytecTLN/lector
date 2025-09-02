@@ -44,19 +44,6 @@
                     <td style="padding: 8px 0; color: #333; font-weight: 600;">{{ $lesson->student->name }}</td>
                 </tr>
             @endif
-            <tr>
-                <td style="padding: 8px 0; color: #666;">Język:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 600;">
-                    {{ $lesson->language === 'english' ? 'Angielski' : 
-                       ($lesson->language === 'german' ? 'Niemiecki' : 
-                       ($lesson->language === 'french' ? 'Francuski' : 
-                       ($lesson->language === 'spanish' ? 'Hiszpański' : $lesson->language))) }}
-                </td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 0; color: #666;">Typ lekcji:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 600;">{{ ucfirst($lesson->type) }}</td>
-            </tr>
         </table>
     </div>
     
@@ -68,7 +55,7 @@
     @endif
     
     <div style="text-align: center; margin: 30px 0;">
-        <a href="{{ config('app.url') }}/dashboard" class="btn">
+        <a href="{{ config('app.url') }}/{{ $recipientType }}/dashboard" class="btn">
             Zobacz w kalendarzu
         </a>
     </div>

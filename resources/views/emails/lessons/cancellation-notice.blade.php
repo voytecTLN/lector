@@ -65,7 +65,7 @@
         </p>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="{{ config('app.url') }}/dashboard" class="btn">
+            <a href="{{ config('app.url') }}/{{ $recipientType }}/dashboard" class="btn">
                 Zarezerwuj nową lekcję
             </a>
         </div>
@@ -76,7 +76,7 @@
         </p>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="{{ config('app.url') }}/dashboard" class="btn">
+            <a href="{{ config('app.url') }}/{{ $recipientType }}/dashboard" class="btn">
                 Zobacz kalendarz
             </a>
         </div>

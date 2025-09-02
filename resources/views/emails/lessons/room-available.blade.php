@@ -22,15 +22,6 @@
                 <td style="padding: 8px 0; color: #333; font-weight: 600;">{{ $tutor->name }}</td>
             </tr>
             <tr>
-                <td style="padding: 8px 0; color: #666;">Język:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 600;">
-                    {{ $lesson->language === 'english' ? 'Angielski' : 
-                       ($lesson->language === 'german' ? 'Niemiecki' : 
-                       ($lesson->language === 'french' ? 'Francuski' : 
-                       ($lesson->language === 'spanish' ? 'Hiszpański' : $lesson->language))) }}
-                </td>
-            </tr>
-            <tr>
                 <td style="padding: 8px 0; color: #666;">Czas trwania:</td>
                 <td style="padding: 8px 0; color: #333; font-weight: 600;">{{ $lesson->duration_minutes }} minut</td>
             </tr>
