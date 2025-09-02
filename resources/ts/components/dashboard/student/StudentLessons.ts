@@ -109,13 +109,11 @@ export class StudentLessons {
                                         Akcje
                                     </button>
                                     <ul class="dropdown-menu">
-                                        ${canCancel ? 
+                                        ${lesson.status === 'scheduled' ? 
                                             `<li><a class="dropdown-item text-danger" href="#" onclick="StudentLessons.cancelLesson(${lesson.id})">
-                                                <i class="bi bi-x-circle me-2"></i>Anuluj
+                                                <i class="bi bi-x-circle me-2"></i>Anuluj${!canCancel ? ' (ostrzeżenie)' : ''}
                                             </a></li>` : 
-                                            `<li><span class="dropdown-item-text text-muted">
-                                                <i class="bi bi-info-circle me-2"></i>Nie można anulować
-                                            </span></li>`
+                                            ''
                                         }
                                         <li><a class="dropdown-item" href="#" onclick="StudentLessons.viewLessonDetails(${lesson.id})">
                                             <i class="bi bi-eye me-2"></i>Szczegóły
@@ -358,35 +356,102 @@ export class StudentLessons {
     
     // Static methods for global access
     static async cancelLesson(lessonId: number): Promise<void> {
-        // Użyj SweetAlert2 dla lepszego UX
-        const { value: formValues } = await Swal.fire({
-            title: 'Anulowanie lekcji',
-            html: `
-                <div class="text-left">
-                    <p class="mb-3">Czy na pewno chcesz anulować lekcję #${lessonId}?</p>
-                    <div class="form-group">
-                        <label for="cancel-reason" class="form-label">Powód anulowania (opcjonalny):</label>
-                        <textarea id="cancel-reason" class="form-control" rows="3" placeholder="Podaj powód anulowania lekcji..."></textarea>
+        try {
+            // Najpierw pobierz szczegóły lekcji aby sprawdzić czas
+            const response = await LessonService.getLessonDetails(lessonId)
+            const lesson = response.data
+            
+            // Sprawdź czy można anulować bez konsekwencji
+            const lessonDateTime = new Date(`${lesson.lesson_date}T${lesson.start_time}`)
+            const now = new Date()
+            const hoursUntilLesson = (lessonDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
+            const canCancelWithoutPenalty = hoursUntilLesson >= 12
+            
+            // Przygotuj odpowiedni komunikat
+            const warningHtml = canCancelWithoutPenalty ? 
+                `<div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Możesz anulować tę lekcję bez żadnych konsekwencji.
+                </div>` :
+                `<div class="alert alert-danger mt-3">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Uwaga!</strong> Anulowanie lekcji na mniej niż 12 godzin przed rozpoczęciem:
+                    <ul class="mb-0 mt-2">
+                        <li>Może skutkować utratą opłaty za lekcję</li>
+                        <li>Będzie odnotowane w Twojej historii</li>
+                        <li>Zbyt częste późne anulowania mogą wpłynąć na Twój dostęp do rezerwacji</li>
+                    </ul>
+                </div>`
+            
+            // Użyj SweetAlert2 dla lepszego UX
+            const { value: formValues } = await Swal.fire({
+                title: 'Anulowanie lekcji',
+                html: `
+                    <div class="text-left">
+                        <p class="mb-3">Czy na pewno chcesz anulować lekcję #${lessonId}?</p>
+                        <div class="mb-3">
+                            <strong>Data:</strong> ${new Date(lesson.lesson_date).toLocaleDateString('pl-PL')}<br>
+                            <strong>Godzina:</strong> ${lesson.start_time} - ${lesson.end_time}<br>
+                            <strong>Lektor:</strong> ${lesson.tutor?.name || 'Nieznany'}
+                        </div>
+                        <div class="form-group">
+                            <label for="cancel-reason" class="form-label">Powód anulowania ${!canCancelWithoutPenalty ? '(wymagany)' : '(opcjonalny)'}:</label>
+                            <textarea id="cancel-reason" class="form-control" rows="3" 
+                                placeholder="Podaj powód anulowania lekcji..." 
+                                ${!canCancelWithoutPenalty ? 'required' : ''}></textarea>
+                        </div>
+                        ${warningHtml}
                     </div>
-                    <div class="alert alert-warning mt-3">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        <strong>Uwaga:</strong> Anulowanie lekcji na mniej niż 12 godzin przed rozpoczęciem może być niemożliwe.
+                `,
+                showCancelButton: true,
+                confirmButtonText: canCancelWithoutPenalty ? 'Anuluj lekcję' : 'Anuluj mimo ostrzeżenia',
+                cancelButtonText: 'Wróć',
+                confirmButtonColor: canCancelWithoutPenalty ? '#dc3545' : '#d9534f',
+                cancelButtonColor: '#6c757d',
+                focusConfirm: false,
+                preConfirm: () => {
+                    const reason = (document.getElementById('cancel-reason') as HTMLTextAreaElement)?.value
+                    if (!canCancelWithoutPenalty && !reason) {
+                        Swal.showValidationMessage('Musisz podać powód anulowania lekcji poniżej 12h')
+                        return false
+                    }
+                    return { reason: reason || 'Anulowanie przez studenta' }
+                }
+            })
+            
+            if (!formValues) return
+        } catch (error) {
+            console.error('Error fetching lesson details:', error)
+            // Jeśli nie uda się pobrać szczegółów, użyj standardowego dialogu
+            var formValues = await Swal.fire({
+                title: 'Anulowanie lekcji',
+                html: `
+                    <div class="text-left">
+                        <p class="mb-3">Czy na pewno chcesz anulować lekcję #${lessonId}?</p>
+                        <div class="form-group">
+                            <label for="cancel-reason" class="form-label">Powód anulowania:</label>
+                            <textarea id="cancel-reason" class="form-control" rows="3" placeholder="Podaj powód anulowania lekcji..."></textarea>
+                        </div>
+                        <div class="alert alert-warning mt-3">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Uwaga:</strong> Anulowanie lekcji na mniej niż 12 godzin przed rozpoczęciem może skutkować konsekwencjami.
+                        </div>
                     </div>
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonText: 'Anuluj lekcję',
-            cancelButtonText: 'Wróć',
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            focusConfirm: false,
-            preConfirm: () => {
-                const reason = (document.getElementById('cancel-reason') as HTMLTextAreaElement)?.value
-                return { reason: reason || 'Anulowanie przez studenta' }
-            }
-        })
-
-        if (!formValues) return
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Anuluj lekcję',
+                cancelButtonText: 'Wróć',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                focusConfirm: false,
+                preConfirm: () => {
+                    const reason = (document.getElementById('cancel-reason') as HTMLTextAreaElement)?.value
+                    return { reason: reason || 'Anulowanie przez studenta' }
+                }
+            }).then(result => result.value)
+            
+            if (!formValues) return
+        }
 
         // Pokaż loader
         Swal.fire({

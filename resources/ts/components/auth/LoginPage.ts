@@ -12,7 +12,8 @@ export class LoginPage implements RouteComponent {
 
         // Check for flash messages in URL params
         const params = new URLSearchParams(window.location.search)
-        const message = params.get('message')
+        // Support both 'message' and 'error' parameters for backward compatibility
+        const message = params.get('message') || params.get('error')
         const type = params.get('type') || 'info'
 
         container.innerHTML = `

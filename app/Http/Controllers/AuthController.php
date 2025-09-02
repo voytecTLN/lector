@@ -9,6 +9,7 @@ use App\Http\Requests\PasswordResetRequest;
 use App\Http\Requests\NewPasswordRequest;
 use App\Models\User;
 use App\Services\AuthService;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -20,7 +21,8 @@ use Illuminate\Auth\Events\Verified;
 class AuthController extends Controller
 {
     public function __construct(
-        private AuthService $authService
+        private AuthService $authService,
+        private NotificationService $notificationService
     ) {}
 
     /**
@@ -256,6 +258,9 @@ class AuthController extends Controller
             // Wywołaj event weryfikacji
             event(new Verified($user));
 
+            // Wyślij email powitalny
+            $this->notificationService->sendWelcomeEmail($user);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Email został zweryfikowany pomyślnie.'
@@ -274,6 +279,11 @@ class AuthController extends Controller
      */
     public function verifyEmailFromLink(Request $request)
     {
+        // First verify the signed URL
+        if (!$request->hasValidSignature()) {
+            return redirect('/#/login?error=' . urlencode('Nieprawidłowy lub wygasły link weryfikacyjny') . '&type=error');
+        }
+
         $token = $request->query('token');
 
         if (!$token) {
@@ -303,6 +313,9 @@ class AuthController extends Controller
 
             // Wywołaj event weryfikacji
             event(new Verified($user));
+
+            // Wyślij email powitalny
+            $this->notificationService->sendWelcomeEmail($user);
 
             // Przekieruj na stronę logowania z komunikatem sukcesu
             return redirect('/#/login?message=' . urlencode('Email został zweryfikowany pomyślnie! Możesz się teraz zalogować.') . '&type=success');

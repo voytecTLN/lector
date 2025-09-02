@@ -101,7 +101,7 @@ class MeetingController extends BaseController
 
                 // Send notification to student that room is available
                 $lesson->load(['student', 'tutor']);
-                $meetingUrl = config('app.url') . '/meeting/' . $lesson->id;
+                $meetingUrl = config('app.url') . '/lesson/' . $lesson->id . '/meeting';
                 $this->notificationService->sendLessonRoomAvailable($lesson, $meetingUrl);
 
                 return $this->successResponse([

@@ -535,8 +535,19 @@ export class AdminAvailabilityLogs {
 
     private async exportToCSV() {
         try {
-            // Use service to export CSV
-            const blob = await availabilityLogsService.exportToCSV(this.filters)
+            // Get current filter values from form inputs
+            const currentFilters = {
+                tutorId: '',
+                action: (document.getElementById('action-filter') as HTMLSelectElement)?.value || '',
+                dateFrom: (document.getElementById('date-from') as HTMLInputElement)?.value || '',
+                dateTo: (document.getElementById('date-to') as HTMLInputElement)?.value || '',
+                search: (document.getElementById('search-input') as HTMLInputElement)?.value || ''
+            }
+            
+            console.log('📊 Export CSV with filters:', currentFilters)
+            
+            // Use service to export CSV with current filters
+            const blob = await availabilityLogsService.exportToCSV(currentFilters)
             
             // Create download link
             const url = window.URL.createObjectURL(blob)

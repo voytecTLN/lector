@@ -58,11 +58,9 @@ class EmailVerificationNotification extends Notification implements ShouldQueue
      */
     protected function verificationUrl($notifiable)
     {
-        // Generate verification token
-        $token = sha1($notifiable->email . time() . uniqid());
-        
-        // Save token hash to user
-        $notifiable->generateVerificationToken($token);
+        // Generate verification token using the User model's method
+        // This ensures the token and its hash are properly saved
+        $token = $notifiable->generateVerificationToken();
 
         // Create signed URL that expires in 24 hours
         return URL::temporarySignedRoute(
