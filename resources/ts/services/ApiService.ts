@@ -243,8 +243,13 @@ export class ApiService {
     }
   }
 
-  async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' }, 0)
+  async get<T>(endpoint: string, params?: any, config?: RequestInit): Promise<T> {
+    // Add query parameters to the endpoint if provided
+    if (params && Object.keys(params).length > 0) {
+      const queryString = new URLSearchParams(params).toString()
+      endpoint = `${endpoint}${endpoint.includes('?') ? '&' : '?'}${queryString}`
+    }
+    return this.request<T>(endpoint, { method: 'GET', ...config }, 0)
   }
 
   async post<T>(endpoint: string, data?: any, config?: RequestInit): Promise<T> {

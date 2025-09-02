@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Lesson;
 use App\Models\MeetingSession;
 use App\Services\DailyVideoService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +16,8 @@ use Illuminate\Validation\ValidationException;
 class MeetingController extends BaseController
 {
     public function __construct(
-        private DailyVideoService $dailyService
+        private DailyVideoService $dailyService,
+        private NotificationService $notificationService
     ) {}
 
     /**
@@ -96,6 +98,11 @@ class MeetingController extends BaseController
                 ]);
 
                 DB::commit();
+
+                // Send notification to student that room is available
+                $lesson->load(['student', 'tutor']);
+                $meetingUrl = config('app.url') . '/lesson/' . $lesson->id . '/meeting';
+                $this->notificationService->sendLessonRoomAvailable($lesson, $meetingUrl);
 
                 return $this->successResponse([
                     'room_url' => $roomData['room_url'],

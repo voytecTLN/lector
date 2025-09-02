@@ -14,7 +14,8 @@ use Exception;
 class StudentImportService
 {
     public function __construct(
-        private StudentService $studentService
+        private StudentService $studentService,
+        private NotificationService $notificationService
     ) {}
 
     /**
@@ -128,7 +129,12 @@ class StudentImportService
                 
                 if ($validationResult['valid']) {
                     try {
-                        $this->createStudentFromRow($row);
+                        $student = $this->createStudentFromRow($row);
+                        
+                        // Send welcome email with temporary password
+                        $tempPassword = $row['temp_password'] ?? null; // Password created for this user
+                        $this->notificationService->sendWelcomeEmail($student, $tempPassword);
+                        
                         $successCount++;
                     } catch (Exception $e) {
                         $failureCount++;
@@ -293,6 +299,8 @@ class StudentImportService
      */
     private function createStudentFromRow(array $row): User
     {
+        $tempPassword = Str::random(12); // Generate random password
+        
         $studentData = [
             'name' => $row['name'],
             'email' => $row['email'],
@@ -300,11 +308,14 @@ class StudentImportService
             'birth_date' => $row['birth_date'],
             'city' => $row['city'] ?: null,
             'country' => $row['country'] ?: 'Polska',
-            'password' => Str::random(12), // Generate random password
+            'password' => $tempPassword,
             'status' => User::STATUS_ACTIVE,
             'email_verified_at' => now(), // Mark as verified during import
-            'is_import' => true // Flag to skip welcome email
+            'is_import' => true // Flag to skip welcome email in StudentService
         ];
+        
+        // Store temp password for email
+        $row['temp_password'] = $tempPassword;
         
         // Parse learning languages
         if (!empty($row['learning_languages'])) {
