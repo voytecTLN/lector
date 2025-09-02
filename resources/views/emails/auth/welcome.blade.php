@@ -28,7 +28,7 @@
     @endif
     
     <div style="text-align: center;">
-        <a href="{{ config('app.url') }}/dashboard" class="btn">
+        <a href="{{ config('app.url') }}/{{ $user->role }}/dashboard" class="btn">
             Przejdź do panelu
         </a>
     </div>
@@ -39,12 +39,14 @@
             Ze względów bezpieczeństwa zalecamy zmianę hasła po pierwszym zalogowaniu.
         </div>
     @endif
-    
-//     <p style="margin-top: 30px;">
-//         <strong>Potrzebujesz pomocy?</strong><br>
-//         Zapoznaj się z naszą <a href="{{ config('app.url') }}/help" style="color: #667eea;">sekcją pomocy</a>
-//         lub skontaktuj się z nami przez panel aplikacji.
-//     </p>
+
+    <!--{{--
+    <p style="margin-top: 30px;">
+        <strong>Potrzebujesz pomocy?</strong><br>
+        Zapoznaj się z naszą <a href="{{ config('app.url') }}/help" style="color: #667eea;">sekcją pomocy</a>
+        lub skontaktuj się z nami przez panel aplikacji.
+    </p>
+    --}}-->
     
     <p>Życzymy owocnej nauki!</p>
     <p><strong>Zespół Platformy Lektorów</strong></p>
