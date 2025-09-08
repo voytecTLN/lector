@@ -1,5 +1,6 @@
 import { tutorService } from '@services/TutorService'
 import { MaterialService } from '@services/MaterialService'
+import { AvatarHelper } from '@/utils/AvatarHelper'
 
 interface TutorStudent {
     id: number
@@ -8,6 +9,7 @@ interface TutorStudent {
     phone?: string
     city?: string
     status: string
+    avatar?: string
     created_at: string
     last_lesson_date?: string
     next_lesson_date?: string
@@ -321,7 +323,6 @@ export class TutorStudents {
         // Use dropup for last 3 rows to prevent overflow
         const isLastRows = index >= totalStudents - 3
         const dropdownClass = isLastRows ? 'dropup' : 'dropdown'
-        const initials = student.name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2)
         const packageInfo = student.active_package 
             ? `${student.active_package.name}<br><small class="text-muted">${student.active_package.hours_remaining}/${student.active_package.hours_total} godzin</small>`
             : '<span class="text-muted">Brak pakietu</span>'
@@ -336,12 +337,19 @@ export class TutorStudents {
             ? new Date(student.next_lesson_date).toLocaleDateString('pl-PL')
             : '<span class="text-muted">-</span>'
         
+        const avatarHtml = AvatarHelper.render({
+            name: student.name,
+            avatar: student.avatar,
+            size: 'md',
+            userId: student.id
+        })
+        
         return `
             <tr>
                 <td>
                     <div class="d-flex align-items-center">
-                        <div class="avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; font-weight: 500;">
-                            ${initials}
+                        <div class="me-3">
+                            ${avatarHtml}
                         </div>
                         <div>
                             <div class="fw-semibold">${student.name}</div>

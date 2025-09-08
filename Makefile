@@ -1,4 +1,4 @@
-.PHONY: help setup start stop logs shell npm build migrate artisan fix-permissions composer-update clear-cache test dev prod
+.PHONY: help setup start stop logs shell npm build migrate artisan fix-permissions composer-update clear-cache test dev prod prod-up prod-down prod-deploy
 
 help:
 	@echo "Language Learning Platform - Development Commands"
@@ -18,6 +18,9 @@ help:
 	@echo "  make clear-cache   - Clear all Laravel caches"
 	@echo "  make test          - Run tests"
 	@echo "  make prod          - Build for production"
+	@echo "  make prod-up       - Start production containers"
+	@echo "  make prod-down     - Stop production containers"
+	@echo "  make prod-deploy   - Full production deployment"
 
 setup:
 	docker-compose up -d --build
@@ -106,3 +109,32 @@ prod:
 	docker-compose exec app php artisan route:cache
 	docker-compose exec app php artisan view:cache
 	@echo "✅ Production build complete!"
+
+# Production deployment commands
+prod-up:
+	@echo "🚀 Starting production containers..."
+	docker-compose -f docker-compose.prod.yml up -d --build
+	@echo "✅ Production containers started!"
+
+prod-down:
+	@echo "🛑 Stopping production containers..."
+	docker-compose -f docker-compose.prod.yml down
+	@echo "✅ Production containers stopped!"
+
+prod-deploy:
+	@echo "🚀 Starting full production deployment..."
+	@echo "📦 Building production assets..."
+	npm run build
+	@echo "🔧 Optimizing Laravel..."
+	php artisan config:cache
+	php artisan route:cache  
+	php artisan view:cache
+	php artisan storage:link
+	@echo "🐳 Building and starting containers..."
+	docker-compose -f docker-compose.prod.yml up -d --build
+	@echo "⏳ Waiting for containers to be ready..."
+	sleep 30
+	@echo "🗄️ Running migrations..."
+	docker-compose -f docker-compose.prod.yml exec app php artisan migrate --force
+	@echo "✅ Production deployment complete!"
+	@echo "🌐 Application available at: http://localhost"

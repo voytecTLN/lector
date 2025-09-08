@@ -48,7 +48,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'birth_date' => 'date',
+        'birth_date' => 'date:Y-m-d',
         'last_login_at' => 'datetime',
         'password_reset_expires_at' => 'datetime',
         'verification_token_expires_at' => 'datetime',
@@ -204,6 +204,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isVerified(): bool
     {
         return $this->hasVerifiedEmail();
+    }
+
+    // Accessors
+    public function getBirthDateAttribute($value)
+    {
+        // Return birth_date as plain Y-m-d string without timezone conversion
+        if ($value) {
+            return \Carbon\Carbon::parse($value)->format('Y-m-d');
+        }
+        return $value;
     }
 
     // Utility methods

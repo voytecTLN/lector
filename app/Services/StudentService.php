@@ -90,6 +90,26 @@ class StudentService
         try {
             $user = User::with('studentProfile')->findOrFail($studentId);
 
+            // Handle profile picture upload  
+            if (isset($data['profile_picture']) && $data['profile_picture'] instanceof \Illuminate\Http\UploadedFile) {
+                // Delete old picture if exists
+                if ($user->avatar) {
+                    \Storage::disk('public')->delete('avatars/' . $user->avatar);
+                }
+                
+                // Store new picture - sanitize filename to avoid ALL special characters including parentheses
+                $extension = $data['profile_picture']->getClientOriginalExtension();
+                $originalName = pathinfo($data['profile_picture']->getClientOriginalName(), PATHINFO_FILENAME);
+                // Remove ALL special characters including parentheses, spaces, etc - keep only alphanumeric
+                $cleanName = preg_replace('/[^A-Za-z0-9]/', '', $originalName);
+                // Ensure we have a name, fallback to 'avatar' if empty after cleaning
+                $cleanName = $cleanName ?: 'avatar';
+                $filename = time() . '_' . substr($cleanName, 0, 20) . '.' . $extension;
+                
+                $data['profile_picture']->storeAs('avatars', $filename, 'public');
+                $data['avatar'] = $filename;
+            }
+
             // 1. Update user data
             $user->update([
                 'name' => $data['name'] ?? $user->name,
@@ -99,6 +119,7 @@ class StudentService
                 'city' => $data['city'] ?? $user->city,
                 'country' => $data['country'] ?? $user->country,
                 'status' => $data['status'] ?? $user->status,
+                'avatar' => $data['avatar'] ?? $user->avatar,
             ]);
 
             // 2. Update student profile

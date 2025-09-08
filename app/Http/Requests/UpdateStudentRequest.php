@@ -171,6 +171,15 @@ class UpdateStudentRequest extends FormRequest
                 'string',
                 'max:1000'
             ],
+            
+            // Profile picture
+            'profile_picture' => [
+                'sometimes',
+                'nullable',
+                'image',
+                'mimes:jpeg,png,jpg,gif',
+                'max:5120' // 5MB max
+            ],
 
             // Package assignment
             'package_id' => [
@@ -257,13 +266,18 @@ class UpdateStudentRequest extends FormRequest
 
         $this->replace($data);
 
-        // Trim whitespace
-        $fieldsToTrim = ['name', 'email', 'phone', 'city', 'country', 'notes'];
+        // Trim whitespace and fix encoding
+        $fieldsToTrim = ['name', 'email', 'phone', 'city', 'country', 'notes', 'bio'];
 
         foreach ($fieldsToTrim as $field) {
             if ($this->has($field)) {
+                $value = $this->input($field);
+                // Fix UTF-8 encoding if needed
+                if (!mb_check_encoding($value, 'UTF-8')) {
+                    $value = mb_convert_encoding($value, 'UTF-8', 'auto');
+                }
                 $this->merge([
-                    $field => trim($this->input($field))
+                    $field => trim($value)
                 ]);
             }
         }

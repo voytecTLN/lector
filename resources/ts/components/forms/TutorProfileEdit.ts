@@ -7,28 +7,13 @@ import { PasswordValidator } from '@/utils/PasswordValidator'
 import { LoadingStateManager } from '@/utils/LoadingStateManager'
 import { LanguageUtils } from '@/utils/LanguageUtils'
 
-export interface TutorProfile {
-    id: number;
-    name: string;
-    email: string;
-    phone?: string;
-    birth_date?: string;
-    city?: string;
-    tutor_profile?: {
-        description?: string;
-        years_experience?: number;
-        is_accepting_students?: boolean;
-        hourly_rate?: number;
-        teaching_languages?: string[];
-        specializations?: string[];
-        qualifications?: string[];
-    };
-}
+// Use the User type from models which includes tutorProfile
+import type { User } from '@/types/models'
 
 export class TutorProfileEdit implements RouteComponent {
     private form: HTMLFormElement | null = null
     private container: HTMLElement | null = null
-    private profile: TutorProfile | null = null
+    private profile: User | null = null
     private validationHandler: FormValidationHandler | null = null
     private passwordValidator: PasswordValidator | null = null
     private loadingManager: LoadingStateManager | null = null
@@ -37,7 +22,17 @@ export class TutorProfileEdit implements RouteComponent {
     async render(): Promise<HTMLElement> {
         const el = document.createElement('div')
         el.className = 'tutor-profile-edit-page'
-        el.innerHTML = `
+        
+        // Add CSS for hover effect
+        const style = document.createElement('style')
+        style.textContent = `
+            #profile-picture:hover .profile-picture-overlay {
+                opacity: 1 !important;
+            }
+        `
+        el.appendChild(style)
+        
+        el.innerHTML += `
             <div class="tutor-content-area">
                 <!-- Loading state -->
                 <div id="form-loading" class="text-center py-5">
@@ -99,15 +94,15 @@ export class TutorProfileEdit implements RouteComponent {
                     <div class="row g-3">
                         <div class="col-md-4 text-center">
                             <div class="profile-picture-section">
-                                <div class="profile-picture-wrapper mb-3">
-                                    <div class="profile-picture" id="profile-picture">
-                                        <div class="profile-avatar-large" id="profile-avatar"></div>
-                                        <div class="profile-picture-overlay">
-                                            <i class="bi bi-camera"></i>
+                                <div class="profile-picture-wrapper mb-3" style="display: flex; justify-content: center;">
+                                    <div class="profile-picture" id="profile-picture" style="position: relative; width: 150px; height: 150px;">
+                                        <div class="profile-avatar-large" id="profile-avatar" style="width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; background: #e9ecef; border-radius: 50%; font-size: 48px; color: #6c757d;"></div>
+                                        <div class="profile-picture-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.5); border-radius: 50%; opacity: 0; transition: opacity 0.3s; cursor: pointer;">
+                                            <i class="bi bi-camera" style="color: white; font-size: 32px;"></i>
                                         </div>
                                     </div>
                                 </div>
-                                <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
+                                <input type="file" id="profile-picture-input" name="profile_picture" accept="image/*" style="display: none;">
                                 <button type="button" class="btn btn-outline-secondary btn-sm" id="change-picture-btn">
                                     <i class="bi bi-camera me-1"></i> Zmień zdjęcie
                                 </button>
@@ -310,6 +305,7 @@ export class TutorProfileEdit implements RouteComponent {
             this.loadingManager?.showLoading()
 
             this.profile = await this.tutorService.getProfile()
+            console.log('Loaded profile:', this.profile)
 
             this.loadingManager?.showContent()
             this.fillForm()
@@ -323,32 +319,50 @@ export class TutorProfileEdit implements RouteComponent {
     }
 
     private fillForm(): void {
-        if (!this.form || !this.profile) return
+        if (!this.form || !this.profile) {
+            console.error('fillForm - missing form or profile:', { form: this.form, profile: this.profile })
+            return
+        }
+
+        console.log('Filling form with profile:', this.profile)
 
         // Basic fields (excluding birth_date which needs special handling)
         const fields = ['name', 'email', 'phone', 'city']
         fields.forEach(field => {
             const input = this.form!.querySelector(`[name="${field}"]`) as HTMLInputElement
-            if (input && this.profile![field as keyof TutorProfile]) {
-                input.value = String(this.profile![field as keyof TutorProfile])
+            const value = this.profile![field as keyof User]
+            console.log(`Field ${field}:`, { input, value })
+            if (input && value) {
+                input.value = String(value)
             }
         })
 
         // Special handling for birth_date field
         const birthDateInput = this.form!.querySelector('[name="birth_date"]') as HTMLInputElement
         if (birthDateInput && this.profile!.birth_date) {
-            // Ensure the date is in YYYY-MM-DD format for HTML date inputs
-            const dateValue = this.profile!.birth_date.toString().split('T')[0] // Remove time part if present
-            birthDateInput.value = dateValue
-            console.log('Setting birth_date:', dateValue, 'from original:', this.profile!.birth_date)
+            // Backend now returns date in Y-m-d format directly
+            birthDateInput.value = this.profile!.birth_date.toString()
+            console.log('Setting birth_date:', this.profile!.birth_date)
         }
 
         // Update avatar
         this.updateAvatar()
+        
+        // Show current avatar if exists
+        if (this.profile!.avatar) {
+            const avatarElement = this.container?.querySelector('#profile-avatar')
+            if (avatarElement) {
+                avatarElement.innerHTML = `<img src="/storage/avatars/${this.profile!.avatar}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`
+            }
+        }
 
-        // Tutor profile fields
-        if (this.profile.tutor_profile) {
-            const profile = this.profile.tutor_profile
+        // Tutor profile fields - check both camelCase and snake_case
+        const tutorProfile = this.profile.tutorProfile || this.profile.tutor_profile
+        console.log('tutorProfile field:', tutorProfile)
+        console.log('Full profile object:', JSON.stringify(this.profile, null, 2))
+        
+        if (tutorProfile) {
+            const profile = tutorProfile
 
             const descriptionField = this.form.querySelector(`[name="description"]`) as HTMLTextAreaElement
             if (descriptionField && profile.description) {
@@ -356,7 +370,7 @@ export class TutorProfileEdit implements RouteComponent {
             }
 
             const experienceField = this.form.querySelector(`[name="years_experience"]`) as HTMLInputElement
-            if (experienceField && profile.years_experience) {
+            if (experienceField && profile.years_experience !== undefined) {
                 experienceField.value = String(profile.years_experience)
             }
 
@@ -370,9 +384,9 @@ export class TutorProfileEdit implements RouteComponent {
                 acceptingField.checked = Boolean(profile.is_accepting_students)
             }
 
-            // Teaching languages
-            if (profile.teaching_languages) {
-                profile.teaching_languages.forEach(lang => {
+            // Teaching languages - field is called 'languages' in backend
+            if (profile.languages) {
+                profile.languages.forEach((lang: string) => {
                     const checkbox = this.form!.querySelector(`[name="teaching_languages[]"][value="${lang}"]`) as HTMLInputElement
                     if (checkbox) {
                         checkbox.checked = true
@@ -382,7 +396,7 @@ export class TutorProfileEdit implements RouteComponent {
 
             // Specializations
             if (profile.specializations) {
-                profile.specializations.forEach(spec => {
+                profile.specializations.forEach((spec: string) => {
                     const checkbox = this.form!.querySelector(`[name="specializations[]"][value="${spec}"]`) as HTMLInputElement
                     if (checkbox) {
                         checkbox.checked = true
@@ -390,9 +404,10 @@ export class TutorProfileEdit implements RouteComponent {
                 })
             }
 
-            // Qualifications
-            if (profile.qualifications && profile.qualifications.length > 0) {
-                this.fillQualifications(profile.qualifications)
+            // Qualifications - might be called 'certifications' in backend
+            const qualifications = (profile as any).qualifications || profile.certifications
+            if (qualifications && qualifications.length > 0) {
+                this.fillQualifications(qualifications)
             }
         }
     }
@@ -502,9 +517,15 @@ export class TutorProfileEdit implements RouteComponent {
         
         const avatarElement = this.container?.querySelector('#profile-avatar')
         if (avatarElement) {
-            const initial = this.profile.name?.charAt(0).toUpperCase() || 'L'
-            avatarElement.textContent = initial
-            avatarElement.className = 'profile-avatar-large'
+            // Add inline styles for proper display
+            avatarElement.setAttribute('style', 'width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; background: #e9ecef; border-radius: 50%; font-size: 48px; color: #6c757d;')
+            
+            if (this.profile.avatar) {
+                avatarElement.innerHTML = `<img src="/storage/avatars/${this.profile.avatar}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`
+            } else {
+                const initial = this.profile.name?.charAt(0).toUpperCase() || 'L'
+                avatarElement.textContent = initial
+            }
         }
     }
 
@@ -550,7 +571,46 @@ export class TutorProfileEdit implements RouteComponent {
 
         try {
             const formData = new FormData(this.form)
-            const updateData = this.parseFormData(formData)
+            
+            // Check if we have a file upload
+            const fileInput = this.form.querySelector('#profile-picture-input') as HTMLInputElement
+            const hasFile = fileInput?.files && fileInput.files.length > 0
+            
+            if (hasFile) {
+                // When sending FormData with file, we need to convert checkbox to proper boolean
+                const isAcceptingCheckbox = this.form.querySelector('[name="is_accepting_students"]') as HTMLInputElement
+                if (isAcceptingCheckbox) {
+                    formData.delete('is_accepting_students')
+                    formData.append('is_accepting_students', isAcceptingCheckbox.checked ? '1' : '0')
+                }
+                
+                // Also need to handle arrays properly - rename them without brackets for Laravel
+                const teachingLanguages = formData.getAll('teaching_languages[]')
+                formData.delete('teaching_languages[]')
+                teachingLanguages.forEach(lang => {
+                    formData.append('teaching_languages[]', lang)
+                })
+                
+                const specializations = formData.getAll('specializations[]')
+                formData.delete('specializations[]')
+                specializations.forEach(spec => {
+                    formData.append('specializations[]', spec)
+                })
+                
+                const qualifications = formData.getAll('qualifications[]')
+                formData.delete('qualifications[]')
+                qualifications.forEach(qual => {
+                    if (qual && String(qual).trim()) {
+                        formData.append('qualifications[]', qual)
+                    }
+                })
+                
+                // Send FormData directly for file upload
+                var updateData: any = formData
+            } else {
+                // Parse to JSON for regular updates
+                var updateData = this.parseFormData(formData)
+            }
 
             await this.tutorService.updateProfile(updateData)
             
@@ -600,17 +660,10 @@ export class TutorProfileEdit implements RouteComponent {
         // Boolean field
         data.is_accepting_students = formData.get('is_accepting_students') === 'on'
 
-        // Array fields
-        const teachingLanguages = formData.getAll('teaching_languages[]')
-        if (teachingLanguages.length > 0) {
-            data.teaching_languages = teachingLanguages
-        }
-
-        const specializations = formData.getAll('specializations[]')
-        if (specializations.length > 0) {
-            data.specializations = specializations
-        }
-
+        // Array fields - handle them even if empty to clear existing values
+        data.teaching_languages = formData.getAll('teaching_languages[]')
+        data.specializations = formData.getAll('specializations[]')
+        
         const qualifications = formData.getAll('qualifications[]').filter(q => q && String(q).trim())
         if (qualifications.length > 0) {
             data.qualifications = qualifications

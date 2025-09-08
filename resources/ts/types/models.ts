@@ -15,7 +15,9 @@ export interface User {
   last_login_at?: string
   last_login_ip?: string
   student_profile?: StudentProfile
+  studentProfile?: StudentProfile  // camelCase alias
   tutor_profile?: TutorProfile
+  tutorProfile?: TutorProfile  // camelCase alias
   active_package_assignments?: PackageAssignment[]
 }
 

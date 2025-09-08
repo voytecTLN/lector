@@ -2,6 +2,7 @@ import Swal from 'sweetalert2'
 import {LessonService} from '@services/LessonService'
 import {authService} from '@services/AuthService'
 import {MeetingButton} from '../video/MeetingButton'
+import {AvatarHelper} from '@/utils/AvatarHelper'
 
 interface LessonDetails {
     id: number
@@ -27,6 +28,7 @@ interface LessonDetails {
         id: number
         name: string
         email: string
+        avatar?: string
         tutor_profile: {
             specializations: string[]
             languages: string[]
@@ -221,14 +223,24 @@ export class LessonDetailsModal {
                     <h3 class="h5 mb-4">Lektor</h3>
                     <div class="bg-light p-4 rounded">
                         <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <p class="fw-bold mb-1">${lesson.tutor.name}</p>
-                                <p class="text-muted small mb-0">${lesson.tutor.email}</p>
-                                ${lesson.tutor.tutor_profile ? `
-                                    <div class="mt-2">
-                                        <p class="text-muted small mb-0">Języki: ${lesson.tutor.tutor_profile.languages.join(', ')}</p>
-                                    </div>
-                                ` : ''}
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    ${AvatarHelper.render({
+                                        name: lesson.tutor.name,
+                                        avatar: lesson.tutor.avatar,
+                                        size: 'md',
+                                        userId: lesson.tutor.id
+                                    })}
+                                </div>
+                                <div>
+                                    <p class="fw-bold mb-1">${lesson.tutor.name}</p>
+                                    <p class="text-muted small mb-0">${lesson.tutor.email}</p>
+                                    ${lesson.tutor.tutor_profile ? `
+                                        <div class="mt-2">
+                                            <p class="text-muted small mb-0">Języki: ${lesson.tutor.tutor_profile.languages.join(', ')}</p>
+                                        </div>
+                                    ` : ''}
+                                </div>
                             </div>
                             ${await this.getTutorProfileButton(lesson)}
                         </div>

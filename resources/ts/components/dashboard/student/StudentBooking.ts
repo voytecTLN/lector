@@ -1,5 +1,6 @@
 import { BookingService } from '@services/BookingService'
 import { formatDate } from '@utils/date'
+import { AvatarHelper } from '@/utils/AvatarHelper'
 
 export class StudentBooking {
     private tutor: any = null

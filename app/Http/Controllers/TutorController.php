@@ -403,12 +403,7 @@ class TutorController extends Controller
 
         $tutor = $this->tutorService->getTutorById($user->id);
         
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'user' => $tutor
-            ]
-        ]);
+        return response()->json($tutor);
     }
 
     /**
@@ -426,22 +421,34 @@ class TutorController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
+            'birth_date' => 'nullable|date|before:today',
             'city' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:2000',
             'years_experience' => 'nullable|integer|min:0|max:50',
+            'hourly_rate' => 'nullable|numeric|min:0',
             'is_accepting_students' => 'boolean',
+            'teaching_languages' => 'nullable|array',
+            'teaching_languages.*' => 'string|in:english,german,french,spanish,italian,portuguese,russian,chinese,japanese,polish',
+            'specializations' => 'nullable|array',
+            'specializations.*' => 'string|in:business,conversation,exam,grammar,pronunciation,academic,travel,culture',
+            'qualifications' => 'nullable|array',
+            'qualifications.*' => 'string|max:255',
             'password' => 'nullable|string|min:8|confirmed',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
         ]);
 
         try {
+            // Handle file upload if present
+            if ($request->hasFile('profile_picture')) {
+                $validated['profile_picture'] = $request->file('profile_picture');
+            }
+            
             $tutor = $this->tutorService->updateTutor($user->id, $validated);
             
             return response()->json([
                 'success' => true,
                 'message' => 'Profil został zaktualizowany',
-                'data' => [
-                    'user' => $tutor
-                ]
+                'data' => $tutor
             ]);
         } catch (\Exception $e) {
             return response()->json([

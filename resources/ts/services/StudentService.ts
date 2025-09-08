@@ -386,11 +386,18 @@ export class StudentService {
      */
     async updateProfile(data: any): Promise<any> {
         try {
-            console.log('✏️ StudentService: Updating student profile')
+            console.log('✏️ StudentService: Updating student profile', data)
 
-            const response = await api.put<{ success: boolean, data: any }>('/student/profile', data)
-
-            return response.data
+            // Check if data is FormData (file upload)
+            if (data instanceof FormData) {
+                // Use POST with _method for file uploads
+                const response = await api.post<{ success: boolean, data: any }>('/student/profile', data)
+                return response.data
+            } else {
+                // Use PUT for regular JSON updates
+                const response = await api.put<{ success: boolean, data: any }>('/student/profile', data)
+                return response.data
+            }
 
         } catch (error) {
             console.error('❌ Update student profile error:', error)

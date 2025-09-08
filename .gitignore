@@ -32,6 +32,26 @@
 /storage/app/temp/*
 !/storage/app/temp/.gitkeep
 
+# ── User Avatars ──
+# Avatar uploads (keep structure, ignore files)
+/storage/app/public/avatars/*
+!/storage/app/public/avatars/.gitkeep
+/storage/app/avatars/*
+!/storage/app/avatars/.gitkeep
+
+# ── Additional Storage Directories ──
+# Public uploads and files
+/storage/app/public/*
+!/storage/app/public/.gitkeep
+!/storage/app/public/avatars/
+# Private app storage
+/storage/app/*
+!/storage/app/.gitkeep
+!/storage/app/public/
+!/storage/app/materials/
+!/storage/app/quarantine/
+!/storage/app/temp/
+
 # ── Environment & Configuration ──
 .env
 Makefile

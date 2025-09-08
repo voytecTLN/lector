@@ -248,10 +248,9 @@ export class AdminForm implements RouteComponent {
         // Special handling for birth_date field
         const birthDateInput = this.form!.querySelector('[name="birth_date"]') as HTMLInputElement
         if (birthDateInput && admin.birth_date) {
-            // Ensure the date is in YYYY-MM-DD format for HTML date inputs
-            const dateValue = admin.birth_date.toString().split('T')[0] // Remove time part if present
-            birthDateInput.value = dateValue
-            console.log('Setting birth_date:', dateValue, 'from original:', admin.birth_date)
+            // Backend now returns date in Y-m-d format directly
+            birthDateInput.value = admin.birth_date.toString()
+            console.log('Setting birth_date:', admin.birth_date)
         }
     }
 

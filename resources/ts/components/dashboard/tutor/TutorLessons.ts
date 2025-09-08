@@ -1,5 +1,6 @@
 import { LessonService } from '@services/LessonService'
 import { formatDate } from '@utils/date'
+import { AvatarHelper } from '@/utils/AvatarHelper'
 
 export class TutorLessons {
     private currentView: 'calendar' | 'list' = 'calendar'
@@ -498,9 +499,13 @@ export class TutorLessons {
                 <td>${this.formatTime(lesson.start_time)} - ${this.formatTime(lesson.end_time)}</td>
                 <td>
                     <div class="d-flex align-items-center">
-                        <div class="avatar-placeholder-small bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
-                            ${lesson.student?.name?.charAt(0) || 'S'}
-                        </div>
+                        ${AvatarHelper.render({
+                            name: lesson.student?.name || 'Student',
+                            avatar: lesson.student?.avatar,
+                            size: 'sm',
+                            className: 'me-2',
+                            userId: lesson.student?.id
+                        })}
                         ${lesson.student?.name || 'Student'}
                     </div>
                 </td>

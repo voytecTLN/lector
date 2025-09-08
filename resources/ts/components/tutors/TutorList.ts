@@ -3,6 +3,7 @@ import type { RouteComponent } from '@router/routes'
 import { TutorService } from '@services/TutorService'
 import type { User, PaginatedResponse, TutorFilters } from '@/types/models'
 import { navigate } from '@/utils/navigation'
+import { AvatarHelper } from '@/utils/AvatarHelper'
 
 export class TutorList implements RouteComponent {
     private tutorService: TutorService
@@ -336,12 +337,19 @@ export class TutorList implements RouteComponent {
 
         tbody.innerHTML = this.tutors.map(tutor => {
             const profile = tutor.tutor_profile
+            const avatarHtml = AvatarHelper.render({
+                name: tutor.name,
+                avatar: tutor.avatar,
+                size: 'md',
+                userId: tutor.id
+            })
+            
             return `
             <tr>
                 <td>
                     <div class="d-flex align-items-center">
-                        <div class="tutor-avatar me-2">
-                            ${tutor.name.charAt(0).toUpperCase()}
+                        <div class="me-2">
+                            ${avatarHtml}
                         </div>
                         <div>
                             <div class="fw-semibold">${tutor.name}</div>

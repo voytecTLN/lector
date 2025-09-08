@@ -6,6 +6,7 @@ import { NotificationService } from '@/utils/NotificationService'
 import { PasswordValidator } from '@/utils/PasswordValidator'
 import { LoadingStateManager } from '@/utils/LoadingStateManager'
 import { LanguageUtils } from '@/utils/LanguageUtils'
+import { formatDate } from '@/utils/date'
 import type { User } from '@/types/models' // Use User interface from models
 
 export class StudentProfileEdit implements RouteComponent {
@@ -16,6 +17,7 @@ export class StudentProfileEdit implements RouteComponent {
     private passwordValidator: PasswordValidator | null = null
     private loadingManager: LoadingStateManager | null = null
     private studentService = new StudentService()
+    private formSetup: boolean = false
 
     async render(): Promise<HTMLElement> {
         const el = document.createElement('div')
@@ -78,14 +80,16 @@ export class StudentProfileEdit implements RouteComponent {
                         <div class="col-md-4 text-center">
                             <div class="profile-picture-section">
                                 <div class="profile-picture-wrapper mb-3">
-                                    <div class="profile-picture" id="profile-picture">
-                                        <div class="profile-avatar-large" id="profile-avatar"></div>
-                                        <div class="profile-picture-overlay">
+                                    <div class="profile-picture" id="profile-picture" style="position: relative; width: 150px; height: 150px; margin: 0 auto;">
+                                        <div class="profile-avatar-large" id="profile-avatar" style="width: 150px; height: 150px; border-radius: 50%; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 48px; color: #666; overflow: hidden;"></div>
+                                        <div class="profile-picture-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); color: white; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; border-radius: 50%; cursor: pointer;" 
+                                             onmouseover="this.style.opacity='1'" 
+                                             onmouseout="this.style.opacity='0'">
                                             <i class="bi bi-camera"></i>
                                         </div>
                                     </div>
                                 </div>
-                                <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
+                                <input type="file" id="profile-picture-input" name="profile_picture" accept="image/*" style="display: none;">
                                 <button type="button" class="btn btn-outline-secondary btn-sm" id="change-picture-btn">
                                     <i class="bi bi-camera me-1"></i> Zmień zdjęcie
                                 </button>
@@ -305,10 +309,9 @@ export class StudentProfileEdit implements RouteComponent {
         // Special handling for birth_date field
         const birthDateInput = this.form!.querySelector('[name="birth_date"]') as HTMLInputElement
         if (birthDateInput && this.profile!.birth_date) {
-            // Ensure the date is in YYYY-MM-DD format for HTML date inputs
-            const dateValue = this.profile!.birth_date.toString().split('T')[0] // Remove time part if present
-            birthDateInput.value = dateValue
-            console.log('Setting birth_date:', dateValue, 'from original:', this.profile!.birth_date)
+            // Backend now returns date in Y-m-d format directly
+            birthDateInput.value = this.profile!.birth_date.toString()
+            console.log('Setting birth_date:', this.profile!.birth_date)
         }
 
         // Bio field
@@ -353,7 +356,9 @@ export class StudentProfileEdit implements RouteComponent {
     }
 
     private setupForm(): void {
-        if (!this.form) return
+        if (!this.form || this.formSetup) return
+
+        this.formSetup = true
 
         // Form submit
         this.form.addEventListener('submit', this.handleSubmit.bind(this))
@@ -403,11 +408,23 @@ export class StudentProfileEdit implements RouteComponent {
     private updateAvatar(): void {
         if (!this.profile) return
         
-        const avatarElement = this.container?.querySelector('#profile-avatar')
+        console.log('UpdateAvatar called, profile avatar:', this.profile.avatar)
+        
+        const avatarElement = this.container?.querySelector('#profile-avatar') as HTMLDivElement
+        console.log('Avatar element found:', avatarElement)
+        
         if (avatarElement) {
-            const initial = this.profile.name?.charAt(0).toUpperCase() || 'S'
-            avatarElement.textContent = initial
-            avatarElement.className = 'profile-avatar-large'
+            // Check if user has an avatar
+            if (this.profile.avatar) {
+                // Display the uploaded avatar
+                const avatarUrl = `/storage/avatars/${this.profile.avatar}`
+                console.log('Setting avatar URL:', avatarUrl)
+                avatarElement.innerHTML = `<img src="${avatarUrl}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`
+            } else {
+                // Display initials if no avatar
+                const initial = this.profile.name?.charAt(0).toUpperCase() || 'S'
+                avatarElement.innerHTML = initial
+            }
         }
     }
 
@@ -454,6 +471,17 @@ export class StudentProfileEdit implements RouteComponent {
         try {
             const formData = new FormData(this.form)
             const updateData = this.parseFormData(formData)
+            
+            // Debug logging
+            console.log('Update data type:', updateData instanceof FormData ? 'FormData' : 'Object')
+            if (updateData instanceof FormData) {
+                console.log('FormData entries:')
+                for (let [key, value] of updateData.entries()) {
+                    console.log(`  ${key}:`, value)
+                }
+            } else {
+                console.log('Update data:', updateData)
+            }
 
             await this.studentService.updateProfile(updateData)
             
@@ -473,11 +501,87 @@ export class StudentProfileEdit implements RouteComponent {
         }
     }
 
-    private parseFormData(formData: FormData): any {
+    private parseFormData(formData: FormData): FormData | any {
+        // Check if we have a file upload - if yes, return FormData as is
+        const profilePictureInput = this.form?.querySelector('[name="profile_picture"]') as HTMLInputElement
+        const hasFile = profilePictureInput?.files && profilePictureInput.files.length > 0
+        
+        console.log('Profile picture input:', profilePictureInput)
+        console.log('Has file:', hasFile)
+        if (profilePictureInput?.files && profilePictureInput.files.length > 0) {
+            console.log('File found:', profilePictureInput.files[0])
+        }
+        
+        if (hasFile) {
+            // When we have a file, we need to send everything as FormData
+            const newFormData = new FormData()
+            
+            // Add _method for Laravel to treat this as PUT
+            newFormData.append('_method', 'PUT')
+            
+            // Basic fields
+            const fields = ['name', 'phone', 'birth_date', 'city', 'country']
+            fields.forEach(field => {
+                const value = formData.get(field)
+                if (value !== null && value !== '') {
+                    newFormData.append(field, value.toString())
+                }
+            })
+            
+            // Add the file
+            const file = profilePictureInput.files![0]
+            newFormData.append('profile_picture', file)
+            
+            // Bio field
+            const bio = formData.get('bio')
+            if (bio) {
+                newFormData.append('bio', bio.toString())
+            }
+            
+            // Password fields (only if provided)
+            const currentPassword = formData.get('current_password')
+            const newPassword = formData.get('password')
+            
+            if (currentPassword && newPassword) {
+                newFormData.append('current_password', currentPassword.toString())
+                newFormData.append('password', newPassword.toString())
+                const passwordConfirm = formData.get('password_confirmation')
+                if (passwordConfirm) {
+                    newFormData.append('password_confirmation', passwordConfirm.toString())
+                }
+            }
+            
+            // Learning preferences as JSON strings
+            const languages = formData.getAll('learning_languages[]')
+            if (languages.length > 0) {
+                languages.forEach(lang => {
+                    newFormData.append('learning_languages[]', lang.toString())
+                })
+                
+                // Current levels
+                languages.forEach(lang => {
+                    const level = formData.get(`current_levels[${lang}]`)
+                    if (level) {
+                        newFormData.append(`current_levels[${lang}]`, level.toString())
+                    }
+                })
+            }
+            
+            const goals = formData.getAll('learning_goals[]')
+            if (goals.length > 0) {
+                goals.forEach(goal => {
+                    newFormData.append('learning_goals[]', goal.toString())
+                })
+            }
+            
+            return newFormData
+        }
+        
+        // No file upload - return regular object for JSON
         const data: any = {}
 
         // Basic fields
-        const fields = ['name', 'phone', 'birth_date', 'city', 'country']
+        const fields = ['name', 'phone', 'birth_date', 'city', 'country', 'bio']
         fields.forEach(field => {
             const value = formData.get(field)
             if (value !== null && value !== '') {

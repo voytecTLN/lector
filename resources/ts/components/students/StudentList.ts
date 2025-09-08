@@ -4,6 +4,7 @@ import { StudentService, HourPackage } from '@services/StudentService'
 import type { StudentFilters, User, PaginatedResponse, StudentProfile } from '@/types/models'
 import { navigate, urlBuilder } from '@/utils/navigation'
 import { LinkTemplates } from '@/components/common/Link'
+import { AvatarHelper } from '@/utils/AvatarHelper'
 
 declare global {
     interface Window {
@@ -287,15 +288,20 @@ export class StudentList implements RouteComponent {
             // Registration date
             const regDate = student.created_at ? new Date(student.created_at).toLocaleDateString('pl-PL') : '-'
 
+            const avatarHtml = AvatarHelper.render({
+                name: student.name,
+                avatar: student.avatar,
+                size: 'md',
+                userId: student.id
+            })
+            
             return `
             <tr>
                 <td>
                     <a href="${profileUrl}" class="text-decoration-none">
                         <div class="d-flex align-items-center">
-                            <div class="avatar avatar-sm me-2">
-                                <span class="avatar-text rounded-circle bg-primary text-white">
-                                    ${this.getInitials(student.name)}
-                                </span>
+                            <div class="me-2">
+                                ${avatarHtml}
                             </div>
                             <div>
                                 <div class="fw-medium">${student.name}</div>

@@ -1,4 +1,5 @@
 import { studentService } from '@services/StudentService'
+import { AvatarHelper } from '@/utils/AvatarHelper'
 
 export class StudentTutors {
     private tutors: any[] = []
@@ -121,16 +122,20 @@ export class StudentTutors {
         const specializations = (profile.specializations || []).map((spec: string) => this.getSpecializationName(spec)).join(', ')
         const hourlyRate = profile.hourly_rate ? `${Math.round(profile.hourly_rate)} zł/h` : 'Do uzgodnienia'
         
+        const avatarHtml = AvatarHelper.render({
+            name: tutor.name,
+            avatar: tutor.avatar,
+            size: 'lg',  // 60px for cards
+            userId: tutor.id
+        })
+        
         return `
             <div class="col-md-6 col-lg-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
-                            <div class="avatar-placeholder me-3" style="width: 60px; height: 60px; background: #e9ecef; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #6c757d;">
-                                ${tutor.avatar_url ? 
-                                    `<img src="${tutor.avatar_url}" alt="${tutor.name}" class="rounded-circle" style="width: 100%; height: 100%; object-fit: cover;">` : 
-                                    `<i class="bi bi-person-circle"></i>`
-                                }
+                            <div class="me-3">
+                                ${avatarHtml}
                             </div>
                             <div class="flex-grow-1">
                                 <h5 class="card-title mb-1">${tutor.name}</h5>
@@ -238,11 +243,13 @@ export class StudentTutors {
                         <div class="col-lg-4 mb-4">
                             <div class="card">
                                 <div class="card-body text-center">
-                                    <div class="avatar-placeholder mb-3" style="width: 150px; height: 150px; margin: 0 auto; background: #e9ecef; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #6c757d;">
-                                        ${tutor.avatar_url 
-                                            ? `<img src="${tutor.avatar_url}" alt="${tutor.name}" class="rounded-circle" style="width: 100%; height: 100%; object-fit: cover;">`
-                                            : '<i class="bi bi-person-circle"></i>'
-                                        }
+                                    <div class="mb-3" style="display: flex; justify-content: center;">
+                                        ${AvatarHelper.render({
+                                            name: tutor.name,
+                                            avatar: tutor.avatar,
+                                            size: 'xl',
+                                            userId: tutor.id
+                                        })}
                                     </div>
                                     <h3 class="card-title">${tutor.name}</h3>
                                     <p class="text-muted mb-2">${tutor.city || 'Miasto nieznane'}</p>

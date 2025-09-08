@@ -1,6 +1,7 @@
 import { DailyVideoComponent } from '@components/video/DailyVideoComponent'
 import { api } from '@services/ApiService'
 import { authService } from '@services/AuthService'
+import { AvatarHelper } from '@/utils/AvatarHelper'
 import Swal from 'sweetalert2'
 
 import type { RouteComponent } from '@router/routes'
@@ -152,18 +153,26 @@ export class MeetingPage implements RouteComponent {
                                     <div class="mb-3">
                                         <small class="text-muted d-block">Lektor</small>
                                         <div class="d-flex align-items-center mt-1">
-                                            <div class="avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 14px;">
-                                                ${lesson.tutor.name.charAt(0)}
-                                            </div>
+                                            ${AvatarHelper.render({
+                                                name: lesson.tutor.name,
+                                                avatar: lesson.tutor.avatar,
+                                                size: 'sm',
+                                                className: 'me-2',
+                                                userId: lesson.tutor.id
+                                            })}
                                             <span class="fw-medium">${lesson.tutor.name}</span>
                                         </div>
                                     </div>
                                     <div class="mb-3">
                                         <small class="text-muted d-block">Uczeń</small>
                                         <div class="d-flex align-items-center mt-1">
-                                            <div class="avatar-placeholder bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 14px;">
-                                                ${lesson.student.name.charAt(0)}
-                                            </div>
+                                            ${AvatarHelper.render({
+                                                name: lesson.student.name,
+                                                avatar: lesson.student.avatar,
+                                                size: 'sm',
+                                                className: 'me-2',
+                                                userId: lesson.student.id
+                                            })}
                                             <span class="fw-medium">${lesson.student.name}</span>
                                         </div>
                                     </div>

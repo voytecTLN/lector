@@ -1,5 +1,6 @@
 import { LessonService } from '@services/LessonService'
 import { LessonDetailsModal } from '@components/modals/LessonDetailsModal'
+import { AvatarHelper } from '@/utils/AvatarHelper'
 
 interface HistoricalLesson {
     id: number
@@ -8,6 +9,7 @@ interface HistoricalLesson {
         id: number
         name: string
         email: string
+        avatar?: string
     }
     lesson_date: string
     start_time: string
@@ -340,8 +342,20 @@ export class TutorLessonHistory {
                     <div class="small text-muted">${formatTime(lesson.start_time)} - ${formatTime(lesson.end_time)}</div>
                 </td>
                 <td>
-                    <div>${lesson.student.name}</div>
-                    <div class="small text-muted">${lesson.student.email}</div>
+                    <div class="d-flex align-items-center">
+                        <div class="me-2">
+                            ${AvatarHelper.render({
+                                name: lesson.student.name,
+                                avatar: lesson.student.avatar,
+                                size: 'sm',
+                                userId: lesson.student.id
+                            })}
+                        </div>
+                        <div>
+                            <div>${lesson.student.name}</div>
+                            <div class="small text-muted">${lesson.student.email}</div>
+                        </div>
+                    </div>
                 </td>
                 <!-- <td>${lesson.topic}</td> -->
                 <td>${getStatusBadge(lesson.status)}</td>

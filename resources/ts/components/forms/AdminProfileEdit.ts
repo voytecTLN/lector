@@ -269,14 +269,21 @@ export class AdminProfileEdit implements RouteComponent {
     private fillFormWithAdminData(admin: User): void {
         if (!this.form) return
 
-        // Basic fields
-        const fields = ['name', 'email', 'phone', 'birth_date', 'city', 'status']
+        // Basic fields (excluding birth_date which needs special handling)
+        const fields = ['name', 'email', 'phone', 'city', 'status']
         fields.forEach(field => {
             const input = this.form!.querySelector(`[name="${field}"]`) as HTMLInputElement
             if (input && admin[field as keyof User]) {
                 input.value = String(admin[field as keyof User])
             }
         })
+        
+        // Special handling for birth_date field
+        const birthDateInput = this.form!.querySelector('[name="birth_date"]') as HTMLInputElement
+        if (birthDateInput && admin.birth_date) {
+            // Backend now returns date in Y-m-d format directly
+            birthDateInput.value = admin.birth_date.toString()
+        }
 
         // Read-only information
         this.setTextContent('#display-id', admin.id.toString())

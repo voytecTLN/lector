@@ -84,6 +84,7 @@ export class TutorService {
         return await api.get('/tutors/stats')
     }
 
+
     async getAvailableTutors(criteria: { language?: string, specialization?: string } = {}): Promise<User[]> {
         const params = new URLSearchParams()
         if (criteria.language) params.append('language', criteria.language)
@@ -214,43 +215,15 @@ export class TutorService {
     /**
      * Get tutor profile for editing
      */
-    async getProfile(): Promise<{
-        id: number;
-        name: string;
-        email: string;
-        phone?: string;
-        city?: string;
-        tutor_profile?: {
-            description?: string;
-            years_experience?: number;
-            is_accepting_students?: boolean;
-            hourly_rate?: number;
-            teaching_languages?: string[];
-            specializations?: string[];
-            qualifications?: string[];
-        };
-    }> {
+    async getProfile(): Promise<User> {
         try {
             console.log('👤 TutorService: Getting tutor profile')
-
-            const response = await api.get<{ success: boolean, data: {
-                id: number;
-                name: string;
-                email: string;
-                phone?: string;
-                city?: string;
-                tutor_profile?: {
-                    description?: string;
-                    years_experience?: number;
-                    is_accepting_students?: boolean;
-                    hourly_rate?: number;
-                    teaching_languages?: string[];
-                    specializations?: string[];
-                    qualifications?: string[];
-                };
-            } }>('/tutor/profile')
             
-            return response.data
+            // Backend returns the user object directly
+            const response = await api.get<User>('/tutor/profile')
+            console.log('Profile response:', response)
+            
+            return response
 
         } catch (error) {
             console.error('❌ Get tutor profile error:', error)
@@ -261,12 +234,18 @@ export class TutorService {
     /**
      * Update tutor profile
      */
-    async updateProfile(data: any): Promise<any> {
+    async updateProfile(data: FormData | any): Promise<any> {
         try {
-            console.log('✏️ TutorService: Updating tutor profile')
+            console.log('✏️ TutorService: Updating tutor profile', data)
 
-            const response = await api.put<{ success: boolean, data: any }>('/tutor/profile', data)
-
+            // If it's FormData (with file upload), use POST
+            if (data instanceof FormData) {
+                const response = await api.post<{ success: boolean, data: User }>('/tutor/profile', data)
+                return response.data
+            }
+            
+            // Otherwise use PUT for JSON
+            const response = await api.put<{ success: boolean, data: User }>('/tutor/profile', data)
             return response.data
 
         } catch (error) {

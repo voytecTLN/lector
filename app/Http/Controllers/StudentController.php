@@ -209,7 +209,10 @@ class StudentController extends BaseController
                 \Log::info('StudentController::updateOwnProfile - Debug info:', [
                     'user_id' => $user?->id,
                     'user_role' => $user?->role,
-                    'request_data' => $request->validated()
+                    'request_data' => $request->validated(),
+                    'has_file' => $request->hasFile('profile_picture'),
+                    'file_valid' => $request->hasFile('profile_picture') ? $request->file('profile_picture')->isValid() : false,
+                    'all_files' => $request->allFiles()
                 ]);
             }
             

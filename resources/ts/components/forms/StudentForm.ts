@@ -369,10 +369,9 @@ export class StudentForm implements RouteComponent {
         // Special handling for birth_date field
         const birthDateInput = this.form!.querySelector('[name="birth_date"]') as HTMLInputElement
         if (birthDateInput && student.birth_date) {
-            // Ensure the date is in YYYY-MM-DD format for HTML date inputs
-            const dateValue = student.birth_date.toString().split('T')[0] // Remove time part if present
-            birthDateInput.value = dateValue
-            console.log('Setting birth_date:', dateValue, 'from original:', student.birth_date)
+            // Backend now returns date in Y-m-d format directly
+            birthDateInput.value = student.birth_date.toString()
+            console.log('Setting birth_date:', student.birth_date)
         }
 
         // Bio field

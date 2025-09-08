@@ -2,6 +2,7 @@ import { LessonService } from '@services/LessonService'
 import { tutorService } from '@services/TutorService'
 import { studentService } from '@services/StudentService'
 import { LessonStatusManager } from '@/components/lessons/LessonStatusManager'
+import { AvatarHelper } from '@/utils/AvatarHelper'
 
 export class AdminLessons {
     static instance: AdminLessons = new AdminLessons()
@@ -316,17 +317,25 @@ export class AdminLessons {
                 <td>${lesson.start_time} - ${lesson.end_time}</td>
                 <td>
                     <div class="d-flex align-items-center">
-                        <div class="avatar-placeholder-small bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
-                            ${lesson.student?.name?.charAt(0) || 'S'}
-                        </div>
+                        ${AvatarHelper.render({
+                            name: lesson.student?.name || 'Student',
+                            avatar: lesson.student?.avatar,
+                            size: 'sm',
+                            className: 'me-2',
+                            userId: lesson.student?.id
+                        })}
                         ${lesson.student?.name || 'Student'}
                     </div>
                 </td>
                 <td>
                     <div class="d-flex align-items-center">
-                        <div class="avatar-placeholder-small bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
-                            ${lesson.tutor?.name?.charAt(0) || 'L'}
-                        </div>
+                        ${AvatarHelper.render({
+                            name: lesson.tutor?.name || 'Lektor',
+                            avatar: lesson.tutor?.avatar,
+                            size: 'sm',
+                            className: 'me-2',
+                            userId: lesson.tutor?.id
+                        })}
                         ${lesson.tutor?.name || 'Lektor'}
                     </div>
                 </td>

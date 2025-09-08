@@ -345,6 +345,9 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::put('/profile', [TutorController::class, 'updateOwnProfile'])
                     ->name('api.tutor.profile.update');
                     
+                Route::post('/profile', [TutorController::class, 'updateOwnProfile'])
+                    ->name('api.tutor.profile.upload');
+                    
                 Route::get('/availability-slots', [TutorController::class, 'getAvailabilitySlots'])
                     ->name('api.tutor.availability-slots');
                     

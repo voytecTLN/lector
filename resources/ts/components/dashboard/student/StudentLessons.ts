@@ -1,4 +1,5 @@
 import { LessonService } from '@services/LessonService'
+import { AvatarHelper } from '@/utils/AvatarHelper'
 import Swal from 'sweetalert2'
 
 export class StudentLessons {
@@ -84,9 +85,12 @@ export class StudentLessons {
                             <div class="col-md-3">
                                 <div class="d-flex align-items-center">
                                     <div class="me-2">
-                                        <div class="avatar-placeholder-small bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                            ${lesson.tutor?.name?.charAt(0) || 'L'}
-                                        </div>
+                                        ${AvatarHelper.render({
+                                            name: lesson.tutor?.name || 'Lektor',
+                                            avatar: lesson.tutor?.avatar,
+                                            size: 'md',
+                                            userId: lesson.tutor?.id
+                                        })}
                                     </div>
                                     <div>
                                         <div class="fw-bold">${lesson.tutor?.name || 'Lektor'}</div>
@@ -293,9 +297,12 @@ export class StudentLessons {
                             <div class="col-md-3">
                                 <div class="d-flex align-items-center">
                                     <div class="me-2">
-                                        <div class="avatar-placeholder-small bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                            ${lesson.tutor?.name?.charAt(0) || 'L'}
-                                        </div>
+                                        ${AvatarHelper.render({
+                                            name: lesson.tutor?.name || 'Lektor',
+                                            avatar: lesson.tutor?.avatar,
+                                            size: 'md',
+                                            userId: lesson.tutor?.id
+                                        })}
                                     </div>
                                     <div>
                                         <div class="fw-bold">${lesson.tutor?.name || 'Lektor'}</div>

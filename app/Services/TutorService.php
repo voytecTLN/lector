@@ -78,6 +78,26 @@ class TutorService
         try {
             $user = User::with('tutorProfile')->findOrFail($tutorId);
 
+            // Handle profile picture upload  
+            if (isset($data['profile_picture']) && $data['profile_picture'] instanceof \Illuminate\Http\UploadedFile) {
+                // Delete old picture if exists
+                if ($user->avatar) {
+                    \Storage::disk('public')->delete('avatars/' . $user->avatar);
+                }
+                
+                // Store new picture - sanitize filename to avoid ALL special characters
+                $extension = $data['profile_picture']->getClientOriginalExtension();
+                $originalName = pathinfo($data['profile_picture']->getClientOriginalName(), PATHINFO_FILENAME);
+                // Remove ALL special characters - keep only alphanumeric
+                $cleanName = preg_replace('/[^A-Za-z0-9]/', '', $originalName);
+                // Ensure we have a name, fallback to 'avatar' if empty after cleaning
+                $cleanName = $cleanName ?: 'avatar';
+                $filename = time() . '_' . substr($cleanName, 0, 20) . '.' . $extension;
+                
+                $data['profile_picture']->storeAs('avatars', $filename, 'public');
+                $data['avatar'] = $filename;
+            }
+
             // 1. Update user data
             $userData = [
                 'name' => $data['name'] ?? $user->name,
@@ -87,6 +107,7 @@ class TutorService
                 'city' => $data['city'] ?? $user->city,
                 'country' => $data['country'] ?? $user->country,
                 'status' => $data['status'] ?? $user->status,
+                'avatar' => $data['avatar'] ?? $user->avatar,
             ];
 
             // Handle password update
@@ -99,18 +120,13 @@ class TutorService
             // 2. Update tutor profile
             if ($user->tutorProfile) {
                 $user->tutorProfile->update([
-                    'languages' => $data['languages'] ?? $user->tutorProfile->languages,
+                    'teaching_languages' => $data['teaching_languages'] ?? $user->tutorProfile->teaching_languages,
                     'specializations' => $data['specializations'] ?? $user->tutorProfile->specializations,
                     'description' => $data['description'] ?? $user->tutorProfile->description,
                     'years_experience' => $data['years_experience'] ?? $user->tutorProfile->years_experience,
-                    'certifications' => $data['certifications'] ?? $user->tutorProfile->certifications,
-                    'education' => $data['education'] ?? $user->tutorProfile->education,
-                    'lesson_types' => $data['lesson_types'] ?? $user->tutorProfile->lesson_types,
-                    'weekly_availability' => $data['weekly_availability'] ?? $user->tutorProfile->weekly_availability,
+                    'qualifications' => $data['qualifications'] ?? $user->tutorProfile->qualifications,
                     'is_accepting_students' => $data['is_accepting_students'] ?? $user->tutorProfile->is_accepting_students,
-                    'max_students_per_week' => $data['max_students_per_week'] ?? $user->tutorProfile->max_students_per_week,
                     'hourly_rate' => $data['hourly_rate'] ?? $user->tutorProfile->hourly_rate,
-                    'weekly_contract_limit' => $data['weekly_contract_limit'] ?? $user->tutorProfile->weekly_contract_limit,
                 ]);
             }
 

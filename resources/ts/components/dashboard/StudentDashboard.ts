@@ -5,6 +5,7 @@ import { StudentBooking } from './student/StudentBooking'
 import { StudentTutors } from './student/StudentTutors'
 import { StudentMaterials } from './student/StudentMaterials'
 import { LessonDetailsModal } from '../modals/LessonDetailsModal'
+import { AvatarHelper } from '@/utils/AvatarHelper'
 import type { RouteComponent } from '@router/routes'
 
 export class StudentDashboard implements RouteComponent {
@@ -67,10 +68,24 @@ export class StudentDashboard implements RouteComponent {
         
         const user = authService.getUser()
         
+        const avatarHtml = AvatarHelper.render({
+            name: user?.name,
+            avatar: user?.avatar,
+            size: 'lg',
+            userId: user?.id
+        })
+        
         this.dashboardContainer.innerHTML = `
             <div class="student-container">
                 <div class="student-sidebar">
                     <div class="student-logo-dashboard">
+                        <div class="student-profile-section" style="text-align: center; padding: 20px 0;">
+                            <div class="student-avatar-wrapper" style="margin-bottom: 10px;">
+                                ${avatarHtml}
+                            </div>
+                            <h3 style="margin: 0; font-size: 18px; color: #333;">${user?.name || 'Student'}</h3>
+                            <p style="margin: 5px 0; font-size: 14px; color: #666;">${user?.email || ''}</p>
+                        </div>
                         <h2>Panel Studenta</h2>
                     </div>
                     <nav class="student-nav">
@@ -134,7 +149,12 @@ export class StudentDashboard implements RouteComponent {
                             <h1 class="student-page-title">Panel główny</h1>
                         </div>
                         <div class="student-user-info">
-                            <div class="student-user-avatar">${user?.name?.charAt(0).toUpperCase() || 'S'}</div>
+                            ${AvatarHelper.render({
+                                name: user?.name || 'Student',
+                                avatar: user?.avatar,
+                                size: 'sm',
+                                userId: user?.id
+                            })}
                             <div>
                                 <div style="font-weight: 600;">${user?.name || 'Student'}</div>
                                 <div style="font-size: 0.75rem; color: #64748b;">${user?.email || ''}</div>

@@ -15,10 +15,18 @@ export class Navigation {
             return routeChecker.isCurrent(path) ? 'active' : ''
         }
 
+        // Create avatar HTML - either image or initials
+        const avatarHtml = user?.avatar 
+            ? `<img src="/storage/avatars/${user.avatar}" alt="${user.name}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 50%;">`
+            : user?.name 
+                ? `<div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #6c757d; color: white; border-radius: 50%; font-weight: bold; font-size: 14px;">${user.name.charAt(0).toUpperCase()}</div>`
+                : ''
+
         // Dynamic content based on authentication state
         const navActions = isAuthenticated && user ? `
-            <div class="nav-actions">
-                <span class="nav-user-name">👤 ${user.name}</span>
+            <div class="nav-actions" style="display: flex; align-items: center; gap: 10px;">
+                ${avatarHtml}
+                <span class="nav-user-name">${user.name}</span>
                 <a href="${urlBuilder.dashboard(user.role)}" class="btn btn-primary">Panel</a>
                 <button class="btn btn-secondary logout-btn" id="logout-btn">Wyloguj</button>
             </div>
