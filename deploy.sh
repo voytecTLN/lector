@@ -74,7 +74,13 @@ npm run build
 
 # -------------------------------------------
 echo -e "${GREEN}📂 Kopiuję zawartość katalogu public/ do root (public_html)${NC}"
-cp -r public/* ./
+# Usuń stary storage link jeśli istnieje
+rm -f storage
+# Kopiuj wszystko z public/ oprócz storage (żeby uniknąć konfliktu)
+find public/ -maxdepth 1 -not -name 'storage' -not -name 'public' -exec cp -r {} ./ \;
+
+echo -e "${GREEN}🔗 Tworzę symbolic link do storage${NC}"
+ln -sf storage/app/public storage
 
 echo -e "${GREEN}🔧 Poprawiam index.php (ścieżki produkcyjne)${NC}"
 sed -i "s|__DIR__.'/../vendor/autoload.php'|__DIR__.'/vendor/autoload.php'|g" index.php
