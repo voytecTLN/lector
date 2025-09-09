@@ -138,6 +138,12 @@ export class StudentDashboard implements RouteComponent {
                                     Mój profil
                                 </a>
                             </li>
+                            <li class="student-nav-item">
+                                <a href="?section=zgloszenia" class="student-nav-link" data-section="zgloszenia">
+                                    <span class="student-nav-icon">🎧</span>
+                                    Zgłoś sprawę
+                                </a>
+                            </li>
                         </ul>
                     </nav>
                 </div>
@@ -357,6 +363,19 @@ export class StudentDashboard implements RouteComponent {
                     contentArea.innerHTML = await this.studentBooking.getTutorBookingContent(bookingTutorId)
                     this.studentBooking.setupLessonBookingEvents()
                 }
+                break
+            case 'zgloszenia':
+                pageTitle.textContent = 'Zgłoś sprawę'
+                contentArea.innerHTML = '<div id="issue-report-container"></div>'
+                
+                // Import and mount IssueReportForm
+                import('@/components/support/IssueReportForm').then((module) => {
+                    const issueForm = new module.IssueReportForm()
+                    const container = document.getElementById('issue-report-container')
+                    if (container) {
+                        issueForm.mount(container)
+                    }
+                })
                 break
         }
     }

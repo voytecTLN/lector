@@ -72,6 +72,10 @@ return [
     'enable_verification' => env('ENABLE_EMAIL_VERIFICATION', true),
     'verification_expire' => env('EMAIL_VERIFICATION_EXPIRY', 24), // hours
     'password_reset_expire' => env('PASSWORD_RESET_EXPIRY', 60), // minutes
+    
+    // Support email addresses
+    'support_technical' => env('SUPPORT_EMAIL_TECHNICAL', 'support-tech@platforma-lektorow.local'),
+    'support_business' => env('SUPPORT_EMAIL_BUSINESS', 'support-biz@platforma-lektorow.local'),
 
     'markdown' => [
         'theme' => 'default',

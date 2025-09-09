@@ -11,6 +11,7 @@ use App\Http\Controllers\TutorController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\ReportsController;
 
 // Health check - publiczny endpoint
 Route::get('/health', function () {
@@ -78,6 +79,8 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.students.search');
                 Route::get('stats', [StudentController::class, 'getStats'])
                     ->name('api.students.stats');
+                Route::get('simple-list', [StudentController::class, 'getSimpleList'])
+                    ->name('api.students.simple-list');
                 Route::put('{id}/learning-goals', [StudentController::class, 'updateLearningGoals'])
                     ->name('api.students.learning-goals.update');
                 Route::post('bulk-status', [StudentController::class, 'bulkUpdateStatus'])
@@ -227,6 +230,8 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.tutors.search');
                 Route::get('/stats', [TutorController::class, 'stats'])
                     ->name('api.tutors.stats');
+                Route::get('/simple-list', [TutorController::class, 'getSimpleList'])
+                    ->name('api.tutors.simple-list');
                 // Removed /available route - using availableForStudents instead
                 Route::get('/export', [TutorController::class, 'export'])
                     ->name('api.tutors.export');
@@ -331,6 +336,26 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.admin.login-logs.stats');
             });
 
+            // Reports endpoints (admin/moderator)
+            Route::prefix('reports')->group(function () {
+                // Raport dostępności lektorów
+                Route::get('/tutor-availability', [ReportsController::class, 'tutorAvailability'])
+                    ->name('api.reports.tutor-availability');
+                
+                // Raport lekcji lektorów
+                Route::get('/tutor-lessons', [ReportsController::class, 'tutorLessons'])
+                    ->name('api.reports.tutor-lessons');
+                
+                // Raport aktywności studentów
+                Route::get('/student-activity', [ReportsController::class, 'studentActivity'])
+                    ->name('api.reports.student-activity');
+                
+                // Eksport raportów
+                Route::get('/{reportType}/export', [ReportsController::class, 'exportReport'])
+                    ->name('api.reports.export');
+            });
+            
+
         });
 
         // Tutor dashboard stats and profile
@@ -433,6 +458,12 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/api/test-tutors-available', [TutorController::class, 'availableForStudents'])
     ->middleware(['auth:sanctum'])
     ->name('api.test.tutors.available');
+
+// Support/Issue Reporting (available to all authenticated users)
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+    Route::post('/support/issue', [\App\Http\Controllers\SupportController::class, 'submitIssue'])
+        ->name('api.support.issue');
+});
 
 
 // CSRF Cookie endpoint for SPA authentication

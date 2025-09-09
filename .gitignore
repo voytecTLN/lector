@@ -96,3 +96,5 @@ CLAUDE.local.md
 # Documentation (temporary)
 docs
 daily-debug.log
+
+.phpunit.result.cache

@@ -57,10 +57,11 @@ class TutorService
             ]);
 
             // 3. Send welcome email
-            $isImport = $data['is_import'] ?? false;
-            if (!$isImport) {
-                $this->notificationService->sendWelcomeEmail($user);
-            }
+            // DISABLED: Tutors receive TutorAccountCreated email instead
+            // $isImport = $data['is_import'] ?? false;
+            // if (!$isImport) {
+            //     $this->notificationService->sendWelcomeEmail($user);
+            // }
 
             DB::commit();
             return $user->load(['tutorProfile']);

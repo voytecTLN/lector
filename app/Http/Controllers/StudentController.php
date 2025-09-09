@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CreateStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
 use App\Services\StudentService;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -234,6 +235,36 @@ class StudentController extends BaseController
             return $this->successResponse($updatedStudent, 'Profile updated successfully');
         } catch (\Exception $e) {
             return $this->handleServiceException($e, 'aktualizacji profilu studenta');
+        }
+    }
+
+    /**
+     * Pobierz prostą listę studentów (do filtrów raportów)
+     */
+    public function getSimpleList(): JsonResponse
+    {
+        try {
+            $students = User::where('role', 'student')
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(function ($student) {
+                    return [
+                        'id' => $student->id,
+                        'name' => $student->name
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'students' => $students
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching students list: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Błąd podczas pobierania listy studentów'
+            ], 500);
         }
     }
 

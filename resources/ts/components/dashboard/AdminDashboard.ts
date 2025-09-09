@@ -135,6 +135,13 @@ export class AdminDashboard implements RouteComponent {
                             Ustawienia systemu
                         </a>
                     </li>
+                    
+                    <li class="admin-nav-item">
+                        <a href="#zgloszenia" class="admin-nav-link" data-section="zgloszenia">
+                            <span class="admin-nav-icon">🎧</span>
+                            Zgłoś sprawę
+                        </a>
+                    </li>
              
 <!--                    <li class="admin-nav-item">-->
 <!--                        <a href="#pomoc" class="admin-nav-link" data-section="pomoc">-->
@@ -513,7 +520,38 @@ export class AdminDashboard implements RouteComponent {
 
             case 'raporty':
                 pageTitle.textContent = 'Raporty'
-                contentArea.innerHTML = this.getReportsContent()
+                
+                // Sprawdź czy jest wybrany konkretny raport
+                const urlParams = new URLSearchParams(window.location.search)
+                const reportType = urlParams.get('report')
+                
+                if (reportType) {
+                    // Załaduj konkretny raport
+                    this.loadSpecificReport(reportType, contentArea as HTMLElement)
+                } else {
+                    // Pokaż hub raportów
+                    contentArea.innerHTML = this.getReportsContent()
+                    
+                    // Mount ReportsHub component
+                    import('../reports/ReportsHub').then(async (module) => {
+                        const reportsHub = new module.ReportsHub()
+                        const container = contentArea.querySelector('#reports-hub-container')
+                        if (container) {
+                            container.innerHTML = reportsHub.render()
+                            reportsHub.attachEventListeners()
+                        }
+                    }).catch(error => {
+                        console.error('Error loading ReportsHub:', error)
+                        contentArea.innerHTML = `
+                            <div class="admin-content-area">
+                                <div class="alert alert-danger">
+                                    <h4>Błąd ładowania</h4>
+                                    <p>Nie udało się załadować komponentu raportów.</p>
+                                </div>
+                            </div>
+                        `
+                    })
+                }
                 break
 
             case 'import-csv':
@@ -826,6 +864,20 @@ export class AdminDashboard implements RouteComponent {
                     `
                 })
                 break
+                
+            case 'zgloszenia':
+                pageTitle.textContent = 'Zgłoś sprawę'
+                contentArea.innerHTML = '<div id="issue-report-container"></div>'
+                
+                // Import and mount IssueReportForm
+                import('@/components/support/IssueReportForm').then((module) => {
+                    const issueForm = new module.IssueReportForm()
+                    const container = document.getElementById('issue-report-container')
+                    if (container) {
+                        issueForm.mount(container)
+                    }
+                })
+                break
 
             default:
                 pageTitle.textContent = 'Dashboard'
@@ -952,17 +1004,66 @@ export class AdminDashboard implements RouteComponent {
     private getReportsContent(): string {
         return `
             <div class="admin-content-area">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h2>Raporty</h2>
-                </div>
-                <p>Raporty dostępne wkrótce.</p>
-                
-                <!-- Tu będzie tabela z raportami -->
-                <div class="table-container">
-                    <p class="admin-text-muted">Raporty</p>
+                <div id="reports-hub-container">
+                    <!-- ReportsHub component will be mounted here -->
                 </div>
             </div>
         `
+    }
+
+    private async loadSpecificReport(reportType: string, contentArea: HTMLElement): Promise<void> {
+        try {
+            let modulePath: string
+            let componentName: string
+            
+            switch(reportType) {
+                case 'tutor-availability':
+                    modulePath = '../reports/tutor/TutorAvailabilityReport'
+                    componentName = 'TutorAvailabilityReport'
+                    break
+                case 'tutor-lessons':
+                    modulePath = '../reports/tutor/TutorLessonsReport'
+                    componentName = 'TutorLessonsReport'
+                    break
+                case 'student-activity':
+                    modulePath = '../reports/student/StudentActivityReport'
+                    componentName = 'StudentActivityReport'
+                    break
+                default:
+                    contentArea.innerHTML = `
+                        <div class="admin-content-area">
+                            <div class="alert alert-warning">
+                                <h4>Nieznany typ raportu</h4>
+                                <p>Raport "${reportType}" nie został rozpoznany.</p>
+                                <a href="/admin/dashboard?section=raporty" class="btn btn-secondary mt-2">
+                                    Powrót do listy raportów
+                                </a>
+                            </div>
+                        </div>
+                    `
+                    return
+            }
+            
+            // Załaduj odpowiedni komponent
+            const module = await import(modulePath)
+            const reportComponent = new module[componentName]()
+            contentArea.innerHTML = await reportComponent.render()
+            await reportComponent.attachEventListeners()
+            
+        } catch (error) {
+            console.error('Error loading report component:', error)
+            contentArea.innerHTML = `
+                <div class="admin-content-area">
+                    <div class="alert alert-danger">
+                        <h4>Błąd ładowania</h4>
+                        <p>Nie udało się załadować raportu. Spróbuj ponownie.</p>
+                        <a href="/admin/dashboard?section=raporty" class="btn btn-secondary mt-2">
+                            Powrót do listy raportów
+                        </a>
+                    </div>
+                </div>
+            `
+        }
     }
 
     private getStudentsContent(): string {

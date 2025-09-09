@@ -94,6 +94,12 @@ export class TutorDashboard implements RouteComponent {
                                 <span>Mój profil</span>
                             </a>
                         </li>
+                        <li class="tutor-nav-item">
+                            <a href="#" class="tutor-nav-link" data-section="zgloszenia">
+                                <span class="tutor-nav-icon">🎧</span>
+                                <span>Zgłoś sprawę</span>
+                            </a>
+                        </li>
                     </ul>
                 </nav>
             </aside>
@@ -271,6 +277,10 @@ export class TutorDashboard implements RouteComponent {
             case 'profile':
                 if (titleEl) titleEl.textContent = 'Mój profil'
                 this.loadProfileContent()
+                break
+            case 'zgloszenia':
+                if (titleEl) titleEl.textContent = 'Zgłoś sprawę'
+                this.loadIssueReportContent()
                 break
             default:
                 this.navigateToSection('dashboard')
@@ -510,5 +520,21 @@ export class TutorDashboard implements RouteComponent {
         contentDiv.appendChild(profileEl)
         
         this.profileComponent.mount(profileEl)
+    }
+
+    private async loadIssueReportContent(): Promise<void> {
+        const contentDiv = this.container?.querySelector('#tutorContent')
+        if (!contentDiv) return
+
+        contentDiv.innerHTML = '<div id="issue-report-container"></div>'
+        
+        // Import and mount IssueReportForm
+        import('@/components/support/IssueReportForm').then((module) => {
+            const issueForm = new module.IssueReportForm()
+            const container = document.getElementById('issue-report-container')
+            if (container) {
+                issueForm.mount(container)
+            }
+        })
     }
 }

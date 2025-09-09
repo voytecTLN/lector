@@ -58,6 +58,7 @@ export class HomePage implements RouteComponent {
                     </div>
                 </div>
             </section>
+            <!--
             <section class="lecturers" id="lecturers">
                 <div class="container">
                     <h2>Poznaj naszych lektorów</h2>
@@ -104,6 +105,7 @@ export class HomePage implements RouteComponent {
                     </div>
                 </div>
             </section>
+            -->
             <section class="about" id="about">
                 <div class="container">
                     <h2>O naszej platformie</h2>

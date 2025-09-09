@@ -7,8 +7,11 @@ use App\Services\TutorService;
 use App\Http\Requests\CreateTutorRequest;
 use App\Http\Requests\UpdateTutorRequest;
 use App\Models\User;
+use App\Mail\TutorAccountCreated;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class TutorController extends Controller
@@ -50,11 +53,30 @@ class TutorController extends Controller
     {
         $data = $request->validated();
         
-        // Auto-verify users created by admin (like import)
+        // Auto-verify users created by admin 
         $data['email_verified_at'] = now();
-        $data['is_import'] = true; // Skip welcome email
         
+        // Create tutor
         $tutor = $this->tutorService->createTutor($data);
+
+        // Send welcome email with password reset link
+        try {
+            $resetToken = $tutor->generatePasswordResetToken();
+            $resetUrl = config('app.url') . '/reset-password?' . http_build_query([
+                'token' => $resetToken,
+                'email' => $tutor->email
+            ]);
+            
+            Mail::to($tutor->email)->send(new TutorAccountCreated($tutor, $resetUrl));
+            
+        } catch (\Exception $e) {
+            // Log the error but don't fail the creation
+            \Log::error('Failed to send tutor welcome email', [
+                'tutor_id' => $tutor->id,
+                'email' => $tutor->email,
+                'error' => $e->getMessage()
+            ]);
+        }
 
         return response()->json($tutor, 201);
     }
@@ -674,6 +696,36 @@ class TutorController extends Controller
                 'success' => false,
                 'message' => $e->getMessage()
             ], 400);
+        }
+    }
+
+    /**
+     * Pobierz prostą listę lektorów (do filtrów raportów)
+     */
+    public function getSimpleList(): JsonResponse
+    {
+        try {
+            $tutors = User::where('role', 'tutor')
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(function ($tutor) {
+                    return [
+                        'id' => $tutor->id,
+                        'name' => $tutor->name
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'tutors' => $tutors
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching tutors list: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Błąd podczas pobierania listy lektorów'
+            ], 500);
         }
     }
 }

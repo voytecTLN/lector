@@ -261,3 +261,20 @@ For deployment issues:
 4. Check file permissions
 
 Remember to test deployment process on staging environment before production deployment.
+
+
+
+
+📋 Podsumowanie lokalizacji:
+
+| Aspekt    | Development                  | Production                                                                     |
+|-----------|------------------------------|--------------------------------------------------------------------------------|
+| HMR       | docker/nginx/dev.conf:7-13   | Brak w prod.conf                                                               |
+| Debug     | .env.example:APP_DEBUG=true  | .env.production.example:APP_DEBUG=falsedocker-compose.prod.yml:APP_DEBUG=false |
+| Cache     | Makefile:84-86 (clear-cache) | Makefile:108-110 + Dockerfile:67-69                                            |
+| SSL       | dev.conf:2 (port 80)         | prod.conf:100-112 (SSL ready)                                                  |
+| Gzip      | Brak w dev.conf              | prod.conf:15-25                                                                |
+| Security  | dev.conf:18 (Cache only)     | prod.conf:8-12 + 29-38 (headers + file protection)                             |
+| Processes | Podstawowe kontenery         | docker/supervisord.conf:15-32                                                  |
+
+Każda konfiguracja ma swoje dedykowane pliki i sekcje, co pozwala na łatwe zarządzanie różnicami między środowiskami! 🚀
