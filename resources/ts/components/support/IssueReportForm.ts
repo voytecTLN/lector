@@ -46,6 +46,7 @@ export class IssueReportForm {
                                                 <select id="issue-type" name="issue_type" class="form-select" required>
                                                     <option value="">Wybierz typ zgłoszenia</option>
                                                     <option value="technical">🔧 Techniczne (błędy, problemy z działaniem)</option>
+                                                    <option value="lessons">📚 Lekcje (rezerwacje, problemy z lekcjami)</option>
                                                     <option value="business">💼 Biznesowe (pakiety, współpraca)</option>
                                                 </select>
                                                 <div class="invalid-feedback"></div>
@@ -94,7 +95,7 @@ export class IssueReportForm {
                                             name="description" 
                                             class="form-control" 
                                             rows="6"
-                                            placeholder="Opisz szczegółowo problem:&#10;- Co robiłeś gdy wystąpił problem?&#10;- Jakie kroki podejmowałeś?&#10;- Czy problem występuje zawsze?&#10;- Jakiej odpowiedzi oczekujesz?"
+                                            placeholder="Techniczne:&#10;- Jaki problem występuje? Jakie kroki podejmowałeś? Czy problem występuje zawsze?&#10;Lekcje:&#10;- Kiedy miała się odbyć? Jaki jest status lekcji?&#10;Biznesowe:&#10;- Dotyczące pakietów, współpracy lub innych kwestii biznesowych"
                                             required
                                             minlength="20"
                                             maxlength="2000"

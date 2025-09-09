@@ -26,7 +26,7 @@ class SupportController extends Controller
         }
 
         $validated = $request->validate([
-            'issue_type' => ['required', 'in:technical,business'],
+            'issue_type' => ['required', 'in:technical,lessons,business'],
             'subject' => ['required', 'string', 'min:5', 'max:200'],
             'description' => ['required', 'string', 'min:20', 'max:2000'],
             'priority' => ['required', 'in:low,medium,high'],
@@ -49,6 +49,7 @@ class SupportController extends Controller
         // Determine support email based on issue type
         $supportEmail = match ($validated['issue_type']) {
             'technical' => config('mail.support_technical', env('SUPPORT_EMAIL_TECHNICAL', 'support-tech@platforma-lektorow.local')),
+            'lessons' => config('mail.support_lessons', env('SUPPORT_EMAIL_LESSONS', 'support-lessons@platforma-lektorow.local')),
             'business' => config('mail.support_business', env('SUPPORT_EMAIL_BUSINESS', 'support-biz@platforma-lektorow.local')),
         };
 

@@ -3,7 +3,7 @@
 
 **Od:** {{ $user->name }} ({{ $user->email }})  
 **Rola:** {{ ucfirst($user->role) }}  
-**Typ zgłoszenia:** {{ $issueType === 'technical' ? 'Techniczne' : 'Biznesowe' }}  
+**Typ zgłoszenia:** {{ match($issueType) { 'technical' => 'Techniczne', 'lessons' => 'Lekcje', 'business' => 'Biznesowe', default => 'Inne' } }}  
 **Priorytet:** {{ match($priority) { 'high' => '🔴 Wysoki', 'medium' => '🟡 Średni', default => '🟢 Niski' } }}  
 
 ---
