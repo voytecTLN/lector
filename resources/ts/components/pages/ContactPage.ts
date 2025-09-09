@@ -13,7 +13,7 @@ export class ContactPage implements RouteComponent {
                 <div class="container">
                     <h1>Kontakt</h1>
                     <p>Masz pytania?</p>
-                    <p>Dane firmy</p>
+                    <p>Strona w przygotowaniu</p>
                 </div>
             </section>
         `

@@ -46,7 +46,7 @@ export class IssueReportForm {
                                                 <select id="issue-type" name="issue_type" class="form-select" required>
                                                     <option value="">Wybierz typ zgłoszenia</option>
                                                     <option value="technical">🔧 Techniczne (błędy, problemy z działaniem)</option>
-                                                    <option value="business">💼 Biznesowe (faktury, płatności, współpraca)</option>
+                                                    <option value="business">💼 Biznesowe (pakiety, współpraca)</option>
                                                 </select>
                                                 <div class="invalid-feedback"></div>
                                             </div>
@@ -136,15 +136,15 @@ export class IssueReportForm {
                                         <h6><i class="bi bi-telephone text-primary me-2"></i>Kontakt telefoniczny</h6>
                                         <p class="small text-muted">
                                             W przypadku pilnych spraw technicznych:<br>
-                                            <strong>+48 123 456 789</strong><br>
-                                            <small>Poniedziałek - Piątek: 9:00 - 17:00</small>
+                                            <strong>+48 22 113 4004</strong><br>
+                                            <small>Poniedziałek - Piątek: 10:00 - 18:00</small>
                                         </p>
                                     </div>
                                     <div class="col-md-6">
                                         <h6><i class="bi bi-envelope text-primary me-2"></i>Email bezpośredni</h6>
                                         <p class="small text-muted">
                                             Możesz też napisać bezpośrednio na:<br>
-                                            <strong>support@platforma-lektorow.pl</strong><br>
+                                            <strong>kontakt@tele-nauka.pl</strong><br>
                                             <small>Odpowiadamy w ciągu 24-48 godzin</small>
                                         </p>
                                     </div>

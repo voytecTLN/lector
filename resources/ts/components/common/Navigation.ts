@@ -46,7 +46,6 @@ export class Navigation {
                 </div>
                 <ul class="nav-links">
                     <li><a href="${urlBuilder.hash(ROUTES.HOME)}" class="${isActive(ROUTES.HOME)}">Start</a></li>
-                    <li><a href="${urlBuilder.hash(ROUTES.HOME)}#lecturers" class="${isActive('/#lecturers')}">Lektorzy</a></li>
                     <li><a href="${urlBuilder.hash(ROUTES.HOME)}#about" class="${isActive('/#about')}">O nas</a></li>
                     <li><a href="${urlBuilder.hash(ROUTES.CONTACT)}" class="${isActive(ROUTES.CONTACT)}">Kontakt</a></li>
                 </ul>

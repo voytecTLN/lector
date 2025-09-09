@@ -163,6 +163,62 @@ export class ReportsHub {
         return []
     }
 
+    public async mount(container: HTMLElement): Promise<void> {
+        // Sprawdź czy jest wybrany konkretny raport w URL
+        const urlParams = new URLSearchParams(window.location.search)
+        const reportType = urlParams.get('report')
+        
+        if (reportType) {
+            // Załaduj konkretny raport
+            await this.loadSpecificReport(reportType, container)
+        } else {
+            // Pokaż hub raportów
+            container.innerHTML = this.render()
+            this.attachEventListeners()
+        }
+    }
+    
+    private async loadSpecificReport(reportType: string, container: HTMLElement): Promise<void> {
+        try {
+            let reportModule: any
+            
+            switch (reportType) {
+                case 'tutor-availability':
+                    reportModule = await import('./tutor/TutorAvailabilityReport')
+                    const availabilityReport = new reportModule.TutorAvailabilityReport()
+                    container.innerHTML = await availabilityReport.render()
+                    availabilityReport.attachEventListeners()
+                    break
+                    
+                case 'tutor-lessons':
+                    reportModule = await import('./tutor/TutorLessonsReport')
+                    const lessonsReport = new reportModule.TutorLessonsReport()
+                    container.innerHTML = await lessonsReport.render()
+                    lessonsReport.attachEventListeners()
+                    break
+                    
+                case 'student-activity':
+                    reportModule = await import('./student/StudentActivityReport')
+                    const activityReport = new reportModule.StudentActivityReport()
+                    container.innerHTML = await activityReport.render()
+                    activityReport.attachEventListeners()
+                    break
+                    
+                default:
+                    // Nieznany raport - pokaż hub
+                    container.innerHTML = this.render()
+                    this.attachEventListeners()
+            }
+        } catch (error) {
+            console.error('Error loading specific report:', error)
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    Błąd podczas ładowania raportu
+                </div>
+            `
+        }
+    }
+
     public attachEventListeners(): void {
         // Obsługa kliknięć w karty raportów
         document.querySelectorAll('.generate-report-btn').forEach(btn => {

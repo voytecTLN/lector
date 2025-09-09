@@ -420,7 +420,6 @@ export class TutorDashboard implements RouteComponent {
                                     <div class="display-4 text-primary me-3">${weeklyLimit}</div>
                                     <div>
                                         <div class="text-muted">godzin tygodniowo</div>
-                                        <small class="text-muted">Limit kontraktowy</small>
                                     </div>
                                 </div>
                                 <hr>

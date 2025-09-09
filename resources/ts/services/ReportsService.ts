@@ -1,5 +1,6 @@
 import { api } from './ApiService'
 
+// Report-specific interfaces (keep in service for encapsulation)
 export interface ReportFilters {
     dateFrom?: string
     dateTo?: string

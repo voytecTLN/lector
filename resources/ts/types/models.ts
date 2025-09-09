@@ -1,3 +1,100 @@
+// Reports interfaces
+export interface ReportFilters {
+  dateFrom?: string
+  dateTo?: string
+  tutorId?: number
+  studentId?: number
+  action?: string
+  status?: string
+}
+
+export interface AvailabilityReportData {
+  summary: {
+    totalChanges: number
+    totalTutors: number
+    additions: number
+    deletions: number
+    period: string
+  }
+  byTutor: Array<{
+    tutorId: number
+    tutorName: string
+    additions: number
+    deletions: number
+    totalChanges: number
+  }>
+  recentChanges: Array<{
+    id: number
+    tutorName: string
+    action: string
+    date: string
+    time: string
+    createdAt: string
+  }>
+  dailyActivity?: Array<{
+    date: string
+    additions: number
+    deletions: number
+  }>
+}
+
+export interface LessonsReportData {
+  summary: {
+    totalLessons: number
+    scheduled: number
+    completed: number
+    cancelled: number
+    completionRate: number
+    period: string
+  }
+  byTutor: Array<{
+    tutorId: number
+    tutorName: string
+    scheduled: number
+    completed: number
+    cancelled: number
+    completionRate: number
+  }>
+  recentLessons: Array<{
+    id: number
+    tutorName: string
+    studentName: string
+    subject: string
+    date: string
+    time: string
+    status: string
+  }>
+}
+
+export interface StudentActivityReportData {
+  summary: {
+    totalStudents: number
+    activeStudents: number
+    totalBookings: number
+    completedLessons: number
+    cancelledLessons: number
+    averageAttendance: number
+    period: string
+  }
+  byStudent: Array<{
+    studentId: number
+    studentName: string
+    totalBookings: number
+    completedLessons: number
+    cancelledLessons: number
+    attendanceRate: number
+    lastActivity: string
+  }>
+  recentActivity: Array<{
+    id: number
+    studentName: string
+    action: string
+    details: string
+    date: string
+    time: string
+  }>
+}
+
 export interface User {
   id: number
   name: string

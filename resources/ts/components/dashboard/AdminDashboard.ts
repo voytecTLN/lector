@@ -520,38 +520,27 @@ export class AdminDashboard implements RouteComponent {
 
             case 'raporty':
                 pageTitle.textContent = 'Raporty'
+                contentArea.innerHTML = this.getReportsContent()
                 
-                // Sprawdź czy jest wybrany konkretny raport
-                const urlParams = new URLSearchParams(window.location.search)
-                const reportType = urlParams.get('report')
-                
-                if (reportType) {
-                    // Załaduj konkretny raport
-                    this.loadSpecificReport(reportType, contentArea as HTMLElement)
-                } else {
-                    // Pokaż hub raportów
-                    contentArea.innerHTML = this.getReportsContent()
-                    
-                    // Mount ReportsHub component
-                    import('../reports/ReportsHub').then(async (module) => {
-                        const reportsHub = new module.ReportsHub()
-                        const container = contentArea.querySelector('#reports-hub-container')
-                        if (container) {
-                            container.innerHTML = reportsHub.render()
-                            reportsHub.attachEventListeners()
-                        }
-                    }).catch(error => {
-                        console.error('Error loading ReportsHub:', error)
-                        contentArea.innerHTML = `
-                            <div class="admin-content-area">
-                                <div class="alert alert-danger">
-                                    <h4>Błąd ładowania</h4>
-                                    <p>Nie udało się załadować komponentu raportów.</p>
-                                </div>
+                // Mount ReportsHub component - deleguj całą logikę do ReportsHub
+                import('../reports/ReportsHub').then(async (module) => {
+                    const reportsHub = new module.ReportsHub()
+                    const container = contentArea.querySelector('#reports-hub-container')
+                    if (container) {
+                        // ReportsHub zajmie się sprawdzeniem URL i załadowaniem odpowiedniego widoku
+                        await reportsHub.mount(container as HTMLElement)
+                    }
+                }).catch(error => {
+                    console.error('Error loading ReportsHub:', error)
+                    contentArea.innerHTML = `
+                        <div class="admin-content-area">
+                            <div class="alert alert-danger">
+                                <h4>Błąd ładowania</h4>
+                                <p>Nie udało się załadować komponentu raportów.</p>
                             </div>
-                        `
-                    })
-                }
+                        </div>
+                    `
+                })
                 break
 
             case 'import-csv':
