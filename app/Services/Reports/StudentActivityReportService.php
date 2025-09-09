@@ -14,11 +14,12 @@ class StudentActivityReportService
      */
     public function generateReport(array $filters): array
     {
-        $dateFrom = Carbon::parse($filters['dateFrom'] ?? Carbon::now()->subMonth());
-        $dateTo = Carbon::parse($filters['dateTo'] ?? Carbon::now())->endOfDay();
+        try {
+            $dateFrom = Carbon::parse($filters['dateFrom'] ?? Carbon::now()->subMonth());
+            $dateTo = Carbon::parse($filters['dateTo'] ?? Carbon::now())->endOfDay();
         
-        // Pobierz studentów z lekcjami w okresie
-        $query = Lesson::whereBetween('scheduled_at', [$dateFrom, $dateTo]);
+            // Pobierz studentów z lekcjami w okresie (użyj lesson_date zamiast scheduled_at)
+            $query = Lesson::whereBetween('lesson_date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')]);
         
         if (!empty($filters['studentId'])) {
             $query->where('student_id', $filters['studentId']);
@@ -39,11 +40,18 @@ class StudentActivityReportService
         $studentStats = $this->calculateStudentStats($lessons, $students);
         $activityTrends = $this->calculateActivityTrends($lessons, $dateFrom, $dateTo);
         
-        return [
-            'summary' => $summary,
-            'students' => $studentStats,
-            'activityTrends' => $activityTrends
-        ];
+            return [
+                'summary' => $summary,
+                'students' => $studentStats,
+                'activityTrends' => $activityTrends
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Error in StudentActivityReportService: ' . $e->getMessage(), [
+                'filters' => $filters,
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
     
     /**
@@ -91,8 +99,8 @@ class StudentActivityReportService
                     'student_cancelled', 
                     'tutor_cancelled'
                 ])->count(),
-                'lastActivity' => $studentLessons->sortByDesc('scheduled_at')->first()
-                    ? Carbon::parse($studentLessons->sortByDesc('scheduled_at')->first()->scheduled_at)->format('Y-m-d H:i')
+                'lastActivity' => $studentLessons->sortByDesc('lesson_date')->first()
+                    ? Carbon::parse($studentLessons->sortByDesc('lesson_date')->first()->lesson_date)->format('Y-m-d')
                     : 'Brak',
                 'registeredAt' => Carbon::parse($student->created_at)->format('Y-m-d')
             ];
@@ -116,7 +124,7 @@ class StudentActivityReportService
         
         while ($currentDate <= $dateTo) {
             $dayLessons = $lessons->filter(function($lesson) use ($currentDate) {
-                return Carbon::parse($lesson->scheduled_at)->format('Y-m-d') === $currentDate->format('Y-m-d');
+                return Carbon::parse($lesson->lesson_date)->format('Y-m-d') === $currentDate->format('Y-m-d');
             });
             
             $trends[] = [

@@ -81,7 +81,10 @@ Options -Indexes -MultiViews +FollowSymLinks
 
     # Blokuj dostęp do folderów Laravel (MUSI BYĆ PIERWSZE!)
     RewriteRule ^(app|bootstrap|config|database|lang|resources|routes|tests|vendor)/.*$ - [F,L]
-    RewriteRule ^(storage)/(.*)$ - [F,L]
+    
+    # Zezwól na dostęp do public storage (avatary, uploads), blokuj resztę storage
+    RewriteCond %{REQUEST_URI} !^/storage/(avatars|uploads)/
+    RewriteRule ^storage/(.*)$ - [F,L]
 
     # Blokuj dostęp do node_modules (build/assets/ musi być dostępny dla Vite)
     # [DODANE]

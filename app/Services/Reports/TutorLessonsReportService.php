@@ -14,11 +14,12 @@ class TutorLessonsReportService
      */
     public function generateReport(array $filters): array
     {
-        $dateFrom = Carbon::parse($filters['dateFrom'] ?? Carbon::now()->subMonth());
-        $dateTo = Carbon::parse($filters['dateTo'] ?? Carbon::now())->endOfDay();
+        try {
+            $dateFrom = Carbon::parse($filters['dateFrom'] ?? Carbon::now()->subMonth());
+            $dateTo = Carbon::parse($filters['dateTo'] ?? Carbon::now())->endOfDay();
         
-        // Pobierz lekcje z okresu
-        $query = Lesson::whereBetween('scheduled_at', [$dateFrom, $dateTo]);
+        // Pobierz lekcje z okresu (użyj lesson_date zamiast scheduled_at)
+        $query = Lesson::whereBetween('lesson_date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')]);
         
         if (!empty($filters['tutorId'])) {
             $query->where('tutor_id', $filters['tutorId']);
@@ -35,11 +36,18 @@ class TutorLessonsReportService
         $tutorStats = $this->calculateTutorStats($lessons);
         $statusBreakdown = $this->calculateStatusBreakdown($lessons);
         
-        return [
-            'summary' => $summary,
-            'tutors' => $tutorStats,
-            'statusBreakdown' => $statusBreakdown
-        ];
+            return [
+                'summary' => $summary,
+                'tutors' => $tutorStats,
+                'statusBreakdown' => $statusBreakdown
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Error in TutorLessonsReportService: ' . $e->getMessage(), [
+                'filters' => $filters,
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
     
     /**

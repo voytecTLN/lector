@@ -14,12 +14,13 @@ class TutorAvailabilityReportService
      */
     public function generateReport(array $filters): array
     {
-        $dateFrom = Carbon::parse($filters['dateFrom'] ?? Carbon::now()->subMonth());
-        $dateTo = Carbon::parse($filters['dateTo'] ?? Carbon::now())->endOfDay();
+        try {
+            $dateFrom = Carbon::parse($filters['dateFrom'] ?? Carbon::now()->subMonth());
+            $dateTo = Carbon::parse($filters['dateTo'] ?? Carbon::now())->endOfDay();
         
-        // Pobierz dane z logów
-        $query = DB::table('tutor_availability_logs')
-            ->whereBetween('created_at', [$dateFrom, $dateTo]);
+            // Pobierz dane z logów
+            $query = DB::table('tutor_availability_logs')
+                ->whereBetween('created_at', [$dateFrom, $dateTo]);
         
         if (!empty($filters['tutorId'])) {
             $query->where('tutor_id', $filters['tutorId']);
@@ -36,11 +37,18 @@ class TutorAvailabilityReportService
         $tutorStats = $this->calculateTutorStats($logs);
         $dailyActivity = $this->calculateDailyActivity($logs, $dateFrom, $dateTo);
         
-        return [
-            'summary' => $summary,
-            'tutors' => $tutorStats,
-            'dailyActivity' => $dailyActivity
-        ];
+            return [
+                'summary' => $summary,
+                'tutors' => $tutorStats,
+                'dailyActivity' => $dailyActivity
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Error in TutorAvailabilityReportService: ' . $e->getMessage(), [
+                'filters' => $filters,
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
     
     /**
