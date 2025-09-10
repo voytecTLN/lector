@@ -1,5 +1,6 @@
 // resources/ts/router/guards.ts - POPRAWIONA WERSJA
 import { authService } from '@services/AuthService'
+import Logger from '@/utils/logger'
 import type { MatchedRoute } from './routes'
 
 export interface GuardContext {
@@ -23,7 +24,7 @@ export class AuthGuard implements RouteGuard {
     name = 'auth'
 
     execute(context: GuardContext): GuardResult {
-        console.log(`🛡️ AuthGuard: Checking route "${context.to.route.name}"`, {
+        Logger.guard(`AuthGuard: Checking route "${context.to.route.name}"`, {
             path: context.to.path,
             requiresAuth: context.to.route.meta?.requiresAuth,
             requiresGuest: context.to.route.meta?.requiresGuest,
@@ -33,7 +34,7 @@ export class AuthGuard implements RouteGuard {
         // NOWE: Specjalna obsługa dla stron związanych z weryfikacją
         const verificationRoutes = ['verify-email', 'resend-verification']
         if (verificationRoutes.includes(context.to.route.name)) {
-            console.log(`✅ AuthGuard: Allowing access to ${context.to.route.name} (verification route)`)
+            Logger.debug(`AuthGuard: Allowing access to ${context.to.route.name} (verification route)`)
             return { allowed: true }
         }
 
@@ -41,7 +42,7 @@ export class AuthGuard implements RouteGuard {
         const requiresAuth = context.to.route.meta?.requiresAuth
         const requiresGuest = context.to.route.meta?.requiresGuest
 
-        console.log(`🛡️ AuthGuard: checking route ${context.to.route.name}`, {
+        Logger.guard(`AuthGuard: checking route ${context.to.route.name}`, {
             requiresAuth,
             requiresGuest,
             isAuthenticated
@@ -91,14 +92,14 @@ export class VerificationGuard implements RouteGuard {
     name = 'verification'
 
     execute(context: GuardContext): GuardResult {
-        console.log(`✅ VerificationGuard: Checking route "${context.to.route.name}"`, {
+        Logger.guard(`VerificationGuard: Checking route "${context.to.route.name}"`, {
             path: context.to.path,
             requiresVerification: context.to.route.meta?.requiresVerification
         })
 
         const requiresVerification = context.to.route.meta?.requiresVerification
 
-        console.log(`✅ VerificationGuard: checking verification for ${context.to.route.name}`, {
+        Logger.guard(`VerificationGuard: checking verification for ${context.to.route.name}`, {
             requiresVerification
         })
 
@@ -118,7 +119,7 @@ export class VerificationGuard implements RouteGuard {
 
         const isVerified = authService.isVerified()
 
-        console.log(`✅ VerificationGuard: user verification status`, {
+        Logger.guard(`VerificationGuard: user verification status`, {
             isVerified,
             email_verified_at: user.email_verified_at
         })
@@ -140,7 +141,7 @@ export class RoleGuard implements RouteGuard {
     name = 'role'
 
     execute(context: GuardContext): GuardResult {
-        console.log(`🎭 RoleGuard: Checking route "${context.to.route.name}"`, {
+        Logger.guard(`RoleGuard: Checking route "${context.to.route.name}"`, {
             path: context.to.path,
             requiredRoles: context.to.route.meta?.roles,
             userRole: authService.getUser()?.role
@@ -149,7 +150,7 @@ export class RoleGuard implements RouteGuard {
         const user = authService.getUser()
         const requiredRoles = context.to.route.meta?.roles
 
-        console.log(`🎭 RoleGuard: checking roles for ${context.to.route.name}`, {
+        Logger.guard(`RoleGuard: checking roles for ${context.to.route.name}`, {
             requiredRoles,
             userRole: user?.role
         })
@@ -187,7 +188,7 @@ export class PermissionGuard implements RouteGuard {
     execute(context: GuardContext): GuardResult {
         const requiredPermissions = context.to.route.meta?.permissions
 
-        console.log(`🔐 PermissionGuard: checking permissions for ${context.to.route.name}`, {
+        Logger.guard(`PermissionGuard: checking permissions for ${context.to.route.name}`, {
             requiredPermissions
         })
 
@@ -209,7 +210,7 @@ export class PermissionGuard implements RouteGuard {
             authService.hasPermission(permission)
         )
 
-        console.log(`🔐 PermissionGuard: permission check result`, {
+        Logger.guard(`PermissionGuard: permission check result`, {
             hasPermission,
             userPermissions: authService.getPermissions()
         })
@@ -237,7 +238,7 @@ export class AccountStatusGuard implements RouteGuard {
             return { allowed: true } // Other guards will handle auth
         }
 
-        console.log(`📊 AccountStatusGuard: checking account status`, {
+        Logger.guard(`AccountStatusGuard: checking account status`, {
             userStatus: user.status,
             route: context.to.route.name
         })
@@ -288,7 +289,7 @@ export class SessionGuard implements RouteGuard {
     async execute(context: GuardContext): Promise<GuardResult> {
         // NOWE: Specjalna obsługa dla /verify-email
         if (context.to.route.name === 'verify-email') {
-            console.log('✅ SessionGuard: Skipping session check for verify-email page')
+            Logger.debug('SessionGuard: Skipping session check for verify-email page')
             return { allowed: true }
         }
 
@@ -312,13 +313,13 @@ export class SessionGuard implements RouteGuard {
 
         // Jeśli mamy token ale nie mamy użytkownika, spróbuj pobrać dane
         if (token && !user) {
-            console.log('🔄 SessionGuard: Token exists but no user data, fetching...')
+            Logger.debug('SessionGuard: Token exists but no user data, fetching...')
 
             try {
                 await authService.getCurrentUser()
                 return { allowed: true }
             } catch (error) {
-                console.log('❌ SessionGuard: Failed to fetch user, session expired')
+                Logger.warn('SessionGuard: Failed to fetch user, session expired')
 
                 // NOWE: Nie czyść danych dla pewnych ścieżek
                 const safeRoutes = ['verify-email', 'login', 'register', 'forgot-password', 'reset-password']

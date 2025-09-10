@@ -16,7 +16,13 @@ class NewPasswordRequest extends FormRequest
     {
         return [
             'token' => 'required|string',
-            'password' => 'required|string|min:8|confirmed'
+            'password' => [
+                'required',
+                'string',
+                'min:12',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?~`]).+$/'
+            ]
         ];
     }
 
@@ -25,8 +31,9 @@ class NewPasswordRequest extends FormRequest
         return [
             'token.required' => 'Token resetowania jest wymagany',
             'password.required' => 'Nowe hasło jest wymagane',
-            'password.min' => 'Hasło musi mieć minimum 8 znaków',
-            'password.confirmed' => 'Hasła muszą być identyczne'
+            'password.min' => 'Hasło musi mieć co najmniej 12 znaków',
+            'password.confirmed' => 'Hasła muszą być identyczne',
+            'password.regex' => 'Hasło musi zawierać co najmniej: jedną małą literę, jedną wielką literę, jedną cyfrę i jeden znak specjalny'
         ];
     }
 }

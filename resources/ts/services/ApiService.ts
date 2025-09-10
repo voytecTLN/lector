@@ -1,6 +1,7 @@
 // resources/ts/services/ApiService.ts - Zgodny z Laravel Sanctum
 import { ValidationError } from "@/types/models"
 import { navigateTo } from '@/utils/navigation'
+import Logger from '@/utils/logger'
 
 interface LaravelResponse<T = any> {
   success: boolean
@@ -64,7 +65,7 @@ export class ApiService {
     }
 
     try {
-      console.log(`🌐 API Request: ${options.method || 'GET'} ${endpoint}`)
+      Logger.api(`API Request: ${options.method || 'GET'} ${endpoint}`)
 
       const response = await fetch(`${this.baseURL}${endpoint}`, {
         ...options,
@@ -72,11 +73,11 @@ export class ApiService {
         credentials: 'include' // Changed from 'same-origin' to 'include' for better session handling
       })
 
-      console.log(`📡 API Response: ${response.status} ${response.statusText}`)
+      Logger.api(`API Response: ${response.status} ${response.statusText}`)
 
       // Obsługa 419 - CSRF token mismatch
       if (response.status === 419 && retryCount < 2) {
-        console.log('🔄 CSRF token mismatch, refreshing token and retrying...')
+        Logger.debug('CSRF token mismatch, refreshing token and retrying...')
 
         // Odśwież CSRF token
         await this.refreshCSRF()
@@ -122,8 +123,8 @@ export class ApiService {
 
       // Sprawdź content-type
       const contentType = response.headers.get('content-type')
-      console.log('Content-Type:', contentType)
-      console.log('Response OK:', response.ok)
+      Logger.api('Content-Type:', contentType)
+      Logger.api('Response OK:', response.ok)
       
       if (!contentType || !contentType.includes('application/json')) {
         if (!response.ok) {
@@ -132,18 +133,18 @@ export class ApiService {
         
         // Check if it's CSV or other binary content
         if (contentType && (contentType.includes('text/csv') || contentType.includes('application/octet-stream'))) {
-          console.log('📄 Returning blob for CSV/binary content')
+          Logger.debug('Returning blob for CSV/binary content')
           const blob = await response.blob()
           return blob as T
         }
         
-        console.log('⚠️ Content-Type is not JSON, returning empty object')
+        Logger.warn('Content-Type is not JSON, returning empty object')
         // Zwróć pustą odpowiedź jeśli nie ma JSON
         return {} as T
       }
 
       const result: LaravelResponse<T> = await response.json()
-      console.log('Parsed JSON result:', result)
+      Logger.api('Parsed JSON result:', result)
 
       if (!response.ok) {
         // Laravel validation errors (422)
@@ -281,7 +282,7 @@ export class ApiService {
   // Metoda do odświeżenia CSRF tokenu dla Sanctum
   async refreshCSRF(): Promise<void> {
     try {
-      console.log('🔐 Refreshing CSRF token...')
+      Logger.debug('Refreshing CSRF token...')
 
       await fetch('/sanctum/csrf-cookie', {
         method: 'GET',
@@ -296,7 +297,7 @@ export class ApiService {
       const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
       this.csrfToken = token || ''
 
-      console.log('✅ CSRF token refreshed')
+      Logger.debug('CSRF token refreshed')
     } catch (error) {
       console.error('❌ Failed to refresh CSRF token:', error)
       // Nie rzucaj błędu - pozwól żądaniu kontynuować

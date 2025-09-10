@@ -3,6 +3,7 @@ import '../css/app.css'
 import { Router } from '@/router'
 import { authService } from '@services/AuthService'
 import { NavigationUtils } from '@/utils/navigation'
+import Logger from '@/utils/logger'
 
 class Application {
     private router: Router
@@ -13,7 +14,7 @@ class Application {
 
     async init(): Promise<void> {
         try {
-            console.log('🚀 Initializing Platforma Lektorów SPA...')
+            Logger.info('Initializing Platforma Lektorów SPA...')
 
             // Initialize CSRF token
             this.initCSRF()
@@ -43,7 +44,7 @@ class Application {
             // Set app as ready - ZMIANA: bezpośrednio na body
             document.body.classList.add('app-ready')
 
-            console.log('✅ Application initialized successfully')
+            Logger.info('Application initialized successfully')
 
         } catch (error) {
             console.error('❌ Application initialization failed:', error)
@@ -63,20 +64,20 @@ class Application {
         try {
             // Try to get current user if token exists
             if (authService.getToken()) {
-                console.log('🔑 Token found, verifying with server...')
+                Logger.auth('Token found, verifying with server...')
                 await authService.getCurrentUser()
-                console.log('✅ User authenticated successfully')
+                Logger.auth('User authenticated successfully')
             } else {
-                console.log('👤 No token found, user is not authenticated')
+                Logger.auth('No token found, user is not authenticated')
             }
         } catch (error: any) {
             console.warn('⚠️ Auth initialization failed:', error.message)
             // Only clear auth data if it's actually invalid, not if it's a network error
             if (error.message?.includes('401') || error.message?.includes('403')) {
-                console.log('🧹 Clearing invalid auth data')
+                Logger.warn('Clearing invalid auth data')
                 authService.logout()
             } else {
-                console.log('🌐 Network error during auth check, keeping existing auth data')
+                Logger.warn('Network error during auth check, keeping existing auth data')
             }
         }
     }
@@ -89,7 +90,7 @@ class Application {
         window.addEventListener('popstate', this.handlePopState.bind(this))
 
         window.addEventListener('hashchange', (event) => {
-            console.log('🔄 Hash changed:', {
+            Logger.debug('Hash changed:', {
                 oldURL: event.oldURL,
                 newURL: event.newURL,
                 newHash: window.location.hash
@@ -114,9 +115,9 @@ class Application {
     }
 
     private async handleLogout(): Promise<void> {
-        console.log('🚪 Handling logout event')
+        Logger.debug('Handling logout event')
         await authService.logout()
-        console.log('✅ Logout complete, navigating to login')
+        Logger.debug('Logout complete, navigating to login')
         this.router.navigate('/login')
     }
 
@@ -142,7 +143,7 @@ class Application {
             if (link.href.includes('#/')) {
                 const hashIndex = link.href.indexOf('#/')
                 const hashPath = link.href.substring(hashIndex + 1) // Pobierz część po #
-                console.log('🔗 Navigating to hash path:', hashPath)
+                Logger.debug('Navigating to hash path:', hashPath)
                 this.router.navigate(hashPath)
             } else {
                 this.router.navigate(link.pathname + link.search + link.hash)
@@ -180,7 +181,7 @@ class Application {
         document.body.classList.toggle('user-authenticated', isAuthenticated)
         document.body.classList.toggle('user-guest', !isAuthenticated)
 
-        console.log(`Auth state changed: ${type}, authenticated: ${isAuthenticated}`)
+        Logger.debug(`Auth state changed: ${type}, authenticated: ${isAuthenticated}`)
 
         // Jeśli użytkownik został wylogowany i jest na chronionej stronie
         if (!isAuthenticated && type === 'logout') {
@@ -188,7 +189,7 @@ class Application {
             const protectedPaths = ['/admin', '/moderator', '/tutor', '/student', '/profile', '/settings']
 
             if (protectedPaths.some(path => currentPath.startsWith(path))) {
-                console.log('🔒 User logged out from protected route, redirecting to home...')
+                Logger.debug('User logged out from protected route, redirecting to home...')
                 this.router.navigate('/')
             }
         }
@@ -199,7 +200,7 @@ class Application {
             const user = customEvent.detail.user
             if (user && window.location.pathname === '/') {
                 const dashboardRoute = `/${user.role}/dashboard`
-                console.log(`🏠 Redirecting to dashboard: ${dashboardRoute}`)
+                Logger.debug(`Redirecting to dashboard: ${dashboardRoute}`)
                 this.router.navigate(dashboardRoute)
             }
         }

@@ -3,6 +3,7 @@ import { BrowserHistory } from './history'
 import { routes, RouteMatcher, type RouteDefinition, type MatchedRoute } from './routes'
 import { defaultGuards, type RouteGuard, type GuardResult } from './guards'
 import { RouteUtils } from '@/config/routing'
+import Logger from '@/utils/logger'
 
 export class Router {
     private history: BrowserHistory
@@ -20,7 +21,7 @@ export class Router {
     }
 
     async init(): Promise<void> {
-        console.log('🧭 Initializing Router...')
+        Logger.router('Initializing Router...')
 
         // Find app container
         this.appContainer = document.getElementById('app')
@@ -39,14 +40,14 @@ export class Router {
         // Handle initial route
         await this.handleRouteChange(this.history.getCurrentPath())
 
-        console.log('✅ Router initialized')
+        Logger.router('Router initialized')
     }
 
     async navigate(path: string, replace: boolean = false): Promise<boolean> {
         // Normalize path using RouteUtils
         const normalizedPath = RouteUtils.normalize(path)
         
-        console.log(`🧭 Router.navigate() called:`, {
+        Logger.router(`Router.navigate() called:`, {
             originalPath: path,
             normalizedPath,
             replace,
@@ -57,7 +58,7 @@ export class Router {
 
         // Queue navigation if already navigating
         if (this.isNavigating) {
-            console.warn('⚠️ Navigation already in progress, queueing new navigation:', normalizedPath)
+            Logger.warn('Navigation already in progress, queueing new navigation:', normalizedPath)
             return new Promise((resolve) => {
                 this.navigationQueue.push(async () => {
                     const result = await this.navigate(normalizedPath, replace)
@@ -66,40 +67,40 @@ export class Router {
             })
         }
 
-        console.log(`🧭 Starting navigation to: ${normalizedPath}`)
+        Logger.router(`Starting navigation to: ${normalizedPath}`)
 
         try {
             this.isNavigating = true
 
             // Match route
             const matchedRoute = RouteMatcher.match(normalizedPath, routes)
-            console.log(`🧭 Route matching result:`, {
+            Logger.router(`Route matching result:`, {
                 matched: !!matchedRoute,
                 routeName: matchedRoute?.route.name,
                 routePath: matchedRoute?.route.path
             })
 
             if (!matchedRoute) {
-                console.error(`❌ Route not found: ${normalizedPath}`)
+                Logger.error(`Route not found: ${normalizedPath}`)
                 await this.handleNotFound(normalizedPath)
                 return false
             }
 
-            console.log(`✅ Route matched: ${matchedRoute.route.name}`)
-            console.log(`📋 Route meta:`, matchedRoute.route.meta)
+            Logger.router(`Route matched: ${matchedRoute.route.name}`)
+            Logger.router(`Route meta:`, matchedRoute.route.meta)
 
             // Run guards BEFORE loading component
             const guardResult = await this.runGuards(matchedRoute)
             if (!guardResult.allowed) {
-                console.log(`🛡️ Guard blocked navigation:`, guardResult)
+                Logger.debug(`Guard blocked navigation:`, guardResult)
 
                 if (guardResult.redirect) {
                     // Prevent infinite redirects
                     if (guardResult.redirect !== path) {
-                        console.log(`↩️ Redirecting to: ${guardResult.redirect}`)
+                        Logger.router(`Redirecting to: ${guardResult.redirect}`)
                         return this.navigate(guardResult.redirect, true)
                     } else {
-                        console.error(`⚠️ Infinite redirect detected: ${path}`)
+                        Logger.error(`Infinite redirect detected: ${path}`)
                         await this.handleNotFound(path)
                         return false
                     }
@@ -111,11 +112,11 @@ export class Router {
                 return false
             }
 
-            console.log(`✅ All guards passed for: ${matchedRoute.route.name}`)
+            Logger.router(`All guards passed for: ${matchedRoute.route.name}`)
 
             // Load component
             try {
-                console.log(`📦 Loading component for: ${matchedRoute.route.name}`)
+                Logger.router(`Loading component for: ${matchedRoute.route.name}`)
                 const ComponentClass = await matchedRoute.route.component()
 
                 // Check if ComponentClass is already an instance (has render method)
@@ -130,9 +131,9 @@ export class Router {
                     matchedRoute.component = new (ComponentClass as any)()
                 }
 
-                console.log(`✅ Component loaded: ${matchedRoute.route.name}`)
+                Logger.router(`Component loaded: ${matchedRoute.route.name}`)
             } catch (error) {
-                console.error(`❌ Failed to load route component:`, error)
+                Logger.error(`Failed to load route component:`, error)
                 this.showNotification('Błąd podczas ładowania strony', 'error')
                 await this.handleNotFound(path)
                 return false
@@ -140,15 +141,15 @@ export class Router {
 
             // Execute component lifecycle hooks
             if (matchedRoute.component.onBeforeEnter) {
-                console.log(`🎣 Executing onBeforeEnter for: ${matchedRoute.route.name}`)
+                Logger.debug(`Executing onBeforeEnter for: ${matchedRoute.route.name}`)
                 try {
                     const canEnter = await matchedRoute.component.onBeforeEnter()
                     if (canEnter === false) {
-                        console.log(`🚫 Component onBeforeEnter blocked navigation`)
+                        Logger.debug(`Component onBeforeEnter blocked navigation`)
                         return false
                     }
                 } catch (error) {
-                    console.error(`❌ Error in onBeforeEnter:`, error)
+                    Logger.error(`Error in onBeforeEnter:`, error)
                     return false
                 }
             }
@@ -166,7 +167,7 @@ export class Router {
             return true
 
         } catch (error) {
-            console.error('❌ Navigation error:', error)
+            Logger.error('Navigation error:', error)
             this.showNotification('Błąd podczas nawigacji', 'error')
             return false
         } finally {
@@ -202,38 +203,38 @@ export class Router {
             from: this.currentRoute || undefined
         }
 
-        console.log(`🛡️ Running guards for route: ${route.route.name}`)
+        Logger.guard(`Running guards for route: ${route.route.name}`)
 
         // NOWE: Reset guard execution tracking
         this.guardExecutions.clear()
 
         // Run route-specific guards first (if any)
         if (route.route.guards && route.route.guards.length > 0) {
-            console.log(`🔒 Running ${route.route.guards.length} route-specific guards`)
+            Logger.debug(`Running ${route.route.guards.length} route-specific guards`)
             for (const guard of route.route.guards) {
                 // NOWE: Track executions
                 const execCount = (this.guardExecutions.get(guard.name) || 0) + 1
                 this.guardExecutions.set(guard.name, execCount)
 
                 if (execCount > 1) {
-                    console.warn(`⚠️ Guard '${guard.name}' executed ${execCount} times!`)
+                    Logger.warn(`Guard '${guard.name}' executed ${execCount} times!`)
                 }
 
-                console.log(`🛡️ Executing route guard: ${guard.name} (execution #${execCount})`)
+                Logger.guard(`Executing route guard: ${guard.name} (execution #${execCount})`)
                 try {
                     const start = performance.now()
                     const result = await guard.execute(context)
                     const duration = performance.now() - start
 
-                    console.log(`⏱️ Guard '${guard.name}' took ${duration.toFixed(2)}ms`)
+                    Logger.debug(`Guard '${guard.name}' took ${duration.toFixed(2)}ms`)
 
                     if (!result.allowed) {
-                        console.log(`🚫 Route guard '${guard.name}' blocked navigation:`, result)
+                        Logger.debug(`Route guard '${guard.name}' blocked navigation:`, result)
                         return result
                     }
-                    console.log(`✅ Route guard '${guard.name}' passed`)
+                    Logger.debug(`Route guard '${guard.name}' passed`)
                 } catch (error) {
-                    console.error(`❌ Error in route guard '${guard.name}':`, error)
+                    Logger.error(`Error in route guard '${guard.name}':`, error)
                     return {
                         allowed: false,
                         message: `Błąd w guard: ${guard.name}`
@@ -243,31 +244,31 @@ export class Router {
         }
 
         // Run global guards
-        console.log(`🌍 Running ${this.guards.length} global guards`)
+        Logger.debug(`Running ${this.guards.length} global guards`)
         for (const guard of this.guards) {
             // NOWE: Track executions
             const execCount = (this.guardExecutions.get(guard.name) || 0) + 1
             this.guardExecutions.set(guard.name, execCount)
 
             if (execCount > 1) {
-                console.warn(`⚠️ Guard '${guard.name}' executed ${execCount} times!`)
+                Logger.warn(`Guard '${guard.name}' executed ${execCount} times!`)
             }
 
-            console.log(`🛡️ Executing global guard: ${guard.name} (execution #${execCount})`)
+            Logger.guard(`Executing global guard: ${guard.name} (execution #${execCount})`)
             try {
                 const start = performance.now()
                 const result = await guard.execute(context)
                 const duration = performance.now() - start
 
-                console.log(`⏱️ Guard '${guard.name}' took ${duration.toFixed(2)}ms`)
+                Logger.debug(`Guard '${guard.name}' took ${duration.toFixed(2)}ms`)
 
                 if (!result.allowed) {
-                    console.log(`🚫 Global guard '${guard.name}' blocked navigation:`, result)
+                    Logger.debug(`Global guard '${guard.name}' blocked navigation:`, result)
                     return result
                 }
-                console.log(`✅ Global guard '${guard.name}' passed`)
+                Logger.debug(`Global guard '${guard.name}' passed`)
             } catch (error) {
-                console.error(`❌ Error in global guard '${guard.name}':`, error)
+                Logger.error(`Error in global guard '${guard.name}':`, error)
                 return {
                     allowed: false,
                     message: `Błąd w guard: ${guard.name}`
@@ -276,8 +277,8 @@ export class Router {
         }
 
         // NOWE: Log summary
-        console.log(`✅ All guards passed for: ${route.route.name}`)
-        console.log(`📊 Guard execution summary:`, Object.fromEntries(this.guardExecutions))
+        Logger.debug(`All guards passed for: ${route.route.name}`)
+        Logger.debug(`Guard execution summary:`, Object.fromEntries(this.guardExecutions))
 
         return { allowed: true }
     }
@@ -285,29 +286,29 @@ export class Router {
     private async renderRoute(matchedRoute: MatchedRoute): Promise<void> {
         if (!this.appContainer) return
 
-        console.log(`🎨 Rendering route: ${matchedRoute.route.name}`)
+        Logger.router(`Rendering route: ${matchedRoute.route.name}`)
 
         // Cleanup previous route
         if (this.currentRoute?.component?.onBeforeLeave) {
-            console.log(`🎣 Executing onBeforeLeave for: ${this.currentRoute.route.name}`)
+            Logger.debug(`Executing onBeforeLeave for: ${this.currentRoute.route.name}`)
             try {
                 const canLeave = await this.currentRoute.component.onBeforeLeave()
                 if (canLeave === false) {
-                    console.log(`🚫 Previous component onBeforeLeave blocked navigation`)
+                    Logger.debug(`Previous component onBeforeLeave blocked navigation`)
                     return
                 }
             } catch (error) {
-                console.error(`❌ Error in onBeforeLeave:`, error)
+                Logger.error(`Error in onBeforeLeave:`, error)
             }
         }
 
         // Unmount previous component
         if (this.currentRoute?.component?.unmount) {
-            console.log(`🔄 Unmounting previous component: ${this.currentRoute.route.name}`)
+            Logger.debug(`Unmounting previous component: ${this.currentRoute.route.name}`)
             try {
                 this.currentRoute.component.unmount()
             } catch (error) {
-                console.error(`❌ Error unmounting component:`, error)
+                Logger.error(`Error unmounting component:`, error)
             }
         }
 
@@ -316,7 +317,7 @@ export class Router {
 
         try {
             // Render new component
-            console.log(`🎨 Rendering component: ${matchedRoute.route.name}`)
+            Logger.router(`Rendering component: ${matchedRoute.route.name}`)
             const element = await matchedRoute.component.render()
 
             // Clear container and add new content
@@ -325,7 +326,7 @@ export class Router {
 
             // Mount component
             if (matchedRoute.component.mount) {
-                console.log(`🔧 Mounting component: ${matchedRoute.route.name}`)
+                Logger.debug(`Mounting component: ${matchedRoute.route.name}`)
                 matchedRoute.component.mount(this.appContainer)
             }
 
@@ -335,7 +336,7 @@ export class Router {
 
             // Execute after enter hook
             if (matchedRoute.component.onAfterEnter) {
-                console.log(`🎣 Executing onAfterEnter for: ${matchedRoute.route.name}`)
+                Logger.debug(`Executing onAfterEnter for: ${matchedRoute.route.name}`)
                 try {
                     matchedRoute.component.onAfterEnter()
                 } catch (error) {
@@ -353,7 +354,7 @@ export class Router {
 
             // Execute after leave hook for previous route
             if (previousRoute?.component?.onAfterLeave) {
-                console.log(`🎣 Executing onAfterLeave for: ${previousRoute.route.name}`)
+                Logger.debug(`Executing onAfterLeave for: ${previousRoute.route.name}`)
                 try {
                     previousRoute.component.onAfterLeave()
                 } catch (error) {
@@ -373,7 +374,7 @@ export class Router {
                 }, 100)
             }
 
-            console.log(`✅ Route rendered successfully: ${matchedRoute.route.name}`)
+            Logger.router(`Route rendered successfully: ${matchedRoute.route.name}`)
 
         } catch (error) {
             console.error('❌ Route rendering error:', error)
@@ -386,7 +387,7 @@ export class Router {
     }
 
     private async handleNotFound(attemptedPath: string): Promise<void> {
-        console.log(`❌ Handling 404 for path: ${attemptedPath}`)
+        Logger.router(`Handling 404 for path: ${attemptedPath}`)
 
         try {
             // Try to navigate to 404 page, but avoid infinite loop
@@ -424,7 +425,7 @@ export class Router {
         const layout = route.route.meta?.layout || 'guest'
         document.body.classList.add(`layout-${layout}`)
 
-        console.log(`🎨 Updated body classes: ${routeClass}, layout-${layout}`)
+        Logger.debug(`Updated body classes: ${routeClass}, layout-${layout}`)
     }
 
     private showLoadingState(): void {
@@ -448,13 +449,13 @@ export class Router {
     // Debug method
     debugRouting(enabled: boolean = true): void {
         if (enabled) {
-            console.log('🔍 Router Debug Mode Enabled')
-            console.log('Current route:', this.currentRoute)
-            console.log('Registered guards:', this.guards.map(g => g.name))
-            console.log('Guard execution count:', Object.fromEntries(this.guardExecutions))
-            console.log('Navigation queue length:', this.navigationQueue.length)
-            console.log('Is navigating:', this.isNavigating)
-            console.log('Intended URL:', this.intendedUrl)
+            Logger.debug('Router Debug Mode Enabled')
+            Logger.debug('Current route:', this.currentRoute)
+            Logger.debug('Registered guards:', this.guards.map(g => g.name))
+            Logger.debug('Guard execution count:', Object.fromEntries(this.guardExecutions))
+            Logger.debug('Navigation queue length:', this.navigationQueue.length)
+            Logger.debug('Is navigating:', this.isNavigating)
+            Logger.debug('Intended URL:', this.intendedUrl)
 
             //NOWE: Enable verbose logging
             window.__ROUTER_DEBUG__ = true
@@ -467,7 +468,7 @@ export class Router {
     public setIntendedUrl(url?: string): void {
         this.intendedUrl = url || this.history.getCurrentPath()
         localStorage.setItem('intended_url', this.intendedUrl)
-        console.log(`💾 Saved intended URL: ${this.intendedUrl}`)
+        Logger.debug(`Saved intended URL: ${this.intendedUrl}`)
     }
 
     // Get and clear intended URL
@@ -476,7 +477,7 @@ export class Router {
         if (url) {
             this.intendedUrl = null
             localStorage.removeItem('intended_url')
-            console.log(`📍 Retrieved intended URL: ${url}`)
+            Logger.debug(`Retrieved intended URL: ${url}`)
         }
         return url
     }

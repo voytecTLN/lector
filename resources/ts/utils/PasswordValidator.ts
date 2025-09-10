@@ -6,6 +6,8 @@ export interface PasswordValidationOptions {
     confirmFieldName?: string;
     confirmMessage?: string;
     mismatchMessage?: string;
+    enforceStrength?: boolean;
+    minLength?: number;
 }
 
 export class PasswordValidator {
@@ -22,6 +24,8 @@ export class PasswordValidator {
             confirmFieldName: 'password_confirmation',
             confirmMessage: 'Potwierdź hasło',
             mismatchMessage: 'Hasła muszą być identyczne',
+            enforceStrength: false,
+            minLength: 8,
             ...options
         };
 
@@ -39,11 +43,52 @@ export class PasswordValidator {
 
     private setupValidation(): void {
         const validatePasswords = () => {
+            this.validatePasswordStrength();
             this.validatePasswordMatch();
         };
 
         this.passwordInput?.addEventListener('input', validatePasswords);
         this.confirmInput?.addEventListener('input', validatePasswords);
+    }
+
+    private validatePasswordStrength(): void {
+        if (!this.passwordInput || !this.options.enforceStrength) return;
+
+        const password = this.passwordInput.value;
+        const strengthError = this.getPasswordStrengthError(password);
+        
+        this.passwordInput.setCustomValidity(strengthError || '');
+    }
+
+    private getPasswordStrengthError(password: string): string | null {
+        if (!this.options.enforceStrength) return null;
+        
+        if (this.options.isEditMode && !password) {
+            // Empty password in edit mode is valid (no change)
+            return null;
+        }
+
+        if (password.length < this.options.minLength) {
+            return `Hasło musi mieć co najmniej ${this.options.minLength} znaków`;
+        }
+
+        if (!/[a-z]/.test(password)) {
+            return 'Hasło musi zawierać co najmniej jedną małą literę';
+        }
+
+        if (!/[A-Z]/.test(password)) {
+            return 'Hasło musi zawierać co najmniej jedną wielką literę';
+        }
+
+        if (!/[0-9]/.test(password)) {
+            return 'Hasło musi zawierać co najmniej jedną cyfrę';
+        }
+
+        if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) {
+            return 'Hasło musi zawierać co najmniej jeden znak specjalny';
+        }
+
+        return null;
     }
 
     private validatePasswordMatch(): void {
@@ -71,8 +116,10 @@ export class PasswordValidator {
      * Check if passwords are valid
      */
     public isValid(): boolean {
+        this.validatePasswordStrength();
         this.validatePasswordMatch();
-        return this.confirmInput?.checkValidity() ?? true;
+        return (this.passwordInput?.checkValidity() ?? true) && 
+               (this.confirmInput?.checkValidity() ?? true);
     }
 
     /**
@@ -149,5 +196,39 @@ export class PasswordValidator {
         }
 
         return null;
+    }
+
+    /**
+     * Static method to validate password strength
+     */
+    static validatePasswordStrength(password: string, minLength: number = 12): string | null {
+        if (password.length < minLength) {
+            return `Hasło musi mieć co najmniej ${minLength} znaków`;
+        }
+
+        if (!/[a-z]/.test(password)) {
+            return 'Hasło musi zawierać co najmniej jedną małą literę';
+        }
+
+        if (!/[A-Z]/.test(password)) {
+            return 'Hasło musi zawierać co najmniej jedną wielką literę';
+        }
+
+        if (!/[0-9]/.test(password)) {
+            return 'Hasło musi zawierać co najmniej jedną cyfrę';
+        }
+
+        if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) {
+            return 'Hasło musi zawierać co najmniej jeden znak specjalny (!@#$%^&*()_+-=[]{};"\\|,.<>/?~`)';
+        }
+
+        return null;
+    }
+
+    /**
+     * Static method to check if password meets strength requirements
+     */
+    static isPasswordStrong(password: string, minLength: number = 12): boolean {
+        return this.validatePasswordStrength(password, minLength) === null;
     }
 }

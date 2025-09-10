@@ -1,5 +1,6 @@
 // resources/ts/services/AuthService.ts - Zgodny z Laravel Backend
 import { api } from '@services/ApiService'
+import Logger from '@/utils/logger'
 import type {
     User,
     LoginCredentials,
@@ -57,9 +58,9 @@ export class AuthService {
      */
     async login(credentials: LoginCredentials): Promise<LaravelAuthResponse> {
         try {
-            console.log('🔐 AuthService: Attempting login')
-            console.log('email: credentials.email,password: credentials.password, remember: credentials.remember');
-            console.log(credentials.email, credentials.password, credentials.remember);
+            Logger.auth('AuthService: Attempting login')
+            // Removed sensitive data logging
+            // Removed sensitive data logging
             const response = await api.post<LaravelAuthResponse>('/auth/login', {
                 email: credentials.email,
                 password: credentials.password,
@@ -67,8 +68,8 @@ export class AuthService {
             })
 
             if (response.success && response.data) {
-                console.log('response.data.user, response.data.token, response.data.permissions');
-                console.log(response.data.user, response.data.token, response.data.permissions);
+                // Removed sensitive data logging
+                // Removed sensitive data logging
                 this.setAuthData(response.data.user, response.data.token, response.data.permissions)
                 this.notifyAuthChange('login')
 
@@ -100,7 +101,7 @@ export class AuthService {
      */
     async register(userData: RegisterData): Promise<LaravelAuthResponse> {
         try {
-            console.log('📝 AuthService: Attempting registration')
+            Logger.auth('AuthService: Attempting registration')
 
             const response = await api.post<LaravelAuthResponse>('/auth/register', {
                 name: userData.name,
@@ -113,13 +114,13 @@ export class AuthService {
                 terms_accepted: userData.terms_accepted
             })
 
-            console.log('response.success && response.data');
-            console.log(response.success, response.data);
+            Logger.debug('Registration response received')
+            // Removed sensitive data logging
 
             if (response.success && response.data) {
                 // WAŻNE: NIE logujemy użytkownika jeśli wymaga weryfikacji
                 if (response.data.requires_verification) {
-                    console.log('✉️ User requires email verification')
+                    Logger.auth('User requires email verification')
 
                     // Tylko pokazujemy komunikat
                     document.dispatchEvent(new CustomEvent('notification:show', {
@@ -130,7 +131,7 @@ export class AuthService {
                     }))
                 } else {
                     // Tylko jeśli użytkownik jest już zweryfikowany (edge case)
-                    console.log('✅ User already verified, logging in')
+                    Logger.auth('User already verified, logging in')
 
                     // Tylko jeśli mamy token
                     if (response.data.token) {
@@ -161,7 +162,7 @@ export class AuthService {
      */
     async logout(): Promise<void> {
         try {
-            console.log('🚪 AuthService: Logging out')
+            Logger.auth('AuthService: Logging out')
 
             // Tylko spróbuj API logout jeśli mamy token
             if (this.token) {
