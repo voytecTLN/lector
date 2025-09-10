@@ -275,16 +275,7 @@ export class TutorProfileEdit implements RouteComponent {
     }
 
     private generateSpecializationCheckboxes(): string {
-        const specializations = [
-            { value: 'conversation', label: 'Konwersacje' },
-            { value: 'business', label: 'Język biznesowy' },
-            { value: 'exam_prep', label: 'Przygotowanie do egzaminów' },
-            { value: 'grammar', label: 'Gramatyka' },
-            { value: 'pronunciation', label: 'Wymowa' },
-            { value: 'academic', label: 'Język akademicki' },
-            { value: 'children', label: 'Nauczanie dzieci' },
-            { value: 'adults', label: 'Nauczanie dorosłych' }
-        ]
+        const specializations = this.tutorService.getSpecializationOptions()
 
         return specializations.map(spec => `
             <div class="col-md-6">
