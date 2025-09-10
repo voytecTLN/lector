@@ -32,7 +32,7 @@ export class Navigation {
             </div>
         ` : `
             <div class="nav-actions">
-                <a href="${urlBuilder.hash(ROUTES.REGISTER)}" class="btn btn-secondary join-btn nowrap">Dołącz do nas</a>
+<!--                <a href="${urlBuilder.hash(ROUTES.REGISTER)}" class="btn btn-secondary join-btn nowrap">Dołącz do nas</a>-->
                 <a href="${urlBuilder.hash(ROUTES.LOGIN)}" class="btn btn-primary login-btn">Zaloguj się</a>
             </div>
         `
@@ -47,6 +47,7 @@ export class Navigation {
                 <ul class="nav-links">
                     <li><a href="${urlBuilder.hash(ROUTES.HOME)}" class="${isActive(ROUTES.HOME)}">Start</a></li>
                     <li><a href="${urlBuilder.hash(ROUTES.HOME)}#about" class="${isActive('/#about')}">O nas</a></li>
+                    <li><a href="${urlBuilder.hash(ROUTES.FAQ)}" class="${isActive(ROUTES.FAQ)}">FAQ</a></li>
                     <li><a href="${urlBuilder.hash(ROUTES.CONTACT)}" class="${isActive(ROUTES.CONTACT)}">Kontakt</a></li>
                 </ul>
                 ${navActions}

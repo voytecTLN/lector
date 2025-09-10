@@ -69,6 +69,15 @@ export const routes: RouteDefinition[] = [
             layout: 'guest'
         }
     },
+    {
+        path: '/faq',
+        name: 'faq',
+        component: () => import('@/components/pages/FaqPage').then(m => new m.FaqPage()),
+        title: 'FAQ - Platforma Lektorów',
+        meta: {
+            layout: 'guest'
+        }
+    },
 
     // Auth routes (for guests only - redirect if logged in)
     {

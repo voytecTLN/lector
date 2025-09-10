@@ -69,6 +69,36 @@ Route::middleware(['web', 'auth:sanctum'])->group(function () {
         ->name('download.material');
 });
 
+// Serve avatars - temporary fix for production storage link issues
+Route::get('/storage/avatars/{filename}', function ($filename) {
+    $path = storage_path('app/public/avatars/' . $filename);
+    
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    
+    // Security check - only allow image files
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    
+    if (!in_array($extension, $allowedExtensions)) {
+        abort(403);
+    }
+    
+    // Set appropriate content type
+    $contentTypes = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp'
+    ];
+    
+    return response()->file($path, [
+        'Content-Type' => $contentTypes[$extension] ?? 'image/jpeg'
+    ]);
+})->where('filename', '.*');
+
 // SPA entry routes with optional flash messages
 Route::get('/', $spa('/'))->name('home');
 Route::get('/login', $spa('/login'))->name('login');

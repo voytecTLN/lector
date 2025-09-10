@@ -23,6 +23,10 @@ nav.navbar {
     display: flex;
     list-style: none;
     gap: 2rem;
+    margin: 0 auto;
+    padding: 0;
+    flex: 1;
+    justify-content: center;
 }
 .navbar .nav-links a {
     text-decoration: none;

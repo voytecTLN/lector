@@ -26,6 +26,7 @@ export const ROUTES = {
     // Public routes
     HOME: '/',
     CONTACT: '/contact',
+    FAQ: '/faq',
     
     // Auth routes
     LOGIN: '/login',

@@ -389,8 +389,6 @@ export class AuthService {
     }
 
     isAuthenticated(): boolean {
-        console.log('!!this.token && !!this.user');
-        console.log(this.token, this.user);
         return !!this.token && !!this.user
     }
 

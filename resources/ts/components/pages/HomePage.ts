@@ -30,9 +30,10 @@ export class HomePage implements RouteComponent {
                     <h1>Nauka języków online z najlepszymi lektorami</h1>
                     <p>Personalizowane lekcje, elastyczny harmonogram, sprawdzone metody nauczania</p>
                     <div class="cta-buttons">
-                        <a href="#lecturers" class="btn btn-primary">Zobacz lektorów</a>
+<!--                        <a href="#lecturers" class="btn btn-primary">Zobacz lektorów</a>-->
                         <a href="#about" class="btn btn-secondary">Dowiedz się więcej</a>
-                        <a href="/register" class="btn btn-primary">Dołącz do nas</a>
+<!--                        <a href="/register" class="btn btn-primary">Dołącz do nas</a>-->
+                        <a href="/login" class="btn btn-primary">Zaloguj się do panelu</a>
                     </div>
                 </div>
             </section>
