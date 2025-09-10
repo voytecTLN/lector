@@ -70,7 +70,7 @@ php composer.phar install --no-dev --optimize-autoloader
 # -------------------------------------------
 echo -e "${GREEN}📦 NPM install & build${NC}"
 npm install
-npm run build
+NODE_ENV=production npm run build
 
 # -------------------------------------------
 echo -e "${GREEN}📂 Kopiuję zawartość katalogu public/ do root (public_html)${NC}"
