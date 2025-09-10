@@ -1,8 +1,12 @@
 // resources/ts/utils/logger.ts
 // Production-safe logging utility
 
-const isProduction = import.meta.env.PROD
-const isDevelopment = import.meta.env.DEV
+declare const __APP_ENV__: string
+
+// Check both Vite env and Laravel APP_ENV
+const isProduction = import.meta.env.PROD || (typeof __APP_ENV__ !== 'undefined' && __APP_ENV__ === 'production')
+const isDevelopment = import.meta.env.DEV || (typeof __APP_ENV__ !== 'undefined' && __APP_ENV__ === 'development')
+
 
 export class Logger {
     /**

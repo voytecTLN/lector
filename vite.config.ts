@@ -32,6 +32,7 @@ export default defineConfig({
   define: {
     __VUE_OPTIONS_API__: false,
     __VUE_PROD_DEVTOOLS__: false,
+    __APP_ENV__: JSON.stringify(process.env.APP_ENV || 'development'),
   },
   build: {
     sourcemap: true
