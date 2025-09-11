@@ -313,11 +313,6 @@ export class StudentDetails implements RouteComponent {
         }
                 </div>
                 
-                <div class="mb-4">
-                    <label class="form-label text-muted">Preferowany harmonogram</label>
-                    <p class="text-muted mb-0">🔧 Funkcja harmonogramu będzie dostępna wkrótce</p>
-                </div>
-                
                 <div>
                     <label class="form-label text-muted">Opis/Bio</label>
                     ${profile?.bio 

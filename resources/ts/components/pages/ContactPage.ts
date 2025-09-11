@@ -52,8 +52,8 @@ export class ContactPage implements RouteComponent {
                                 <a href="tel:+48221134004" style="color: #2563eb; text-decoration: none; font-size: 1.25rem; font-weight: bold;">
                                     +48 22 113 4004
                                 </a><br><br>
-                                <span style="color: #64748b;">pon-pt: 8:00 - 18:00<br>
-                                sob: 9:00 - 14:00</span>
+                                <span style="color: #64748b;">pon-pt: 10:00 - 18:00<br>
+                                sob: 10:00 - 14:00</span>
                             </p>
                         </div>
                     </div>

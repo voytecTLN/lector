@@ -223,7 +223,8 @@ export class StudentTutors {
                         <div class="fw-bold">${profile.total_students || 0}</div>
                     </div>
                     -->
-                    <div class="col-4">
+<!--                    <div class="col-4">-->
+                    <div class="mb-3">
                         <div class="small text-muted">Doświadczenie</div>
                         <div class="fw-bold">${profile.years_experience || 0} lat</div>
                     </div>

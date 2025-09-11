@@ -77,7 +77,7 @@ export class IssueReportForm {
                                             id="subject" 
                                             name="subject" 
                                             class="form-control" 
-                                            placeholder="Krótko opisz problem (np. 'Nie mogę zalogować się do systemu')"
+                                            placeholder="Krótko opisz problem (np. 'Nie mogę zarezerwować lekcji')"
                                             required
                                             minlength="5"
                                             maxlength="200"

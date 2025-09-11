@@ -1,0 +1,532 @@
+/* Error Pages - Fun and Kid-Friendly Design */
+
+.error-page-body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-x: hidden;
+}
+
+.error-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+}
+
+.error-content {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 3rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    max-width: 800px;
+    width: 100%;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+/* 404 Page Animations */
+.error-animation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    gap: 2rem;
+}
+
+.floating-number {
+    font-size: 8rem;
+    font-weight: bold;
+    color: #ff6b6b;
+    text-shadow: 3px 3px 0px #ff4757;
+    animation: float 3s ease-in-out infinite;
+}
+
+.floating-number:first-child {
+    animation-delay: 0s;
+}
+
+.floating-number:last-child {
+    animation-delay: 1s;
+}
+
+.search-character {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: wiggle 2s ease-in-out infinite;
+}
+
+.magnifying-glass {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.glass-circle {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #4834d4;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.glass-handle {
+    width: 4px;
+    height: 30px;
+    background: #4834d4;
+    position: absolute;
+    bottom: -25px;
+    right: -10px;
+    transform: rotate(45deg);
+    border-radius: 2px;
+}
+
+.confused-face {
+    font-size: 3rem;
+    animation: bounce 1s infinite;
+}
+
+/* Forbidden Page Animations */
+.forbidden-page {
+    /* Using same background as main error-page-body */
+}
+
+.forbidden-container {
+    background: none;
+}
+
+.forbidden-animation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.guard-character {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    animation: guardAlert 2s ease-in-out infinite;
+}
+
+.guard-hat {
+    font-size: 3rem;
+    margin-bottom: -10px;
+    z-index: 2;
+}
+
+.guard-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #2c3e50;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    position: relative;
+}
+
+.stop-sign {
+    font-size: 4rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.guard-face {
+    font-size: 2rem;
+    margin-top: 0.5rem;
+}
+
+.guard-speech {
+    position: absolute;
+    top: -40px;
+    left: -60px;
+    background: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: #e74c3c;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    animation: speechBubble 2s ease-in-out infinite;
+}
+
+.guard-speech::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 30px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid white;
+}
+
+.forbidden-barriers {
+    display: flex;
+    gap: 10px;
+    margin-top: 2rem;
+}
+
+.barrier {
+    width: 80px;
+    height: 8px;
+    background: repeating-linear-gradient(
+        45deg,
+        #f1c40f,
+        #f1c40f 10px,
+        #e74c3c 10px,
+        #e74c3c 20px
+    );
+    animation: barrierFlash 1s linear infinite;
+}
+
+/* Typography */
+.error-title {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.error-subtitle {
+    font-size: 1.2rem;
+    color: #7f8c8d;
+    margin-bottom: 2rem;
+}
+
+.funny-line {
+    color: #e67e22;
+    font-style: italic;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+/* Helpful Suggestions */
+.helpful-suggestions {
+    text-align: left;
+    margin: 2rem 0;
+    background: #ecf0f1;
+    padding: 1.5rem;
+    border-radius: 15px;
+}
+
+.helpful-suggestions h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.suggestion-list {
+    list-style: none;
+    padding: 0;
+}
+
+.suggestion-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #bdc3c7;
+    font-size: 1.1rem;
+}
+
+.suggestion-list li:last-child {
+    border-bottom: none;
+}
+
+/* Magic Rules Grid */
+.magic-rules {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    border-radius: 15px;
+    color: white;
+}
+
+.magic-rules h4 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.rule-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    backdrop-filter: blur(5px);
+}
+
+.rule-icon {
+    font-size: 1.5rem;
+}
+
+/* Action Buttons */
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #74b9ff, #0984e3);
+    color: white;
+    box-shadow: 0 4px 15px rgba(116, 185, 255, 0.4);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(116, 185, 255, 0.6);
+}
+
+.btn-secondary {
+    background: linear-gradient(45deg, #fd79a8, #e84393);
+    color: white;
+    box-shadow: 0 4px 15px rgba(253, 121, 168, 0.4);
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(253, 121, 168, 0.6);
+}
+
+.btn-outline {
+    background: transparent;
+    color: #2c3e50;
+    border: 2px solid #3498db;
+}
+
+.btn-outline:hover {
+    background: #3498db;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Fun Facts Box */
+.fun-facts {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 100%;
+    backdrop-filter: blur(10px);
+    margin-bottom: 2rem;
+}
+
+.fact-box h4 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.fact-box p {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    text-align: center;
+    transition: opacity 0.3s ease;
+}
+
+.forbidden-facts {
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    color: #2d3436;
+}
+
+.forbidden-facts h4,
+.forbidden-facts p {
+    color: #2d3436;
+}
+
+/* Secret Knock Game */
+.secret-knock {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+}
+
+.knock-text {
+    color: #7f8c8d;
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+.knock-sequence {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.knock-btn {
+    background: #3498db;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: white;
+}
+
+.knock-btn:hover {
+    background: #2980b9;
+    transform: scale(1.1);
+}
+
+.knock-result {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 10px;
+    background: #ecf0f1;
+    color: #2c3e50;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.knock-result.success {
+    background: #d5f4e6;
+    color: #27ae60;
+}
+
+.knock-result.info {
+    background: #d6eaf8;
+    color: #2980b9;
+}
+
+/* Animations */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+@keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes guardAlert {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@keyframes speechBubble {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes barrierFlash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .error-content {
+        padding: 2rem;
+        margin: 1rem;
+    }
+    
+    .error-animation {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .floating-number {
+        font-size: 4rem;
+    }
+    
+    .error-title {
+        font-size: 2rem;
+    }
+    
+    .error-subtitle {
+        font-size: 1rem;
+    }
+    
+    .error-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn {
+        width: 200px;
+        justify-content: center;
+    }
+    
+    .rules-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .knock-sequence {
+        gap: 0.5rem;
+    }
+    
+    .knock-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .error-container {
+        padding: 1rem;
+    }
+    
+    .error-content {
+        padding: 1.5rem;
+    }
+    
+    .floating-number {
+        font-size: 3rem;
+    }
+    
+    .fun-facts,
+    .secret-knock {
+        padding: 1.5rem;
+    }
+}

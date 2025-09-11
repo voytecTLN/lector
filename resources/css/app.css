@@ -18,6 +18,7 @@
 @import './pages/reset-password.css';
 @import './pages/email-verification.css';
 @import './pages/logout.css';
+@import './pages/error-pages.css';
 
 @import './pages/admin-dashboard.css';
 @import './pages/student-dashboard.css';
