@@ -131,12 +131,12 @@ class UpdateStudentRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'array',
-                'max:5'
+                'max:8'  // Allow all 8 available options
             ],
             'learning_goals.*' => [
                 'string',
                 'distinct',
-                'in:conversation,business,exam,travel,academic,hobby,culture'
+                'in:conversation,business,exam,travel,academic,hobby,culture,career'
             ],
             'preferred_schedule' => [
                 'sometimes',

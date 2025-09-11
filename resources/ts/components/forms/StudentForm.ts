@@ -309,7 +309,8 @@ export class StudentForm implements RouteComponent {
             { value: 'travel', label: 'Podróże' },
             { value: 'academic', label: 'Język akademicki' },
             { value: 'hobby', label: 'Hobby' },
-            { value: 'culture', label: 'Kultura' }
+            { value: 'culture', label: 'Kultura' },
+            { value: 'career', label: 'Rozwój kariery' }
         ]
 
         return goals.map(goal => `

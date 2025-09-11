@@ -427,9 +427,6 @@ export class TutorDetails implements RouteComponent {
                                     ? '<span class="badge bg-success">Przyjmuje nowych uczniów</span>' 
                                     : '<span class="badge bg-secondary">Nie przyjmuje nowych uczniów</span>'}
                             </p>
-                            <small class="text-muted">
-                                Maksymalnie ${profile?.max_students_per_week || 0} uczniów tygodniowo
-                            </small>
                         </div>
                     </div>
                 </div>

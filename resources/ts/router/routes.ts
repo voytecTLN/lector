@@ -78,6 +78,16 @@ export const routes: RouteDefinition[] = [
             layout: 'guest'
         }
     },
+    {
+        path: '/changelog',
+        name: 'changelog',
+        component: () => import('@/components/changelog/ChangelogPage').then(m => new m.ChangelogPage()),
+        title: 'Wykaz zmian - Platforma Lektorów',
+        meta: {
+            layout: 'app',
+            requiresAuth: true
+        }
+    },
 
     // Auth routes (for guests only - redirect if logged in)
     {

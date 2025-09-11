@@ -4,11 +4,37 @@ import { authService } from '@services/AuthService'
 import { navigate } from '@/utils/navigation'
 
 export class ModeratorDashboard implements RouteComponent {
+    private activeSection: string = 'dashboard'
+    private container: HTMLElement | null = null
+
     async render(): Promise<HTMLElement> {
         const user = authService.getUser()
         const el = document.createElement('div')
         el.className = 'moderator-container'
         el.innerHTML = `
+            <!-- Sidebar -->
+            <nav class="moderator-sidebar">
+                <div class="moderator-logo-dashboard">
+                    <h2>🎓 Platforma Lektorów</h2>
+                    <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Panel Moderatora</p>
+                </div>
+                
+                <ul class="moderator-nav-menu">
+                    <li class="moderator-nav-item">
+                        <a href="#dashboard" class="moderator-nav-link active" data-section="dashboard">
+                            <span class="moderator-nav-icon">📊</span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="moderator-nav-item">
+                        <a href="#wykaz-zmian" class="moderator-nav-link" data-section="wykaz-zmian">
+                            <span class="moderator-nav-icon">📋</span>
+                            Wykaz zmian
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
             <!-- Main Content -->
             <main class="moderator-main-content">
                 <header class="moderator-header">
@@ -26,10 +52,96 @@ export class ModeratorDashboard implements RouteComponent {
                     </div>
                 </header>
 
-                <div class="moderator-content-area">
-                    <div class="container-fluid">
-            
-            <div class="row mt-4">
+                <div class="moderator-content-area" id="content-area">
+                    <!-- Dynamic content will be loaded here -->
+                </div>
+            </main>
+        `
+
+        return el
+    }
+
+    mount(container: HTMLElement): void {
+        this.container = container
+        
+        // Setup navigation
+        this.setupNavigation()
+        
+        // Setup logout
+        const logoutBtn = container.querySelector('#logout-btn')
+        logoutBtn?.addEventListener('click', async () => {
+            await authService.logout()
+            await navigate.to('/')
+        })
+
+        // Load initial content
+        this.loadContent('dashboard')
+    }
+
+    private setupNavigation(): void {
+        const navLinks = this.container?.querySelectorAll('.moderator-nav-link')
+        navLinks?.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault()
+                const section = link.getAttribute('data-section') || 'dashboard'
+                this.navigateToSection(section)
+            })
+        })
+    }
+
+    private navigateToSection(section: string): void {
+        // Update active nav link
+        const navLinks = this.container?.querySelectorAll('.moderator-nav-link')
+        navLinks?.forEach(link => {
+            if (link.getAttribute('data-section') === section) {
+                link.classList.add('active')
+            } else {
+                link.classList.remove('active')
+            }
+        })
+        
+        // Load section content
+        this.loadContent(section)
+    }
+
+    private async loadContent(section: string): Promise<void> {
+        const contentArea = this.container?.querySelector('#content-area')
+        if (!contentArea) return
+
+        this.activeSection = section
+
+        switch(section) {
+            case 'dashboard':
+                contentArea.innerHTML = this.getDashboardContent()
+                this.loadStats()
+                break
+            case 'wykaz-zmian':
+                contentArea.innerHTML = '<div id="changelog-container"></div>'
+                
+                // Import and mount ChangelogPage
+                import('@/components/changelog/ChangelogPage').then(async (module) => {
+                    const changelogPage = new module.ChangelogPage()
+                    const container = document.getElementById('changelog-container')
+                    if (container) {
+                        const changelogEl = await changelogPage.render()
+                        container.appendChild(changelogEl)
+                        changelogPage.mount(container)
+                    }
+                }).catch(error => {
+                    console.error('Failed to load ChangelogPage:', error)
+                    contentArea.innerHTML = '<div class="alert alert-danger">Błąd ładowania wykazu zmian</div>'
+                })
+                break
+            default:
+                contentArea.innerHTML = this.getDashboardContent()
+                this.loadStats()
+        }
+    }
+
+    private getDashboardContent(): string {
+        return `
+            <div class="container-fluid">
+                <div class="row mt-4">
                 <div class="col-md-3">
                     <div class="card text-center">
                         <div class="card-body">
@@ -86,22 +198,8 @@ export class ModeratorDashboard implements RouteComponent {
                     </div>
                 </div>
                     </div>
-                </div>
-            </main>
+            </div>
         `
-        return el
-    }
-
-    mount(container: HTMLElement): void {
-        // Setup logout
-        const logoutBtn = container.querySelector('#logout-btn')
-        logoutBtn?.addEventListener('click', async () => {
-            await authService.logout()
-            await navigate.to('/')
-        })
-
-        // Load dashboard stats
-        this.loadStats()
     }
 
     private async loadStats(): Promise<void> {

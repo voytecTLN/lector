@@ -88,6 +88,12 @@ class StudentService
         DB::beginTransaction();
 
         try {
+            \Log::info('📝 StudentService: Updating student with data', [
+                'student_id' => $studentId,
+                'data' => $data,
+                'learning_goals' => $data['learning_goals'] ?? 'not_set'
+            ]);
+            
             $user = User::with('studentProfile')->findOrFail($studentId);
 
             // Handle profile picture upload  
@@ -136,8 +142,39 @@ class StudentService
             // 3. Handle package assignment if provided
             if (isset($data['package_id'])) {
                 if (!empty($data['package_id'])) {
-                    $packageService = app(\App\Services\PackageService::class);
-                    $packageService->assignPackageToStudent($user->id, $data['package_id']);
+                    // Check current active assignments for this student
+                    $currentActiveAssignments = \App\Models\PackageAssignment::where('student_id', $user->id)
+                        ->where('is_active', true)
+                        ->get();
+                    
+                    // Check if student already has this specific package assigned and active
+                    $existingAssignment = $currentActiveAssignments->where('package_id', $data['package_id'])->first();
+                    
+                    if (!$existingAssignment) {
+                        // If changing to a different package, deactivate old ones first
+                        if ($currentActiveAssignments->count() > 0) {
+                            \Log::info('📦 StudentService: Deactivating old packages before assigning new one', [
+                                'user_id' => $user->id,
+                                'old_assignments_count' => $currentActiveAssignments->count()
+                            ]);
+                            $currentActiveAssignments->each(function($assignment) {
+                                $assignment->update(['is_active' => false]);
+                            });
+                        }
+                        
+                        \Log::info('📦 StudentService: Assigning new package', [
+                            'user_id' => $user->id,
+                            'package_id' => $data['package_id']
+                        ]);
+                        $packageService = app(\App\Services\PackageService::class);
+                        $packageService->assignPackageToStudent($user->id, $data['package_id']);
+                    } else {
+                        \Log::info('📦 StudentService: Package already assigned, skipping', [
+                            'user_id' => $user->id,
+                            'package_id' => $data['package_id'],
+                            'assignment_id' => $existingAssignment->id
+                        ]);
+                    }
                 }
                 // Note: If package_id is empty, we don't remove existing packages
                 // That would need to be a separate action
@@ -148,6 +185,12 @@ class StudentService
 
         } catch (Exception $e) {
             DB::rollBack();
+            \Log::error('❌ StudentService: Update failed', [
+                'student_id' => $studentId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'data_keys' => array_keys($data ?? [])
+            ]);
             throw $e;
         }
     }

@@ -79,21 +79,21 @@ export class StudentDashboard implements RouteComponent {
             <div class="student-container">
                 <div class="student-sidebar">
                     <div class="student-logo-dashboard">
-                        <div class="student-profile-section" style="text-align: center; padding: 20px 0;">
-                            <div class="student-avatar-wrapper" style="margin-bottom: 10px;">
-                                ${avatarHtml}
-                            </div>
-                            <h3 style="margin: 0; font-size: 18px; color: #333;">${user?.name || 'Student'}</h3>
-                            <p style="margin: 5px 0; font-size: 14px; color: #666;">${user?.email || ''}</p>
-                        </div>
-                        <h2>Panel Studenta</h2>
+                        <h2>📚 Platforma Lektorów</h2>
+                        <p style="color: #666; font-size: 0.875rem; margin: 0;">Panel studenta</p>
                     </div>
                     <nav class="student-nav">
                         <ul class="student-nav-menu">
                             <li class="student-nav-item">
                                 <a href="?section=dashboard" class="student-nav-link active" data-section="dashboard">
                                     <span class="student-nav-icon">📊</span>
-                                    Panel główny
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="student-nav-item">
+                                <a href="?section=wykaz-zmian" class="student-nav-link" data-section="wykaz-zmian">
+                                    <span class="student-nav-icon">📋</span>
+                                    Wykaz zmian
                                 </a>
                             </li>
                         </ul>
@@ -152,7 +152,7 @@ export class StudentDashboard implements RouteComponent {
                     <div class="student-header">
                         <div>
                             <button class="student-mobile-menu-btn" id="mobile-menu-btn">☰</button>
-                            <h1 class="student-page-title">Panel główny</h1>
+                            <h1 class="student-page-title">Dashboard</h1>
                         </div>
                         <div class="student-user-info">
                             ${AvatarHelper.render({
@@ -291,7 +291,7 @@ export class StudentDashboard implements RouteComponent {
 
         switch (section) {
             case 'dashboard':
-                pageTitle.textContent = 'Panel główny'
+                pageTitle.textContent = 'Dashboard'
                 this.isLoadingStats = true
                 contentArea.innerHTML = '<div class="student-loading-container"><div class="student-loading-spinner"></div><p class="student-loading-text">Ładowanie statystyk...</p></div>'
                 this.isLoadingStats = false
@@ -375,6 +375,24 @@ export class StudentDashboard implements RouteComponent {
                     if (container) {
                         issueForm.mount(container)
                     }
+                })
+                break
+            case 'wykaz-zmian':
+                pageTitle.textContent = 'Wykaz zmian'
+                contentArea.innerHTML = '<div id="changelog-container"></div>'
+                
+                // Import and mount ChangelogPage
+                import('@/components/changelog/ChangelogPage').then(async (module) => {
+                    const changelogPage = new module.ChangelogPage()
+                    const container = document.getElementById('changelog-container')
+                    if (container) {
+                        const changelogEl = await changelogPage.render()
+                        container.appendChild(changelogEl)
+                        changelogPage.mount(container)
+                    }
+                }).catch(error => {
+                    console.error('Failed to load ChangelogPage:', error)
+                    contentArea.innerHTML = '<div class="alert alert-danger">Błąd ładowania wykazu zmian</div>'
                 })
                 break
         }
@@ -694,6 +712,16 @@ export class StudentDashboard implements RouteComponent {
                                                                     <div class="form-check">
                                                                         <input class="form-check-input" type="checkbox" value="hobby" id="goal_hobby" ${profile?.learning_goals?.includes('hobby') ? 'checked' : ''}>
                                                                         <label class="form-check-label" for="goal_hobby">Hobby</label>
+                                                                    </div>
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="checkbox" value="culture" id="goal_culture" ${profile?.learning_goals?.includes('culture') ? 'checked' : ''}>
+                                                                        <label class="form-check-label" for="goal_culture">Kultura</label>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="checkbox" value="career" id="goal_career" ${profile?.learning_goals?.includes('career') ? 'checked' : ''}>
+                                                                        <label class="form-check-label" for="goal_career">Rozwój kariery</label>
                                                                     </div>
                                                                 </div>
                                                             </div>

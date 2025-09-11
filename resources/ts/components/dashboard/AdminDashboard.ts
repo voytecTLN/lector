@@ -32,6 +32,13 @@ export class AdminDashboard implements RouteComponent {
                         </a>
                     </li>
 
+                    <li class="admin-nav-item">
+                        <a href="#wykaz-zmian" class="admin-nav-link" data-section="wykaz-zmian">
+                            <span class="admin-nav-icon">📋</span>
+                            Wykaz zmian
+                        </a>
+                    </li>
+
                     <div class="admin-nav-section">Zarządzanie Użytkownikami</div>
 
                     <li class="admin-nav-item">
@@ -865,6 +872,25 @@ export class AdminDashboard implements RouteComponent {
                     if (container) {
                         issueForm.mount(container)
                     }
+                })
+                break
+
+            case 'wykaz-zmian':
+                pageTitle.textContent = 'Wykaz zmian'
+                contentArea.innerHTML = '<div id="changelog-container"></div>'
+                
+                // Mount ChangelogPage component
+                import('@/components/changelog/ChangelogPage').then(async (module) => {
+                    const container = contentArea.querySelector('#changelog-container')
+                    if (container && container instanceof HTMLElement) {
+                        const changelogPage = new module.ChangelogPage()
+                        const changelogEl = await changelogPage.render()
+                        container.appendChild(changelogEl)
+                        changelogPage.mount(container)
+                    }
+                }).catch(error => {
+                    console.error('Failed to load ChangelogPage:', error)
+                    contentArea.innerHTML = '<div class="alert alert-danger">Błąd ładowania wykazu zmian</div>'
                 })
                 break
 

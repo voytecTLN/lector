@@ -226,7 +226,7 @@ export class StudentTutors {
 <!--                    <div class="col-4">-->
                     <div class="mb-3">
                         <div class="small text-muted">Doświadczenie</div>
-                        <div class="fw-bold">${profile.years_experience || 0} lat</div>
+                        <div class="fw-bold">${profile.years_experience || 0} ${this.getYearsLabel(profile.years_experience || 0)}</div>
                     </div>
                 </div>
             `
@@ -286,13 +286,22 @@ export class StudentTutors {
                             <div class="card mb-4">
                                 <div class="card-body">
                                     <h4 class="card-title">O mnie</h4>
-                                    <p class="card-text">${profile.description || 'Brak opisu'}</p>
+                                    <div class="card-text">${this.formatDescription(profile.description)}</div>
                                 </div>
                             </div>
                             
+                            ${profile.education ? `
                             <div class="card mb-4">
                                 <div class="card-body">
-                                    <h4 class="card-title">Języki nauczania</h4>
+                                    <h4 class="card-title">Wykształcenie</h4>
+                                    <p class="card-text" style="white-space: pre-line;">${profile.education}</p>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h4 class="card-title">Język nauczania</h4>
                                     <div class="d-flex flex-wrap gap-2">
                                         ${(profile.languages || []).map((lang: string) => 
                                             `<span class="badge bg-primary fs-6">${this.getLanguageName(lang)}</span>`
@@ -311,6 +320,22 @@ export class StudentTutors {
                                     </div>
                                 </div>
                             </div>
+                            
+                            ${(profile.certifications && profile.certifications.length > 0) ? `
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h4 class="card-title">Kwalifikacje i certyfikaty</h4>
+                                    <ul class="list-unstyled">
+                                        ${profile.certifications.map((cert: string) => 
+                                            `<li class="mb-2">
+                                                <i class="bi bi-award text-success me-2"></i>
+                                                ${cert}
+                                            </li>`
+                                        ).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
@@ -421,16 +446,14 @@ export class StudentTutors {
 
     private getSpecializationName(code: string): string {
         const specializations: { [key: string]: string } = {
-            'general': 'Język ogólny',
-            'business': 'Biznesowy',
-            'exams': 'Egzaminy',
-            'kids': 'Dla dzieci',
+            'business': 'Język biznesowy',
             'conversation': 'Konwersacje',
+            'exam': 'Przygotowanie do egzaminów',
             'grammar': 'Gramatyka',
             'pronunciation': 'Wymowa',
-            'writing': 'Pisanie',
-            'reading': 'Czytanie',
-            'listening': 'Słuchanie'
+            'academic': 'Język akademicki',
+            'travel': 'Język w podróży',
+            'kids': 'Zajęcia dla dzieci'
         }
         return specializations[code] || code
     }
@@ -440,5 +463,39 @@ export class StudentTutors {
         if (years === 1) return 'rok'
         if (years >= 2 && years <= 4) return 'lata'
         return 'lat'
+    }
+    
+    /**
+     * Safely render HTML with allowed formatting tags
+     */
+    private formatDescription(text: string): string {
+        if (!text) return 'Brak opisu'
+        
+        // First, escape any existing HTML to prevent XSS, except our allowed tags
+        let formatted = text
+            // Temporarily replace allowed tags with placeholders
+            .replace(/<b>/gi, '{{B_OPEN}}')
+            .replace(/<\/b>/gi, '{{B_CLOSE}}')
+            .replace(/<i>/gi, '{{I_OPEN}}')
+            .replace(/<\/i>/gi, '{{I_CLOSE}}')
+            .replace(/<u>/gi, '{{U_OPEN}}')
+            .replace(/<\/u>/gi, '{{U_CLOSE}}')
+            .replace(/<br\s*\/?>/gi, '{{BR}}')
+            // Remove any script tags completely
+            .replace(/<script[^>]*>.*?<\/script>/gi, '')
+            // Remove all other HTML tags
+            .replace(/<[^>]+>/g, '')
+            // Restore allowed tags
+            .replace(/{{B_OPEN}}/g, '<b>')
+            .replace(/{{B_CLOSE}}/g, '</b>')
+            .replace(/{{I_OPEN}}/g, '<i>')
+            .replace(/{{I_CLOSE}}/g, '</i>')
+            .replace(/{{U_OPEN}}/g, '<u>')
+            .replace(/{{U_CLOSE}}/g, '</u>')
+            .replace(/{{BR}}/g, '<br>')
+            // Convert line breaks to <br> tags
+            .replace(/\n/g, '<br>')
+        
+        return formatted
     }
 }

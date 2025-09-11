@@ -27,6 +27,7 @@ export const ROUTES = {
     HOME: '/',
     CONTACT: '/contact',
     FAQ: '/faq',
+    CHANGELOG: '/changelog',
     
     // Auth routes
     LOGIN: '/login',

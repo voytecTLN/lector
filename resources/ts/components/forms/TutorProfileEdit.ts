@@ -68,6 +68,12 @@ export class TutorProfileEdit implements RouteComponent {
         }
 
         this.loadingManager = LoadingStateManager.simple(container, '#form-loading', '#profile-form-container')
+        
+        // Setup description preview
+        this.setupDescriptionPreview()
+        
+        // Setup profile preview
+        this.setupProfilePreview()
 
         await this.loadProfile()
     }
@@ -147,9 +153,31 @@ export class TutorProfileEdit implements RouteComponent {
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">O mnie / Bio</label>
-                            <textarea name="description" class="form-control" rows="4" 
-                                placeholder="Opisz swoje doświadczenie, metody nauczania, osiągnięcia..."></textarea>
-                            <div class="form-text">Przedstaw się swoim przyszłym studentom</div>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <textarea name="description" class="form-control" rows="10" id="description-textarea"
+                                        placeholder="Opisz swoje doświadczenie, metody nauczania, osiągnięcia..."></textarea>
+                                    <div class="form-text">
+                                        <div class="alert alert-info p-2 mt-2">
+                                            <strong>💡 Formatowanie tekstu:</strong><br>
+                                            • <strong>Nowa linia:</strong> <code>Enter lub użyj &lt;br&gt;</code><br>
+                                            • <strong>Pogrubienie:</strong> <code>&lt;b&gt;pogrubiony tekst&lt;/b&gt;</code><br>
+                                            • <strong>Kursywa:</strong> <code>&lt;i&gt;pochylony tekst&lt;/i&gt;</code><br>
+                                            • <strong>Podkreślenie:</strong> <code>&lt;u&gt;podkreślony tekst&lt;/u&gt;</code>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <strong>📖 Podgląd</strong>
+                                        </div>
+                                        <div class="card-body" id="description-preview" style="min-height: 250px; max-height: 400px; overflow-y: auto;">
+                                            <p class="text-muted">Tu pojawi się podgląd twojego opisu...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="col-md-4">
@@ -188,7 +216,7 @@ export class TutorProfileEdit implements RouteComponent {
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Języki nauczania</label>
+                            <label class="form-label">Język nauczania</label>
                             <div class="row g-2">
                                 ${this.generateLanguageCheckboxes()}
                             </div>
@@ -213,7 +241,7 @@ export class TutorProfileEdit implements RouteComponent {
                         <div class="qualification-item mb-3">
                             <div class="row g-2">
                                 <div class="col-md-10">
-                                    <input type="text" name="qualifications[]" class="form-control" 
+                                    <input type="text" name="certifications[]" class="form-control" 
                                         placeholder="np. Certyfikat TESOL, Magister filologii angielskiej...">
                                 </div>
                                 <div class="col-md-2">
@@ -227,6 +255,20 @@ export class TutorProfileEdit implements RouteComponent {
                     <button type="button" class="btn btn-outline-primary btn-sm" id="add-qualification">
                         <i class="bi bi-plus-circle me-1"></i> Dodaj kwalifikację
                     </button>
+                </div>
+            </div>
+
+            <!-- Education -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Wykształcenie</h5>
+                </div>
+                <div class="card-body">
+                    <div class="col-12">
+                        <textarea name="education" class="form-control" rows="3" 
+                            placeholder="np. Magister filologii angielskiej, Uniwersytet Warszawski&#10;Kurs metodyki nauczania języków obcych&#10;Certyfikat Cambridge CELTA..."></textarea>
+                        <div class="form-text">Opisz swoje wykształcenie, kursy, szkolenia</div>
+                    </div>
                 </div>
             </div>
 
@@ -263,9 +305,34 @@ export class TutorProfileEdit implements RouteComponent {
                 <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">
                     <i class="bi bi-x-circle me-1"></i> Anuluj
                 </button>
+                <button type="button" class="btn btn-outline-info" id="preview-profile-btn">
+                    <i class="bi bi-eye me-1"></i> Podgląd profilu
+                </button>
                 <button type="submit" class="btn btn-primary" id="submit-button">
                     <i class="bi bi-check-circle me-1"></i> Zapisz zmiany
                 </button>
+            </div>
+            
+            <!-- Profile Preview Modal -->
+            <div class="modal fade" id="profile-preview-modal" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header bg-info text-white">
+                            <h5 class="modal-title">
+                                <i class="bi bi-eye me-2"></i>Podgląd profilu - tak widzą Cię studenci
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-0" id="profile-preview-content">
+                            <!-- Profile preview content will be rendered here -->
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle me-1"></i> Zamknij podgląd
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         `
     }
@@ -358,6 +425,20 @@ export class TutorProfileEdit implements RouteComponent {
             const descriptionField = this.form.querySelector(`[name="description"]`) as HTMLTextAreaElement
             if (descriptionField && profile.description) {
                 descriptionField.value = profile.description
+                
+                // Update preview
+                const preview = this.container?.querySelector('#description-preview')
+                if (preview) {
+                    preview.innerHTML = this.formatDescriptionForPreview(profile.description)
+                }
+            }
+
+            const educationField = this.form.querySelector(`[name="education"]`) as HTMLTextAreaElement
+            if (educationField && profile.education) {
+                // Handle if education is array or string
+                educationField.value = Array.isArray(profile.education) 
+                    ? profile.education.join('\n') 
+                    : profile.education
             }
 
             const experienceField = this.form.querySelector(`[name="years_experience"]`) as HTMLInputElement
@@ -414,7 +495,7 @@ export class TutorProfileEdit implements RouteComponent {
                 <div class="qualification-item mb-3">
                     <div class="row g-2">
                         <div class="col-md-10">
-                            <input type="text" name="qualifications[]" class="form-control" value="${qualification}">
+                            <input type="text" name="certifications[]" class="form-control" value="${qualification}">
                         </div>
                         <div class="col-md-2">
                             <button type="button" class="btn btn-outline-danger remove-qualification" ${index === 0 ? 'style="display: none;"' : ''}>
@@ -477,7 +558,7 @@ export class TutorProfileEdit implements RouteComponent {
             <div class="qualification-item mb-3">
                 <div class="row g-2">
                     <div class="col-md-10">
-                        <input type="text" name="qualifications[]" class="form-control" 
+                        <input type="text" name="certifications[]" class="form-control" 
                             placeholder="np. Certyfikat TESOL, Magister filologii angielskiej...">
                     </div>
                     <div class="col-md-2">
@@ -583,16 +664,23 @@ export class TutorProfileEdit implements RouteComponent {
                 })
                 
                 const specializations = formData.getAll('specializations[]')
+                
+                // Validate specializations count (allow all 8 available options)
+                if (specializations.length > 8) {
+                    NotificationService.error('Możesz wybrać maksymalnie 8 specjalizacji')
+                    return
+                }
+                
                 formData.delete('specializations[]')
                 specializations.forEach(spec => {
                     formData.append('specializations[]', spec)
                 })
                 
-                const qualifications = formData.getAll('qualifications[]')
-                formData.delete('qualifications[]')
-                qualifications.forEach(qual => {
-                    if (qual && String(qual).trim()) {
-                        formData.append('qualifications[]', qual)
+                const certifications = formData.getAll('certifications[]')
+                formData.delete('certifications[]')
+                certifications.forEach(cert => {
+                    if (cert && String(cert).trim()) {
+                        formData.append('certifications[]', cert)
                     }
                 })
                 
@@ -613,7 +701,13 @@ export class TutorProfileEdit implements RouteComponent {
         } catch (error: any) {
             console.error('Profile update error:', error)
 
-            if (error.name !== 'ValidationError') {
+            // Check for specializations validation error
+            if (error.response?.data?.errors?.specializations) {
+                const specError = Array.isArray(error.response.data.errors.specializations) 
+                    ? error.response.data.errors.specializations[0]
+                    : error.response.data.errors.specializations
+                NotificationService.error(`Błąd specjalizacji: ${specError}`)
+            } else if (error.name !== 'ValidationError') {
                 NotificationService.error('Wystąpił błąd podczas zapisywania profilu')
             }
         } finally {
@@ -634,7 +728,7 @@ export class TutorProfileEdit implements RouteComponent {
         })
 
         // Tutor profile fields
-        const tutorFields = ['description', 'years_experience', 'hourly_rate']
+        const tutorFields = ['description', 'education', 'years_experience', 'hourly_rate']
         tutorFields.forEach(field => {
             const value = formData.get(field)
             if (value !== null && value !== '') {
@@ -653,11 +747,17 @@ export class TutorProfileEdit implements RouteComponent {
 
         // Array fields - handle them even if empty to clear existing values
         data.teaching_languages = formData.getAll('teaching_languages[]')
-        data.specializations = formData.getAll('specializations[]')
         
-        const qualifications = formData.getAll('qualifications[]').filter(q => q && String(q).trim())
-        if (qualifications.length > 0) {
-            data.qualifications = qualifications
+        const specializations = formData.getAll('specializations[]')
+        // Validate specializations count (allow all 8 available options)
+        if (specializations.length > 8) {
+            throw new Error('Możesz wybrać maksymalnie 8 specjalizacji')
+        }
+        data.specializations = specializations
+        
+        const certifications = formData.getAll('certifications[]').filter(q => q && String(q).trim())
+        if (certifications.length > 0) {
+            data.certifications = certifications
         }
 
         // Password fields (only if provided)
@@ -671,5 +771,274 @@ export class TutorProfileEdit implements RouteComponent {
         }
 
         return data
+    }
+    
+    /**
+     * Setup live preview for description field
+     */
+    private setupDescriptionPreview(): void {
+        const textarea = this.container?.querySelector('#description-textarea') as HTMLTextAreaElement
+        const preview = this.container?.querySelector('#description-preview')
+        
+        if (!textarea || !preview) return
+        
+        // Initial preview update if there's existing text
+        const existingText = textarea.value
+        if (existingText) {
+            preview.innerHTML = this.formatDescriptionForPreview(existingText)
+        }
+        
+        // Update preview on input
+        textarea.addEventListener('input', () => {
+            const text = textarea.value
+            if (text.trim()) {
+                preview.innerHTML = this.formatDescriptionForPreview(text)
+            } else {
+                preview.innerHTML = '<p class="text-muted">Tu pojawi się podgląd twojego opisu...</p>'
+            }
+        })
+    }
+    
+    /**
+     * Format description text for preview (similar to StudentTutors formatDescription)
+     */
+    private formatDescriptionForPreview(text: string): string {
+        if (!text) return ''
+        
+        // First, escape any existing HTML to prevent XSS, except our allowed tags
+        let formatted = text
+            // Temporarily replace allowed tags with placeholders
+            .replace(/<b>/gi, '{{B_OPEN}}')
+            .replace(/<\/b>/gi, '{{B_CLOSE}}')
+            .replace(/<i>/gi, '{{I_OPEN}}')
+            .replace(/<\/i>/gi, '{{I_CLOSE}}')
+            .replace(/<u>/gi, '{{U_OPEN}}')
+            .replace(/<\/u>/gi, '{{U_CLOSE}}')
+            .replace(/<br\s*\/?>/gi, '{{BR}}')
+            // Remove any script tags completely
+            .replace(/<script[^>]*>.*?<\/script>/gi, '')
+            // Remove all other HTML tags
+            .replace(/<[^>]+>/g, '')
+            // Restore allowed tags
+            .replace(/{{B_OPEN}}/g, '<b>')
+            .replace(/{{B_CLOSE}}/g, '</b>')
+            .replace(/{{I_OPEN}}/g, '<i>')
+            .replace(/{{I_CLOSE}}/g, '</i>')
+            .replace(/{{U_OPEN}}/g, '<u>')
+            .replace(/{{U_CLOSE}}/g, '</u>')
+            .replace(/{{BR}}/g, '<br>')
+            // Convert line breaks to <br> tags
+            .replace(/\n/g, '<br>')
+        
+        return formatted
+    }
+    
+    /**
+     * Setup profile preview functionality
+     */
+    private setupProfilePreview(): void {
+        const previewBtn = this.container?.querySelector('#preview-profile-btn')
+        
+        if (!previewBtn) return
+        
+        previewBtn.addEventListener('click', () => {
+            this.showProfilePreview()
+        })
+    }
+    
+    /**
+     * Show profile preview modal
+     */
+    private showProfilePreview(): void {
+        const previewContent = this.container?.querySelector('#profile-preview-content')
+        if (!previewContent) return
+        
+        // Generate preview content from current form data
+        const previewHTML = this.generateProfilePreview()
+        previewContent.innerHTML = previewHTML
+        
+        // Show modal using Bootstrap
+        const modal = this.container?.querySelector('#profile-preview-modal')
+        if (modal && (window as any).bootstrap) {
+            const bsModal = new (window as any).bootstrap.Modal(modal)
+            bsModal.show()
+        }
+    }
+    
+    /**
+     * Generate profile preview HTML (same as student sees)
+     */
+    private generateProfilePreview(): string {
+        if (!this.form) return '<p class="text-muted">Błąd podczas ładowania podglądu</p>'
+        
+        // Collect current form data
+        const formData = new FormData(this.form)
+        const currentData = this.parseFormData(formData)
+        
+        // Get user data
+        const name = String(formData.get('name') || this.profile?.name || 'Nie podano')
+        const city = String(formData.get('city') || this.profile?.city || 'Miasto nieznane')
+        const avatar = this.profile?.avatar
+        
+        // Get tutor profile data with fallbacks
+        const description = currentData.description || this.profile?.tutorProfile?.description || ''
+        const education = currentData.education || this.profile?.tutorProfile?.education || ''
+        const yearsExperience = currentData.years_experience || this.profile?.tutorProfile?.years_experience || 0
+        const isAcceptingStudents = currentData.is_accepting_students !== undefined 
+            ? currentData.is_accepting_students 
+            : this.profile?.tutorProfile?.is_accepting_students || false
+        const languages = currentData.teaching_languages?.length 
+            ? currentData.teaching_languages 
+            : this.profile?.tutorProfile?.languages || []
+        const specializations = currentData.specializations?.length 
+            ? currentData.specializations 
+            : this.profile?.tutorProfile?.specializations || []
+        const certifications = currentData.certifications?.length 
+            ? currentData.certifications 
+            : this.profile?.tutorProfile?.certifications || []
+        
+        // Generate stats
+        const yearsLabel = yearsExperience === 1 ? 'rok' : yearsExperience >= 2 && yearsExperience <= 4 ? 'lata' : 'lat'
+        const stats = `
+            <div class="mb-3">
+                <div class="small text-muted">Doświadczenie</div>
+                <div class="fw-bold">${yearsExperience} ${yearsLabel}</div>
+            </div>
+        `
+        
+        // Generate avatar HTML
+        const avatarHtml = avatar 
+            ? `<img src="/storage/avatars/${avatar}" alt="Profile" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">`
+            : `<div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 48px; font-weight: bold;">${name.charAt(0).toUpperCase()}</div>`
+        
+        return `
+            <div class="container-fluid p-4">
+                <div class="row">
+                    <div class="col-lg-4 mb-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <div class="mb-3" style="display: flex; justify-content: center;">
+                                    ${avatarHtml}
+                                </div>
+                                <h3 class="card-title">${name}</h3>
+                                <p class="text-muted mb-2">${city}</p>
+                                
+                                <div class="mb-3">
+                                    ${isAcceptingStudents 
+                                        ? '<span class="badge bg-success">Przyjmuje studentów</span>'
+                                        : '<span class="badge bg-secondary">Nie przyjmuje studentów</span>'
+                                    }
+                                </div>
+                                
+                                ${stats}
+                                
+                                <button class="btn btn-primary btn-lg w-100" disabled>
+                                    <i class="bi bi-calendar-check me-2"></i>Sprawdź terminy
+                                </button>
+                                <small class="text-muted d-block mt-2">To tylko podgląd - przycisk nieaktywny</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-8">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title">O mnie</h4>
+                                <div class="card-text">${this.formatDescriptionForPreview(description) || '<p class="text-muted">Brak opisu</p>'}</div>
+                            </div>
+                        </div>
+                        
+                        ${education ? `
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title">Wykształcenie</h4>
+                                <p class="card-text" style="white-space: pre-line;">${education}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title">Języki nauczania</h4>
+                                <div class="d-flex flex-wrap gap-2">
+                                    ${languages.length > 0 
+                                        ? languages.map((lang: string) => 
+                                            `<span class="badge bg-primary fs-6">${this.getLanguageName(lang)}</span>`
+                                        ).join('')
+                                        : '<span class="text-muted">Brak wybranych języków</span>'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title">Specjalizacje</h4>
+                                <div class="d-flex flex-wrap gap-2">
+                                    ${specializations.length > 0 
+                                        ? specializations.map((spec: string) => 
+                                            `<span class="badge bg-info fs-6">${this.getSpecializationName(spec)}</span>`
+                                        ).join('')
+                                        : '<span class="text-muted">Brak wybranych specjalizacji</span>'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${(certifications && certifications.length > 0) ? `
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title">Kwalifikacje i certyfikaty</h4>
+                                <ul class="list-unstyled">
+                                    ${certifications.map((cert: string) => 
+                                        `<li class="mb-2">
+                                            <i class="bi bi-award text-success me-2"></i>
+                                            ${cert}
+                                        </li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `
+    }
+    
+    /**
+     * Get language name for display
+     */
+    private getLanguageName(code: string): string {
+        const languages: { [key: string]: string } = {
+            'english': 'Angielski',
+            'german': 'Niemiecki', 
+            'french': 'Francuski',
+            'spanish': 'Hiszpański',
+            'italian': 'Włoski',
+            'portuguese': 'Portugalski',
+            'russian': 'Rosyjski',
+            'chinese': 'Chiński',
+            'japanese': 'Japoński',
+            'polish': 'Polski'
+        }
+        return languages[code] || code
+    }
+    
+    /**
+     * Get specialization name for display
+     */
+    private getSpecializationName(code: string): string {
+        const specializations: { [key: string]: string } = {
+            'business': 'Język biznesowy',
+            'conversation': 'Konwersacje',
+            'exam': 'Przygotowanie do egzaminów',
+            'grammar': 'Gramatyka',
+            'pronunciation': 'Wymowa',
+            'academic': 'Język akademicki',
+            'travel': 'Język w podróży',
+            'kids': 'Zajęcia dla dzieci'
+        }
+        return specializations[code] || code
     }
 }

@@ -1412,7 +1412,8 @@ export class StudentDetails implements RouteComponent {
             travel: 'Podróże',
             academic: 'Język akademicki',
             hobby: 'Hobby',
-            culture: 'Kultura'
+            culture: 'Kultura',
+            career: 'Rozwój kariery'
         }
         return labels[goal] || goal
     }

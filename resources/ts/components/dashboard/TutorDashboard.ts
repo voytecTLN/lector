@@ -33,13 +33,6 @@ export class TutorDashboard implements RouteComponent {
         el.innerHTML = `
             <aside class="tutor-sidebar" id="tutorSidebar">
                 <div class="tutor-logo-dashboard">
-                    <div class="tutor-profile-section" style="text-align: center; padding: 20px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.1); margin-bottom: 20px;">
-                        <div class="tutor-avatar-wrapper" style="margin-bottom: 10px;">
-                            ${avatarHtml}
-                        </div>
-                        <h3 style="margin: 0; font-size: 18px; color: #fff;">${user?.name || 'Lektor'}</h3>
-                        <p style="margin: 5px 0; font-size: 14px; color: #94a3b8;">${user?.email || ''}</p>
-                    </div>
                     <h2>📚 Platforma Lektorów</h2>
                     <p style="color: #94a3b8; font-size: 0.875rem; margin: 0;">Panel Lektora</p>
                 </div>
@@ -49,7 +42,13 @@ export class TutorDashboard implements RouteComponent {
                         <li class="tutor-nav-item">
                             <a href="#" class="tutor-nav-link active" data-section="dashboard">
                                 <span class="tutor-nav-icon">🏠</span>
-                                <span>Strona główna</span>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="tutor-nav-item">
+                            <a href="#" class="tutor-nav-link" data-section="wykaz-zmian">
+                                <span class="tutor-nav-icon">📋</span>
+                                <span>Wykaz zmian</span>
                             </a>
                         </li>
                         
@@ -108,7 +107,7 @@ export class TutorDashboard implements RouteComponent {
                 <header class="tutor-header">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <button class="tutor-mobile-menu-btn" id="tutorMobileMenuBtn">☰</button>
-                        <h1 id="sectionTitle">Strona główna</h1>
+                        <h1 id="sectionTitle">Dashboard</h1>
                     </div>
                     <div class="tutor-user-info">
                         ${AvatarHelper.render({
@@ -251,7 +250,7 @@ export class TutorDashboard implements RouteComponent {
         
         switch (this.currentSection) {
             case 'dashboard':
-                if (titleEl) titleEl.textContent = 'Strona główna'
+                if (titleEl) titleEl.textContent = 'Dashboard'
                 this.loadDashboardContent()
                 break
             case 'availability':
@@ -281,6 +280,10 @@ export class TutorDashboard implements RouteComponent {
             case 'zgloszenia':
                 if (titleEl) titleEl.textContent = 'Zgłoś sprawę'
                 this.loadIssueReportContent()
+                break
+            case 'wykaz-zmian':
+                if (titleEl) titleEl.textContent = 'Wykaz zmian'
+                this.loadChangelogContent()
                 break
             default:
                 this.navigateToSection('dashboard')
@@ -445,9 +448,6 @@ export class TutorDashboard implements RouteComponent {
                                         ? '<span class="badge bg-success fs-6">Przyjmuję nowych uczniów</span>' 
                                         : '<span class="badge bg-secondary fs-6">Nie przyjmuję nowych uczniów</span>'}
                                 </div>
-                                <p class="text-muted mb-0">
-                                    Maksymalnie <strong>${profile?.max_students_per_week || 0}</strong> uczniów tygodniowo
-                                </p>
                             </div>
                         </div>
                     </div>
@@ -533,6 +533,29 @@ export class TutorDashboard implements RouteComponent {
             const container = document.getElementById('issue-report-container')
             if (container) {
                 issueForm.mount(container)
+            }
+        })
+    }
+
+    private async loadChangelogContent(): Promise<void> {
+        const contentDiv = this.container?.querySelector('#tutorContent')
+        if (!contentDiv) return
+
+        contentDiv.innerHTML = '<div id="changelog-container"></div>'
+        
+        // Import and mount ChangelogPage
+        import('@/components/changelog/ChangelogPage').then(async (module) => {
+            const changelogPage = new module.ChangelogPage()
+            const container = document.getElementById('changelog-container')
+            if (container) {
+                const changelogEl = await changelogPage.render()
+                container.appendChild(changelogEl)
+                changelogPage.mount(container)
+            }
+        }).catch(error => {
+            console.error('Failed to load ChangelogPage:', error)
+            if (contentDiv) {
+                contentDiv.innerHTML = '<div class="alert alert-danger">Błąd ładowania wykazu zmian</div>'
             }
         })
     }

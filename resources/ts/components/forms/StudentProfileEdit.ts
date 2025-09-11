@@ -53,6 +53,9 @@ export class StudentProfileEdit implements RouteComponent {
         }
 
         this.loadingManager = LoadingStateManager.simple(container, '#form-loading', '#profile-form-container')
+        
+        // Setup bio preview
+        this.setupBioPreview()
 
         await this.loadProfile()
     }
@@ -135,11 +138,34 @@ export class StudentProfileEdit implements RouteComponent {
                     <h5 class="mb-0">O mnie</h5>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">Opis/Bio</label>
-                        <textarea name="bio" class="form-control" rows="4" 
-                                  placeholder="Opisz swoje zainteresowania, motywację do nauki języka, cel nauki..."></textarea>
-                        <div class="form-text">Ten opis pomoże lektorowi lepiej dostosować lekcje do Twoich potrzeb</div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Opis/Bio</label>
+                                <textarea name="bio" class="form-control" rows="10" id="bio-textarea"
+                                          placeholder="Opisz swoje zainteresowania, motywację do nauki języka, cel nauki..."></textarea>
+                                <div class="form-text">
+                                    <div class="mb-2">Ten opis pomoże lektorowi lepiej dostosować lekcje do Twoich potrzeb</div>
+                                    <div class="alert alert-info p-2">
+                                        <strong>💡 Formatowanie tekstu:</strong><br>
+                                        • <strong>Nowa linia:</strong> <code>Enter lub użyj &lt;br&gt;</code><br>
+                                        • <strong>Pogrubienie:</strong> <code>&lt;b&gt;pogrubiony tekst&lt;/b&gt;</code><br>
+                                        • <strong>Kursywa:</strong> <code>&lt;i&gt;pochylony tekst&lt;/i&gt;</code><br>
+                                        • <strong>Podkreślenie:</strong> <code>&lt;u&gt;podkreślony tekst&lt;/u&gt;</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <strong>📖 Podgląd</strong>
+                                </div>
+                                <div class="card-body" id="bio-preview" style="min-height: 250px; max-height: 400px; overflow-y: auto;">
+                                    <p class="text-muted">Tu pojawi się podgląd twojego opisu...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -241,7 +267,9 @@ export class StudentProfileEdit implements RouteComponent {
             { value: 'exam', label: 'Egzaminy' },
             { value: 'travel', label: 'Podróże' },
             { value: 'academic', label: 'Język akademicki' },
-            { value: 'hobby', label: 'Hobby' }
+            { value: 'hobby', label: 'Hobby' },
+            { value: 'culture', label: 'Kultura' },
+            { value: 'career', label: 'Rozwój kariery' }
         ]
 
         return goals.map(goal => `
@@ -318,6 +346,12 @@ export class StudentProfileEdit implements RouteComponent {
         const bioField = this.form!.querySelector('[name="bio"]') as HTMLTextAreaElement
         if (bioField && this.profile.student_profile?.bio) {
             bioField.value = this.profile.student_profile.bio
+            
+            // Update preview
+            const preview = this.container?.querySelector('#bio-preview')
+            if (preview) {
+                preview.innerHTML = this.formatBioForPreview(this.profile.student_profile.bio)
+            }
         }
 
         // Update avatar
@@ -625,5 +659,65 @@ export class StudentProfileEdit implements RouteComponent {
 
     private getLanguageLabel(language: string): string {
         return LanguageUtils.getLanguageLabel(language)
+    }
+    
+    /**
+     * Setup live preview for bio field
+     */
+    private setupBioPreview(): void {
+        const textarea = this.container?.querySelector('#bio-textarea') as HTMLTextAreaElement
+        const preview = this.container?.querySelector('#bio-preview')
+        
+        if (!textarea || !preview) return
+        
+        // Initial preview update if there's existing text
+        const existingText = textarea.value
+        if (existingText) {
+            preview.innerHTML = this.formatBioForPreview(existingText)
+        }
+        
+        // Update preview on input
+        textarea.addEventListener('input', () => {
+            const text = textarea.value
+            if (text.trim()) {
+                preview.innerHTML = this.formatBioForPreview(text)
+            } else {
+                preview.innerHTML = '<p class="text-muted">Tu pojawi się podgląd twojego opisu...</p>'
+            }
+        })
+    }
+    
+    /**
+     * Format bio text for preview
+     */
+    private formatBioForPreview(text: string): string {
+        if (!text) return ''
+        
+        // First, escape any existing HTML to prevent XSS, except our allowed tags
+        let formatted = text
+            // Temporarily replace allowed tags with placeholders
+            .replace(/<b>/gi, '{{B_OPEN}}')
+            .replace(/<\/b>/gi, '{{B_CLOSE}}')
+            .replace(/<i>/gi, '{{I_OPEN}}')
+            .replace(/<\/i>/gi, '{{I_CLOSE}}')
+            .replace(/<u>/gi, '{{U_OPEN}}')
+            .replace(/<\/u>/gi, '{{U_CLOSE}}')
+            .replace(/<br\s*\/?>/gi, '{{BR}}')
+            // Remove any script tags completely
+            .replace(/<script[^>]*>.*?<\/script>/gi, '')
+            // Remove all other HTML tags
+            .replace(/<[^>]+>/g, '')
+            // Restore allowed tags
+            .replace(/{{B_OPEN}}/g, '<b>')
+            .replace(/{{B_CLOSE}}/g, '</b>')
+            .replace(/{{I_OPEN}}/g, '<i>')
+            .replace(/{{I_CLOSE}}/g, '</i>')
+            .replace(/{{U_OPEN}}/g, '<u>')
+            .replace(/{{U_CLOSE}}/g, '</u>')
+            .replace(/{{BR}}/g, '<br>')
+            // Convert line breaks to <br> tags
+            .replace(/\n/g, '<br>')
+        
+        return formatted
     }
 }

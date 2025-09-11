@@ -185,7 +185,7 @@ export class TutorForm implements RouteComponent {
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <label class="form-label">Języki nauczania <span class="text-danger">*</span></label>
+                                <label class="form-label">Język nauczania <span class="text-danger">*</span></label>
                                 <div class="row g-2">
                                     ${this.generateLanguageCheckboxes()}
                                 </div>
@@ -217,10 +217,6 @@ export class TutorForm implements RouteComponent {
                                 <div class="col-md-6">
                                     <label class="form-label">Lata doświadczenia <span class="text-danger">*</span></label>
                                     <input type="number" name="years_experience" class="form-control" required min="0" max="50">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Maksymalnie studentów na tydzień</label>
-                                    <input type="number" name="max_students_per_week" class="form-control" min="1" max="100">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Tygodniowy limit godzin <span class="text-danger">*</span></label>
@@ -396,7 +392,6 @@ export class TutorForm implements RouteComponent {
         const profile = this.tutor.tutor_profile
         if (profile) {
             this.setFormValue('years_experience', profile.years_experience?.toString())
-            this.setFormValue('max_students_per_week', profile.max_students_per_week?.toString())
             this.setFormValue('hourly_rate', profile.hourly_rate?.toString())
             this.setFormValue('weekly_contract_limit', profile.weekly_contract_limit?.toString() || '40')
             this.setFormValue('description', profile.description)
@@ -557,7 +552,7 @@ export class TutorForm implements RouteComponent {
                 data[key] = (value as string).split('\n').filter(line => line.trim())
             } else if (key === 'is_accepting_students') {
                 data[key] = true // checkbox present means true
-            } else if (key === 'years_experience' || key === 'max_students_per_week' || key === 'weekly_contract_limit') {
+            } else if (key === 'years_experience' || key === 'weekly_contract_limit') {
                 data[key] = value ? parseInt(value as string) : undefined
             } else if (key === 'hourly_rate') {
                 data[key] = value ? parseFloat(value as string) : undefined
