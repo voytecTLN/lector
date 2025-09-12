@@ -30,9 +30,8 @@ export class ChangelogPage implements RouteComponent {
                 ],
                 tutor: [
                     "Naprawiono zapisywanie języków nauczania w profilu lektora",
-                    "Zwiększono limity walidacji: maksymalnie 4 języki nauczania (poprzednio bez limitu)",
-                    "Naprawiono routing dashboard - teraz używa standardowego hash routing jak inne role",
-                    "Usunięto problemy z duplikowaniem URL typu '/tutor/dashboard?section=profile?section=profile'",
+                    "Naprawiono routing dashboard - teraz używa standardowego hash routing",
+                    "Usunięto problemy z duplikowaniem URL",
                     "Naprawiono automatyczne odświeżanie danych profilu po zapisaniu zmian",
                     "Ulepszona nawigacja - menu działa płynnie bez błędów ładowania",
                     "Poprawiono zgodność między formularzem admina a formularzem tutora dla edycji profilu",
@@ -40,10 +39,10 @@ export class ChangelogPage implements RouteComponent {
                     "Wprowadzono wymóg silnego hasła przy zmianie hasła w profilu"
                 ],
                 admin: [
-                    "Naprawiono inconsistency między endpoint-ami backend dla języków nauczania",
-                    "Zunifikowano nazewnictwo pól formularzy (languages zamiast teaching_languages)",
-                    "Poprawiono walidację w TutorController::updateOwnProfile",
-                    "Uprościono routing system - usunięto skomplikowane blokady specyficzne dla tutorów",
+                    "Naprawiono niekonsekwencję między endpoint-ami backend dla języków nauczania",
+                    "Zunifikowano nazewnictwo pól formularzy",
+                    "Poprawiono walidację w kontrolerze lektora",
+                    "Uproszczono system przeładowywania stron",
                     "Poprawiono stabilność routingu w całej aplikacji", 
                     "Naprawiono problemy z cache-owaniem danych profilu po aktualizacji",
                     "Zwiększono spójność między różnymi dashboardami (admin, tutor, student)",
