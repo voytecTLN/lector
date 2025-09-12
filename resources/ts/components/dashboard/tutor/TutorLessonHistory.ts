@@ -44,6 +44,21 @@ export class TutorLessonHistory {
         (window as any).TutorLessonHistory = TutorLessonHistory
     }
     
+    public applyStudentFilter(studentName: string): void {
+        // Set the student filter
+        this.currentFilter.student = studentName
+        
+        // Update the input field when it becomes available
+        setTimeout(() => {
+            const studentInput = document.getElementById('student-filter') as HTMLInputElement
+            if (studentInput) {
+                studentInput.value = studentName
+                // Trigger the static filter method which handles the proper flow
+                TutorLessonHistory.applyFilters()
+            }
+        }, 200)
+    }
+    
     public getHistoryContent(): string {
         // Trigger async loading
         this.loadLessonHistory()

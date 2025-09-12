@@ -36,7 +36,20 @@ class StudentImportService
             'package_name'
         ];
 
-        $sampleData = [
+        $sampleDataMinimal = [
+            'Anna Nowak',
+            'anna.nowak@example.com',
+            '', // phone - opcjonalne
+            '', // birth_date - opcjonalne 
+            '', // city - opcjonalne
+            '', // country - opcjonalne
+            '', // learning_languages - opcjonalne
+            '', // learning_goals - opcjonalne
+            '', // current_levels - opcjonalne
+            ''  // package_name - opcjonalne
+        ];
+
+        $sampleDataFull = [
             'Jan Kowalski',
             'jan.kowalski@example.com',
             '+48123456789',
@@ -57,8 +70,11 @@ class StudentImportService
         // Add headers
         fputcsv($output, $headers);
         
-        // Add sample data
-        fputcsv($output, $sampleData);
+        // Add minimal example (only required fields)
+        fputcsv($output, $sampleDataMinimal);
+        
+        // Add full example (all fields filled)
+        fputcsv($output, $sampleDataFull);
         
         rewind($output);
         $csvData = stream_get_contents($output);
@@ -226,8 +242,8 @@ class StudentImportService
         $validator = Validator::make($row, [
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'birth_date' => 'required|date|before:today',
+            'phone' => 'nullable|string|max:20',
+            'birth_date' => 'nullable|date|before:today',
             'city' => 'nullable|string|max:100',
             'country' => 'nullable|string|max:100',
             'learning_languages' => 'nullable|string',
@@ -304,8 +320,8 @@ class StudentImportService
         $studentData = [
             'name' => $row['name'],
             'email' => $row['email'],
-            'phone' => $row['phone'],
-            'birth_date' => $row['birth_date'],
+            'phone' => !empty($row['phone']) ? $row['phone'] : null,
+            'birth_date' => !empty($row['birth_date']) ? $row['birth_date'] : null,
             'city' => $row['city'] ?: null,
             'country' => $row['country'] ?: 'Polska',
             'password' => $tempPassword,

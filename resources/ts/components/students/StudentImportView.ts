@@ -69,13 +69,13 @@ export class StudentImportView implements RouteComponent {
                                 <ul>
                                     <li><strong>name</strong> - Imię i nazwisko</li>
                                     <li><strong>email</strong> - Adres email</li>
-                                    <li><strong>phone</strong> - Numer telefonu</li>
-                                    <li><strong>birth_date</strong> - Data urodzenia (YYYY-MM-DD)</li>
                                 </ul>
                             </div>
                             <div class="col-md-6">
                                 <h6>Pola opcjonalne:</h6>
                                 <ul>
+                                    <li><strong>phone</strong> - Numer telefonu</li>
+                                    <li><strong>birth_date</strong> - Data urodzenia (YYYY-MM-DD)</li>
                                     <li><strong>city</strong> - Miasto</li>
                                     <li><strong>country</strong> - Kraj</li>
                                     <li><strong>learning_languages</strong> - Języki (english,german)</li>

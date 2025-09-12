@@ -786,6 +786,7 @@ class TutorService
                 'learning_languages' => $student->studentProfile->learning_languages ?? [],
                 'learning_goals' => $student->studentProfile->learning_goals ?? [],
                 'current_levels' => $student->studentProfile->current_levels ?? [],
+                'bio' => $student->studentProfile->bio,
             ] : null,
         ];
     }

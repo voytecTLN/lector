@@ -26,6 +26,7 @@ interface TutorStudent {
         learning_languages: string[]
         learning_goals: string[]
         current_levels?: Record<string, string>
+        bio?: string
     }
 }
 
@@ -283,9 +284,6 @@ export class TutorStudents {
                     <thead class="table-light">
                         <tr>
                             <th>Student</th>
-                            <th>Kontakt</th>
-                            <th>Pakiet</th>
-<!--                             <th>Postępy</th> -->
                             <th>Ostatnia lekcja</th>
                             <th>Następna lekcja</th>
                             <th>Akcje</th>
@@ -305,10 +303,6 @@ export class TutorStudents {
         // Use dropup for last 3 rows to prevent overflow
         const isLastRows = index >= totalStudents - 3
         const dropdownClass = isLastRows ? 'dropup' : 'dropdown'
-        const packageInfo = student.active_package 
-            ? `${student.active_package.name}<br><small class="text-muted">${student.active_package.hours_remaining}/${student.active_package.hours_total} godzin</small>`
-            : '<span class="text-muted">Brak pakietu</span>'
-        
         const progressPercent = student.total_lessons > 0 ? Math.round((student.completed_lessons / student.total_lessons) * 100) : 0
         
         const lastLesson = student.last_lesson_date 
@@ -337,17 +331,6 @@ export class TutorStudents {
                             <div class="fw-semibold">${student.name}</div>
                             <div class="small text-muted">${student.city || 'Brak miasta'}</div>
                         </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="small">
-                        <div><i class="bi bi-envelope me-1"></i>${student.email}</div>
-                        ${student.phone ? `<div><i class="bi bi-telephone me-1"></i>${student.phone}</div>` : ''}
-                    </div>
-                </td>
-                <td>
-                    <div class="small">
-                        ${packageInfo}
                     </div>
                 </td>
                 <!-- <td>
@@ -439,10 +422,35 @@ export class TutorStudents {
         }
     }
     
+    // Translation functions
+    static translateLanguage(language: string): string {
+        const translations: {[key: string]: string} = {
+            'english': 'Angielski',
+            'german': 'Niemiecki', 
+            'french': 'Francuski',
+            'spanish': 'Hiszpański',
+            'italian': 'Włoski',
+            'russian': 'Rosyjski'
+        }
+        return translations[language] || language
+    }
+
+    static translateGoal(goal: string): string {
+        const translations: {[key: string]: string} = {
+            'conversation': 'Rozmowa',
+            'business': 'Biznes',
+            'exam': 'Egzamin',
+            'travel': 'Podróże',
+            'hobby': 'Hobby',
+            'career': 'Kariera'
+        }
+        return translations[goal] || goal
+    }
+
     static showStudentDetailsModal(student: TutorStudent): void {
         // Create and show student details modal
-        const languages = student.student_profile?.learning_languages?.join(', ') || 'Brak'
-        const goals = student.student_profile?.learning_goals?.join(', ') || 'Brak'
+        const languages = student.student_profile?.learning_languages?.map(lang => this.translateLanguage(lang)).join(', ') || 'Brak'
+        const goals = student.student_profile?.learning_goals?.map(goal => this.translateGoal(goal)).join(', ') || 'Brak'
         
         const modalHtml = `
             <div class="modal fade" id="studentDetailsModal" tabindex="-1">
@@ -453,32 +461,17 @@ export class TutorStudents {
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6>Informacje podstawowe</h6>
-                                    <p><strong>Email:</strong> ${student.email}</p>
-                                    <p><strong>Telefon:</strong> ${student.phone || 'Brak'}</p>
-                                    <p><strong>Miasto:</strong> ${student.city || 'Brak'}</p>
-                                    <p><strong>Status:</strong> <span class="badge bg-${student.status === 'active' ? 'success' : 'secondary'}">${student.status}</span></p>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6>Preferencje nauki</h6>
-                                    <p><strong>Języki:</strong> ${languages}</p>
-                                    <p><strong>Cele:</strong> ${goals}</p>
-                                </div>
+                            <div class="mb-4">
+                                <h6>Preferencje nauki</h6>
+                                <p><strong>Języki:</strong> ${languages}</p>
+                                <p><strong>Cele:</strong> ${goals}</p>
                             </div>
                             
-                            ${student.active_package ? `
-                            <hr>
-                            <h6>Aktywny pakiet</h6>
-                            <div class="card">
-                                <div class="card-body">
-                                    <h6 class="card-title">${student.active_package.name}</h6>
-                                    <div class="progress mb-2">
-                                        <div class="progress-bar" style="width: ${(student.active_package.hours_remaining / student.active_package.hours_total) * 100}%"></div>
-                                    </div>
-                                    <p class="small mb-0">Pozostało: ${student.active_package.hours_remaining} / ${student.active_package.hours_total} godzin</p>
-                                    <p class="small text-muted">Ważny do: ${new Date(student.active_package.expires_at).toLocaleDateString('pl-PL')}</p>
+                            ${student.student_profile?.bio ? `
+                            <div class="mb-4">
+                                <h6>Opis/Bio studenta</h6>
+                                <div class="bg-light p-3 rounded">
+                                    <p class="mb-0">${student.student_profile.bio}</p>
                                 </div>
                             </div>
                             ` : ''}
@@ -502,9 +495,6 @@ export class TutorStudents {
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
-                            <button type="button" class="btn btn-primary" onclick="TutorStudents.viewLessonsHistory(${student.id})" data-bs-dismiss="modal">
-                                <i class="bi bi-clock-history me-2"></i>Historia lekcji
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -526,13 +516,19 @@ export class TutorStudents {
     }
     
     static async viewLessonsHistory(studentId: number): Promise<void> {
-        document.dispatchEvent(new CustomEvent('notification:show', {
-            detail: {
-                type: 'info',
-                message: 'Historia lekcji studenta - funkcja w przygotowaniu',
-                duration: 3000
+        try {
+            // Get student data to get the name for filtering
+            const student = await tutorService.getStudentById(studentId)
+            
+            if (student) {
+                // Redirect to historia section with student name filter
+                window.location.hash = `/tutor/dashboard?section=historia&student_filter=${encodeURIComponent(student.name)}`
             }
-        }))
+        } catch (error) {
+            console.error('Error getting student data for history redirect:', error)
+            // Fallback to historia section without filter
+            window.location.hash = '/tutor/dashboard?section=historia'
+        }
     }
     
     static showComingSoon(): void {

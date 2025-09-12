@@ -581,7 +581,20 @@ export class TutorDashboard implements RouteComponent {
         }
         
         this.lessonHistoryComponent = new TutorLessonHistory()
+        
+        // Check for student_filter parameter from URL
+        const urlParams = new URLSearchParams(window.location.search)
+        const studentFilter = urlParams.get('student_filter')
+        
         contentDiv.innerHTML = this.lessonHistoryComponent.getHistoryContent()
+        
+        // Apply student filter if provided
+        if (studentFilter) {
+            // Wait a bit for the component to render, then apply the filter
+            setTimeout(() => {
+                this.lessonHistoryComponent?.applyStudentFilter(studentFilter)
+            }, 100)
+        }
         
         // Set global instance for static methods
         ;(window as any).currentTutorLessonHistoryInstance = this.lessonHistoryComponent
