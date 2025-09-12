@@ -18,13 +18,21 @@ export class AdminAvailabilityLogs {
     private stats: any = null
 
     async mount(container: HTMLElement) {
+        console.log('🚀 AdminAvailabilityLogs mount called')
         this.container = container
         await this.render()
+    }
+
+    unmount(): void {
+        // Clean up any intervals, event listeners, etc.
+        this.container = null
+        this.isLoading = false
     }
 
     async render() {
         if (!this.container) return
 
+        console.log('🎨 AdminAvailabilityLogs render called')
         this.container.innerHTML = this.getTemplate()
         this.attachEventListeners()
         await this.loadData()
@@ -254,8 +262,16 @@ export class AdminAvailabilityLogs {
     }
 
     private async loadData() {
-        if (this.isLoading) return
+        if (this.isLoading) {
+            console.log('⏳ Already loading, skipping...')
+            return
+        }
         this.isLoading = true
+        
+        console.log('📊 Loading data:', { 
+            page: this.currentPage, 
+            filters: this.filters 
+        })
 
         try {
             const params = new URLSearchParams({
@@ -265,6 +281,12 @@ export class AdminAvailabilityLogs {
             })
 
             const response = await api.get<any>(`/availability-logs?${params}`)
+            
+            console.log('📥 Response received:', { 
+                success: (response as any)?.success,
+                dataLength: (response as any)?.data?.length,
+                meta: (response as any)?.meta
+            })
             
             if (response && (response as any).success) {
                 this.renderLogs((response as any).data)
@@ -438,6 +460,12 @@ export class AdminAvailabilityLogs {
         const pagination = document.getElementById('pagination')
         if (!pagination || !meta) return
 
+        console.log('📄 Rendering pagination:', { 
+            currentPage: meta.current_page, 
+            totalPages: meta.last_page,
+            thisCurrentPage: this.currentPage 
+        })
+
         this.totalPages = meta.last_page || 1
         this.currentPage = meta.current_page || 1
 
@@ -455,7 +483,7 @@ export class AdminAvailabilityLogs {
         // Previous button
         pages.push(`
             <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="${this.currentPage - 1}">
+                <a class="page-link" href="javascript:void(0)" data-page="${this.currentPage - 1}">
                     <i class="bi bi-chevron-left"></i>
                 </a>
             </li>
@@ -465,7 +493,7 @@ export class AdminAvailabilityLogs {
         if (startPage > 1) {
             pages.push(`
                 <li class="page-item">
-                    <a class="page-link" href="#" data-page="1">1</a>
+                    <a class="page-link" href="javascript:void(0)" data-page="1">1</a>
                 </li>
             `)
             if (startPage > 2) {
@@ -477,7 +505,7 @@ export class AdminAvailabilityLogs {
         for (let i = startPage; i <= endPage; i++) {
             pages.push(`
                 <li class="page-item ${i === this.currentPage ? 'active' : ''}">
-                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    <a class="page-link" href="javascript:void(0)" data-page="${i}">${i}</a>
                 </li>
             `)
         }
@@ -489,7 +517,7 @@ export class AdminAvailabilityLogs {
             }
             pages.push(`
                 <li class="page-item">
-                    <a class="page-link" href="#" data-page="${this.totalPages}">${this.totalPages}</a>
+                    <a class="page-link" href="javascript:void(0)" data-page="${this.totalPages}">${this.totalPages}</a>
                 </li>
             `)
         }
@@ -497,7 +525,7 @@ export class AdminAvailabilityLogs {
         // Next button
         pages.push(`
             <li class="page-item ${this.currentPage === this.totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="${this.currentPage + 1}">
+                <a class="page-link" href="javascript:void(0)" data-page="${this.currentPage + 1}">
                     <i class="bi bi-chevron-right"></i>
                 </a>
             </li>
@@ -510,9 +538,19 @@ export class AdminAvailabilityLogs {
             link.addEventListener('click', (e) => {
                 e.preventDefault()
                 const page = parseInt((e.target as HTMLElement).closest('a')?.dataset.page || '1')
+                console.log('🔍 Page clicked:', { 
+                    page, 
+                    currentPage: this.currentPage, 
+                    totalPages: this.totalPages,
+                    currentHash: window.location.hash,
+                    currentSearch: window.location.search
+                })
                 if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+                    console.log('📍 Changing page from', this.currentPage, 'to', page)
                     this.currentPage = page
                     this.loadData()
+                } else {
+                    console.log('⚠️ Page click ignored:', { page, reason: 'invalid or same page' })
                 }
             })
         })

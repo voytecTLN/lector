@@ -51,7 +51,10 @@ export class TutorDashboard implements RouteComponent {
         el.innerHTML = `
             <aside class="tutor-sidebar" id="tutorSidebar">
                 <div class="tutor-logo-dashboard">
-                    <h2>📚 Platforma Lektorów</h2>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <img src="/images/favicon-logo.png" alt="Platforma Lektorów" style="max-height: 32px;">
+                        <h2 style="margin: 0; font-size: 1.2rem;">Platforma Lektorów</h2>
+                    </div>
                     <p style="color: #94a3b8; font-size: 0.875rem; margin: 0;">Panel Lektora</p>
                 </div>
                 
@@ -545,7 +548,8 @@ export class TutorDashboard implements RouteComponent {
         const tutorLessons = new TutorLessons()
         contentDiv.innerHTML = tutorLessons.getCalendarContent()
         
-        // TutorLessons already exports itself to global scope with static methods
+        // Set global instance for static methods
+        ;(window as any).currentTutorLessonsInstance = tutorLessons
     }
 
     private loadUpcomingLessonsContent(): void {
@@ -554,6 +558,9 @@ export class TutorDashboard implements RouteComponent {
         
         const tutorLessons = new TutorLessons()
         contentDiv.innerHTML = tutorLessons.getUpcomingLessonsContent()
+        
+        // Set global instance for static methods
+        ;(window as any).currentTutorLessonsInstance = tutorLessons
     }
 
     private loadStudentsContent(): void {

@@ -12,6 +12,7 @@ export class AdminDashboard implements RouteComponent {
     private container: HTMLElement | null = null
     private statsInterval: number | null = null
     private isLoadingStats: boolean = false
+    private componentCache: Map<string, any> = new Map()
 
     async render(): Promise<HTMLElement> {
         const user = authService.getUser()
@@ -21,7 +22,10 @@ export class AdminDashboard implements RouteComponent {
             <!-- Sidebar -->
             <nav class="admin-sidebar" id="sidebar">
                 <div class="admin-logo-dashboard">
-                    <h2>🎓 Platforma Lektorów</h2>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <img src="/images/favicon-logo.png" alt="Platforma Lektorów" style="max-height: 32px;">
+                        <h2 style="margin: 0; font-size: 1.2rem;">Platforma Lektorów</h2>
+                    </div>
                     <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Panel Administratora</p>
                 </div>
 
@@ -219,6 +223,8 @@ export class AdminDashboard implements RouteComponent {
     }
 
     private handlePopState = (): void => {
+        console.log('🔙 PopState event triggered')
+        
         // Don't handle navigation if user is not authenticated
         if (!authService.isAuthenticated()) {
             return
@@ -226,6 +232,8 @@ export class AdminDashboard implements RouteComponent {
 
         const urlParams = new URLSearchParams(window.location.search)
         const section = urlParams.get('section') || 'dashboard'
+        
+        console.log('🔄 PopState loading section:', section)
 
         this.setActiveNavLink(section)
         this.loadContent(section)
@@ -256,6 +264,14 @@ export class AdminDashboard implements RouteComponent {
             clearInterval(this.statsInterval)
         }
 
+        // Cleanup cached components
+        this.componentCache.forEach((cached, key) => {
+            if (cached.instance && typeof cached.instance.unmount === 'function') {
+                cached.instance.unmount()
+            }
+        })
+        this.componentCache.clear()
+
         window.removeEventListener('popstate', this.handlePopState)
     }
 
@@ -267,6 +283,8 @@ export class AdminDashboard implements RouteComponent {
                 e.preventDefault()
 
                 const section = link.getAttribute('data-section')
+                console.log('🖱️ Nav link clicked:', section)
+                
                 if (section) {
                     // NOWE: Aktualizuj URL
                     this.updateURL(section)
@@ -311,6 +329,8 @@ export class AdminDashboard implements RouteComponent {
     }
 
     private async loadContent(section: string): Promise<void> {
+        console.log('🎯 loadContent called for section:', section, 'Cache has:', Array.from(this.componentCache.keys()))
+        
         const contentArea = this.container?.querySelector('#content-area')
         const pageTitle = this.container?.querySelector('#page-title')
 
@@ -509,26 +529,44 @@ export class AdminDashboard implements RouteComponent {
 
             case 'logi-dostepnosci':
                 pageTitle.textContent = 'Logi Dostępności'
-                contentArea.innerHTML = this.getAvailabilityLogsContent()
                 
-                // Mount AdminAvailabilityLogs component
-                import('../admin/AdminAvailabilityLogs').then(async (module) => {
-                    const availabilityLogs = new module.AdminAvailabilityLogs()
-                    const container = contentArea.querySelector('#availability-logs-container') as HTMLElement
-                    if (container) {
-                        await availabilityLogs.mount(container)
-                    }
-                }).catch(error => {
-                    console.error('Error loading AdminAvailabilityLogs:', error)
-                    contentArea.innerHTML = `
-                        <div class="admin-content-area">
-                            <div class="alert alert-danger">
-                                <h4>Błąd ładowania</h4>
-                                <p>Nie udało się załadować komponentu logów dostępności.</p>
+                // Use cached component if available
+                if (this.componentCache.has('logi-dostepnosci')) {
+                    console.log('🔄 Using cached AdminAvailabilityLogs component')
+                    const cachedData = this.componentCache.get('logi-dostepnosci')
+                    contentArea.innerHTML = ''
+                    contentArea.appendChild(cachedData.container)
+                } else {
+                    console.log('🆕 Creating new AdminAvailabilityLogs component')
+                    contentArea.innerHTML = this.getAvailabilityLogsContent()
+                    
+                    // Mount AdminAvailabilityLogs component and cache it
+                    import('../admin/AdminAvailabilityLogs').then(async (module) => {
+                        const availabilityLogs = new module.AdminAvailabilityLogs()
+                        const container = contentArea.querySelector('#availability-logs-container') as HTMLElement
+                        if (container) {
+                            await availabilityLogs.mount(container)
+                            
+                            // Cache the component instance and container
+                            console.log('💾 Caching AdminAvailabilityLogs component')
+                            this.componentCache.set('logi-dostepnosci', {
+                                instance: availabilityLogs,
+                                container: container
+                            })
+                            console.log('📦 Component cache size:', this.componentCache.size)
+                        }
+                    }).catch(error => {
+                        console.error('Error loading AdminAvailabilityLogs:', error)
+                        contentArea.innerHTML = `
+                            <div class="admin-content-area">
+                                <div class="alert alert-danger">
+                                    <h4>Błąd ładowania</h4>
+                                    <p>Nie udało się załadować komponentu logów dostępności.</p>
+                                </div>
                             </div>
-                        </div>
-                    `
-                })
+                        `
+                    })
+                }
                 break
 
             case 'raporty':

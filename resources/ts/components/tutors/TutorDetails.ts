@@ -432,7 +432,6 @@ export class TutorDetails implements RouteComponent {
                 </div>
             </div>
             <div class="mt-4">
-                <h5 class="mb-3">Kalendarz dostępności</h5>
                 <div id="availability-calendar-readonly"></div>
             </div>
         `
@@ -451,6 +450,9 @@ export class TutorDetails implements RouteComponent {
         if (!this.tutorLessons) {
             this.tutorLessons = new TutorLessons(this.tutorId || undefined)
         }
+        
+        // Set global instance for static methods
+        ;(window as any).currentTutorLessonsInstance = this.tutorLessons
         
         // Return the lessons content from TutorLessons component
         return this.tutorLessons.getCalendarContent()

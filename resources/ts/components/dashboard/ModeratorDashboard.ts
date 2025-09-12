@@ -15,7 +15,10 @@ export class ModeratorDashboard implements RouteComponent {
             <!-- Sidebar -->
             <nav class="moderator-sidebar">
                 <div class="moderator-logo-dashboard">
-                    <h2>🎓 Platforma Lektorów</h2>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <img src="/images/favicon-logo.png" alt="Platforma Lektorów" style="max-height: 32px;">
+                        <h2 style="margin: 0; font-size: 1.2rem;">Platforma Lektorów</h2>
+                    </div>
                     <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Panel Moderatora</p>
                 </div>
                 

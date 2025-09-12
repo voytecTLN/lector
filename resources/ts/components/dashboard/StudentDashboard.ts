@@ -79,7 +79,10 @@ export class StudentDashboard implements RouteComponent {
             <div class="student-container">
                 <div class="student-sidebar">
                     <div class="student-logo-dashboard">
-                        <h2>📚 Platforma Lektorów</h2>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <img src="/images/favicon-logo.png" alt="Platforma Lektorów" style="max-height: 32px;">
+                            <h2 style="margin: 0; font-size: 1.2rem;">Platforma Lektorów</h2>
+                        </div>
                         <p style="color: #666; font-size: 0.875rem; margin: 0;">Panel studenta</p>
                     </div>
                     <nav class="student-nav">

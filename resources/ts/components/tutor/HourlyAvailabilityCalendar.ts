@@ -88,7 +88,7 @@ export class HourlyAvailabilityCalendar {
                             <i class="bi bi-chevron-left"></i> Poprzedni tydzień
                         </button>
                         <h4>${this.getWeekRangeText()}</h4>
-                        <button class="btn btn-outline-primary" id="next-week">
+                        <button class="btn btn-outline-primary" id="next-week" ${this.currentWeekOffset >= 3 ? 'disabled' : ''}>
                             Następny tydzień <i class="bi bi-chevron-right"></i>
                         </button>
                     </div>
@@ -476,9 +476,12 @@ export class HourlyAvailabilityCalendar {
         })
         
         this.container?.querySelector('#next-week')?.addEventListener('click', () => {
-            this.currentWeekOffset++
-            this.render()
-            this.loadAvailability()
+            // Limit to 4 weeks in advance
+            if (this.currentWeekOffset < 3) {
+                this.currentWeekOffset++
+                this.render()
+                this.loadAvailability()
+            }
         })
         
         // Hour cell selection with drag support

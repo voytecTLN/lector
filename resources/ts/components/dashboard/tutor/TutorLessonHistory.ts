@@ -50,15 +50,6 @@ export class TutorLessonHistory {
         
         return `
             <div class="tutor-content-area">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2>Historia lekcji</h2>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-outline-primary" onclick="TutorLessonHistory.exportHistory()">
-                            <i class="bi bi-download me-2"></i>Eksportuj
-                        </button>
-                    </div>
-                </div>
-                
                 ${this.renderStats()}
                 ${this.renderFilters()}
                 

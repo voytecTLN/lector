@@ -40,8 +40,8 @@ export class Navigation {
         header.innerHTML = `
             <nav class="navbar">
                 <div class="logo">
-                    <a href="${urlBuilder.hash(ROUTES.HOME)}" style="text-decoration: none; color: inherit;">
-                        Platforma Lektorów
+                    <a href="${urlBuilder.hash(ROUTES.HOME)}" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+                        <img src="/images/logo.svg" alt="Platforma Lektorów" style="max-height: 40px; max-width: 200px;">
                     </a>
                 </div>
                 <ul class="nav-links">

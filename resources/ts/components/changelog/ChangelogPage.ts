@@ -18,6 +18,24 @@ export class ChangelogPage implements RouteComponent {
     // Example changelog data - in real app this would come from API or config
     private changelog: ChangelogEntry[] = [
         {
+            version: "1.2.7",
+            releaseDate: "2025-09-13",
+            sections: {
+                student: [
+                    "Dodano właściwe logo i favicon do aplikacji",
+                ],
+                tutor: [
+                    "Ograniczono nawigację kalendarza dostępności do maksymalnie 4 tygodni w przód",
+                    "Poprawiono wygląd nagłówków w zakładkach",
+                ],
+                admin: [
+                    "Naprawiono problem z uprawnieniami dla nawigacji tygodniowej w szczegółach tutora tab Kalendarz",
+                    "Poprawiono błąd 403 przy używaniu przycisków 'Następny/Poprzedni tydzień' w panelu admina",
+                    "Poprawiono wygląd nagłówków w zakładkach",
+                ]
+            }
+        },
+        {
             version: "1.2.6",
             releaseDate: "2025-09-12",
             sections: {

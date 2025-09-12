@@ -28,7 +28,7 @@
     <meta property="og:url" content="{{ config('app.url') }}">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 
     <!-- Fonts -->
@@ -114,7 +114,8 @@
     <!-- Loading Screen -->
     <div class="app-loading" id="app-loading">
         <div class="loading-logo">
-            🎓 Platforma Lektorów
+            <img src="/images/logo.svg" alt="Platforma Lektorów" style="max-height: 80px; max-width: 200px; margin-bottom: 1rem;">
+            <div>Platforma Lektorów</div>
         </div>
         <div class="loading-spinner"></div>
         <div class="loading-text">Ładowanie aplikacji...</div>

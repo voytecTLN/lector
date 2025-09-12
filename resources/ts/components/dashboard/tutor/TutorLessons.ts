@@ -40,22 +40,6 @@ export class TutorLessons {
         
         return `
             <div class="tutor-content-area">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2>Kalendarz lekcji</h2>
-                    <div class="btn-group" role="group">
-                        <button class="btn ${this.currentView === 'calendar' ? 'btn-primary' : 'btn-outline-primary'}" 
-                                onclick="TutorLessons.switchView('calendar')">
-                            <i class="bi bi-calendar3 me-2"></i>Kalendarz
-                        </button>
-                        <!--
-                        <button class="btn ${this.currentView === 'list' ? 'btn-primary' : 'btn-outline-primary'}" 
-                                onclick="TutorLessons.switchView('list')">
-                            <i class="bi bi-list-ul me-2"></i>Lista
-                        </button>
-                        -->
-                    </div>
-                </div>
-                
                 <div id="lessons-container">
                     <div class="text-center py-4">
                         <div class="spinner-border text-primary" role="status">
@@ -859,18 +843,21 @@ export class TutorLessons {
     static instance = new TutorLessons()
     
     static switchView(view: 'calendar' | 'list'): void {
-        this.instance.currentView = view
-        this.instance.loadLessons()
+        const currentInstance = (window as any).currentTutorLessonsInstance || this.instance
+        currentInstance.currentView = view
+        currentInstance.loadLessons()
     }
     
     static previousWeek(): void {
-        this.instance.currentWeekOffset--
-        this.instance.loadLessons()
+        const currentInstance = (window as any).currentTutorLessonsInstance || this.instance
+        currentInstance.currentWeekOffset--
+        currentInstance.loadLessons()
     }
     
     static nextWeek(): void {
-        this.instance.currentWeekOffset++
-        this.instance.loadLessons()
+        const currentInstance = (window as any).currentTutorLessonsInstance || this.instance
+        currentInstance.currentWeekOffset++
+        currentInstance.loadLessons()
     }
     
     static async completeLesson(lessonId: number): Promise<void> {
