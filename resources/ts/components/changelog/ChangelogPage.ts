@@ -32,6 +32,7 @@ export class ChangelogPage implements RouteComponent {
                     "Naprawiono problem z uprawnieniami dla nawigacji tygodniowej w szczegółach tutora tab Kalendarz",
                     "Poprawiono błąd 403 przy używaniu przycisków 'Następny/Poprzedni tydzień' w panelu admina",
                     "Poprawiono wygląd nagłówków w zakładkach",
+                    "Naprawiono paginację w logach dostępności",
                 ]
             }
         },
