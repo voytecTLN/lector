@@ -104,22 +104,17 @@ export class LessonDetailsModal {
                     htmlContainer: 'lesson-details-content'
                 },
                 didOpen: () => {
-                    console.log('📋 Modal opened, looking for meeting button container...')
                     // Inicjalizuj przycisk spotkania jeśli istnieje
                     const meetingButtonContainer = document.getElementById('meeting-button-container')
-                    console.log('🔍 Meeting button container found:', !!meetingButtonContainer)
                     if (meetingButtonContainer) {
-                        console.log('✅ Initializing MeetingButton component for lesson:', lesson.id)
                         new MeetingButton(meetingButtonContainer, lesson.id, {
                             onMeetingOpen: () => {
-                                console.log('🚀 Meeting opened, closing modal and redirecting...')
                                 Swal.close()
                                 // Use hash routing for SPA navigation
                                 window.location.hash = `#/lesson/${lesson.id}/meeting`
                             }
                         })
                     } else {
-                        console.log('❌ Meeting button container not found in DOM')
                     }
                 }
             }).then((result: any) => {
@@ -317,41 +312,19 @@ export class LessonDetailsModal {
     }
 
     private static async buildMeetingSection(lesson: LessonDetails): Promise<string> {
-        console.log('🔍 Building meeting section for lesson:', {
-            lessonId: lesson.id,
-            status: lesson.status,
-            tutorId: lesson.tutor_id,
-            studentId: lesson.student_id,
-            lessonDate: lesson.lesson_date,
-            startTime: lesson.start_time,
-            endTime: lesson.end_time
-        })
         
         // Pokaż sekcję spotkania tylko dla aktywnych lekcji
         if (lesson.status !== 'scheduled' && lesson.status !== 'in_progress') {
-            console.log('❌ Meeting section skipped - wrong status:', lesson.status)
             return ''
         }
 
         const user = await authService.getCurrentUser()
-        console.log('👤 Current user:', {
-            userId: user?.id,
-            role: user?.role,
-            name: user?.name
-        })
         
         const isTutor = user?.role === 'tutor' && user.id === lesson.tutor_id
         const isStudent = user?.role === 'student' && user.id === lesson.student_id
         const isParticipant = isTutor || isStudent
-        
-        console.log('🔐 Access check:', {
-            isTutor,
-            isStudent,
-            isParticipant
-        })
 
         if (!isParticipant) {
-            console.log('❌ Meeting section skipped - not a participant')
             return ''
         }
 

@@ -80,13 +80,6 @@ class SupportController extends Controller
             RateLimiter::hit($key, 3600); // 1 hour
 
             // Log the issue
-            \Log::info('Issue report submitted', [
-                'user_id' => $user->id,
-                'user_email' => $user->email,
-                'issue_type' => $validated['issue_type'],
-                'priority' => $validated['priority'],
-                'support_email' => $supportEmail,
-            ]);
 
             return response()->json([
                 'success' => true,

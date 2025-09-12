@@ -130,13 +130,10 @@ class LessonServiceClass {
     }
 
     async getStatusHistory(lessonId: number): Promise<any> {
-        console.log('LessonService.getStatusHistory called with lessonId:', lessonId)
         const url = `/lessons/${lessonId}/status-history`
-        console.log('Fetching from URL:', url)
         
         try {
             const response = await api.get<LessonResponse>(url)
-            console.log('API response:', response)
             return response.data || response
         } catch (error) {
             console.error('Error fetching status history:', error)

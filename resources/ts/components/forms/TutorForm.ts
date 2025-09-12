@@ -3,6 +3,12 @@ import type { RouteComponent } from '@router/routes'
 import { TutorService } from '@services/TutorService'
 import type { CreateTutorRequest, UpdateTutorRequest, User } from '@/types/models'
 import { navigate } from '@/utils/navigation'
+import { ROUTES } from '@/config/routing'
+import { PasswordValidator } from '@/utils/PasswordValidator'
+import { PasswordToggleHelper } from '@/utils/PasswordToggleHelper'
+
+// Global tracking to prevent multiple form setups
+const setupFormInstances = new Set<string>()
 
 export class TutorForm implements RouteComponent {
     private tutorService: TutorService
@@ -11,6 +17,10 @@ export class TutorForm implements RouteComponent {
     private isEditMode: boolean = false
     private tutorId: number | null = null
     private tutor: User | null = null
+    private passwordValidator: PasswordValidator | null = null
+    private isMounted: boolean = false
+    private isFormSetup: boolean = false
+    private instanceKey: string = ''
 
     constructor() {
         this.tutorService = new TutorService()
@@ -88,22 +98,92 @@ export class TutorForm implements RouteComponent {
     }
 
     async mount(container: HTMLElement): Promise<void> {
+        // Create unique instance key based on mode and tutor ID
+        this.instanceKey = this.isEditMode ? `edit-${this.tutorId}` : 'create'
+        
+        console.log('🔥 TutorForm mount called', { 
+            isEditMode: this.isEditMode, 
+            tutorId: this.tutorId, 
+            isMounted: this.isMounted,
+            instanceKey: this.instanceKey,
+            globalSetup: setupFormInstances.has(this.instanceKey)
+        })
+        
+        // Check if this specific form instance is already set up globally AND form exists in DOM
+        const existingForm = container.querySelector('#tutor-form') as HTMLFormElement
+        if (setupFormInstances.has(this.instanceKey) && existingForm?.dataset?.tutorFormSetup === 'true') {
+            console.log('⚠️ TutorForm instance already set up globally with valid DOM form, skipping...', this.instanceKey)
+            return
+        } else if (setupFormInstances.has(this.instanceKey)) {
+            console.log('🔧 TutorForm instance in global set but no valid DOM form found, clearing and proceeding...', this.instanceKey)
+            setupFormInstances.delete(this.instanceKey)
+        }
+        
+        if (this.isMounted) {
+            console.log('⚠️ TutorForm already mounted, skipping...')
+            return
+        }
+        
+        this.isMounted = true
         document.addEventListener('form:validationError', this.handleValidationError.bind(this) as EventListener)
         this.container = container
-        this.form = container.querySelector('#tutor-form')
+        this.form = container.querySelector('#tutor-form') as HTMLFormElement
+        
+        console.log('🔥 Form element search results:', {
+            form: this.form,
+            formId: this.form?.id,
+            formTagName: this.form?.tagName,
+            formNodeType: this.form?.nodeType,
+            isHTMLElement: this.form instanceof HTMLElement,
+            isHTMLFormElement: this.form instanceof HTMLFormElement,
+            hasAddEventListener: typeof this.form?.addEventListener === 'function',
+            instanceKey: this.instanceKey,
+            containerHTML: container.innerHTML.substring(0, 200) + '...'
+        })
+
+        // Additional validation
+        if (!this.form) {
+            console.error('❌ Form element #tutor-form not found in container!')
+            console.log('Container innerHTML:', container.innerHTML.substring(0, 500))
+            this.isMounted = false
+            return
+        }
+
+        if (!(this.form instanceof HTMLFormElement)) {
+            console.error('❌ Found element is not an HTMLFormElement:', this.form)
+            this.isMounted = false
+            return
+        }
 
         if (this.isEditMode && this.tutorId) {
+            console.log('🔥 Edit mode detected, loading tutor data...')
             await this.loadTutorData()
         } else {
+            console.log('🔥 Create mode detected, setting up form...')
             this.setupForm()
         }
     }
 
     unmount(): void {
+        console.log('🔥 TutorForm UNMOUNT called', { 
+            tutorId: this.tutorId, 
+            isMounted: this.isMounted,
+            instanceKey: this.instanceKey
+        })
+        this.isMounted = false
+        this.isFormSetup = false
         document.removeEventListener('form:validationError', this.handleValidationError.bind(this) as EventListener)
+        
+        // Clean up global setup tracking
+        if (this.instanceKey) {
+            setupFormInstances.delete(this.instanceKey)
+            console.log('✅ Cleaned up global setup tracking for:', this.instanceKey)
+        }
+        
         this.container = null
         this.form = null
         this.tutor = null
+        this.instanceKey = ''
     }
 
     private generateFormHTML(): string {
@@ -129,8 +209,8 @@ export class TutorForm implements RouteComponent {
                                 ${!this.isEditMode ? `
                                     <div class="col-md-6">
                                         <label class="form-label">Hasło <span class="text-danger">*</span></label>
-                                        <input type="password" name="password" class="form-control" required minlength="8">
-                                        <div class="form-text">Minimum 8 znaków</div>
+                                        <input type="password" name="password" class="form-control" required minlength="12">
+                                        <div class="form-text">Minimum 12 znaków (duże i małe litery, cyfry, znaki specjalne)</div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Potwierdź hasło <span class="text-danger">*</span></label>
@@ -145,8 +225,8 @@ export class TutorForm implements RouteComponent {
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Nowe hasło</label>
-                                        <input type="password" name="password" class="form-control" minlength="8">
-                                        <div class="form-text">Minimum 8 znaków (opcjonalne)</div>
+                                        <input type="password" name="password" class="form-control" minlength="12">
+                                        <div class="form-text">Minimum 12 znaków (duże i małe litery, cyfry, znaki specjalne)</div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Potwierdź nowe hasło</label>
@@ -347,33 +427,94 @@ export class TutorForm implements RouteComponent {
     }
 
     private setupForm(): void {
-        if (!this.form) return
+        console.log('🔥 TutorForm setupForm called', { 
+            form: this.form, 
+            formElement: this.form?.tagName, 
+            isFormSetup: this.isFormSetup,
+            formInstanceCheck: this.form instanceof HTMLFormElement,
+            addEventListenerType: typeof this.form?.addEventListener
+        })
+        
+        if (!this.form) {
+            console.error('❌ Form element not found in setupForm!')
+            return
+        }
 
-        this.form.addEventListener('submit', this.handleSubmit.bind(this))
+        if (!(this.form instanceof HTMLFormElement)) {
+            console.error('❌ Form is not an HTMLFormElement in setupForm:', this.form)
+            return
+        }
+
+        if (this.isFormSetup) {
+            console.log('⚠️ Form already set up, skipping event listener setup...')
+            return
+        }
+
+        this.isFormSetup = true
+        console.log('✅ Adding submit event listener to form')
+        
+        // Mark this instance as set up globally
+        setupFormInstances.add(this.instanceKey)
+        
+        try {
+            this.form.addEventListener('submit', this.handleSubmit.bind(this))
+            console.log('✅ Submit event listener added successfully')
+        } catch (error) {
+            console.error('❌ Failed to add submit event listener:', error)
+            return
+        }
+        
+        // Initialize password validation with strong password requirements
+        try {
+            this.passwordValidator = new PasswordValidator(this.form, {
+                isEditMode: this.isEditMode,
+                enforceStrength: true,
+                minLength: 12
+            })
+            console.log('✅ Password validator initialized')
+        } catch (error) {
+            console.error('❌ Failed to initialize password validator:', error)
+        }
+
+        // Convert password inputs to have toggles
+        try {
+            PasswordToggleHelper.convertPasswordInputsToToggleable(this.container!)
+            console.log('✅ Password toggles initialized')
+        } catch (error) {
+            console.error('❌ Failed to initialize password toggles:', error)
+        }
         
         // Setup delete button for edit mode
         if (this.isEditMode) {
             const deleteButton = this.form.querySelector('#delete-button') as HTMLButtonElement
             if (deleteButton) {
-                deleteButton.addEventListener('click', this.handleDelete.bind(this))
+                try {
+                    deleteButton.addEventListener('click', this.handleDelete.bind(this))
+                    console.log('✅ Delete button event listener added')
+                } catch (error) {
+                    console.error('❌ Failed to add delete button event listener:', error)
+                }
             }
         }
-        
-        this.showForm()
     }
 
     private async loadTutorData(): Promise<void> {
+        console.log('🔥 loadTutorData called', { tutorId: this.tutorId })
         if (!this.tutorId) return
 
         try {
+            console.log('🔥 Fetching tutor data...')
             this.tutor = await this.tutorService.getTutorById(this.tutorId)
+            console.log('🔥 Tutor data loaded, populating form...')
             this.populateForm()
+            console.log('🔥 Form populated, setting up form...')
             this.setupForm()
+            console.log('🔥 Form setup complete, showing form...')
             this.showForm()
         } catch (error) {
-            console.error('Failed to load tutor data:', error)
+            console.error('❌ Failed to load tutor data:', error)
             this.showError('Nie udało się załadować danych lektora')
-            await navigate.to('/admin/dashboard?section=lektorzy')
+            await navigate.to(ROUTES.ADMIN_TUTORS)
         }
     }
 
@@ -439,17 +580,24 @@ export class TutorForm implements RouteComponent {
             // Special handling for date fields - ensure YYYY-MM-DD format
             const dateValue = value.toString().split('T')[0] // Remove time part if present
             element.value = dateValue
-            console.log(`Setting date field ${name}:`, dateValue, 'from original:', value)
         } else {
             element.value = value || ''
         }
     }
 
     private async handleSubmit(event: Event): Promise<void> {
+        console.log('🔥 TutorForm handleSubmit called', { event, form: this.form, isEditMode: this.isEditMode, tutorId: this.tutorId })
+        console.log('🔥 Preventing default behavior...')
         event.preventDefault()
+        console.log('🔥 Looking for submit button...')
         
         const submitButton = this.form?.querySelector('#submit-button') as HTMLButtonElement
-        if (!submitButton) return
+        console.log('🔥 Submit button search result:', { submitButton, form: this.form })
+        if (!submitButton) {
+            console.log('❌ Submit button not found!')
+            return
+        }
+        console.log('✅ Submit button found, proceeding...')
 
         const originalText = submitButton.innerHTML
         submitButton.disabled = true
@@ -458,17 +606,26 @@ export class TutorForm implements RouteComponent {
         try {
             const formData = new FormData(this.form!)
             const data = this.extractFormData(formData)
+            console.log('🔥 Form data extracted:', data)
 
             if (this.isEditMode && this.tutorId) {
+                console.log('🔥 Sending UPDATE request for tutor:', this.tutorId)
                 await this.tutorService.updateTutor(this.tutorId, data as UpdateTutorRequest)
+                console.log('✅ UPDATE request completed successfully!')
                 this.showSuccess('Lektor został zaktualizowany')
+                
+                // Stay on the edit form after successful update
+                console.log('✅ Staying on edit form after successful update')
             } else {
+                console.log('🔥 Sending CREATE request')
                 await this.tutorService.createTutor(data as CreateTutorRequest)
+                console.log('✅ CREATE request completed successfully!')
                 this.showSuccess('Lektor został utworzony')
+                
+                console.log('🔥 Redirecting to tutors list...')
+                // Redirect to tutor list only after creation
+                await navigate.to(ROUTES.ADMIN_TUTORS)
             }
-
-            // Redirect to tutor list
-            await navigate.to('/admin/dashboard?section=lektorzy')
 
         } catch (error: any) {
             console.error('Form submission error:', error)
@@ -526,7 +683,7 @@ export class TutorForm implements RouteComponent {
             
             // Redirect to tutor list
             setTimeout(() => {
-                navigate.to('/admin/dashboard?section=lektorzy')
+                navigate.to(ROUTES.ADMIN_TUTORS)
             }, 1500)
 
         } catch (error: any) {
@@ -541,8 +698,29 @@ export class TutorForm implements RouteComponent {
     private extractFormData(formData: FormData): CreateTutorRequest | UpdateTutorRequest {
         const data: any = {}
 
+        // Handle multi-select fields first (checkboxes/multiple selects)
+        const languages = formData.getAll('languages')
+        if (languages.length > 0) {
+            data.languages = languages
+        }
+        
+        const lessonTypes = formData.getAll('lesson_types')
+        if (lessonTypes.length > 0) {
+            data.lesson_types = lessonTypes
+        }
+
+        const specializations = formData.getAll('specializations')
+        if (specializations.length > 0) {
+            data.specializations = specializations
+        }
+
         // Basic fields
         formData.forEach((value, key) => {
+            // Skip multi-select fields (already handled above)
+            if (key === 'languages' || key === 'lesson_types' || key === 'specializations') {
+                return
+            }
+            
             if (key.endsWith('[]')) {
                 const arrayKey = key.replace('[]', '')
                 if (!data[arrayKey]) data[arrayKey] = []

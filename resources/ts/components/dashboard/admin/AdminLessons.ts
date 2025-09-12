@@ -117,13 +117,10 @@ export class AdminLessons {
             
             const response = await LessonService.getAdminLessons(filters)
             
-            console.log('AdminLessons API response:', response)
-            console.log('Lessons array:', response.lessons)
             
             const lessons = response.lessons || response.data || []
             this.totalPages = response.last_page || Math.ceil((response.total || lessons.length) / this.perPage)
             
-            console.log('Final lessons array:', lessons)
             this.renderLessons(lessons)
         } catch (error) {
             console.error('Error loading lessons:', error)
@@ -135,7 +132,6 @@ export class AdminLessons {
         try {
             // Load tutors
             const tutorsResponse = await tutorService.getAllTutors()
-            console.log('Tutors response:', tutorsResponse)
             const tutors = tutorsResponse || []
             
             const tutorSelect = document.getElementById('tutor-filter') as HTMLSelectElement
@@ -146,7 +142,6 @@ export class AdminLessons {
             
             // Load students
             const studentsResponse = await studentService.getAllStudents()
-            console.log('Students response:', studentsResponse)
             const students = studentsResponse || []
             
             const studentSelect = document.getElementById('student-filter') as HTMLSelectElement
@@ -161,9 +156,7 @@ export class AdminLessons {
     }
     
     private renderLessons(lessons: any[]): void {
-        console.log('renderLessons called with:', lessons)
         const container = document.getElementById('lessons-container')
-        console.log('Container found:', container)
         if (!container) {
             console.error('lessons-container not found!')
             return
@@ -519,7 +512,6 @@ export class AdminLessons {
     }
 
     static async viewStatusHistory(lessonId: number): Promise<void> {
-        console.log('viewStatusHistory called for lessonId:', lessonId)
         try {
             // Show loading modal first
             const loadingModalHtml = `
@@ -556,13 +548,11 @@ export class AdminLessons {
             const modal = new (window as any).bootstrap.Modal(document.getElementById('statusHistoryModal'))
             modal.show()
 
-            console.log('About to fetch status history for lesson:', lessonId)
             
             let response
             try {
                 // Fetch status history from API
                 response = await LessonService.getStatusHistory(lessonId)
-                console.log('Status history response:', response)
             } catch (error) {
                 console.error('Error fetching status history:', error)
                 throw error
@@ -580,7 +570,6 @@ export class AdminLessons {
                 }
             }
             
-            console.log('Extracted history array:', historyArray)
 
             // Get status label helper
             const getStatusLabel = (status: string): string => {

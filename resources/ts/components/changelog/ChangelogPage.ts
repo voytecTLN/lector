@@ -18,6 +18,43 @@ export class ChangelogPage implements RouteComponent {
     // Example changelog data - in real app this would come from API or config
     private changelog: ChangelogEntry[] = [
         {
+            version: "1.2.6",
+            releaseDate: "2025-09-12",
+            sections: {
+                student: [
+                    "Naprawiono podwójne ładowanie treści w menu dashboard - teraz każdy klik wykonuje tylko jeden request",
+                    "Ulepszone nawigowanie między sekcjami - bardziej płynne przejścia", 
+                    "Poprawiono stabilność routingu przy używaniu przycisku Wstecz w przeglądarce",
+                    "Dodano przełącznik pokazuj/ukryj hasło we wszystkich formularzach z hasłami",
+                    "Wprowadzono wymóg silnego hasła we wszystkich formularzach rejestracji i zmiany hasła"
+                ],
+                tutor: [
+                    "Naprawiono zapisywanie języków nauczania w profilu lektora",
+                    "Zwiększono limity walidacji: maksymalnie 4 języki nauczania (poprzednio bez limitu)",
+                    "Naprawiono routing dashboard - teraz używa standardowego hash routing jak inne role",
+                    "Usunięto problemy z duplikowaniem URL typu '/tutor/dashboard?section=profile?section=profile'",
+                    "Naprawiono automatyczne odświeżanie danych profilu po zapisaniu zmian",
+                    "Ulepszona nawigacja - menu działa płynnie bez błędów ładowania",
+                    "Poprawiono zgodność między formularzem admina a formularzem tutora dla edycji profilu",
+                    "Dodano przełącznik pokazuj/ukryj hasło w formularzach edycji profilu",
+                    "Wprowadzono wymóg silnego hasła przy zmianie hasła w profilu"
+                ],
+                admin: [
+                    "Naprawiono inconsistency między endpoint-ami backend dla języków nauczania",
+                    "Zunifikowano nazewnictwo pól formularzy (languages zamiast teaching_languages)",
+                    "Poprawiono walidację w TutorController::updateOwnProfile",
+                    "Uprościono routing system - usunięto skomplikowane blokady specyficzne dla tutorów",
+                    "Poprawiono stabilność routingu w całej aplikacji", 
+                    "Naprawiono problemy z cache-owaniem danych profilu po aktualizacji",
+                    "Zwiększono spójność między różnymi dashboardami (admin, tutor, student)",
+                    "Naprawiono problem z navigation queue w router system",
+                    "Dodano PasswordToggleHelper utility - zunifikowane zarządzanie przełącznikami hasła",
+                    "Wprowadzono wymóg silnego hasła we wszystkich formularzach użytkowników",
+                    "Ulepszone UX dla pól hasła - jednolite zachowanie w całej aplikacji"
+                ]
+            }
+        },
+        {
             version: "1.2.5",
             releaseDate: "2025-09-11",
             sections: {
@@ -70,9 +107,9 @@ export class ChangelogPage implements RouteComponent {
                 admin: [
                     "Wyczyszczono logi produkcyjne z niebezpiecznych informacji deweloperskich", 
                     "Poprawiono wykrywanie środowiska produkcyjnego w systemie logowania",
-                    "Synchronizacja zmiennej APP_ENV między Laravel a frontendem",
-                    "Dodano zaawansowany system walidacji hasła w backend (regex)",
-                    "Poprawiono konfigurację deploy.sh dla środowiska produkcyjnego",
+                    "Lepsza synchronizacja między Laravel a frontendem",
+                    "Dodano zaawansowany system walidacji hasła w backend",
+                    "Poprawiono konfigurację wdrażania zmian dla środowiska produkcyjnego",
                     "Kompletnie przepisano stronę resetowania hasła z nowoczesnymi wzorcami UX",
                     "Dodano Logger utility z filtrowaniem logów według środowiska"
                 ]

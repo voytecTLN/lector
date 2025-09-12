@@ -431,8 +431,6 @@ export class StudentList implements RouteComponent {
                     const student = this.students.find(s => s.id === studentId)
                     const currentStatus = student?.status || 'active'
 
-                    console.log('Found student:', student)
-                    console.log('Current status from data:', currentStatus)
 
                     await this.changeStudentStatus(studentId, currentStatus)
                 }
@@ -766,11 +764,6 @@ export class StudentList implements RouteComponent {
 
 
     public changeStatus(studentId: number, currentStatus: string): void {
-        console.log('=== changeStatus Debug ===')
-        console.log('studentId:', studentId)
-        console.log('currentStatus:', currentStatus)
-        console.log('window.bootstrap exists:', !!window.bootstrap)
-        console.log('this.studentService exists:', !!this.studentService)
         this.changeStudentStatus(studentId, currentStatus)
     }
 }

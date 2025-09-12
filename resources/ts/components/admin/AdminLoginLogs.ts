@@ -250,9 +250,7 @@ export class AdminLoginLogs {
 
     private async loadStats(): Promise<void> {
         try {
-            console.log('Loading login stats...')
             const response = await api.get('/login-logs/stats') as any
-            console.log('Stats response:', response)
             
             // Check if we got a proper JSON response
             if (!response.data || typeof response.data !== 'object') {
@@ -262,7 +260,6 @@ export class AdminLoginLogs {
             }
 
             const stats = response.data
-            console.log('Parsed stats:', stats)
 
             // Update stats cards
             const statsMapping = [
@@ -353,9 +350,7 @@ export class AdminLoginLogs {
                 ...this.filters
             })
 
-            console.log('Loading login logs with params:', params.toString())
             const response = await api.get(`/login-logs/logs?${params.toString()}`) as any
-            console.log('Logs response:', response)
             
             // Check if we got a proper JSON response
             if (!response.data || typeof response.data !== 'object' || !response.pagination) {
@@ -367,7 +362,6 @@ export class AdminLoginLogs {
 
             const logs = response.data
             const pagination = response.pagination
-            console.log('Parsed logs:', logs, 'Pagination:', pagination)
 
             loadingEl.style.display = 'none'
 

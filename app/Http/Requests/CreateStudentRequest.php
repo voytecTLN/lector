@@ -40,10 +40,9 @@ class CreateStudentRequest extends FormRequest
             'password' => [
                 'required',
                 'string',
-                Password::min(8)
-                    ->mixedCase()
-                    ->numbers()
-                    ->uncompromised()
+                'min:12',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?~`]).+$/'
             ],
             'password_confirmation' => 'required|string|same:password',
 

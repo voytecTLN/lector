@@ -34,7 +34,13 @@ class UpdateAdminRequest extends FormRequest
                 'max:255', 
                 Rule::unique('users')->ignore($adminId)
             ],
-            'password' => ['nullable', 'confirmed', Password::defaults()],
+            'password' => [
+                'nullable',
+                'string',
+                'min:12',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?~`]).+$/'
+            ],
             'phone' => ['nullable', 'string', 'max:20'],
             'birth_date' => ['nullable', 'date', 'before:today'],
             'city' => ['nullable', 'string', 'max:255'],
@@ -54,6 +60,8 @@ class UpdateAdminRequest extends FormRequest
             'email.required' => 'Email jest wymagany.',
             'email.email' => 'Email musi być prawidłowym adresem email.',
             'email.unique' => 'Ten adres email jest już zajęty.',
+            'password.min' => 'Hasło musi mieć minimum 12 znaków.',
+            'password.regex' => 'Hasło musi zawierać co najmniej: jedną małą literę, jedną wielką literę, jedną cyfrę i jeden znak specjalny.',
             'password.confirmed' => 'Potwierdzenie hasła się nie zgadza.',
             'phone.max' => 'Numer telefonu nie może być dłuższy niż 20 znaków.',
             'birth_date.date' => 'Data urodzenia musi być prawidłową datą.',

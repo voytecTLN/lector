@@ -2,7 +2,6 @@ import { authService } from '@services/AuthService'
 import { redirectWithMessage } from '@/utils/navigation'
 import { PasswordValidator } from '@/utils/PasswordValidator'
 import { LoadingStateManager } from '@/utils/LoadingStateManager'
-import Logger from '@/utils/logger'
 import type { RouteComponent } from '@router/routes'
 
 export class ResetPasswordPage implements RouteComponent {
@@ -345,7 +344,6 @@ export class ResetPasswordPage implements RouteComponent {
         e.preventDefault()
         
         if (!this.form || !this.passwordValidator || !this.loadingManager) {
-            Logger.error('ResetPasswordPage: Missing required components')
             return
         }
 
@@ -379,7 +377,6 @@ export class ResetPasswordPage implements RouteComponent {
             }, 1500)
 
         } catch (err: any) {
-            Logger.error('Password reset error:', err)
             this.handleError(err)
         } finally {
             this.loadingManager?.showContent()

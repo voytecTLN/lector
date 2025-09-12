@@ -36,7 +36,18 @@ class UpdateTutorRequest extends FormRequest
                 'max:255', 
                 Rule::unique('users')->ignore($tutorId)
             ],
-            'password' => ['nullable', 'confirmed', Password::defaults()],
+            'current_password' => [
+                'nullable',
+                'string',
+                'current_password'
+            ],
+            'password' => [
+                'nullable',
+                'string',
+                'min:12',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?~`]).+$/'
+            ],
             'phone' => ['nullable', 'string', 'max:20'],
             'birth_date' => ['nullable', 'date', 'before:today'],
             'city' => ['nullable', 'string', 'max:255'],
@@ -44,9 +55,9 @@ class UpdateTutorRequest extends FormRequest
             'status' => ['sometimes', 'required', 'in:active,inactive,blocked'],
 
             // Tutor profile data
-            'languages' => ['sometimes', 'required', 'array', 'min:1'],
+            'languages' => ['sometimes', 'required', 'array', 'min:1', 'max:4'],
             'languages.*' => ['required', 'string', 'in:' . implode(',', array_keys(TutorProfile::LANGUAGES))],
-            'specializations' => ['sometimes', 'required', 'array', 'min:1'],
+            'specializations' => ['sometimes', 'required', 'array', 'min:1', 'max:8'],
             'specializations.*' => ['required', 'string', 'in:' . implode(',', array_keys(TutorProfile::SPECIALIZATIONS))],
             'description' => ['nullable', 'string', 'max:2000'],
             'years_experience' => ['sometimes', 'required', 'integer', 'min:0', 'max:50'],
@@ -54,7 +65,7 @@ class UpdateTutorRequest extends FormRequest
             'certifications.*' => ['string', 'max:255'],
             'education' => ['nullable', 'array'],
             'education.*' => ['string', 'max:255'],
-            'lesson_types' => ['nullable', 'array'],
+            'lesson_types' => ['nullable', 'array', 'max:4'],
             'lesson_types.*' => ['string', 'in:' . implode(',', array_keys(TutorProfile::LESSON_TYPES))],
             'weekly_availability' => ['nullable', 'array'],
             'is_accepting_students' => ['boolean'],
@@ -75,6 +86,10 @@ class UpdateTutorRequest extends FormRequest
             'email.required' => 'Email jest wymagany.',
             'email.email' => 'Email musi być prawidłowym adresem email.',
             'email.unique' => 'Ten adres email jest już zajęty.',
+            'current_password.required_with' => 'Obecne hasło jest wymagane przy zmianie hasła.',
+            'current_password.current_password' => 'Podane obecne hasło jest nieprawidłowe.',
+            'password.min' => 'Hasło musi mieć minimum 12 znaków.',
+            'password.regex' => 'Hasło musi zawierać co najmniej: jedną małą literę, jedną wielką literę, jedną cyfrę i jeden znak specjalny.',
             'password.confirmed' => 'Potwierdzenie hasła się nie zgadza.',
             'phone.max' => 'Numer telefonu nie może być dłuższy niż 20 znaków.',
             'birth_date.date' => 'Data urodzenia musi być prawidłową datą.',
@@ -86,9 +101,11 @@ class UpdateTutorRequest extends FormRequest
             
             'languages.required' => 'Należy wybrać co najmniej jeden język.',
             'languages.min' => 'Należy wybrać co najmniej jeden język.',
+            'languages.max' => 'Można wybrać maksymalnie 4 języki.',
             'languages.*.in' => 'Wybrany język jest nieprawidłowy.',
             'specializations.required' => 'Należy wybrać co najmniej jedną specjalizację.',
             'specializations.min' => 'Należy wybrać co najmniej jedną specjalizację.',
+            'specializations.max' => 'Można wybrać maksymalnie 8 specjalizacji.',
             'specializations.*.in' => 'Wybrana specjalizacja jest nieprawidłowa.',
             'description.max' => 'Opis nie może być dłuższy niż 2000 znaków.',
             'years_experience.required' => 'Doświadczenie jest wymagane.',
@@ -97,6 +114,7 @@ class UpdateTutorRequest extends FormRequest
             'years_experience.max' => 'Doświadczenie nie może być większe niż 50 lat.',
             'certifications.*.max' => 'Nazwa certyfikatu nie może być dłuższa niż 255 znaków.',
             'education.*.max' => 'Nazwa wykształcenia nie może być dłuższa niż 255 znaków.',
+            'lesson_types.max' => 'Można wybrać maksymalnie 4 typy lekcji.',
             'lesson_types.*.in' => 'Wybrany typ lekcji jest nieprawidłowy.',
             'max_students_per_week.integer' => 'Maksymalna liczba studentów musi być liczbą.',
             'max_students_per_week.min' => 'Maksymalna liczba studentów musi być większa niż 0.',
@@ -112,6 +130,7 @@ class UpdateTutorRequest extends FormRequest
         return [
             'name' => 'imię i nazwisko',
             'email' => 'email',
+            'current_password' => 'obecne hasło',
             'password' => 'hasło',
             'phone' => 'telefon',
             'birth_date' => 'data urodzenia',
@@ -139,6 +158,7 @@ class UpdateTutorRequest extends FormRequest
         if ($this->password === null || $this->password === '') {
             $this->request->remove('password');
             $this->request->remove('password_confirmation');
+            $this->request->remove('current_password'); // Admin nie potrzebuje current_password
         }
     }
 }

@@ -3,6 +3,7 @@ import type { RouteComponent } from '@router/routes'
 import { authService } from '@services/AuthService'
 import { adminService } from "@services/AdminService";
 import { navigate } from "@utils/navigation";
+import { ROUTES } from '@/config/routing';
 import { AdminLessons } from './admin/AdminLessons'
 import { LessonDetailsModal } from '../modals/LessonDetailsModal'
 
@@ -218,6 +219,11 @@ export class AdminDashboard implements RouteComponent {
     }
 
     private handlePopState = (): void => {
+        // Don't handle navigation if user is not authenticated
+        if (!authService.isAuthenticated()) {
+            return
+        }
+
         const urlParams = new URLSearchParams(window.location.search)
         const section = urlParams.get('section') || 'dashboard'
 
@@ -299,7 +305,7 @@ export class AdminDashboard implements RouteComponent {
         const logoutBtn = this.container?.querySelector('#logout-btn')
         logoutBtn?.addEventListener('click', async () => {
             await authService.logout()
-            await navigate.to('/')
+            await navigate.to(ROUTES.HOME)
             //TODO
         })
     }
@@ -609,7 +615,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to students list if no ID
-                    await navigate.to('/admin/dashboard?section=uczniowie')
+                    await navigate.to(ROUTES.ADMIN_STUDENTS)
                 }
                 break
 
@@ -634,7 +640,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to students list if no ID
-                    await navigate.to('/admin/dashboard?section=uczniowie')
+                    await navigate.to(ROUTES.ADMIN_STUDENTS)
                 }
                 break
 
@@ -705,7 +711,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to admins list if no ID
-                    await navigate.to('/admin/dashboard?section=administratorzy')
+                    await navigate.to(ROUTES.ADMIN_ADMINS)
                 }
                 break
 
@@ -730,7 +736,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to admins list if no ID
-                    await navigate.to('/admin/dashboard?section=administratorzy')
+                    await navigate.to(ROUTES.ADMIN_ADMINS)
                 }
                 break
 
@@ -755,7 +761,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to admins list if no ID
-                    await navigate.to('/admin/dashboard?section=administratorzy')
+                    await navigate.to(ROUTES.ADMIN_ADMINS)
                 }
                 break
 
@@ -805,7 +811,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to tutors list if no ID
-                    await navigate.to('/admin/dashboard?section=lektorzy')
+                    await navigate.to(ROUTES.ADMIN_TUTORS)
                 }
                 break
 
@@ -833,7 +839,7 @@ export class AdminDashboard implements RouteComponent {
                     })
                 } else {
                     // Redirect back to tutors list if no ID
-                    await navigate.to('/admin/dashboard?section=lektorzy')
+                    await navigate.to(ROUTES.ADMIN_TUTORS)
                 }
                 break
 
@@ -1213,6 +1219,11 @@ export class AdminDashboard implements RouteComponent {
     }
 
     private async fetchDashboardStats(): Promise<any> {
+        // Don't fetch if user is not authenticated
+        if (!authService.isAuthenticated()) {
+            return {}
+        }
+        
         try {
             /*
             * Dodać typy np.:
@@ -1235,7 +1246,7 @@ export class AdminDashboard implements RouteComponent {
     private startStatsRefresh(): void {
         // Refresh stats every 30 seconds
         this.statsInterval = window.setInterval(() => {
-            if (this.activeSection === 'dashboard') {
+            if (this.activeSection === 'dashboard' && authService.isAuthenticated()) {
                 this.fetchDashboardStats().then(stats => {
                     this.updateStats(stats)
                 })

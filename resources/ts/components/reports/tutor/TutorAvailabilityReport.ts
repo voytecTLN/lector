@@ -348,7 +348,6 @@ export class TutorAvailabilityReport {
 
     private renderChart(): void {
         // TODO: Implementacja wykresu Chart.js
-        console.log('Chart rendering would go here')
     }
 
     private getDefaultDateFrom(): string {

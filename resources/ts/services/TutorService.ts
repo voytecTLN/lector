@@ -217,11 +217,8 @@ export class TutorService {
      */
     async getProfile(): Promise<User> {
         try {
-            console.log('👤 TutorService: Getting tutor profile')
-            
             // Backend returns the user object directly
             const response = await api.get<User>('/tutor/profile')
-            console.log('Profile response:', response)
             
             return response
 
@@ -236,7 +233,6 @@ export class TutorService {
      */
     async updateProfile(data: FormData | any): Promise<any> {
         try {
-            console.log('✏️ TutorService: Updating tutor profile', data)
 
             // If it's FormData (with file upload), use POST
             if (data instanceof FormData) {

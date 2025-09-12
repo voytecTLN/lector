@@ -252,9 +252,7 @@ export class AdminAuditLogs {
 
     private async loadStats(): Promise<void> {
         try {
-            console.log('Loading audit stats...')
             const response = await api.get('/audit/stats') as any
-            console.log('Stats response:', response)
             
             // Check if we got a proper JSON response
             if (!response.data || typeof response.data !== 'object') {
@@ -264,7 +262,6 @@ export class AdminAuditLogs {
             }
 
             const stats = response.data
-            console.log('Parsed stats:', stats)
 
             // Update stats cards
             document.getElementById('stat-today')!.textContent = (stats.today_total || 0).toString()
@@ -333,9 +330,7 @@ export class AdminAuditLogs {
                 ...this.filters
             })
 
-            console.log('Loading audit logs with params:', params.toString())
             const response = await api.get(`/audit/logs?${params.toString()}`) as any
-            console.log('Logs response:', response)
             
             // Check if we got a proper JSON response
             if (!response.data || typeof response.data !== 'object') {
@@ -347,7 +342,6 @@ export class AdminAuditLogs {
 
             const logs = response.data
             const pagination = response.pagination
-            console.log('Parsed logs:', logs, 'Pagination:', pagination)
 
             loadingEl.style.display = 'none'
 

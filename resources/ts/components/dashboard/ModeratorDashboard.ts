@@ -212,7 +212,6 @@ export class ModeratorDashboard implements RouteComponent {
             })
             const data = await response.json()
             // Update stats in DOM
-            console.log('Moderator stats:', data)
         } catch (error) {
             console.error('Failed to load moderator stats:', error)
         }

@@ -392,7 +392,6 @@ export const LinkHandlers = {
      */
     withTracking: (url: string, eventName: string) => (event: MouseEvent) => {
         // Add your analytics tracking here
-        console.log(`External link clicked: ${eventName} -> ${url}`)
         navigate.external(url, true)
     }
 }

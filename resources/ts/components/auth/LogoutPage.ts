@@ -1,6 +1,7 @@
 // resources/ts/components/auth/LogoutPage.ts
 import { authService } from '@services/AuthService'
-import {navigateTo, redirectWithMessage} from '@/utils/navigation'
+import {navigate, redirectWithMessage} from '@/utils/navigation'
+import { ROUTES } from '@/config/routing'
 import type { RouteComponent } from '@router/routes'
 
 export class LogoutPage implements RouteComponent {
@@ -61,12 +62,11 @@ export class LogoutPage implements RouteComponent {
             }))
 
             // Przekieruj na stronę główną
-            navigateTo('/')
+            await navigate.to(ROUTES.HOME)
 
         } catch (error) {
-            console.error('Logout error:', error)
-            // W przypadku błędu też przekieruj (logout po stronie frontu już wykonany)
-            navigateTo('/')
+            // In case of error, still redirect (frontend logout already performed)
+            await navigate.to(ROUTES.HOME)
         }
     }
 

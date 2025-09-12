@@ -544,7 +544,6 @@ export class AdminAvailabilityLogs {
                 search: (document.getElementById('search-input') as HTMLInputElement)?.value || ''
             }
             
-            console.log('📊 Export CSV with filters:', currentFilters)
             
             // Use service to export CSV with current filters
             const blob = await availabilityLogsService.exportToCSV(currentFilters)

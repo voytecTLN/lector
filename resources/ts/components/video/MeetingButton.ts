@@ -22,12 +22,12 @@ export class MeetingButton {
     }
 
     private async init(): Promise<void> {
-        console.log('🎬 MeetingButton init for lesson:', this.lessonId)
+        // MeetingButton initialized
         await this.updateButton()
         
         // Sprawdzaj status co 30 sekund
         this.checkInterval = window.setInterval(() => {
-            console.log('🔄 MeetingButton auto-refresh for lesson:', this.lessonId)
+            // Auto-refresh meeting status
             this.updateButton()
         }, 60000)
     }
@@ -49,17 +49,8 @@ export class MeetingButton {
                 ? `/tutor/lessons/${this.lessonId}/meeting/status`
                 : `/student/lessons/${this.lessonId}/meeting/status`
 
-            console.log('📡 Fetching meeting status:', {
-                lessonId: this.lessonId,
-                userRole: user?.role,
-                userId: user?.id,
-                endpoint: endpoint
-            })
 
             const response = await api.get<{ success: boolean; data: MeetingStatus }>(endpoint)
-            console.log('📥 Meeting status response:', response)
-            console.log('📥 Response type:', typeof response)
-            console.log('📥 Response keys:', Object.keys(response))
             
             // If response is empty object, it might be a content-type issue
             if (Object.keys(response).length === 0) {
@@ -83,11 +74,6 @@ export class MeetingButton {
         const user = await authService.getCurrentUser()
         const isTutor = user?.role === 'tutor'
         
-        console.log('🎨 Rendering button with status:', {
-            status: status,
-            isTutor: isTutor,
-            user: { id: user?.id, role: user?.role }
-        })
         
         let buttonHtml = ''
         
@@ -129,15 +115,12 @@ export class MeetingButton {
             `
         }
         
-        console.log('🗒️ Setting button HTML:', buttonHtml || 'empty')
         this.container.innerHTML = buttonHtml
         
         // Dodaj event listener
         const actionBtn = this.container.querySelector('.meeting-action-btn')
         if (actionBtn) {
-            console.log('✅ Meeting action button found, adding click listener')
             actionBtn.addEventListener('click', () => {
-                console.log('🕵️ Meeting button clicked')
                 if (this.onMeetingOpen) {
                     this.onMeetingOpen()
                 } else {
@@ -146,7 +129,6 @@ export class MeetingButton {
                 }
             })
         } else {
-            console.log('ℹ️ No action button found in rendered HTML')
         }
     }
 

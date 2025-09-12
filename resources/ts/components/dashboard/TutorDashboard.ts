@@ -8,6 +8,11 @@ import {TutorStudents} from './tutor/TutorStudents'
 import {TutorLessonHistory} from './tutor/TutorLessonHistory'
 import {LessonDetailsModal} from '../modals/LessonDetailsModal'
 import {AvatarHelper} from '@/utils/AvatarHelper'
+import {ROUTES} from '@/config/routing'
+
+// Global state to prevent router interference
+let globalCurrentSection: string = 'dashboard'
+let hasEverMounted: boolean = false
 
 export class TutorDashboard implements RouteComponent {
     private currentSection: string = 'dashboard'
@@ -17,8 +22,24 @@ export class TutorDashboard implements RouteComponent {
     private profileComponent: TutorProfileEdit | null = null
     private availabilityComponent: HourlyAvailabilityCalendar | null = null
     private lessonHistoryComponent: TutorLessonHistory | null = null
+    private isLoadingSection: boolean = false
+    private loadingPromise: Promise<void> | null = null
+    private lastLoadTime: number = 0
+    private loadDebounceMs: number = 100
+    private renderedElement: HTMLElement | null = null
+
+    constructor() {
+        console.log('🔧 TutorDashboard constructor - using singleton pattern')
+    }
 
     async render(): Promise<HTMLElement> {
+        // Return cached element if already rendered (singleton pattern)
+        if (this.renderedElement) {
+            console.log('🔄 Returning cached rendered element')
+            return this.renderedElement
+        }
+        
+        console.log('🎨 Creating new rendered element')
         const user = authService.getUser()
         const el = document.createElement('div')
         el.className = 'tutor-container'
@@ -40,13 +61,13 @@ export class TutorDashboard implements RouteComponent {
                 <nav>
                     <ul class="tutor-nav-menu">
                         <li class="tutor-nav-item">
-                            <a href="#" class="tutor-nav-link active" data-section="dashboard">
+                            <a href="#/tutor/dashboard" class="tutor-nav-link active" data-section="dashboard">
                                 <span class="tutor-nav-icon">🏠</span>
                                 <span>Dashboard</span>
                             </a>
                         </li>
                         <li class="tutor-nav-item">
-                            <a href="#" class="tutor-nav-link" data-section="wykaz-zmian">
+                            <a href="#/tutor/dashboard?section=wykaz-zmian" class="tutor-nav-link" data-section="wykaz-zmian">
                                 <span class="tutor-nav-icon">📋</span>
                                 <span>Wykaz zmian</span>
                             </a>
@@ -54,19 +75,19 @@ export class TutorDashboard implements RouteComponent {
                         
                         <li class="tutor-nav-section">ZARZĄDZANIE</li>
                         <li class="tutor-nav-item">
-                            <a href="#" class="tutor-nav-link" data-section="availability">
+                            <a href="#/tutor/dashboard?section=availability" class="tutor-nav-link" data-section="availability">
                                 <span class="tutor-nav-icon">🕐</span>
                                 <span>Dostępność</span>
                             </a>
                         </li>
                         <li class="tutor-nav-item">
-                            <a href="#" class="tutor-nav-link" data-section="calendar">
+                            <a href="#/tutor/dashboard?section=calendar" class="tutor-nav-link" data-section="calendar">
                                 <span class="tutor-nav-icon">📅</span>
                                 <span>Kalendarz</span>
                             </a>
                         </li>
                         <li class="tutor-nav-item">
-                            <a href="#" class="tutor-nav-link" data-section="nadchodzace">
+                            <a href="#/tutor/dashboard?section=nadchodzace" class="tutor-nav-link" data-section="nadchodzace">
                                 <span class="tutor-nav-icon">🎯</span>
                                 <span>Nadchodzące lekcje</span>
                             </a>
@@ -74,13 +95,13 @@ export class TutorDashboard implements RouteComponent {
                         
                         <li class="tutor-nav-section">STUDENCI</li>
                         <li class="tutor-nav-item">
-                            <a href="#" class="tutor-nav-link" data-section="students">
+                            <a href="#/tutor/dashboard?section=students" class="tutor-nav-link" data-section="students">
                                 <span class="tutor-nav-icon">👥</span>
                                 <span>Moi studenci</span>
                             </a>
                         </li>
                         <li class="tutor-nav-item">
-                            <a href="#" class="tutor-nav-link" data-section="historia">
+                            <a href="#/tutor/dashboard?section=historia" class="tutor-nav-link" data-section="historia">
                                 <span class="tutor-nav-icon">📚</span>
                                 <span>Historia lekcji</span>
                             </a>
@@ -88,13 +109,13 @@ export class TutorDashboard implements RouteComponent {
                         
                         <li class="tutor-nav-section">KONTO</li>
                         <li class="tutor-nav-item">
-                            <a href="#" class="tutor-nav-link" data-section="profile">
+                            <a href="#/tutor/dashboard?section=profile" class="tutor-nav-link" data-section="profile">
                                 <span class="tutor-nav-icon">👤</span>
                                 <span>Mój profil</span>
                             </a>
                         </li>
                         <li class="tutor-nav-item">
-                            <a href="#" class="tutor-nav-link" data-section="zgloszenia">
+                            <a href="#/tutor/dashboard?section=zgloszenia" class="tutor-nav-link" data-section="zgloszenia">
                                 <span class="tutor-nav-icon">🎧</span>
                                 <span>Zgłoś sprawę</span>
                             </a>
@@ -130,33 +151,88 @@ export class TutorDashboard implements RouteComponent {
             </main>
         `
         
+        // Cache the rendered element for singleton pattern
+        this.renderedElement = el
         return el
     }
 
     mount(container: HTMLElement): void {
+        console.log('🔧 TutorDashboard mount called', {
+            hasContainer: !!this.container,
+            newContainer: container,
+            currentSection: this.currentSection
+        })
+        
+        // Always read URL section to support Ctrl+R and direct navigation
+        let section = 'dashboard'
+        const regularParams = new URLSearchParams(window.location.search)
+        if (regularParams.has('section')) {
+            section = regularParams.get('section') || 'dashboard'
+        } else if (window.location.hash && window.location.hash.includes('?')) {
+            const hashParts = window.location.hash.split('?')
+            if (hashParts.length > 1) {
+                const hashParams = new URLSearchParams('?' + hashParts[1])
+                section = hashParams.get('section') || 'dashboard'
+            }
+        }
+        
+        console.log('🎬 Mount - section from URL:', section, { 
+            isFirstMount: !hasEverMounted,
+            currentSection: this.currentSection
+        })
+        
+        // If already mounted with the same container, only update section if it changed
+        if (this.container === container) {
+            console.log('🔄 Same container, checking if section changed')
+            if (this.currentSection !== section) {
+                console.log('📍 Section changed, updating content', { from: this.currentSection, to: section })
+                this.currentSection = section
+                globalCurrentSection = section
+                this.updateActiveNavLink()
+                this.loadSectionContent()
+            } else {
+                console.log('⏭️ Same section, no update needed')
+            }
+            return
+        }
+        
         this.container = container
         this.setupEventListeners()
-        this.handleUrlChange()
+        
+        // Update current section from URL
+        this.currentSection = section
+        globalCurrentSection = section
+        hasEverMounted = true
+        
+        this.updateActiveNavLink()
+        this.loadSectionContent()
         
         // Make LessonDetailsModal available globally for onclick handlers
         ;(window as any).LessonDetailsModal = LessonDetailsModal
         
-        // Set up auto-refresh for dashboard stats
-        this.refreshInterval = window.setInterval(() => {
-            if (this.currentSection === 'dashboard') {
-                this.loadDashboardContent()
-            }
-        }, 60000) // Refresh every minute
-        
-        // Listen for browser back/forward
-        window.addEventListener('popstate', () => this.handleUrlChange())
+        // Set up auto-refresh for dashboard stats (only once)
+        if (!this.refreshInterval) {
+            this.refreshInterval = window.setInterval(() => {
+                if (this.currentSection === 'dashboard') {
+                    this.loadDashboardContent()
+                }
+            }, 60000) // Refresh every minute
+        }
     }
 
     unmount(): void {
+        console.log('⚠️ TutorDashboard unmount called - this should not happen with singleton pattern!')
+        
+        // DO NOT unmount anything when using singleton pattern
+        // The router should skip calling unmount for the same component instance
+        // If this is still being called, it means the router fix isn't working
+        return
+        
+        // Original unmount logic commented out to prevent destruction
+        /*
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval)
         }
-        window.removeEventListener('popstate', () => this.handleUrlChange())
         
         if (this.profileComponent) {
             this.profileComponent.unmount()
@@ -166,21 +242,10 @@ export class TutorDashboard implements RouteComponent {
             this.availabilityComponent.unmount()
             this.availabilityComponent = null
         }
+        */
     }
 
     private setupEventListeners(): void {
-        // Navigation clicks
-        const navLinks = this.container?.querySelectorAll('.tutor-nav-link')
-        navLinks?.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault()
-                const section = (link as HTMLElement).dataset.section
-                if (section) {
-                    this.navigateToSection(section)
-                }
-            })
-        })
-        
         // Mobile menu toggle
         const mobileMenuBtn = this.container?.querySelector('#tutorMobileMenuBtn')
         mobileMenuBtn?.addEventListener('click', () => {
@@ -190,10 +255,10 @@ export class TutorDashboard implements RouteComponent {
         // Logout
         const logoutBtn = this.container?.querySelector('#logoutBtn')
         logoutBtn?.addEventListener('click', () => {
-            authService.logout()
-            window.location.href = '/login'
+            document.dispatchEvent(new CustomEvent('app:logout'))
         })
     }
+
 
     private toggleSidebar(): void {
         this.sidebarOpen = !this.sidebarOpen
@@ -203,23 +268,6 @@ export class TutorDashboard implements RouteComponent {
         }
     }
 
-    private navigateToSection(section: string): void {
-        this.currentSection = section
-        this.updateActiveNavLink()
-        this.loadSectionContent()
-        
-        // Update URL without page reload
-        const url = new URL(window.location.href)
-        url.searchParams.set('section', section)
-        window.history.pushState({}, '', url.toString())
-    }
-
-    private handleUrlChange(): void {
-        const urlParams = new URLSearchParams(window.location.search)
-        this.currentSection = urlParams.get('section') || 'dashboard'
-        this.updateActiveNavLink()
-        this.loadSectionContent()
-    }
 
     private updateActiveNavLink(): void {
         const navLinks = this.container?.querySelectorAll('.tutor-nav-link')
@@ -230,10 +278,27 @@ export class TutorDashboard implements RouteComponent {
     }
 
     private loadSectionContent(): void {
+        // Debounce rapid calls
+        const now = Date.now()
+        if (now - this.lastLoadTime < this.loadDebounceMs) {
+            console.log('⏱️ Debouncing rapid section load')
+            return
+        }
+        this.lastLoadTime = now
+        
+        // Prevent concurrent loads
+        if (this.isLoadingSection) {
+            console.log('⚠️ Section load already in progress, skipping...')
+            return
+        }
+        
         const contentDiv = this.container?.querySelector('#tutorContent')
         const titleEl = this.container?.querySelector('#sectionTitle')
         
         if (!contentDiv) return
+        
+        console.log('🔄 Starting section load:', this.currentSection)
+        this.isLoadingSection = true
         
         // Clean up previous components
         if (this.profileComponent) {
@@ -251,8 +316,11 @@ export class TutorDashboard implements RouteComponent {
         switch (this.currentSection) {
             case 'dashboard':
                 if (titleEl) titleEl.textContent = 'Dashboard'
-                this.loadDashboardContent()
-                break
+                this.loadingPromise = this.loadDashboardContent().finally(() => {
+                    this.isLoadingSection = false
+                    this.loadingPromise = null
+                })
+                return
             case 'availability':
                 if (titleEl) titleEl.textContent = 'Dostępność'
                 this.loadAvailabilityContent()
@@ -275,24 +343,49 @@ export class TutorDashboard implements RouteComponent {
                 break
             case 'profile':
                 if (titleEl) titleEl.textContent = 'Mój profil'
-                this.loadProfileContent()
-                break
+                this.loadingPromise = this.loadProfileContent().finally(() => {
+                    this.isLoadingSection = false
+                    this.loadingPromise = null
+                })
+                return // Don't reset flag here, wait for async completion
             case 'zgloszenia':
                 if (titleEl) titleEl.textContent = 'Zgłoś sprawę'
-                this.loadIssueReportContent()
-                break
+                this.loadingPromise = this.loadIssueReportContent().finally(() => {
+                    this.isLoadingSection = false
+                    this.loadingPromise = null
+                })
+                return
             case 'wykaz-zmian':
                 if (titleEl) titleEl.textContent = 'Wykaz zmian'
-                this.loadChangelogContent()
-                break
+                this.loadingPromise = this.loadChangelogContent().finally(() => {
+                    this.isLoadingSection = false
+                    this.loadingPromise = null
+                })
+                return
             default:
-                this.navigateToSection('dashboard')
+                console.log('⚠️ Unknown section, loading dashboard:', { 
+                    currentSection: this.currentSection
+                })
+                // Load dashboard content for unknown sections
+                if (titleEl) titleEl.textContent = 'Dashboard'
+                this.loadingPromise = this.loadDashboardContent().finally(() => {
+                    this.isLoadingSection = false
+                    this.loadingPromise = null
+                })
+                return
         }
+        
+        // Reset loading flag for synchronous sections (async sections return early)
+        this.isLoadingSection = false
     }
 
     private async loadDashboardContent(): Promise<void> {
+        console.log('📊 Loading dashboard content')
         const contentDiv = this.container?.querySelector('#tutorContent')
-        if (!contentDiv) return
+        if (!contentDiv) {
+            console.error('❌ No content div found for dashboard')
+            return
+        }
         
         const user = authService.getUser()
         
@@ -508,17 +601,45 @@ export class TutorDashboard implements RouteComponent {
     }
 
     private async loadProfileContent(): Promise<void> {
+        console.log('📋 loadProfileContent called', {
+            hasProfileComponent: !!this.profileComponent,
+            isLoadingSection: this.isLoadingSection,
+            currentSection: this.currentSection
+        })
+        
+        // Double-check we're still on profile section
+        if (this.currentSection !== 'profile') {
+            console.log('⚠️ Section changed, aborting profile load')
+            return
+        }
+        
         const contentDiv = this.container?.querySelector('#tutorContent')
-        if (!contentDiv) return
+        if (!contentDiv) {
+            console.log('⚠️ No content div found')
+            return
+        }
+        
+        // Clean up previous profile component if exists
+        if (this.profileComponent) {
+            console.log('🔧 Cleaning up previous profile component')
+            this.profileComponent.unmount()
+            this.profileComponent = null
+        }
         
         // Use TutorProfileEdit component
-        this.profileComponent = new TutorProfileEdit()
-        const profileEl = await this.profileComponent.render()
+        console.log('🔧 Creating new TutorProfileEdit instance')
+        const component = new TutorProfileEdit()
+        const profileEl = await component.render()
         
         contentDiv.innerHTML = ''
         contentDiv.appendChild(profileEl)
         
-        this.profileComponent.mount(profileEl)
+        // Store reference before mounting
+        this.profileComponent = component
+        
+        console.log('🔧 Mounting TutorProfileEdit')
+        await component.mount(profileEl)
+        console.log('✅ Profile component mounted successfully')
     }
 
     private async loadIssueReportContent(): Promise<void> {

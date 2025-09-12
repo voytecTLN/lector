@@ -938,7 +938,6 @@ export class SystemSettings {
     }
 
     saveSection(section: string): void {
-        console.log(`Saving section: ${section}`)
         // TODO: Implement actual saving logic
         this.unsavedChanges = false
         this.updateUnsavedBanner()
@@ -949,7 +948,6 @@ export class SystemSettings {
 
     resetSection(section: string): void {
         if (confirm('Czy na pewno chcesz przywrócić domyślne ustawienia tej sekcji?')) {
-            console.log(`Resetting section: ${section}`)
             // TODO: Implement reset logic
             this.switchSection(section) // Reload section with defaults
         }
@@ -966,7 +964,6 @@ export class SystemSettings {
     }
 
     testEmail(): void {
-        console.log('Testing email configuration...')
         // TODO: Implement email test
         alert('Test email będzie zaimplementowany w przyszłych wersjach')
     }

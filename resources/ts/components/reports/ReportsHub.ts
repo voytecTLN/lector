@@ -274,11 +274,9 @@ export class ReportsHub {
 
     private viewCachedReport(reportId: string): void {
         // TODO: Implementacja podglądu zapisanego raportu
-        console.log('Viewing cached report:', reportId)
     }
 
     private downloadReport(reportId: string): void {
         // TODO: Implementacja pobierania raportu
-        console.log('Downloading report:', reportId)
     }
 }

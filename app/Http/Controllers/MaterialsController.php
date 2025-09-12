@@ -120,11 +120,6 @@ class MaterialsController extends Controller
             $userId = Auth::id();
             $user = Auth::user();
             
-            Log::info('Download request', [
-                'material_id' => $materialId, 
-                'user_id' => $userId,
-                'user_verified' => $user ? $user->hasVerifiedEmail() : false
-            ]);
             
             // Check if user is verified
             if (!$user || !$user->hasVerifiedEmail()) {
@@ -136,11 +131,6 @@ class MaterialsController extends Controller
             
             $material = $this->materialsService->downloadMaterial($materialId, $userId);
             
-            Log::info('Material found', [
-                'file_path' => $material->file_path, 
-                'original_name' => $material->original_name,
-                'storage_exists' => Storage::exists($material->file_path)
-            ]);
             
             // Check if file exists
             if (!Storage::exists($material->file_path)) {

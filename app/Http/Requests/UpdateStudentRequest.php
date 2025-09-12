@@ -56,14 +56,18 @@ class UpdateStudentRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($studentId)
             ],
+            'current_password' => [
+                'nullable',
+                'string',
+                'current_password'
+            ],
             'password' => [
                 'sometimes',
                 'nullable',
                 'string',
-                Password::min(8)
-                    ->mixedCase()
-                    ->numbers()
-                    ->uncompromised()
+                'min:12',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?~`]).+$/'
             ],
             'password_confirmation' => 'required_with:password|string|same:password',
 
@@ -207,6 +211,9 @@ class UpdateStudentRequest extends FormRequest
             'email.email' => 'Adres email musi być prawidłowy.',
             'email.unique' => 'Ten adres email jest już zajęty.',
 
+            'current_password.required_with' => 'Obecne hasło jest wymagane przy zmianie hasła.',
+            'current_password.current_password' => 'Podane obecne hasło jest nieprawidłowe.',
+
             'password.min' => 'Hasło musi mieć minimum :min znaków.',
             'password.mixed' => 'Hasło musi zawierać małe i duże litery.',
             'password.numbers' => 'Hasło musi zawierać przynajmniej jedną cyfrę.',
@@ -238,6 +245,7 @@ class UpdateStudentRequest extends FormRequest
         return [
             'name' => 'imię i nazwisko',
             'email' => 'adres email',
+            'current_password' => 'obecne hasło',
             'password' => 'hasło',
             'password_confirmation' => 'potwierdzenie hasła',
             'status' => 'status',
@@ -286,6 +294,13 @@ class UpdateStudentRequest extends FormRequest
         if ($this->has('phone') && $this->input('phone')) {
             $phone = preg_replace('/\s+/', '', $this->input('phone'));
             $this->merge(['phone' => $phone]);
+        }
+
+        // Remove password fields if they are empty - admin doesn't need current_password
+        if ($this->password === null || $this->password === '') {
+            $this->request->remove('password');
+            $this->request->remove('password_confirmation');
+            $this->request->remove('current_password'); // Admin nie potrzebuje current_password
         }
     }
 

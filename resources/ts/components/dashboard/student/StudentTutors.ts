@@ -10,7 +10,6 @@ export class StudentTutors {
             this.tutors = await studentService.getAvailableTutors()
             this.filteredTutors = [...this.tutors]
             
-            console.log('Tutors loaded:', this.tutors) // Debug log
             
             return this.renderTutorsList()
         } catch (error) {
@@ -115,7 +114,6 @@ export class StudentTutors {
     
     private renderTutorCard(tutor: any): string {
         // Debug log for tutor data structure
-        console.log('Rendering tutor card:', tutor)
         
         const profile = tutor.tutor_profile || {}
         const languages = (profile.languages || []).map((lang: string) => this.getLanguageName(lang)).join(', ')

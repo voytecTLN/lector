@@ -4,6 +4,7 @@ import { TutorService } from '@services/TutorService'
 import { FormValidationHandler } from '@/utils/FormValidationHandler'
 import { NotificationService } from '@/utils/NotificationService'
 import { PasswordValidator } from '@/utils/PasswordValidator'
+import { PasswordToggleHelper } from '@/utils/PasswordToggleHelper'
 import { LoadingStateManager } from '@/utils/LoadingStateManager'
 import { LanguageUtils } from '@/utils/LanguageUtils'
 
@@ -18,6 +19,8 @@ export class TutorProfileEdit implements RouteComponent {
     private passwordValidator: PasswordValidator | null = null
     private loadingManager: LoadingStateManager | null = null
     private tutorService = new TutorService()
+    private isMounted: boolean = false
+    private isLoadingProfile: boolean = false
 
     async render(): Promise<HTMLElement> {
         const el = document.createElement('div')
@@ -58,13 +61,42 @@ export class TutorProfileEdit implements RouteComponent {
     }
 
     async mount(container: HTMLElement): Promise<void> {
+        console.log('🔥 TutorProfileEdit mount called', { 
+            container, 
+            containerId: container?.id, 
+            containerClass: container?.className,
+            isMounted: this.isMounted
+        })
+        
+        // Only check per-instance mounting
+        if (this.isMounted) {
+            console.log('⚠️ TutorProfileEdit instance already mounted, skipping...')
+            return
+        }
+        
+        this.isMounted = true
         this.container = container
         this.form = container.querySelector('#tutor-profile-form')
+        
+        console.log('🔥 Form search results:', { 
+            form: this.form, 
+            formId: this.form?.id,
+            containerHTML: container?.innerHTML.substring(0, 200) + '...'
+        })
 
         // Initialize utilities
         if (this.form) {
+            console.log('✅ Form found, initializing utilities')
             this.validationHandler = new FormValidationHandler(this.form)
-            this.passwordValidator = new PasswordValidator(this.form, { isEditMode: true })
+            this.passwordValidator = new PasswordValidator(this.form, { 
+                isEditMode: true, 
+                enforceStrength: true,
+                minLength: 12
+            })
+        } else {
+            console.error('❌ Form #tutor-profile-form not found in container!')
+            this.isMounted = false
+            return
         }
 
         this.loadingManager = LoadingStateManager.simple(container, '#form-loading', '#profile-form-container')
@@ -79,10 +111,19 @@ export class TutorProfileEdit implements RouteComponent {
     }
 
     unmount(): void {
+        console.log('🔥 TutorProfileEdit UNMOUNT called', { 
+            isMounted: this.isMounted
+        })
+        
+        this.isMounted = false
+        
         this.validationHandler?.destroy()
         this.passwordValidator?.destroy()
-        this.container = null
-        this.form = null
+        
+        // Don't clear form and container - they might be needed if component gets remounted
+        // this.container = null
+        // this.form = null
+        
         this.profile = null
         this.validationHandler = null
         this.passwordValidator = null
@@ -289,8 +330,8 @@ export class TutorProfileEdit implements RouteComponent {
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Nowe hasło</label>
-                            <input type="password" name="password" class="form-control" minlength="8">
-                            <div class="form-text">Minimum 8 znaków</div>
+                            <input type="password" name="password" class="form-control" minlength="12">
+                            <div class="form-text">Minimum 12 znaków (duże i małe litery, cyfry, znaki specjalne)</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Potwierdź nowe hasło</label>
@@ -338,7 +379,7 @@ export class TutorProfileEdit implements RouteComponent {
     }
 
     private generateLanguageCheckboxes(): string {
-        return LanguageUtils.generateLanguageCheckboxes([], 'teaching_languages')
+        return LanguageUtils.generateLanguageCheckboxes([], 'languages')
     }
 
     private generateSpecializationCheckboxes(): string {
@@ -359,13 +400,36 @@ export class TutorProfileEdit implements RouteComponent {
     }
 
     private async loadProfile(): Promise<void> {
+        console.log('🔥 TutorProfileEdit loadProfile called', { 
+            isLoadingProfile: this.isLoadingProfile,
+            hasProfile: !!this.profile 
+        })
+        
+        // Prevent multiple concurrent loads
+        if (this.isLoadingProfile) {
+            console.log('⚠️ Profile already loading, skipping...')
+            return
+        }
+        
+        // Always force refresh from server after form submission
+        // if (this.profile) {
+        //     console.log('✅ Profile data already loaded, filling form')
+        //     this.fillForm()
+        //     this.setupForm()
+        //     return
+        // }
+        
+        this.isLoadingProfile = true
+        
         try {
             this.loadingManager?.showLoading()
 
+            console.log('🔥 Fetching profile data...')
             this.profile = await this.tutorService.getProfile()
-            console.log('Loaded profile:', this.profile)
+            console.log('🔥 Profile data received:', this.profile)
 
             this.loadingManager?.showContent()
+            console.log('🔥 Calling fillForm...')
             this.fillForm()
             this.setupForm()
 
@@ -373,23 +437,34 @@ export class TutorProfileEdit implements RouteComponent {
             console.error('Error loading profile:', error)
             NotificationService.error('Nie udało się załadować profilu')
             this.loadingManager?.setError('Błąd ładowania profilu')
+        } finally {
+            this.isLoadingProfile = false
         }
     }
 
     private fillForm(): void {
+        // Re-find form if it's null (might have been cleared by unmount)
+        if (!this.form && this.container) {
+            console.log('🔧 Re-finding form element after unmount')
+            this.form = this.container.querySelector('#tutor-profile-form')
+        }
+        
         if (!this.form || !this.profile) {
-            console.error('fillForm - missing form or profile:', { form: this.form, profile: this.profile })
+            console.error('fillForm - missing form or profile:', { 
+                form: this.form, 
+                profile: this.profile,
+                container: this.container,
+                containerHTML: this.container?.innerHTML.substring(0, 200) + '...'
+            })
             return
         }
 
-        console.log('Filling form with profile:', this.profile)
 
         // Basic fields (excluding birth_date which needs special handling)
         const fields = ['name', 'email', 'phone', 'city']
         fields.forEach(field => {
             const input = this.form!.querySelector(`[name="${field}"]`) as HTMLInputElement
             const value = this.profile![field as keyof User]
-            console.log(`Field ${field}:`, { input, value })
             if (input && value) {
                 input.value = String(value)
             }
@@ -400,7 +475,6 @@ export class TutorProfileEdit implements RouteComponent {
         if (birthDateInput && this.profile!.birth_date) {
             // Backend now returns date in Y-m-d format directly
             birthDateInput.value = this.profile!.birth_date.toString()
-            console.log('Setting birth_date:', this.profile!.birth_date)
         }
 
         // Update avatar
@@ -416,8 +490,6 @@ export class TutorProfileEdit implements RouteComponent {
 
         // Tutor profile fields - check both camelCase and snake_case
         const tutorProfile = this.profile.tutorProfile || this.profile.tutor_profile
-        console.log('tutorProfile field:', tutorProfile)
-        console.log('Full profile object:', JSON.stringify(this.profile, null, 2))
         
         if (tutorProfile) {
             const profile = tutorProfile
@@ -459,7 +531,7 @@ export class TutorProfileEdit implements RouteComponent {
             // Teaching languages - field is called 'languages' in backend
             if (profile.languages) {
                 profile.languages.forEach((lang: string) => {
-                    const checkbox = this.form!.querySelector(`[name="teaching_languages[]"][value="${lang}"]`) as HTMLInputElement
+                    const checkbox = this.form!.querySelector(`[name="languages[]"][value="${lang}"]`) as HTMLInputElement
                     if (checkbox) {
                         checkbox.checked = true
                     }
@@ -470,6 +542,16 @@ export class TutorProfileEdit implements RouteComponent {
             if (profile.specializations) {
                 profile.specializations.forEach((spec: string) => {
                     const checkbox = this.form!.querySelector(`[name="specializations[]"][value="${spec}"]`) as HTMLInputElement
+                    if (checkbox) {
+                        checkbox.checked = true
+                    }
+                })
+            }
+
+            // Lesson types - field is called 'lesson_types' in backend
+            if (profile.lesson_types) {
+                profile.lesson_types.forEach((type: string) => {
+                    const checkbox = this.form!.querySelector(`[name="lesson_types[]"][value="${type}"]`) as HTMLInputElement
                     if (checkbox) {
                         checkbox.checked = true
                     }
@@ -513,6 +595,9 @@ export class TutorProfileEdit implements RouteComponent {
 
     private setupForm(): void {
         if (!this.form) return
+
+        // Convert password inputs to have toggles (after form is visible)
+        PasswordToggleHelper.convertPasswordInputsToToggleable(this.container!)
 
         // Form submit
         this.form.addEventListener('submit', this.handleSubmit.bind(this))
@@ -657,10 +742,11 @@ export class TutorProfileEdit implements RouteComponent {
                 }
                 
                 // Also need to handle arrays properly - rename them without brackets for Laravel
-                const teachingLanguages = formData.getAll('teaching_languages[]')
-                formData.delete('teaching_languages[]')
-                teachingLanguages.forEach(lang => {
-                    formData.append('teaching_languages[]', lang)
+                const languages = formData.getAll('languages[]')
+                console.log('🔍 DEBUG: Languages found in formData:', languages)
+                formData.delete('languages[]')
+                languages.forEach(lang => {
+                    formData.append('languages[]', lang)
                 })
                 
                 const specializations = formData.getAll('specializations[]')
@@ -691,7 +777,8 @@ export class TutorProfileEdit implements RouteComponent {
                 var updateData = this.parseFormData(formData)
             }
 
-            await this.tutorService.updateProfile(updateData)
+            const response = await this.tutorService.updateProfile(updateData)
+            console.log('🔍 DEBUG: Backend response:', response)
             
             NotificationService.success('Profil został zaktualizowany')
             
@@ -746,7 +833,8 @@ export class TutorProfileEdit implements RouteComponent {
         data.is_accepting_students = formData.get('is_accepting_students') === 'on'
 
         // Array fields - handle them even if empty to clear existing values
-        data.teaching_languages = formData.getAll('teaching_languages[]')
+        data.languages = formData.getAll('languages[]')
+        console.log('🔍 DEBUG: Final languages for API:', data.languages)
         
         const specializations = formData.getAll('specializations[]')
         // Validate specializations count (allow all 8 available options)
@@ -887,8 +975,8 @@ export class TutorProfileEdit implements RouteComponent {
         const isAcceptingStudents = currentData.is_accepting_students !== undefined 
             ? currentData.is_accepting_students 
             : this.profile?.tutorProfile?.is_accepting_students || false
-        const languages = currentData.teaching_languages?.length 
-            ? currentData.teaching_languages 
+        const languages = currentData.languages?.length 
+            ? currentData.languages 
             : this.profile?.tutorProfile?.languages || []
         const specializations = currentData.specializations?.length 
             ? currentData.specializations 

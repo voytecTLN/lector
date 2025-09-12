@@ -121,17 +121,8 @@ class LessonStatusService
             $packageAssignment->save();
 
             // Log the refund
-            \Log::info("Refunded {$lesson->duration_minutes} minutes to student {$lesson->student_id} due to tutor no-show");
-        }
-
-        // Mark lesson as started (requires migration to add started_at column)
-        // TODO: Uncomment after running migration to add started_at and ended_at columns
-        /*
-        if ($newStatus === self::STATUS_IN_PROGRESS && $previousStatus === self::STATUS_SCHEDULED) {
-            $lesson->started_at = now();
             $lesson->save();
         }
-        */
 
         // Mark lesson as ended (requires migration to add ended_at column)
         // TODO: Uncomment after running migration to add started_at and ended_at columns

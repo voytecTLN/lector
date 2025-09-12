@@ -277,11 +277,6 @@ class MeetingController extends BaseController
      */
     public function getMeetingStatus(Lesson $lesson): JsonResponse
     {
-        \Log::info('getMeetingStatus called', [
-            'lesson_id' => $lesson->id,
-            'user_id' => Auth::id(),
-            'user_role' => Auth::user()?->role
-        ]);
         
         try {
             $user = Auth::user();
@@ -326,10 +321,6 @@ class MeetingController extends BaseController
                 });
             }
 
-            \Log::info('getMeetingStatus returning status', [
-                'lesson_id' => $lesson->id,
-                'status' => $status
-            ]);
             
             return $this->successResponse($status);
 
@@ -353,12 +344,6 @@ class MeetingController extends BaseController
         $event = $request->input('event');
         $roomName = $request->input('room_name');
         $participantId = $request->input('participant_user_id');
-
-        Log::info('Daily.co webhook received', [
-            'event' => $event,
-            'room_name' => $roomName,
-            'participant_id' => $participantId
-        ]);
 
         try {
             switch ($event) {

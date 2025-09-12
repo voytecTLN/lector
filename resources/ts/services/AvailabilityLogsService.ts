@@ -32,7 +32,6 @@ export class AvailabilityLogsService {
             params.search = filters.search
         }
 
-        console.log('📊 AvailabilityLogsService exportToCSV params:', params)
         
         return api.get('/availability-logs/export', params, { responseType: 'blob' })
     }

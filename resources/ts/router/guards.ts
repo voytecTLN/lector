@@ -24,29 +24,15 @@ export class AuthGuard implements RouteGuard {
     name = 'auth'
 
     execute(context: GuardContext): GuardResult {
-        Logger.guard(`AuthGuard: Checking route "${context.to.route.name}"`, {
-            path: context.to.path,
-            requiresAuth: context.to.route.meta?.requiresAuth,
-            requiresGuest: context.to.route.meta?.requiresGuest,
-            isAuthenticated: authService.isAuthenticated()
-        })
-
-        // NOWE: Specjalna obsługa dla stron związanych z weryfikacją
+        // Special handling for verification routes
         const verificationRoutes = ['verify-email', 'resend-verification']
         if (verificationRoutes.includes(context.to.route.name)) {
-            Logger.debug(`AuthGuard: Allowing access to ${context.to.route.name} (verification route)`)
             return { allowed: true }
         }
 
         const isAuthenticated = authService.isAuthenticated()
         const requiresAuth = context.to.route.meta?.requiresAuth
         const requiresGuest = context.to.route.meta?.requiresGuest
-
-        Logger.guard(`AuthGuard: checking route ${context.to.route.name}`, {
-            requiresAuth,
-            requiresGuest,
-            isAuthenticated
-        })
 
         // Route requires authentication but user is not logged in
         if (requiresAuth && !isAuthenticated) {
@@ -77,13 +63,8 @@ export class AuthGuard implements RouteGuard {
     }
 
     private getDashboardRoute(role: string): string {
-        const dashboardMap: Record<string, string> = {
-            admin: '/admin/dashboard',
-            moderator: '/moderator/dashboard',
-            tutor: '/tutor/dashboard',
-            student: '/student/dashboard'
-        }
-        return dashboardMap[role] || '/student/dashboard'
+        // Return role-based dashboard route
+        return `/${role}/dashboard`
     }
 }
 
@@ -92,16 +73,7 @@ export class VerificationGuard implements RouteGuard {
     name = 'verification'
 
     execute(context: GuardContext): GuardResult {
-        Logger.guard(`VerificationGuard: Checking route "${context.to.route.name}"`, {
-            path: context.to.path,
-            requiresVerification: context.to.route.meta?.requiresVerification
-        })
-
         const requiresVerification = context.to.route.meta?.requiresVerification
-
-        Logger.guard(`VerificationGuard: checking verification for ${context.to.route.name}`, {
-            requiresVerification
-        })
 
         if (!requiresVerification) {
             return { allowed: true }
@@ -118,11 +90,6 @@ export class VerificationGuard implements RouteGuard {
         }
 
         const isVerified = authService.isVerified()
-
-        Logger.guard(`VerificationGuard: user verification status`, {
-            isVerified,
-            email_verified_at: user.email_verified_at
-        })
 
         if (!isVerified) {
             return {
@@ -141,19 +108,8 @@ export class RoleGuard implements RouteGuard {
     name = 'role'
 
     execute(context: GuardContext): GuardResult {
-        Logger.guard(`RoleGuard: Checking route "${context.to.route.name}"`, {
-            path: context.to.path,
-            requiredRoles: context.to.route.meta?.roles,
-            userRole: authService.getUser()?.role
-        })
-
         const user = authService.getUser()
         const requiredRoles = context.to.route.meta?.roles
-
-        Logger.guard(`RoleGuard: checking roles for ${context.to.route.name}`, {
-            requiredRoles,
-            userRole: user?.role
-        })
 
         if (!requiredRoles || requiredRoles.length === 0) {
             return { allowed: true }
@@ -188,10 +144,6 @@ export class PermissionGuard implements RouteGuard {
     execute(context: GuardContext): GuardResult {
         const requiredPermissions = context.to.route.meta?.permissions
 
-        Logger.guard(`PermissionGuard: checking permissions for ${context.to.route.name}`, {
-            requiredPermissions
-        })
-
         if (!requiredPermissions || requiredPermissions.length === 0) {
             return { allowed: true }
         }
@@ -209,11 +161,6 @@ export class PermissionGuard implements RouteGuard {
         const hasPermission = requiredPermissions.some(permission =>
             authService.hasPermission(permission)
         )
-
-        Logger.guard(`PermissionGuard: permission check result`, {
-            hasPermission,
-            userPermissions: authService.getPermissions()
-        })
 
         if (!hasPermission) {
             return {
@@ -237,11 +184,6 @@ export class AccountStatusGuard implements RouteGuard {
         if (!user) {
             return { allowed: true } // Other guards will handle auth
         }
-
-        Logger.guard(`AccountStatusGuard: checking account status`, {
-            userStatus: user.status,
-            route: context.to.route.name
-        })
 
         if (user.status === 'blocked') {
             return {
@@ -287,9 +229,8 @@ export class SessionGuard implements RouteGuard {
     name = 'session'
 
     async execute(context: GuardContext): Promise<GuardResult> {
-        // NOWE: Specjalna obsługa dla /verify-email
+        // Special handling for verify-email
         if (context.to.route.name === 'verify-email') {
-            Logger.debug('SessionGuard: Skipping session check for verify-email page')
             return { allowed: true }
         }
 
@@ -306,29 +247,31 @@ export class SessionGuard implements RouteGuard {
         const token = authService.getToken()
         const user = authService.getUser()
 
-        // Jeśli nie ma tokenu, pozwól innym guardom obsłużyć to
+        // Jeśli nie ma tokenu dla chronionej trasy, zablokuj dostęp
         if (!token) {
-            return { allowed: true }
+            // Store intended URL for later redirect after login
+            if (window.router && requiresAuth) {
+                window.router.setIntendedUrl(context.to.path)
+            }
+            return {
+                allowed: false,
+                redirect: '/login',
+                message: 'Wymagane logowanie.'
+            }
         }
 
-        // Jeśli mamy token ale nie mamy użytkownika, spróbuj pobrać dane
+        // If we have token but no user data, try to fetch user
         if (token && !user) {
-            Logger.debug('SessionGuard: Token exists but no user data, fetching...')
-
             try {
                 await authService.getCurrentUser()
                 return { allowed: true }
             } catch (error) {
-                Logger.warn('SessionGuard: Failed to fetch user, session expired')
-
-                // NOWE: Nie czyść danych dla pewnych ścieżek
+                // Don't clear data for certain routes
                 const safeRoutes = ['verify-email', 'login', 'register', 'forgot-password', 'reset-password']
                 if (!safeRoutes.includes(context.to.route.name)) {
-                    // Wyczyść nieważne dane
                     authService.logout()
                 }
 
-                // Dla chronionych tras zwróć błąd
                 return {
                     allowed: false,
                     redirect: '/login',

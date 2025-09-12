@@ -186,17 +186,11 @@ export class StudentDashboard implements RouteComponent {
         const navLinks = this.dashboardContainer?.querySelectorAll('.student-nav-link')
         navLinks?.forEach(link => {
             link.addEventListener('click', (e) => {
-                e.preventDefault()
+                // Let browser handle navigation naturally - no preventDefault()
                 const section = link.getAttribute('data-section')
                 if (section) {
-                    // Update URL like Admin/Tutor do
-                    this.updateURL(section)
-                    
-                    // Update active state
-                    this.setActiveNavLink(section)
-                    
-                    // Load content
-                    this.loadContent(section)
+                    console.log('🔍 StudentDashboard nav click:', section)
+                    // Browser will navigate to href, which will trigger URL change and proper loading
                 }
             })
         })

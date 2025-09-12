@@ -4,6 +4,7 @@ import { StudentService } from '@services/StudentService'
 import { FormValidationHandler } from '@/utils/FormValidationHandler'
 import { NotificationService } from '@/utils/NotificationService'
 import { PasswordValidator } from '@/utils/PasswordValidator'
+import { PasswordToggleHelper } from '@/utils/PasswordToggleHelper'
 import { LoadingStateManager } from '@/utils/LoadingStateManager'
 import { LanguageUtils } from '@/utils/LanguageUtils'
 import { formatDate } from '@/utils/date'
@@ -49,7 +50,11 @@ export class StudentProfileEdit implements RouteComponent {
         // Initialize utilities
         if (this.form) {
             this.validationHandler = new FormValidationHandler(this.form)
-            this.passwordValidator = new PasswordValidator(this.form, { isEditMode: true })
+            this.passwordValidator = new PasswordValidator(this.form, { 
+                isEditMode: true, 
+                enforceStrength: true,
+                minLength: 12
+            })
         }
 
         this.loadingManager = LoadingStateManager.simple(container, '#form-loading', '#profile-form-container')
@@ -187,8 +192,8 @@ export class StudentProfileEdit implements RouteComponent {
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Nowe hasło</label>
-                            <input type="password" name="password" class="form-control" minlength="8">
-                            <div class="form-text">Minimum 8 znaków</div>
+                            <input type="password" name="password" class="form-control" minlength="12">
+                            <div class="form-text">Minimum 12 znaków (duże i małe litery, cyfry, znaki specjalne)</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Potwierdź nowe hasło</label>
@@ -339,7 +344,6 @@ export class StudentProfileEdit implements RouteComponent {
         if (birthDateInput && this.profile!.birth_date) {
             // Backend now returns date in Y-m-d format directly
             birthDateInput.value = this.profile!.birth_date.toString()
-            console.log('Setting birth_date:', this.profile!.birth_date)
         }
 
         // Bio field
@@ -394,6 +398,9 @@ export class StudentProfileEdit implements RouteComponent {
 
         this.formSetup = true
 
+        // Convert password inputs to have toggles (after form is visible)
+        PasswordToggleHelper.convertPasswordInputsToToggleable(this.container!)
+
         // Form submit
         this.form.addEventListener('submit', this.handleSubmit.bind(this))
 
@@ -442,17 +449,14 @@ export class StudentProfileEdit implements RouteComponent {
     private updateAvatar(): void {
         if (!this.profile) return
         
-        console.log('UpdateAvatar called, profile avatar:', this.profile.avatar)
         
         const avatarElement = this.container?.querySelector('#profile-avatar') as HTMLDivElement
-        console.log('Avatar element found:', avatarElement)
         
         if (avatarElement) {
             // Check if user has an avatar
             if (this.profile.avatar) {
                 // Display the uploaded avatar
                 const avatarUrl = `/storage/avatars/${this.profile.avatar}`
-                console.log('Setting avatar URL:', avatarUrl)
                 avatarElement.innerHTML = `<img src="${avatarUrl}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`
             } else {
                 // Display initials if no avatar
@@ -507,14 +511,10 @@ export class StudentProfileEdit implements RouteComponent {
             const updateData = this.parseFormData(formData)
             
             // Debug logging
-            console.log('Update data type:', updateData instanceof FormData ? 'FormData' : 'Object')
             if (updateData instanceof FormData) {
-                console.log('FormData entries:')
                 for (let [key, value] of updateData.entries()) {
-                    console.log(`  ${key}:`, value)
                 }
             } else {
-                console.log('Update data:', updateData)
             }
 
             await this.studentService.updateProfile(updateData)
@@ -540,10 +540,7 @@ export class StudentProfileEdit implements RouteComponent {
         const profilePictureInput = this.form?.querySelector('[name="profile_picture"]') as HTMLInputElement
         const hasFile = profilePictureInput?.files && profilePictureInput.files.length > 0
         
-        console.log('Profile picture input:', profilePictureInput)
-        console.log('Has file:', hasFile)
         if (profilePictureInput?.files && profilePictureInput.files.length > 0) {
-            console.log('File found:', profilePictureInput.files[0])
         }
         
         if (hasFile) {

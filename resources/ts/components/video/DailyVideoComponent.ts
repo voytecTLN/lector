@@ -30,16 +30,14 @@ export class DailyVideoComponent {
     constructor(container: HTMLElement, lessonId: number) {
         this.container = container
         this.lessonId = lessonId
-        console.log('🎥 DailyVideoComponent initialized for lesson:', lessonId)
+        // DailyVideoComponent initialized for lesson
         this.init()
     }
 
     private async init(): Promise<void> {
-        console.log('🎬 DailyVideoComponent init() called')
         // Sprawdź status spotkania
         const status = await this.getMeetingStatus()
         
-        console.log('📊 Meeting status received:', status)
         
         if (!status) {
             this.showError('Nie udało się pobrać statusu spotkania')
@@ -274,7 +272,6 @@ export class DailyVideoComponent {
     }
 
     private async startMeeting(): Promise<void> {
-        console.log('🚀 Starting meeting for lesson:', this.lessonId)
         try {
             // Pokaż loader
             Swal.fire({
@@ -286,27 +283,14 @@ export class DailyVideoComponent {
                 }
             })
 
-            console.log('📡 Calling API to create meeting room...')
             const response = await api.post<{ success: boolean; data: MeetingCredentials }>(`/tutor/lessons/${this.lessonId}/meeting/start`)
-            console.log('📥 Meeting start response:', response)
-            console.log('📥 Response data:', JSON.stringify(response.data))
             
             if (!response.success || !response.data) {
-                console.error('❌ Invalid response structure:', {
-                    success: response.success,
-                    hasData: !!response.data,
-                    response: response
-                })
+                console.error('Invalid response from meeting API:', response)
                 throw new Error('Invalid response from server')
             }
             
             const credentials: MeetingCredentials = response.data
-            console.log('🔑 Meeting credentials received:', {
-                room_url: credentials.room_url,
-                room_name: credentials.room_name,
-                is_moderator: credentials.is_moderator,
-                has_token: !!credentials.token
-            })
 
             Swal.close()
             
@@ -369,7 +353,6 @@ export class DailyVideoComponent {
     }
 
     private openMeeting(credentials: MeetingCredentials): void {
-        console.log('🎬 Opening meeting with credentials:', credentials)
         
         // Ukryj obecny interfejs
         this.container.innerHTML = ''
@@ -385,7 +368,6 @@ export class DailyVideoComponent {
             overflow: hidden;
         `
         
-        console.log('📦 Created frame container')
         
         // Dodaj przyciski kontrolne
         const controls = document.createElement('div')
@@ -429,12 +411,6 @@ export class DailyVideoComponent {
     }
 
     private loadDailyFrame(container: HTMLElement, credentials: MeetingCredentials): void {
-        console.log('📺 Loading Daily.co iframe...')
-        console.log('📺 Credentials:', {
-            room_url: credentials.room_url,
-            has_token: !!credentials.token,
-            token_length: credentials.token?.length
-        })
         
         // Utwórz iframe dla Daily Prebuilt
         const iframe = document.createElement('iframe')
@@ -448,7 +424,6 @@ export class DailyVideoComponent {
         const url = new URL(credentials.room_url)
         url.searchParams.set('t', credentials.token)
         
-        console.log('📺 iframe URL:', url.toString())
         
         iframe.src = url.toString()
         iframe.allow = 'camera; microphone; fullscreen; display-capture'
@@ -457,7 +432,6 @@ export class DailyVideoComponent {
         const frameWrapper = container.querySelector('.daily-frame-container') || container
         frameWrapper.insertBefore(iframe, frameWrapper.firstChild)
         
-        console.log('📺 iframe added to DOM')
         
         // Zapisz referencję
         this.dailyFrame = iframe
@@ -465,7 +439,6 @@ export class DailyVideoComponent {
         // Nasłuchuj na wydarzenia z iframe (opcjonalnie)
         window.addEventListener('message', this.handleFrameMessage.bind(this))
         
-        console.log('✅ Daily.co iframe loaded successfully')
     }
 
     private handleFrameMessage(event: MessageEvent): void {
@@ -475,7 +448,7 @@ export class DailyVideoComponent {
         }
         
         // Daily.co może wysyłać różne wydarzenia
-        console.log('Daily.co event:', event.data)
+        // Handle Daily.co events
     }
 
     private async endMeeting(): Promise<void> {

@@ -44,12 +44,6 @@ class StudentController extends BaseController
         try {
             $data = $request->validated();
             
-            \Log::info('📝 StudentController: Creating student with data', [
-                'data_keys' => array_keys($data),
-                'has_package_id' => isset($data['package_id']),
-                'package_id_value' => $data['package_id'] ?? 'not_set',
-                'package_id_type' => isset($data['package_id']) ? gettype($data['package_id']) : 'not_set'
-            ]);
             
             // Auto-verify users created by admin (like import)
             $data['email_verified_at'] = now();
@@ -207,14 +201,6 @@ class StudentController extends BaseController
             $user = $request->user();
             
             if (app()->environment(['local', 'testing'])) {
-                \Log::info('StudentController::updateOwnProfile - Debug info:', [
-                    'user_id' => $user?->id,
-                    'user_role' => $user?->role,
-                    'request_data' => $request->validated(),
-                    'has_file' => $request->hasFile('profile_picture'),
-                    'file_valid' => $request->hasFile('profile_picture') ? $request->file('profile_picture')->isValid() : false,
-                    'all_files' => $request->allFiles()
-                ]);
             }
             
             if (!$user || $user->role !== 'student') {
@@ -227,9 +213,6 @@ class StudentController extends BaseController
             $updatedStudent = $this->studentService->updateStudent($user->id, $request->validated());
             
             if (app()->environment(['local', 'testing'])) {
-                \Log::info('StudentController::updateOwnProfile - Profile updated successfully', [
-                    'user_id' => $user->id
-                ]);
             }
             
             return $this->successResponse($updatedStudent, 'Profile updated successfully');

@@ -21,19 +21,19 @@ Route::get('/health', function () {
 // Authentication routes (publiczne - bez middleware auth)
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])
-        ->middleware('throttle:60,1') // 60 attempts per minute (development)
+        ->middleware('throttle:10,1') // 10 attempts per minute (production ready)
         ->name('api.auth.login');
 
     Route::post('/register', [AuthController::class, 'register'])
-        ->middleware('throttle:30,1') // 30 attempts per minute (development)
+        ->middleware('throttle:5,1') // 5 attempts per minute (production ready)
         ->name('api.auth.register');
 
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
-        ->middleware('throttle:30,1') // 30 attempts per minute (development)
+        ->middleware('throttle:3,1') // 3 attempts per minute (production ready)
         ->name('api.auth.forgot-password');
 
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])
-        ->middleware('throttle:30,1') // 30 attempts per minute (development)
+        ->middleware('throttle:5,1') // 5 attempts per minute (production ready)
         ->name('api.auth.reset-password');
 
     // POPRAWIONE - weryfikacja emaila jako POST (dla frontend)
@@ -44,7 +44,7 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::post('/auth/resend-verification-public', [AuthController::class, 'resendVerificationPublic'])
-    ->middleware('throttle:30,1') // 30 attempts per minute (development)
+    ->middleware('throttle:2,1') // 2 attempts per minute (production ready)
     ->name('api.auth.resend-verification-public');
 
 // Daily.co webhook endpoint (publiczny, weryfikowany przez signature)
@@ -158,22 +158,11 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::get('/tutors/{tutorId}/students', [TutorController::class, 'getTutorStudents'])
                     ->name('api.admin.tutors.students');
 
-                // NOWE - podstawowe zarządzanie (przekierowania)
-                Route::get('/students', function() {
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Przekierowywanie do zarządzania studentami...',
-                        'redirect' => '/admin/students'
-//                         'redirect' => 'admin/dashboard?section=uczniowie'
-                    ]);
-                });
-                Route::get('/tutors', function() {
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Moduł lektorów w przygotowaniu',
-                        'available' => false
-                    ]);
-                });
+                // Admin redirects - move to AdminController for better maintainability
+                Route::get('/students', [AdminController::class, 'redirectToStudents'])
+                    ->name('api.admin.students.redirect');
+                Route::get('/tutors', [AdminController::class, 'redirectToTutors'])
+                    ->name('api.admin.tutors.redirect');
             });
         });
 
@@ -454,10 +443,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('api.student.tutor-profile');
 });
 
-// Test route for debugging
-Route::get('/api/test-tutors-available', [TutorController::class, 'availableForStudents'])
-    ->middleware(['auth:sanctum'])
-    ->name('api.test.tutors.available');
+// Test route removed - use proper endpoint: /student/tutors-available
 
 // Support/Issue Reporting (available to all authenticated users)
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
@@ -469,4 +455,4 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 // CSRF Cookie endpoint for SPA authentication
 Route::get('/sanctum/csrf-cookie', function () {
     return response()->json(['message' => 'CSRF cookie set']);
-})->middleware(['web', 'throttle:120,1']); // Max 120 requests per minute (development)
+})->middleware(['web', 'throttle:60,1']); // Max 60 requests per minute (production ready)

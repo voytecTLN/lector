@@ -19,7 +19,13 @@ class RegisterRequest extends FormRequest
         return [
             'name' => 'required|string|min:2|max:100',
             'email' => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'min:12',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?~`]).+$/'
+            ],
             'role' => ['required', Rule::in([User::ROLE_STUDENT, User::ROLE_TUTOR])],
             'phone' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
@@ -35,7 +41,8 @@ class RegisterRequest extends FormRequest
             'email.required' => 'Email jest wymagany',
             'email.unique' => 'Ten email jest już zajęty',
             'password.required' => 'Hasło jest wymagane',
-            'password.min' => 'Hasło musi mieć minimum 8 znaków',
+            'password.min' => 'Hasło musi mieć minimum 12 znaków',
+            'password.regex' => 'Hasło musi zawierać co najmniej: jedną małą literę, jedną wielką literę, jedną cyfrę i jeden znak specjalny',
             'password.confirmed' => 'Hasła muszą być identyczne',
             'role.required' => 'Rola jest wymagana',
             'role.in' => 'Nieprawidłowa rola',

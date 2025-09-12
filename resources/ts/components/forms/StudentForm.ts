@@ -3,6 +3,8 @@ import type { RouteComponent } from '@router/routes'
 import { StudentService } from '@services/StudentService'
 import type { CreateStudentRequest, UpdateStudentRequest, User } from '@/types/models'
 import { navigate } from '@/utils/navigation'
+import { PasswordValidator } from '@/utils/PasswordValidator'
+import { PasswordToggleHelper } from '@/utils/PasswordToggleHelper'
 
 export class StudentForm implements RouteComponent {
     private studentService: StudentService
@@ -11,6 +13,7 @@ export class StudentForm implements RouteComponent {
     private isEditMode: boolean = false
     private studentId: number | null = null
     private student: User | null = null
+    private passwordValidator: PasswordValidator | null = null
 
     constructor() {
         this.studentService = new StudentService()
@@ -129,8 +132,8 @@ export class StudentForm implements RouteComponent {
                         ${!this.isEditMode ? `
                             <div class="col-md-6">
                                 <label class="form-label">Hasło <span class="text-danger">*</span></label>
-                                <input type="password" name="password" class="form-control" required minlength="8">
-                                <div class="form-text">Minimum 8 znaków</div>
+                                <input type="password" name="password" class="form-control" required minlength="12">
+                                <div class="form-text">Minimum 12 znaków (duże i małe litery, cyfry, znaki specjalne)</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Potwierdź hasło <span class="text-danger">*</span></label>
@@ -145,8 +148,8 @@ export class StudentForm implements RouteComponent {
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Nowe hasło</label>
-                                <input type="password" name="password" class="form-control" minlength="8">
-                                <div class="form-text">Minimum 8 znaków (opcjonalne)</div>
+                                <input type="password" name="password" class="form-control" minlength="12">
+                                <div class="form-text">Minimum 12 znaków (duże i małe litery, cyfry, znaki specjalne)</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Potwierdź nowe hasło</label>
@@ -178,7 +181,8 @@ export class StudentForm implements RouteComponent {
                 </div>
             </div>
 
-            <!-- Bio/Opis -->
+            <!-- Bio/Opis - ukryte dla administratorów -->
+            <!-- 
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">O studencie</h5>
@@ -192,6 +196,7 @@ export class StudentForm implements RouteComponent {
                     </div>
                 </div>
             </div>
+            -->
 
             <!-- Języki i poziomy -->
             <div class="card mb-4">
@@ -372,14 +377,13 @@ export class StudentForm implements RouteComponent {
         if (birthDateInput && student.birth_date) {
             // Backend now returns date in Y-m-d format directly
             birthDateInput.value = student.birth_date.toString()
-            console.log('Setting birth_date:', student.birth_date)
         }
 
-        // Bio field
-        const bioField = this.form!.querySelector('[name="bio"]') as HTMLTextAreaElement
-        if (bioField && student.student_profile?.bio) {
-            bioField.value = student.student_profile.bio
-        }
+        // Bio field - ukryte dla administratorów
+        // const bioField = this.form!.querySelector('[name="bio"]') as HTMLTextAreaElement
+        // if (bioField && student.student_profile?.bio) {
+        //     bioField.value = student.student_profile.bio
+        // }
 
         // Languages and levels
         if (student.student_profile?.learning_languages) {
@@ -425,6 +429,16 @@ export class StudentForm implements RouteComponent {
 
         // Form submit
         this.form.addEventListener('submit', this.handleSubmit.bind(this))
+        
+        // Initialize password validation with strong password requirements
+        this.passwordValidator = new PasswordValidator(this.form, {
+            isEditMode: this.isEditMode,
+            enforceStrength: true,
+            minLength: 12
+        })
+
+        // Convert password inputs to have toggles
+        PasswordToggleHelper.convertPasswordInputsToToggleable(this.container!)
 
         // Language checkbox handlers
         const languageCheckboxes = this.form.querySelectorAll('.language-checkbox')
@@ -498,7 +512,6 @@ export class StudentForm implements RouteComponent {
             })
             
             select.disabled = false
-            console.log(`Loaded ${packages.length} packages successfully`)
             
         } catch (error) {
             console.error('Error loading packages:', error)
@@ -603,9 +616,7 @@ export class StudentForm implements RouteComponent {
     }
 
     private parseFormData(formData: FormData): CreateStudentRequest | UpdateStudentRequest {
-        console.log('🔍 Parsing FormData - all entries:')
         for (const [key, value] of formData.entries()) {
-            console.log(`  ${key}: ${value}`)
         }
 
         const data: any = {}
@@ -658,15 +669,11 @@ export class StudentForm implements RouteComponent {
 
         // Package assignment
         const packageId = formData.get('package_id')
-        console.log('📦 Package ID from form:', packageId)
         if (packageId && packageId !== '') {
             data.package_id = parseInt(packageId as string)
-            console.log('📦 Parsed package_id:', data.package_id)
         } else {
-            console.log('📦 No package selected or empty value')
         }
 
-        console.log('🚀 Final parsed data:', data)
         return data
     }
 

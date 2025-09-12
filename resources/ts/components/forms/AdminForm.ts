@@ -8,6 +8,7 @@ import { NotificationService } from '@/utils/NotificationService'
 import { PasswordValidator } from '@/utils/PasswordValidator'
 import { FormDataParser } from '@/utils/FormDataParser'
 import { LoadingStateManager } from '@/utils/LoadingStateManager'
+import { PasswordToggleHelper } from '@/utils/PasswordToggleHelper'
 
 export class AdminForm implements RouteComponent {
     private form: HTMLFormElement | null = null
@@ -73,7 +74,11 @@ export class AdminForm implements RouteComponent {
         // Initialize utilities
         if (this.form) {
             this.validationHandler = new FormValidationHandler(this.form)
-            this.passwordValidator = new PasswordValidator(this.form, { isEditMode: this.isEditMode })
+            this.passwordValidator = new PasswordValidator(this.form, { 
+                isEditMode: this.isEditMode,
+                enforceStrength: true,
+                minLength: 12
+            })
         }
 
         this.loadingManager = LoadingStateManager.simple(container, '#form-loading', '#admin-form')
@@ -117,8 +122,8 @@ export class AdminForm implements RouteComponent {
                         ${!this.isEditMode ? `
                             <div class="col-md-6">
                                 <label class="form-label">Hasło <span class="text-danger">*</span></label>
-                                <input type="password" name="password" class="form-control" required minlength="8">
-                                <div class="form-text">Minimum 8 znaków</div>
+                                <input type="password" name="password" class="form-control" required minlength="12">
+                                <div class="form-text">Minimum 12 znaków (duże i małe litery, cyfry, znaki specjalne)</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Potwierdź hasło <span class="text-danger">*</span></label>
@@ -133,8 +138,8 @@ export class AdminForm implements RouteComponent {
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Nowe hasło</label>
-                                <input type="password" name="password" class="form-control" minlength="8">
-                                <div class="form-text">Minimum 8 znaków (opcjonalne)</div>
+                                <input type="password" name="password" class="form-control" minlength="12">
+                                <div class="form-text">Minimum 12 znaków (duże i małe litery, cyfry, znaki specjalne)</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Potwierdź nowe hasło</label>
@@ -250,12 +255,14 @@ export class AdminForm implements RouteComponent {
         if (birthDateInput && admin.birth_date) {
             // Backend now returns date in Y-m-d format directly
             birthDateInput.value = admin.birth_date.toString()
-            console.log('Setting birth_date:', admin.birth_date)
         }
     }
 
     private setupForm(): void {
         if (!this.form) return
+
+        // Convert password inputs to have toggles (after form is visible)
+        PasswordToggleHelper.convertPasswordInputsToToggleable(this.container!)
 
         // Form submit
         this.form.addEventListener('submit', this.handleSubmit.bind(this))

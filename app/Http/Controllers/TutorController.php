@@ -230,12 +230,6 @@ class TutorController extends Controller
     public function setAvailabilitySlots(Request $request): JsonResponse
     {
         // Always log for debugging
-        \Log::info('Availability slots request:', [
-            'slots_count' => count($request->slots ?? []),
-            'today' => Carbon::today()->toDateString(),
-            'timezone' => config('app.timezone'),
-            'slots' => $request->slots
-        ]);
 
         // Validate the request with custom date validation
         $request->validate([
@@ -450,8 +444,8 @@ class TutorController extends Controller
             'years_experience' => 'nullable|integer|min:0|max:50',
             'hourly_rate' => 'nullable|numeric|min:0',
             'is_accepting_students' => 'boolean',
-            'teaching_languages' => 'nullable|array',
-            'teaching_languages.*' => 'string|in:english,german,french,spanish,italian,portuguese,russian,chinese,japanese,polish',
+            'languages' => 'nullable|array',
+            'languages.*' => 'string|in:english,german,french,spanish,italian,portuguese,russian,chinese,japanese,polish',
             'specializations' => 'nullable|array',
             'specializations.*' => 'string|in:business,conversation,exam,grammar,pronunciation,academic,travel,kids',
             'certifications' => 'nullable|array',
@@ -487,11 +481,6 @@ class TutorController extends Controller
      */
     public function availableForStudents(Request $request): JsonResponse
     {
-        \Log::info('availableForStudents method called', [
-            'user_id' => $request->user()?->id,
-            'user_role' => $request->user()?->role,
-            'method' => 'availableForStudents'
-        ]);
         
         $filters = $request->only(['language', 'specialization', 'min_experience', 'max_experience']);
         

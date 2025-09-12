@@ -196,7 +196,6 @@ export class TutorLessonHistory {
                 this.lessons = []
             }
             
-            console.log('Loaded lessons:', this.lessons.length, this.lessons)
             
             // Filter only past lessons OR completed/cancelled lessons
             const now = new Date()
@@ -209,11 +208,9 @@ export class TutorLessonHistory {
                 // For other statuses, check if in the past
                 const lessonDate = new Date(`${lesson.lesson_date} ${lesson.start_time}`)
                 const isPast = lessonDate < now
-                console.log(`Lesson ${lesson.id}: ${lesson.lesson_date} ${lesson.start_time} - status: ${lesson.status}, isPast: ${isPast}`)
                 return isPast
             })
             
-            console.log('Historical lessons:', historicalLessons.length)
             this.lessons = historicalLessons
             
             // Sort by date descending (newest first)

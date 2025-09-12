@@ -65,11 +65,10 @@ export class EmailVerificationPage implements RouteComponent {
 
         if (!messageContainer) return
 
-        // WAŻNE: NIE próbujemy weryfikować tokenu!
-        // Backend już to zrobił i przekierował nas tutaj
+        // Backend handles token verification and redirects here
 
         if (error) {
-            // Wyświetl błąd jeśli został przekazany z backend
+            // Display error if passed from backend
             messageContainer.innerHTML = `
                 <div class="alert alert-danger" role="alert">
                     <i class="bi bi-exclamation-circle me-2"></i>
@@ -80,7 +79,7 @@ export class EmailVerificationPage implements RouteComponent {
                 </p>
             `
         } else {
-            // Domyślna wiadomość informacyjna
+            // Default informational message
             messageContainer.innerHTML = `
                 <p class="mb-5 text-muted fs-5">
                     Sprawdź swoją skrzynkę pocztową i kliknij w link aktywacyjny, aby potwierdzić swój adres e-mail.
@@ -97,7 +96,7 @@ export class EmailVerificationPage implements RouteComponent {
         resendLink?.addEventListener('click', async (e) => {
             e.preventDefault()
 
-            // Poproś o email
+            // Ask for email
             const email = prompt('Podaj adres email użyty podczas rejestracji:')
             if (!email) return
 

@@ -199,7 +199,16 @@ export const routes: RouteDefinition[] = [
     {
         path: '/tutor/dashboard',
         name: 'tutor.dashboard',
-        component: () => import('@/components/dashboard/TutorDashboard').then(m => new m.TutorDashboard()),
+        component: () => {
+            // Singleton pattern for TutorDashboard to prevent multiple instances
+            if (!(window as any).__tutorDashboardInstance) {
+                return import('@/components/dashboard/TutorDashboard').then(m => {
+                    (window as any).__tutorDashboardInstance = new m.TutorDashboard()
+                    return (window as any).__tutorDashboardInstance
+                })
+            }
+            return Promise.resolve((window as any).__tutorDashboardInstance)
+        },
         title: 'Panel Lektora - Platforma Lektorów',
         meta: {
             requiresAuth: true,

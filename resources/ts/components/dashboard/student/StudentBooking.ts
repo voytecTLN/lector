@@ -369,7 +369,6 @@ export class StudentBooking {
             
             if (loadingSlots) loadingSlots.style.display = 'none'
             
-            console.log('Final slots to use:', slots)
             
             if (slots && slots.length > 0) {
                 // Filter out past time slots if this is today

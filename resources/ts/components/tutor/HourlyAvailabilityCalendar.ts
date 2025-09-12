@@ -42,8 +42,6 @@ export class HourlyAvailabilityCalendar {
                 formatDate(endDate)
             )
             
-            console.log('Loaded availability slots:', response)
-            console.log('Sample slot structure:', response.slots[0])
 
             if (response.slots) {
                 this.slots.clear()
@@ -358,7 +356,6 @@ export class HourlyAvailabilityCalendar {
                                 </button>
                             </div>
                         `
-                        console.log(`📝 Generated tooltip for slot ${existingSlot.id} at ${dateStr}:${hour} (existingSlot.date was: ${existingSlot.date})`, tooltip)
                     }
                 }
                 
@@ -470,7 +467,6 @@ export class HourlyAvailabilityCalendar {
     }
 
     private attachEventListeners(): void {
-        console.log('🎯 Attaching event listeners...')
         
         // Navigation
         this.container?.querySelector('#prev-week')?.addEventListener('click', () => {
@@ -487,7 +483,6 @@ export class HourlyAvailabilityCalendar {
         
         // Hour cell selection with drag support
         const hourCells = this.container?.querySelectorAll('.hour-cell:not(.past):not(.booked)')
-        console.log(`📅 Found ${hourCells?.length || 0} clickable hour cells`)
         
         hourCells?.forEach(cell => {
             // Use click for simple selection (like in the old calendar)
@@ -497,16 +492,8 @@ export class HourlyAvailabilityCalendar {
                 const clickedElement = e.target as HTMLElement
                 const key = target.dataset.key
                 
-                console.log('🖱️ Hour cell clicked:', {
-                    key,
-                    clickedElement: clickedElement.tagName,
-                    clickedClasses: clickedElement.className,
-                    isWithdrawBtn: clickedElement.closest('.withdraw-btn')
-                })
-                
                 // If clicked on withdraw button, don't handle cell logic
                 if (clickedElement.closest('.withdraw-btn')) {
-                    console.log('🗑️ Withdraw button clicked - skipping cell logic')
                     return
                 }
                 
@@ -517,7 +504,6 @@ export class HourlyAvailabilityCalendar {
                     // Check if this cell has an available slot (green)
                     if (target.classList.contains('available')) {
                         // Show tooltip for available slots
-                        console.log('📌 Showing tooltip for available slot')
                         target.classList.add('show-tooltip')
                         
                         // Hide tooltip after 10 seconds (longer time)
@@ -595,24 +581,11 @@ export class HourlyAvailabilityCalendar {
         // Method 1: Event delegation on container
         this.container?.addEventListener('click', (e) => {
             const target = e.target as HTMLElement
-            console.log('🎯 Container click:', { 
-                target: target.tagName, 
-                classes: target.className,
-                parentClasses: target.parentElement?.className,
-                hasWithdrawBtn: !!target.closest('.withdraw-btn')
-            })
             
             // Check if clicked element is a withdraw button or child of one
             const withdrawBtn = target.closest('.withdraw-btn') as HTMLButtonElement
             
             if (withdrawBtn) {
-                console.log('🗑️ Withdraw button clicked via delegation!')
-                console.log('🗑️ Button data:', {
-                    slotId: withdrawBtn.dataset.slotId,
-                    date: withdrawBtn.dataset.date,
-                    hour: withdrawBtn.dataset.hour
-                })
-                
                 e.preventDefault()
                 e.stopPropagation()
                 e.stopImmediatePropagation()
@@ -621,7 +594,6 @@ export class HourlyAvailabilityCalendar {
                 const date = withdrawBtn.dataset.date!
                 const hour = parseInt(withdrawBtn.dataset.hour!)
                 
-                console.log('🗑️ Calling withdrawSlot with:', { slotId, date, hour })
                 this.withdrawSlot(slotId, date, hour)
                 return false
             }
@@ -630,12 +602,10 @@ export class HourlyAvailabilityCalendar {
         // Method 2: Direct event listeners (add after DOM is updated)
         setTimeout(() => {
             const withdrawButtons = this.container?.querySelectorAll('.withdraw-btn')
-            console.log('🔧 Adding direct listeners to', withdrawButtons?.length, 'withdraw buttons')
             
             withdrawButtons?.forEach(btn => {
                 const button = btn as HTMLButtonElement
                 button.addEventListener('click', (e) => {
-                    console.log('🗑️ DIRECT withdraw button clicked!')
                     e.preventDefault()
                     e.stopPropagation()
                     e.stopImmediatePropagation()
@@ -644,7 +614,6 @@ export class HourlyAvailabilityCalendar {
                     const date = button.dataset.date!
                     const hour = parseInt(button.dataset.hour!)
                     
-                    console.log('🗑️ DIRECT calling withdrawSlot with:', { slotId, date, hour })
                     this.withdrawSlot(slotId, date, hour)
                 })
             })
@@ -655,12 +624,10 @@ export class HourlyAvailabilityCalendar {
         // Wait for DOM to be fully rendered, then attach direct listeners
         setTimeout(() => {
             const withdrawButtons = this.container?.querySelectorAll('.withdraw-btn')
-            console.log('🔧 attachWithdrawButtonListeners: found', withdrawButtons?.length, 'withdraw buttons')
             
             withdrawButtons?.forEach(btn => {
                 const button = btn as HTMLButtonElement
                 button.addEventListener('click', (e) => {
-                    console.log('🗑️ DIRECT withdraw button clicked! (from attachWithdrawButtonListeners)')
                     e.preventDefault()
                     e.stopPropagation()
                     e.stopImmediatePropagation()
@@ -669,7 +636,6 @@ export class HourlyAvailabilityCalendar {
                     const date = button.dataset.date!
                     const hour = parseInt(button.dataset.hour!)
                     
-                    console.log('🗑️ DIRECT calling withdrawSlot with:', { slotId, date, hour })
                     this.withdrawSlot(slotId, date, hour)
                 })
             })
@@ -712,7 +678,6 @@ export class HourlyAvailabilityCalendar {
     }
 
     private toggleHour(key: string): void {
-        console.log('🔄 Toggling hour:', key)
         if (this.selectedHours.has(key)) {
             this.selectedHours.delete(key)
         } else {
@@ -724,7 +689,6 @@ export class HourlyAvailabilityCalendar {
     
     private updateCellVisual(key: string): void {
         const cell = this.container?.querySelector(`[data-key="${key}"]`) as HTMLElement
-        console.log('🎨 Updating cell visual:', { key, cell, hasKey: this.selectedHours.has(key) })
         
         if (cell) {
             if (this.selectedHours.has(key)) {
@@ -732,16 +696,12 @@ export class HourlyAvailabilityCalendar {
                 // Also set inline style as fallback
                 cell.style.backgroundColor = '#bbdefb'
                 cell.style.border = '2px solid #2196f3'
-                console.log('✅ Added selected class and styles to cell')
             } else {
                 cell.classList.remove('selected')
                 // Remove inline styles
                 cell.style.backgroundColor = ''
                 cell.style.border = ''
-                console.log('❌ Removed selected class and styles from cell')
             }
-            console.log('📋 Cell classes:', cell.className)
-            console.log('🎨 Cell style:', cell.style.cssText)
         } else {
             console.error('❗ Could not find cell with key:', key)
         }
@@ -802,9 +762,6 @@ export class HourlyAvailabilityCalendar {
     }
 
     private async saveAvailability(): Promise<void> {
-        console.log('💾 Saving availability...')
-        console.log('📝 Selected hours:', Array.from(this.selectedHours))
-        console.log('📚 Existing slots:', Array.from(this.slots.entries()))
         
         // Prepare slots data
         const slots: any[] = []
@@ -824,7 +781,6 @@ export class HourlyAvailabilityCalendar {
             const date = key.substring(0, lastDashIndex) // YYYY-MM-DD
             const hour = parseInt(key.substring(lastDashIndex + 1))
             
-            console.log('Processing selected hour:', { key, date, hour })
             
             // Check if this is a new slot or modification
             const existingSlot = this.slots.get(key)
@@ -846,7 +802,6 @@ export class HourlyAvailabilityCalendar {
         // TODO: Implement proper tracking of explicitly removed slots if needed
         // For now, we only send the newly selected slots
         
-        console.log('📤 Slots to save:', slots)
         
         if (slots.length === 0) {
             this.showNotification('warning', 'Nie wybrano żadnych zmian')
@@ -870,7 +825,6 @@ export class HourlyAvailabilityCalendar {
     }
 
     private async withdrawSlot(slotId: number, date: string, hour: number): Promise<void> {
-        console.log('🗑️ withdrawSlot called:', { slotId, date, hour })
         
         // Import SweetAlert2 for confirmation dialog
         const { default: Swal } = await import('sweetalert2')

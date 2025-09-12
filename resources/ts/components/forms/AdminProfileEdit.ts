@@ -3,12 +3,15 @@ import type { RouteComponent } from '@router/routes'
 import { adminService } from '@services/AdminService'
 import type { UpdateAdminRequest, User } from '@/types/models'
 import { navigate } from '@/utils/navigation'
+import { PasswordValidator } from '@/utils/PasswordValidator'
+import { PasswordToggleHelper } from '@/utils/PasswordToggleHelper'
 
 export class AdminProfileEdit implements RouteComponent {
     private form: HTMLFormElement | null = null
     private container: HTMLElement | null = null
     private admin: User | null = null
     private adminId: number | null = null
+    private passwordValidator: PasswordValidator | null = null
 
 
     async render(): Promise<HTMLElement> {
@@ -85,6 +88,15 @@ export class AdminProfileEdit implements RouteComponent {
         this.container = container
         this.form = container.querySelector('#admin-profile-form')
 
+        // Initialize password validator
+        if (this.form) {
+            this.passwordValidator = new PasswordValidator(this.form, { 
+                isEditMode: true, 
+                enforceStrength: true,
+                minLength: 12
+            })
+        }
+
         if (this.adminId) {
             await this.loadAdminData()
         } else {
@@ -94,9 +106,11 @@ export class AdminProfileEdit implements RouteComponent {
 
     unmount(): void {
         document.removeEventListener('form:validationError', this.handleValidationError.bind(this) as EventListener)
+        this.passwordValidator?.destroy()
         this.container = null
         this.form = null
         this.admin = null
+        this.passwordValidator = null
     }
 
     private generateFormHTML(): string {
@@ -153,8 +167,8 @@ export class AdminProfileEdit implements RouteComponent {
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Nowe hasło</label>
-                            <input type="password" name="password" class="form-control" minlength="8">
-                            <div class="form-text">Minimum 8 znaków (opcjonalne)</div>
+                            <input type="password" name="password" class="form-control" minlength="12">
+                            <div class="form-text">Minimum 12 znaków (duże i małe litery, cyfry, znaki specjalne)</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Potwierdź nowe hasło</label>
@@ -302,25 +316,13 @@ export class AdminProfileEdit implements RouteComponent {
     private setupForm(): void {
         if (!this.form) return
 
+        // Convert password inputs to have toggles (after form is visible)
+        PasswordToggleHelper.convertPasswordInputsToToggleable(this.container!)
+
         // Form submit
         this.form.addEventListener('submit', this.handleSubmit.bind(this))
-
-        // Password validation
-        const passwordInput = this.form.querySelector('[name="password"]') as HTMLInputElement
-        const confirmInput = this.form.querySelector('[name="password_confirmation"]') as HTMLInputElement
-
-        const validatePasswords = () => {
-            if (passwordInput.value && !confirmInput.value) {
-                confirmInput.setCustomValidity('Potwierdź hasło')
-            } else if (passwordInput.value !== confirmInput.value) {
-                confirmInput.setCustomValidity('Hasła muszą być identyczne')
-            } else {
-                confirmInput.setCustomValidity('')
-            }
-        }
-
-        passwordInput?.addEventListener('input', validatePasswords)
-        confirmInput?.addEventListener('input', validatePasswords)
+        
+        // Password validation is now handled by PasswordValidator
     }
 
     private async handleSubmit(e: Event): Promise<void> {

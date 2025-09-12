@@ -46,26 +46,11 @@ class StudentService
 
             // 3. Assign package if provided
             if (!empty($data['package_id'])) {
-                \Log::info('📦 StudentService: Assigning package to student', [
-                    'user_id' => $user->id,
-                    'package_id' => $data['package_id'],
-                    'package_id_type' => gettype($data['package_id'])
-                ]);
                 
                 $packageService = app(\App\Services\PackageService::class);
                 $result = $packageService->assignPackageToStudent($user->id, $data['package_id']);
                 
-                \Log::info('📦 StudentService: Package assignment result', [
-                    'result' => $result,
-                    'user_id' => $user->id,
-                    'package_id' => $data['package_id']
-                ]);
             } else {
-                \Log::info('📦 StudentService: No package assignment', [
-                    'package_id_value' => $data['package_id'] ?? 'not_set',
-                    'package_id_empty' => empty($data['package_id']),
-                    'all_data_keys' => array_keys($data)
-                ]);
             }
 
             // 4. Send welcome email (skip for imports)
@@ -88,11 +73,6 @@ class StudentService
         DB::beginTransaction();
 
         try {
-            \Log::info('📝 StudentService: Updating student with data', [
-                'student_id' => $studentId,
-                'data' => $data,
-                'learning_goals' => $data['learning_goals'] ?? 'not_set'
-            ]);
             
             $user = User::with('studentProfile')->findOrFail($studentId);
 
@@ -117,7 +97,7 @@ class StudentService
             }
 
             // 1. Update user data
-            $user->update([
+            $userData = [
                 'name' => $data['name'] ?? $user->name,
                 'email' => $data['email'] ?? $user->email,
                 'phone' => $data['phone'] ?? $user->phone,
@@ -126,7 +106,14 @@ class StudentService
                 'country' => $data['country'] ?? $user->country,
                 'status' => $data['status'] ?? $user->status,
                 'avatar' => $data['avatar'] ?? $user->avatar,
-            ]);
+            ];
+
+            // Handle password update
+            if (!empty($data['password'])) {
+                $userData['password'] = Hash::make($data['password']);
+            }
+
+            $user->update($userData);
 
             // 2. Update student profile
             if ($user->studentProfile) {
@@ -153,27 +140,14 @@ class StudentService
                     if (!$existingAssignment) {
                         // If changing to a different package, deactivate old ones first
                         if ($currentActiveAssignments->count() > 0) {
-                            \Log::info('📦 StudentService: Deactivating old packages before assigning new one', [
-                                'user_id' => $user->id,
-                                'old_assignments_count' => $currentActiveAssignments->count()
-                            ]);
                             $currentActiveAssignments->each(function($assignment) {
                                 $assignment->update(['is_active' => false]);
                             });
                         }
                         
-                        \Log::info('📦 StudentService: Assigning new package', [
-                            'user_id' => $user->id,
-                            'package_id' => $data['package_id']
-                        ]);
                         $packageService = app(\App\Services\PackageService::class);
                         $packageService->assignPackageToStudent($user->id, $data['package_id']);
                     } else {
-                        \Log::info('📦 StudentService: Package already assigned, skipping', [
-                            'user_id' => $user->id,
-                            'package_id' => $data['package_id'],
-                            'assignment_id' => $existingAssignment->id
-                        ]);
                     }
                 }
                 // Note: If package_id is empty, we don't remove existing packages

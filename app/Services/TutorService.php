@@ -121,14 +121,16 @@ class TutorService
             // 2. Update tutor profile
             if ($user->tutorProfile) {
                 $user->tutorProfile->update([
-                    'teaching_languages' => $data['teaching_languages'] ?? $user->tutorProfile->teaching_languages,
+                    'languages' => $data['languages'] ?? $user->tutorProfile->languages,
                     'specializations' => $data['specializations'] ?? $user->tutorProfile->specializations,
+                    'lesson_types' => $data['lesson_types'] ?? $user->tutorProfile->lesson_types,
                     'description' => $data['description'] ?? $user->tutorProfile->description,
                     'education' => $data['education'] ?? $user->tutorProfile->education,
                     'years_experience' => $data['years_experience'] ?? $user->tutorProfile->years_experience,
                     'certifications' => $data['certifications'] ?? $user->tutorProfile->certifications,
                     'is_accepting_students' => $data['is_accepting_students'] ?? $user->tutorProfile->is_accepting_students,
                     'hourly_rate' => $data['hourly_rate'] ?? $user->tutorProfile->hourly_rate,
+                    'weekly_contract_limit' => $data['weekly_contract_limit'] ?? $user->tutorProfile->weekly_contract_limit,
                 ]);
             }
 

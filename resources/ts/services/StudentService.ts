@@ -87,9 +87,6 @@ export class StudentService {
      */
     async createStudent(data: CreateStudentRequest): Promise<User> {
         try {
-            console.log('👨‍🎓 StudentService: Creating student with data:', data)
-            console.log('📦 StudentService: package_id value:', data.package_id)
-            console.log('📦 StudentService: package_id type:', typeof data.package_id)
 
             const requestPayload = {
                 name: data.name,
@@ -108,8 +105,6 @@ export class StudentService {
                 package_id: data.package_id // ✅ DODANE!
             }
             
-            console.log('🚀 StudentService: Final request payload:', requestPayload)
-            console.log('📦 StudentService: payload package_id:', requestPayload.package_id)
 
             const response = await api.post<LaravelStudentResponse>('/students', requestPayload)
 
@@ -143,7 +138,6 @@ export class StudentService {
      */
     async getStudents(filters?: StudentFilters): Promise<PaginatedResponse<(User & { hour_package: HourPackage })[]>> {
         try {
-            console.log('📋 StudentService: Getting students with filters:', filters)
 
             const params = new URLSearchParams()
 
@@ -184,7 +178,6 @@ export class StudentService {
         stats: StudentStats;
     }> {
         try {
-            console.log('👤 StudentService: Getting student by ID:', id)
 
             const response = await api.get<LaravelStudentDetailsResponse>(`/students/${id}`)
 
@@ -204,9 +197,7 @@ export class StudentService {
      * Update student - zgodny z StudentController::update
      */
     async updateStudent(id: number, data: UpdateStudentRequest): Promise<User> {
-        console.log('updateStudent dada', data)
         try {
-            console.log('✏️ StudentService: Updating student:', id)
 
             const response = await api.put<LaravelStudentResponse>(`/students/${id}`, data)
 
@@ -238,7 +229,6 @@ export class StudentService {
      */
     async deleteStudent(id: number): Promise<void> {
         try {
-            console.log('🗑️ StudentService: Deleting student:', id)
 
             const response = await api.delete<{ success: boolean, message: string }>(`/students/${id}`)
 
@@ -261,7 +251,6 @@ export class StudentService {
      */
     async getStats(): Promise<LaravelStatsResponse['data']> {
         try {
-            console.log('📊 StudentService: Getting stats')
 
             const response = await api.get<LaravelStatsResponse>('/students/stats')
 
@@ -280,7 +269,6 @@ export class StudentService {
      */
     async updateLearningGoals(id: number, goals: string[]): Promise<User> {
         try {
-            console.log('🎯 StudentService: Updating learning goals:', id)
 
             const response = await api.put<LaravelStudentResponse>(`/students/${id}/learning-goals`, { goals })
 
@@ -303,7 +291,6 @@ export class StudentService {
      */
     async searchStudents(query: string): Promise<User[]> {
         try {
-            console.log('🔍 StudentService: Searching students:', query)
 
             const response = await api.get<LaravelStudentsResponse>(`/students/search?q=${encodeURIComponent(query)}`)
 
@@ -319,7 +306,6 @@ export class StudentService {
      */
     async bulkUpdateStatus(studentIds: number[], status: string): Promise<void> {
         try {
-            console.log('📋 StudentService: Bulk updating status')
 
             const response = await api.post<{ success: boolean, message: string }>('/students/bulk-status', {
                 student_ids: studentIds,
@@ -356,7 +342,6 @@ export class StudentService {
         };
     }> {
         try {
-            console.log('👤 StudentService: Getting student profile')
 
             const response = await api.get<{ success: boolean, data: {
                 id: number;
@@ -386,7 +371,6 @@ export class StudentService {
      */
     async updateProfile(data: any): Promise<any> {
         try {
-            console.log('✏️ StudentService: Updating student profile', data)
 
             // Check if data is FormData (file upload)
             if (data instanceof FormData) {
@@ -410,7 +394,6 @@ export class StudentService {
      */
     async getDashboardStats(): Promise<any> {
         try {
-            console.log('📊 StudentService: Getting dashboard stats')
 
             const response = await api.get<{ success: boolean, data: any }>('/student/dashboard-stats')
 
@@ -440,7 +423,6 @@ export class StudentService {
      */
     async getAvailableTutors(): Promise<any[]> {
         try {
-            console.log('👨‍🏫 StudentService: Getting available tutors')
             const response = await api.get<{success: boolean, data: any[]}>('/student/tutors-available')
             return response.data || []
         } catch (error) {
@@ -454,7 +436,6 @@ export class StudentService {
      */
     async getTutorProfile(tutorId: number): Promise<any> {
         try {
-            console.log('👨‍🏫 StudentService: Getting tutor profile:', tutorId)
             const response = await api.get<{success: boolean, data: any}>(`/student/tutor/${tutorId}`)
             return response.data
         } catch (error) {

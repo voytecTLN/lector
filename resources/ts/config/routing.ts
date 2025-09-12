@@ -43,11 +43,58 @@ export const ROUTES = {
     TUTOR_DASHBOARD: '/tutor/dashboard',
     STUDENT_DASHBOARD: '/student/dashboard',
     
-    // Admin routes
-    ADMIN_STUDENTS: '/admin/students',
-    ADMIN_STUDENTS_ADD: '/admin/students/add',
-    ADMIN_STUDENTS_SHOW: (id: string | number) => `/admin/students/${id}`,
-    ADMIN_STUDENTS_EDIT: (id: string | number) => `/admin/students/${id}/edit`,
+    // Admin routes - Dashboard sections
+    ADMIN_STUDENTS: '/admin/dashboard?section=uczniowie',
+    ADMIN_STUDENTS_ADD: '/admin/dashboard?section=dodaj-studenta',
+    ADMIN_STUDENTS_IMPORT: '/admin/dashboard?section=import-csv',
+    ADMIN_STUDENTS_DETAILS: (id: string | number) => `/admin/dashboard?section=student-details&student_id=${id}`,
+    ADMIN_STUDENTS_EDIT: (id: string | number) => `/admin/dashboard?section=edytuj-studenta&student_id=${id}`,
+    
+    ADMIN_TUTORS: '/admin/dashboard?section=lektorzy',
+    ADMIN_TUTORS_ADD: '/admin/dashboard?section=dodaj-lektora',
+    ADMIN_TUTORS_DETAILS: (id: string | number) => `/admin/dashboard?section=tutor-details&tutor_id=${id}`,
+    ADMIN_TUTORS_EDIT: (id: string | number) => `/admin/dashboard?section=edytuj-lektora&tutor_id=${id}`,
+    
+    ADMIN_ADMINS: '/admin/dashboard?section=administratorzy',
+    ADMIN_ADMINS_ADD: '/admin/dashboard?section=dodaj-administratora',
+    ADMIN_ADMINS_DETAILS: (id: string | number) => `/admin/dashboard?section=admin-details&admin_id=${id}`,
+    ADMIN_ADMINS_EDIT: (id: string | number) => `/admin/dashboard?section=edytuj-administratora&admin_id=${id}`,
+    
+    ADMIN_PACKAGES: '/admin/dashboard?section=pakiety',
+    ADMIN_PACKAGES_ADD: '/admin/dashboard?section=dodaj-pakiet',
+    ADMIN_PACKAGES_DETAILS: (id: string | number) => `/admin/dashboard?section=package-details&package_id=${id}`,
+    ADMIN_PACKAGES_EDIT: (id: string | number) => `/admin/dashboard?section=edytuj-pakiet&package_id=${id}`,
+    
+    ADMIN_REPORTS: '/admin/dashboard?section=raporty',
+    ADMIN_SETTINGS: '/admin/dashboard?section=ustawienia',
+    ADMIN_MATERIALS: '/admin/dashboard?section=materialy',
+    ADMIN_LESSONS: '/admin/dashboard?section=lekcje',
+    ADMIN_AUDIT_LOGS: '/admin/dashboard?section=logi-auditowe',
+    ADMIN_LOGIN_LOGS: '/admin/dashboard?section=logi-logowania',
+    ADMIN_AVAILABILITY_LOGS: '/admin/dashboard?section=logi-dostepnosci',
+    
+    // Tutor dashboard sections  
+    TUTOR_CALENDAR: '/tutor/dashboard?section=calendar',
+    TUTOR_AVAILABILITY: '/tutor/dashboard?section=availability',
+    TUTOR_STUDENTS: '/tutor/dashboard?section=students',
+    TUTOR_PROFILE: '/tutor/dashboard?section=profile',
+    TUTOR_UPCOMING: '/tutor/dashboard?section=nadchodzace',
+    TUTOR_HISTORY: '/tutor/dashboard?section=historia',
+    TUTOR_CHANGELOG: '/tutor/dashboard?section=wykaz-zmian',
+    TUTOR_SUPPORT: '/tutor/dashboard?section=zgloszenia',
+    
+    // Student dashboard sections
+    STUDENT_BOOKING: '/student/dashboard?section=rezerwuj',
+    STUDENT_TUTORS: '/student/dashboard?section=lektorzy',
+    STUDENT_PROFILE: '/student/dashboard?section=profil',
+    STUDENT_HISTORY: '/student/dashboard?section=historia',
+    STUDENT_UPCOMING: '/student/dashboard?section=nadchodzace',
+    STUDENT_MATERIALS: '/student/dashboard?section=materialy',
+    STUDENT_TUTOR_PROFILE: (id: string | number) => `/student/dashboard?section=tutor-profile&tutor_id=${id}`,
+    STUDENT_TUTOR_BOOKING: (id: string | number) => `/student/dashboard?section=tutor-booking&tutor_id=${id}`,
+    
+    // Meeting routes
+    LESSON_MEETING: (id: string | number) => `/lesson/${id}/meeting`,
     
     // Error routes
     UNAUTHORIZED: '/unauthorized',

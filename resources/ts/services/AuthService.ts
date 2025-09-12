@@ -1,14 +1,10 @@
 // resources/ts/services/AuthService.ts - Zgodny z Laravel Backend
 import { api } from '@services/ApiService'
-import Logger from '@/utils/logger'
 import type {
     User,
     LoginCredentials,
     RegisterData,
-    AuthResponse,
-    PasswordResetData,
     NewPasswordData,
-    CurrentUserResponse
 } from '@/types/auth'
 
 // Dopasowane do Laravel AuthController responses
@@ -58,9 +54,6 @@ export class AuthService {
      */
     async login(credentials: LoginCredentials): Promise<LaravelAuthResponse> {
         try {
-            Logger.auth('AuthService: Attempting login')
-            // Removed sensitive data logging
-            // Removed sensitive data logging
             const response = await api.post<LaravelAuthResponse>('/auth/login', {
                 email: credentials.email,
                 password: credentials.password,
@@ -68,8 +61,6 @@ export class AuthService {
             })
 
             if (response.success && response.data) {
-                // Removed sensitive data logging
-                // Removed sensitive data logging
                 this.setAuthData(response.data.user, response.data.token, response.data.permissions)
                 this.notifyAuthChange('login')
 
@@ -101,8 +92,6 @@ export class AuthService {
      */
     async register(userData: RegisterData): Promise<LaravelAuthResponse> {
         try {
-            Logger.auth('AuthService: Attempting registration')
-
             const response = await api.post<LaravelAuthResponse>('/auth/register', {
                 name: userData.name,
                 email: userData.email,
@@ -114,15 +103,10 @@ export class AuthService {
                 terms_accepted: userData.terms_accepted
             })
 
-            Logger.debug('Registration response received')
-            // Removed sensitive data logging
-
             if (response.success && response.data) {
-                // WAŻNE: NIE logujemy użytkownika jeśli wymaga weryfikacji
+                // IMPORTANT: DON'T log user in if verification is required
                 if (response.data.requires_verification) {
-                    Logger.auth('User requires email verification')
-
-                    // Tylko pokazujemy komunikat
+                    // Only show message
                     document.dispatchEvent(new CustomEvent('notification:show', {
                         detail: {
                             type: 'warning',
@@ -130,10 +114,8 @@ export class AuthService {
                         }
                     }))
                 } else {
-                    // Tylko jeśli użytkownik jest już zweryfikowany (edge case)
-                    Logger.auth('User already verified, logging in')
-
-                    // Tylko jeśli mamy token
+                    // Only if user is already verified (edge case)
+                    // Only if we have a token
                     if (response.data.token) {
                         this.setAuthData(response.data.user, response.data.token, response.data.permissions)
                         this.saveToStorage()
@@ -162,19 +144,16 @@ export class AuthService {
      */
     async logout(): Promise<void> {
         try {
-            Logger.auth('AuthService: Logging out')
-
-            // Tylko spróbuj API logout jeśli mamy token
+            // Only try API logout if we have a token
             if (this.token) {
                 await api.post<LaravelMessageResponse>('/auth/logout')
             }
         } catch (error) {
-            console.warn('⚠️ Logout API error (continuing anyway):', error)
+            // Continue with logout even if API call fails
         } finally {
             this.clearAuthData()
             this.notifyAuthChange('logout')
 
-            // NOWE: Zmień komunikat na bardziej przyjazny
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'success',
@@ -190,41 +169,25 @@ export class AuthService {
      */
     async getCurrentUser(): Promise<User | null> {
         if (!this.token) {
-            console.log('🚫 No token available for getCurrentUser')
             return null
         }
 
         try {
-            console.log('👤 AuthService: Getting current user with token:', this.token?.substring(0, 20) + '...')
-
             const response = await api.get<LaravelUserResponse>('/auth/me')
 
             if (response.success && response.data) {
                 this.user = response.data.user
                 this.permissions = response.data.permissions
                 this.saveToStorage()
-                console.log('✅ User data updated:', { 
-                    name: this.user.name, 
-                    role: this.user.role,
-                    email: this.user.email,
-                    permissions: this.permissions 
-                })
                 return this.user
             }
 
             throw new Error('Invalid response format')
 
         } catch (error: any) {
-            console.error('❌ Get current user error:', error)
-            console.error('❌ Error details:', {
-                message: error.message,
-                status: error.status,
-                response: error.response
-            })
 
-            // NOWE: Dodaj komunikat jeśli to problem z autoryzacją
+            // Handle authorization error
             if (error.message?.includes('401')) {
-                console.log('🔑 Token expired or invalid, clearing auth data')
                 document.dispatchEvent(new CustomEvent('notification:show', {
                     detail: {
                         type: 'warning',
@@ -233,8 +196,6 @@ export class AuthService {
                     }
                 }))
                 this.clearAuthData()
-            } else {
-                console.log('🌐 Network or other error, not clearing auth data')
             }
 
             throw error
@@ -246,8 +207,6 @@ export class AuthService {
      */
     async forgotPassword(email: string): Promise<void> {
         try {
-            console.log('📧 AuthService: Sending password reset')
-
             const response = await api.post<LaravelMessageResponse>('/auth/forgot-password', { email })
 
             document.dispatchEvent(new CustomEvent('notification:show', {
@@ -273,8 +232,6 @@ export class AuthService {
      */
     async resetPassword(data: NewPasswordData): Promise<void> {
         try {
-            console.log('🔑 AuthService: Resetting password')
-
             const response = await api.post<LaravelMessageResponse>('/auth/reset-password', {
                 token: data.token,
                 password: data.password,
@@ -299,111 +256,12 @@ export class AuthService {
         }
     }
 
-    /**
-     * Verify email - zgodny z Laravel AuthController::verifyEmail
-     */
-    async verifyEmail(token: string): Promise<void> {
-        try {
-            console.log('✅ AuthService: Verifying email')
-
-            const response = await api.post<LaravelMessageResponse>('/auth/verify-email', { token })
-
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'success',
-                    message: response.message || 'Email został zweryfikowany pomyślnie!'
-                }
-            }))
-
-            // Odśwież dane użytkownika po weryfikacji
-            if (this.token) {
-                await this.getCurrentUser()
-            }
-
-        } catch (error: any) {
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'error',
-                    message: error.message || 'Błąd podczas weryfikacji emaila'
-                }
-            }))
-            throw error
-        }
-    }
-
-    /**
-     * Resend verification - zgodny z Laravel AuthController::resendVerification
-     */
-    async resendVerification(): Promise<void> {
-        try {
-            console.log('📧 AuthService: Resending verification')
-
-            const response = await api.post<LaravelMessageResponse>('/auth/resend-verification')
-
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'success',
-                    message: response.message || 'Email weryfikacyjny został wysłany ponownie.'
-                }
-            }))
-
-        } catch (error: any) {
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'error',
-                    message: error.message || 'Błąd podczas wysyłania emaila weryfikacyjnego'
-                }
-            }))
-            throw error
-        }
-    }
-
-    /**
-     * Change password - zgodny z Laravel AuthController::changePassword
-     */
-    async changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Promise<void> {
-        try {
-            console.log('🔐 AuthService: Changing password')
-
-            const response = await api.post<LaravelMessageResponse>('/auth/change-password', {
-                current_password: currentPassword,
-                new_password: newPassword,
-                new_password_confirmation: confirmPassword
-            })
-
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'success',
-                    message: response.message || 'Hasło zostało zmienione pomyślnie.'
-                }
-            }))
-
-        } catch (error: any) {
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'error',
-                    message: error.message || 'Błąd podczas zmiany hasła'
-                }
-            }))
-            throw error
-        }
-    }
-
     isAuthenticated(): boolean {
         return !!this.token && !!this.user
     }
 
-    /*isVerified(): boolean {
-        // Używamy tylko email_verified_at zgodnie z Laravel
-        return !!this.user?.email_verified_at
-    }*/
     isVerified(): boolean {
-        // Używamy tylko email_verified_at zgodnie z Laravel
-        return !!this.user?.email_verified_at;
-    }
-
-    hasRole(role: string): boolean {
-        return this.user?.role === role
+        return !!this.user?.email_verified_at
     }
 
     hasAnyRole(roles: string[]): boolean {

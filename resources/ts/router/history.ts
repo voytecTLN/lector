@@ -48,18 +48,13 @@ export class BrowserHistory {
         if (title) {
             document.title = title
         }
-
         this.notifyListeners(path, state)
     }
 
     getCurrentPath(): string {
-        // NOWE: Jeśli mamy hash routing, użyj hash jako path
         if (window.location.hash && window.location.hash.startsWith('#/')) {
-            const hashPath = window.location.hash.substring(1) // Usuń tylko #
-            return hashPath + window.location.search
+            return window.location.hash.substring(1)
         }
-
-        // Fallback do normalnego pathname
         return window.location.pathname + window.location.search + window.location.hash
     }
 

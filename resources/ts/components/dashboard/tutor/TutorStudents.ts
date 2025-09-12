@@ -241,14 +241,6 @@ export class TutorStudents {
                 stats = result.stats || {}
             }
             
-            console.log('🔍 API Response Debug:', {
-                result,
-                extractedStudents: students,
-                studentsType: typeof students,
-                isArray: Array.isArray(students),
-                stats
-            })
-            
             this.updateStats(stats)
             this.renderStudents(students)
         } catch (error) {
@@ -273,7 +265,6 @@ export class TutorStudents {
         const container = document.getElementById('students-container')
         if (!container) return
         
-        console.log('🎯 renderStudents called with:', students, 'Type:', typeof students, 'IsArray:', Array.isArray(students))
         
         // Defensive check - ensure students is array
         if (!Array.isArray(students)) {

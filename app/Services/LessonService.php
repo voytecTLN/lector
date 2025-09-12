@@ -155,7 +155,7 @@ class LessonService
     /**
      * Cancel a lesson
      */
-    public function cancelLesson(int $lessonId, string $cancelledBy, string $reason = null): bool
+    public function cancelLesson(int $lessonId, string $cancelledBy, ?string $reason = null): bool
     {
         $lesson = Lesson::findOrFail($lessonId);
         
@@ -256,7 +256,7 @@ class LessonService
     /**
      * Submit lesson feedback
      */
-    public function submitFeedback(int $lessonId, int $rating, string $feedback = null): Lesson
+    public function submitFeedback(int $lessonId, int $rating, ?string $feedback = null): Lesson
     {
         $lesson = Lesson::findOrFail($lessonId);
         
@@ -340,14 +340,6 @@ class LessonService
         // Dla 60 minut, po prostu dodaj 1 godzinę
         $lessonEndHour = $lessonStartHour + 1;
         
-        \Log::info('validateTutorAvailability - searching for slot', [
-            'tutor_id' => $tutorId,
-            'date' => $date,
-            'start_time' => $startTime,
-            'lesson_start_hour' => $lessonStartHour,
-            'lesson_end_hour' => $lessonEndHour,
-            'duration_minutes' => $durationMinutes
-        ]);
         
         // Dla lekcji 60-minutowych, szukamy dokładnie pasującego slotu
         if ($durationMinutes === 60) {

@@ -1,9 +1,13 @@
 import { authService } from '@services/AuthService'
 import { redirectWithMessage } from '@/utils/navigation'
+import { PasswordValidator } from '@/utils/PasswordValidator'
+import { PasswordToggleHelper } from '@/utils/PasswordToggleHelper'
 import type { RouteComponent } from '@router/routes'
 
 export class RegisterPage implements RouteComponent {
     private form: HTMLFormElement | null = null
+    private passwordValidator: PasswordValidator | null = null
+    private updateRequirements: (password: string) => void = () => {}
 
     async render(): Promise<HTMLElement> {
         const container = document.createElement('div')
@@ -24,11 +28,37 @@ export class RegisterPage implements RouteComponent {
                         </div>
                         <div class="form-group">
                             <label for="password">Hasło</label>
-                            <input type="password" id="password" name="password" class="form-control" required>
+                            <div class="password-input-container">
+                                <input type="password" id="password" name="password" class="form-control" required 
+                                    minlength="12"
+                                    autocomplete="new-password"
+                                    aria-describedby="password-requirements"
+                                    title="Hasło musi spełniać wymagania bezpieczeństwa">
+                                <button type="button" class="password-toggle" id="password-toggle" aria-label="Pokaż/ukryj hasło">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="password-requirements" id="password-requirements">
+                                <div class="requirements-header">
+                                    <strong>Wymagania dla hasła:</strong>
+                                </div>
+                                <ul class="requirements-list">
+                                    <li id="req-length"><i class="bi bi-x-circle"></i> Co najmniej 12 znaków</li>
+                                    <li id="req-lowercase"><i class="bi bi-x-circle"></i> Małą literę (a-z)</li>
+                                    <li id="req-uppercase"><i class="bi bi-x-circle"></i> Wielką literę (A-Z)</li>
+                                    <li id="req-number"><i class="bi bi-x-circle"></i> Cyfrę (0-9)</li>
+                                    <li id="req-special"><i class="bi bi-x-circle"></i> Znak specjalny (!@#$%^&* itp.)</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="password_confirmation">Potwierdź hasło</label>
-                            <input type="password" id="password_confirmation" name="password_confirmation" class="form-control" required>
+                            <div class="password-input-container">
+                                <input type="password" id="password_confirmation" name="password_confirmation" class="form-control" required>
+                                <button type="button" class="password-toggle" id="password-confirmation-toggle" aria-label="Pokaż/ukryj potwierdzenie hasła">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <button type="submit" class="login-btn" id="registerButton">Załóż konto</button>
                     </form>
@@ -46,6 +76,21 @@ export class RegisterPage implements RouteComponent {
     mount(container: HTMLElement): void {
         this.form = container.querySelector('#registerForm') as HTMLFormElement
         this.form?.addEventListener('submit', this.handleSubmit)
+        
+        // Initialize password validation with strong password requirements
+        if (this.form) {
+            this.passwordValidator = new PasswordValidator(this.form, {
+                enforceStrength: true,
+                minLength: 12
+            })
+        }
+
+        // Setup password toggles
+        PasswordToggleHelper.setupPasswordToggle('#password', '#password-toggle')
+        PasswordToggleHelper.setupPasswordToggle('#password_confirmation', '#password-confirmation-toggle')
+        
+        // Setup password validation
+        this.setupPasswordValidation()
     }
 
     unmount(): void {
@@ -55,6 +100,41 @@ export class RegisterPage implements RouteComponent {
         document.body.classList.remove('login-page')
     }
 
+    private setupPasswordValidation(): void {
+        const requirements = {
+            'req-length': (password: string) => password.length >= 12,
+            'req-lowercase': (password: string) => /[a-z]/.test(password),
+            'req-uppercase': (password: string) => /[A-Z]/.test(password),
+            'req-number': (password: string) => /[0-9]/.test(password),
+            'req-special': (password: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)
+        }
+
+        this.updateRequirements = (password: string) => {
+            Object.entries(requirements).forEach(([id, test]) => {
+                const element = document.getElementById(id)
+                if (element) {
+                    const icon = element.querySelector('i')
+                    const isValid = test(password)
+                    
+                    element.classList.toggle('valid', isValid)
+                    element.classList.toggle('invalid', !isValid)
+                    
+                    if (icon) {
+                        icon.className = isValid ? 'bi bi-check-circle-fill' : 'bi bi-x-circle'
+                    }
+                }
+            })
+        }
+
+        // Add password input event listener
+        const passwordInput = this.form?.querySelector('#password') as HTMLInputElement
+        if (passwordInput) {
+            passwordInput.addEventListener('input', () => {
+                this.updateRequirements(passwordInput.value)
+            })
+        }
+    }
+
     private handleSubmit = async (e: Event) => {
         e.preventDefault()
         if (!this.form) return
@@ -62,8 +142,6 @@ export class RegisterPage implements RouteComponent {
         button.disabled = true
 
         try {
-            console.log('📝 RegisterPage: Starting registration...')
-
             const response = await authService.register({
                 name: (this.form.querySelector('#name') as HTMLInputElement).value,
                 email: (this.form.querySelector('#email') as HTMLInputElement).value,
@@ -75,33 +153,20 @@ export class RegisterPage implements RouteComponent {
                 terms_accepted: true
             })
 
-            console.log('📝 RegisterPage: Registration response:', response)
-            console.log('📝 RegisterPage: requires_verification =', response.data?.requires_verification)
-
-            // Sprawdź czy użytkownik wymaga weryfikacji
+            // Check if user requires verification
             if (response.data?.requires_verification) {
-                console.log('📝 RegisterPage: User requires verification, redirecting to /verify-email')
-                console.log('📝 RegisterPage: Current URL before redirect:', window.location.href)
-
-                // Przekieruj na stronę weryfikacji emaila
                 redirectWithMessage(
                     '/verify-email',
                     'Konto zostało utworzone. Sprawdź email w celu weryfikacji.',
                     'success'
                 )
-
-                console.log('📝 RegisterPage: redirectWithMessage called, waiting for redirect...')
             } else {
-                console.log('📝 RegisterPage: User does not require verification, redirecting to /login')
-
-                // Jeśli nie wymaga weryfikacji (edge case), przekieruj na login
+                // If no verification required (edge case), redirect to login
                 redirectWithMessage('/#/login', 'Konto utworzone. Możesz się zalogować.', 'success')
             }
 
         } catch (err: any) {
-            console.error('❌ RegisterPage: Registration error:', err)
-
-            // Wyświetl błąd jako notyfikację
+            // Display error as notification
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'error',

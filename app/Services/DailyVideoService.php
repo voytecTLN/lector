@@ -50,12 +50,6 @@ class DailyVideoService
         try {
             $roomName = $this->generateRoomName($lesson);
             
-            Log::info('Creating Daily.co room', [
-                'room_name' => $roomName,
-                'lesson_id' => $lesson->id,
-                'domain' => $this->domain,
-                'api_key_exists' => !empty($this->apiKey)
-            ]);
             
             $requestData = [
                 'name' => $roomName,
@@ -74,10 +68,6 @@ class DailyVideoService
                 ],
             ];
             
-            Log::info('Daily.co API request', [
-                'url' => 'https://api.daily.co/v1/rooms',
-                'data' => $requestData
-            ]);
             
             $response = $this->client->post('rooms', [
                 'json' => $requestData,
@@ -86,11 +76,6 @@ class DailyVideoService
             $responseBody = $response->getBody()->getContents();
             $roomData = json_decode($responseBody, true);
             
-            Log::info('Daily.co room created successfully', [
-                'room_name' => $roomData['name'],
-                'room_url' => $roomData['url'],
-                'response' => $roomData
-            ]);
             
             return [
                 'success' => true,

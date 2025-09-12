@@ -26,7 +26,13 @@ class CreateTutorRequest extends FormRequest
             // User basic data
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => [
+                'required',
+                'string',
+                'min:12',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?~`]).+$/'
+            ],
             'phone' => ['nullable', 'string', 'max:20'],
             'birth_date' => ['nullable', 'date', 'before:today'],
             'city' => ['nullable', 'string', 'max:255'],
@@ -66,6 +72,8 @@ class CreateTutorRequest extends FormRequest
             'email.email' => 'Email musi być prawidłowym adresem email.',
             'email.unique' => 'Ten adres email jest już zajęty.',
             'password.required' => 'Hasło jest wymagane.',
+            'password.min' => 'Hasło musi mieć minimum 12 znaków.',
+            'password.regex' => 'Hasło musi zawierać co najmniej: jedną małą literę, jedną wielką literę, jedną cyfrę i jeden znak specjalny.',
             'password.confirmed' => 'Potwierdzenie hasła się nie zgadza.',
             'phone.max' => 'Numer telefonu nie może być dłuższy niż 20 znaków.',
             'birth_date.date' => 'Data urodzenia musi być prawidłową datą.',

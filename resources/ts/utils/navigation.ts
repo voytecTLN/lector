@@ -280,7 +280,7 @@ export const urlBuilder = {
     adminStudent: {
         list: () => urlBuilder.hash(ROUTES.ADMIN_STUDENTS),
         add: () => urlBuilder.hash(ROUTES.ADMIN_STUDENTS_ADD),
-        show: (id: string | number) => urlBuilder.hash(ROUTES.ADMIN_STUDENTS_SHOW(id)),
+        show: (id: string | number) => urlBuilder.hash(ROUTES.ADMIN_STUDENTS_DETAILS(id)),
         edit: (id: string | number) => urlBuilder.hash(ROUTES.ADMIN_STUDENTS_EDIT(id))
     }
 }
@@ -323,11 +323,7 @@ export const routeChecker = {
     matches: (path: string, pattern: RegExp) => RouteUtils.matches(path, pattern)
 }
 
-// Legacy compatibility - to be removed after refactoring
-export function navigateTo(path: string): void {
-    console.warn('⚠️ navigateTo is deprecated. Use navigate.to() instead.')
-    navigate.to(path)
-}
+// Legacy compatibility function removed - all usage migrated to navigate.to()
 
 export function redirectWithMessage(
     path: string,

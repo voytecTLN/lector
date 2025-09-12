@@ -1,7 +1,7 @@
 // resources/ts/services/ApiService.ts - Zgodny z Laravel Sanctum
 import { ValidationError } from "@/types/models"
-import { navigateTo } from '@/utils/navigation'
-import Logger from '@/utils/logger'
+import { navigate } from '@/utils/navigation'
+import { ROUTES } from '@/config/routing'
 
 interface LaravelResponse<T = any> {
   success: boolean
@@ -65,24 +65,16 @@ export class ApiService {
     }
 
     try {
-      Logger.api(`API Request: ${options.method || 'GET'} ${endpoint}`)
-
       const response = await fetch(`${this.baseURL}${endpoint}`, {
         ...options,
         headers: finalHeaders,
         credentials: 'include' // Changed from 'same-origin' to 'include' for better session handling
       })
 
-      Logger.api(`API Response: ${response.status} ${response.statusText}`)
-
-      // Obsługa 419 - CSRF token mismatch
+      // Handle 419 - CSRF token mismatch
       if (response.status === 419 && retryCount < 2) {
-        Logger.debug('CSRF token mismatch, refreshing token and retrying...')
-
-        // Odśwież CSRF token
+        // Refresh CSRF token and retry
         await this.refreshCSRF()
-
-        // Powtórz żądanie
         return this.request<T>(endpoint, options, retryCount + 1)
       }
 
@@ -108,7 +100,7 @@ export class ApiService {
               detail: { type: 'logout', isAuthenticated: false, user: null }
             }))
             
-            navigateTo('/#/login')
+            await navigate.to(ROUTES.LOGIN)
             throw new Error('Session expired')
           }
           
@@ -121,10 +113,8 @@ export class ApiService {
         }) as T
       }
 
-      // Sprawdź content-type
+      // Check content-type
       const contentType = response.headers.get('content-type')
-      Logger.api('Content-Type:', contentType)
-      Logger.api('Response OK:', response.ok)
       
       if (!contentType || !contentType.includes('application/json')) {
         if (!response.ok) {
@@ -133,18 +123,15 @@ export class ApiService {
         
         // Check if it's CSV or other binary content
         if (contentType && (contentType.includes('text/csv') || contentType.includes('application/octet-stream'))) {
-          Logger.debug('Returning blob for CSV/binary content')
           const blob = await response.blob()
           return blob as T
         }
         
-        Logger.warn('Content-Type is not JSON, returning empty object')
-        // Zwróć pustą odpowiedź jeśli nie ma JSON
+        // Return empty response if not JSON
         return {} as T
       }
 
       const result: LaravelResponse<T> = await response.json()
-      Logger.api('Parsed JSON result:', result)
 
       if (!response.ok) {
         // Laravel validation errors (422)
@@ -213,6 +200,10 @@ export class ApiService {
             }
           }))
 
+          // Clear auth data from storage
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('user')
+          
           // Emit auth change event
           document.dispatchEvent(new CustomEvent('auth:change', {
             detail: { type: 'logout', isAuthenticated: false, user: null }
@@ -223,7 +214,13 @@ export class ApiService {
               !window.location.hash.includes('/register') &&
               !window.location.hash.includes('/forgot-password')) {
 
-            navigateTo('/#/login')
+            try {
+              await navigate.to(ROUTES.LOGIN)
+            } catch (navError) {
+              console.warn('Navigation failed during 401 redirect, using fallback:', navError)
+              // Fallback - direct window redirect
+              window.location.href = '/login'
+            }
           }
         }
 
@@ -282,7 +279,6 @@ export class ApiService {
   // Metoda do odświeżenia CSRF tokenu dla Sanctum
   async refreshCSRF(): Promise<void> {
     try {
-      Logger.debug('Refreshing CSRF token...')
 
       await fetch('/sanctum/csrf-cookie', {
         method: 'GET',
@@ -297,7 +293,6 @@ export class ApiService {
       const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
       this.csrfToken = token || ''
 
-      Logger.debug('CSRF token refreshed')
     } catch (error) {
       console.error('❌ Failed to refresh CSRF token:', error)
       // Nie rzucaj błędu - pozwól żądaniu kontynuować

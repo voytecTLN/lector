@@ -337,21 +337,10 @@ export class StudentDetails implements RouteComponent {
         })
 
         // Debug logging to help troubleshoot
-        console.log('Student data:', this.student)
-        console.log('Active assignments:', activeAssignments)
-        console.log('All assignments:', allAssignments)
-        console.log('Active assignment found:', activeAssignment)
         
         // Log calculated statuses for debugging
         activeAssignments.forEach((assignment, index) => {
-            console.log(`Assignment ${index + 1} status:`, {
-                id: assignment.id,
-                serverStatus: assignment.status,
-                calculatedStatus: this.calculateAssignmentStatus(assignment),
-                isActive: assignment.is_active,
-                expiresAt: assignment.expires_at,
-                hoursRemaining: assignment.hours_remaining
-            })
+            // Debug data structure was here
         })
 
         return `
@@ -822,7 +811,6 @@ export class StudentDetails implements RouteComponent {
     private handleTabChange(e: Event): void {
         const target = e.target as HTMLElement
         const tabId = target.getAttribute('data-bs-target')
-        console.log('Tab changed to:', tabId)
     }
 
     private async showAssignPackageModal(): Promise<void> {
@@ -1423,23 +1411,17 @@ export class StudentDetails implements RouteComponent {
 
     static async changeStatus(lessonId: number, currentStatus: string): Promise<void> {
         try {
-            console.log('StudentDetails.changeStatus called with:', { lessonId, currentStatus })
-            console.log('LessonStatusManager available:', !!LessonStatusManager)
             
             const statusManager = new LessonStatusManager(lessonId, currentStatus, (newStatus: string) => {
-                console.log('Status update callback triggered:', newStatus)
                 // Reload lessons after status update
                 if (StudentDetails.instance) {
-                    console.log('Reloading student data...')
                     StudentDetails.instance.loadStudentData()
                 } else {
                     console.error('StudentDetails.instance is null!')
                 }
             })
 
-            console.log('Showing status modal...')
             await statusManager.showModal()
-            console.log('Status modal shown successfully')
         } catch (error) {
             console.error('Error in changeStatus:', error)
             console.error('Error stack:', (error as Error).stack)
@@ -1455,11 +1437,8 @@ export class StudentDetails implements RouteComponent {
 
     static async viewStatusHistory(lessonId: number): Promise<void> {
         try {
-            console.log('StudentDetails.viewStatusHistory called with lessonId:', lessonId)
             const { api } = await import('@services/ApiService')
-            console.log('API service imported successfully')
             const response = await api.get<{ success: boolean, data: any[] }>(`/lessons/${lessonId}/status-history`)
-            console.log('Status history response:', response)
             const history = response.data || []
 
             const modalHtml = `

@@ -169,9 +169,11 @@ export class AdminDetails implements RouteComponent {
                                         <button type="button" class="btn btn-outline-primary btn-sm" id="quick-edit-btn">
                                             <i class="bi bi-pencil me-1"></i> Edytuj dane
                                         </button>
+                                        <!--
                                         <button type="button" class="btn btn-outline-info btn-sm" id="reset-password-btn">
                                             <i class="bi bi-key me-1"></i> Resetuj hasło
                                         </button>
+                                        -->
                                         <button type="button" class="btn btn-outline-warning btn-sm" id="quick-deactivate-btn">
                                             <i class="bi bi-pause-circle me-1"></i> Zmień status
                                         </button>

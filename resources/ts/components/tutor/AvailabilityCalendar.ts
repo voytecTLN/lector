@@ -35,8 +35,6 @@ export class AvailabilityCalendar {
             })
             const response = await api.get<any>(`/tutor/availability-slots?${params.toString()}`)
             
-            console.log('Loaded availability slots:', response)
-            console.log('Raw slots data:', response.slots)
 
             if (response.slots) {
                 this.slots.clear()
@@ -49,7 +47,6 @@ export class AvailabilityCalendar {
                         slotDate = slotDate.split('T')[0]
                     }
                     
-                    console.log('Processing slot:', { original: slot.date, processed: slotDate })
                     
                     this.slots.set(slotDate, {
                         ...slot,
@@ -348,12 +345,7 @@ export class AvailabilityCalendar {
                 
                 // Debug logging
                 if (week === 0 && day < 7) {
-                    console.log('Calendar date:', { 
-                        dateObj: date.toISOString(), 
-                        formatted: dateStr,
-                        dayOfWeek: date.getDay(),
-                        hasSlot: this.slots.has(dateStr)
-                    })
+                    // Debug data was here
                 }
                 
                 // Determine the active slot (from DB or selected)

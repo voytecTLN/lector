@@ -19,20 +19,23 @@ class Application {
             // Initialize CSRF token
             this.initCSRF()
 
-            // Initialize authentication state
+            // Initialize router but don't handle initial route yet
+            await this.router.init(false) // Pass false to skip initial navigation
+
+            // Initialize unified navigation system  
+            NavigationUtils.init(this.router)
+
+            // Initialize authentication state first
             await this.initAuth()
+            
+            // Now handle the initial route after auth is resolved
+            await this.router.handleInitialRoute()
 
             // Initialize global event listeners
             this.initEventListeners()
 
             // Initialize notification system
             this.initNotifications()
-
-            // Initialize router
-            await this.router.init()
-
-            // Initialize unified navigation system
-            NavigationUtils.init(this.router)
 
             window.router = this.router
 
@@ -72,10 +75,15 @@ class Application {
             }
         } catch (error: any) {
             console.warn('⚠️ Auth initialization failed:', error.message)
-            // Only clear auth data if it's actually invalid, not if it's a network error
-            if (error.message?.includes('401') || error.message?.includes('403')) {
+            // For 401/403 errors or "Unauthenticated" messages, clear auth data
+            if (error.message?.includes('401') || 
+                error.message?.includes('403') || 
+                error.message?.includes('Unauthenticated')) {
                 Logger.warn('Clearing invalid auth data')
-                authService.logout()
+                // Don't call logout API, just clear local data
+                localStorage.removeItem('auth_token')
+                localStorage.removeItem('auth_user')
+                localStorage.removeItem('auth_permissions')
             } else {
                 Logger.warn('Network error during auth check, keeping existing auth data')
             }
@@ -139,10 +147,10 @@ class Application {
         if (link && this.shouldHandleInternally(link)) {
             event.preventDefault()
 
-            // NOWE: Obsługa hash links
+            // Handle hash links
             if (link.href.includes('#/')) {
                 const hashIndex = link.href.indexOf('#/')
-                const hashPath = link.href.substring(hashIndex + 1) // Pobierz część po #
+                const hashPath = link.href.substring(hashIndex + 1) // Get part after #
                 Logger.debug('Navigating to hash path:', hashPath)
                 this.router.navigate(hashPath)
             } else {

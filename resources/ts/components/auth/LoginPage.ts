@@ -2,6 +2,7 @@
 import { authService } from '@services/AuthService'
 import type { RouteComponent } from '@router/routes'
 import { navigate } from '@/utils/navigation'
+import { PasswordToggleHelper } from '@/utils/PasswordToggleHelper'
 
 export class LoginPage implements RouteComponent {
     private form: HTMLFormElement | null = null
@@ -39,7 +40,12 @@ export class LoginPage implements RouteComponent {
                         </div>
                         <div class="form-group">
                             <label for="password">Hasło</label>
-                            <input type="password" id="password" name="password" class="form-control" required>
+                            <div class="password-input-container">
+                                <input type="password" id="password" name="password" class="form-control" required>
+                                <button type="button" class="password-toggle" id="password-toggle" aria-label="Pokaż/ukryj hasło">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
                             <div class="error-message" id="passwordError">Hasło jest wymagane</div>
                         </div>
                         <div class="form-options">
@@ -72,6 +78,9 @@ export class LoginPage implements RouteComponent {
         this.form = container.querySelector('#loginForm') as HTMLFormElement
         this.form?.addEventListener('submit', this.handleSubmit)
 
+        // Setup password toggle
+        PasswordToggleHelper.setupPasswordToggle('#password', '#password-toggle')
+
         // Handle notification close
         const closeBtn = container.querySelector('.login-notification-close')
         closeBtn?.addEventListener('click', (e) => {
@@ -86,7 +95,7 @@ export class LoginPage implements RouteComponent {
             window.history.replaceState({}, document.title, url.pathname)
         })
 
-        // Dodatkowo: wyczyść hash jeśli istnieje (dla SPA z hash routing)
+        // Additionally: clear hash if it exists (for SPA with hash routing)
         if (window.location.hash.includes('?')) {
             const hashPath = window.location.hash.split('?')[0]
             window.history.replaceState({}, document.title, window.location.pathname + hashPath)
@@ -131,17 +140,17 @@ export class LoginPage implements RouteComponent {
                 remember: rememberInput.checked
             })
 
-            // Pobierz dane użytkownika po zalogowaniu
+            // Get user data after login
             const user = authService.getUser()
 
             if (user) {
                 const intendedUrl = (window as any).router?.getIntendedUrl()
 
                 if (intendedUrl) {
-                    // Przekieruj do intended URL
+                    // Redirect to intended URL
                     navigate.to(intendedUrl)
                 } else {
-                    // Określ dashboard na podstawie roli
+                    // Determine dashboard based on role
                     let dashboardUrl = '/'
 
                     switch (user.role) {
@@ -161,18 +170,18 @@ export class LoginPage implements RouteComponent {
                             dashboardUrl = '/'
                     }
 
-                    // Przekieruj na odpowiedni dashboard
+                    // Redirect to appropriate dashboard
                     navigate.to(dashboardUrl)
                 }
             } else {
-                // Fallback - jeśli z jakiegoś powodu nie ma użytkownika
+                // Fallback - if for some reason there's no user
                 navigate.to('/')
             }
 
         } catch (err: any) {
             const msg = err.message || 'Błąd logowania'
 
-            // Wyświetl błąd użytkownikowi
+            // Display error to user
             document.dispatchEvent(new CustomEvent('notification:show', {
                 detail: {
                     type: 'error',
@@ -181,7 +190,7 @@ export class LoginPage implements RouteComponent {
                 }
             }))
 
-            // Reset przycisku
+            // Reset button
             button.disabled = false
             spinner.style.display = 'none'
             buttonText.style.display = 'inline'
