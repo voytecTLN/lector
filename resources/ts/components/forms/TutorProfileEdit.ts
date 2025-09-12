@@ -61,32 +61,17 @@ export class TutorProfileEdit implements RouteComponent {
     }
 
     async mount(container: HTMLElement): Promise<void> {
-        console.log('🔥 TutorProfileEdit mount called', { 
-            container, 
-            containerId: container?.id, 
-            containerClass: container?.className,
-            isMounted: this.isMounted
-        })
-        
         // Only check per-instance mounting
         if (this.isMounted) {
-            console.log('⚠️ TutorProfileEdit instance already mounted, skipping...')
             return
         }
         
         this.isMounted = true
         this.container = container
         this.form = container.querySelector('#tutor-profile-form')
-        
-        console.log('🔥 Form search results:', { 
-            form: this.form, 
-            formId: this.form?.id,
-            containerHTML: container?.innerHTML.substring(0, 200) + '...'
-        })
 
         // Initialize utilities
         if (this.form) {
-            console.log('✅ Form found, initializing utilities')
             this.validationHandler = new FormValidationHandler(this.form)
             this.passwordValidator = new PasswordValidator(this.form, { 
                 isEditMode: true, 
@@ -111,10 +96,6 @@ export class TutorProfileEdit implements RouteComponent {
     }
 
     unmount(): void {
-        console.log('🔥 TutorProfileEdit UNMOUNT called', { 
-            isMounted: this.isMounted
-        })
-        
         this.isMounted = false
         
         this.validationHandler?.destroy()
@@ -400,14 +381,8 @@ export class TutorProfileEdit implements RouteComponent {
     }
 
     private async loadProfile(): Promise<void> {
-        console.log('🔥 TutorProfileEdit loadProfile called', { 
-            isLoadingProfile: this.isLoadingProfile,
-            hasProfile: !!this.profile 
-        })
-        
         // Prevent multiple concurrent loads
         if (this.isLoadingProfile) {
-            console.log('⚠️ Profile already loading, skipping...')
             return
         }
         
@@ -424,12 +399,9 @@ export class TutorProfileEdit implements RouteComponent {
         try {
             this.loadingManager?.showLoading()
 
-            console.log('🔥 Fetching profile data...')
             this.profile = await this.tutorService.getProfile()
-            console.log('🔥 Profile data received:', this.profile)
 
             this.loadingManager?.showContent()
-            console.log('🔥 Calling fillForm...')
             this.fillForm()
             this.setupForm()
 
@@ -445,7 +417,6 @@ export class TutorProfileEdit implements RouteComponent {
     private fillForm(): void {
         // Re-find form if it's null (might have been cleared by unmount)
         if (!this.form && this.container) {
-            console.log('🔧 Re-finding form element after unmount')
             this.form = this.container.querySelector('#tutor-profile-form')
         }
         
@@ -743,7 +714,6 @@ export class TutorProfileEdit implements RouteComponent {
                 
                 // Also need to handle arrays properly - rename them without brackets for Laravel
                 const languages = formData.getAll('languages[]')
-                console.log('🔍 DEBUG: Languages found in formData:', languages)
                 formData.delete('languages[]')
                 languages.forEach(lang => {
                     formData.append('languages[]', lang)
@@ -778,7 +748,6 @@ export class TutorProfileEdit implements RouteComponent {
             }
 
             const response = await this.tutorService.updateProfile(updateData)
-            console.log('🔍 DEBUG: Backend response:', response)
             
             NotificationService.success('Profil został zaktualizowany')
             
@@ -834,7 +803,6 @@ export class TutorProfileEdit implements RouteComponent {
 
         // Array fields - handle them even if empty to clear existing values
         data.languages = formData.getAll('languages[]')
-        console.log('🔍 DEBUG: Final languages for API:', data.languages)
         
         const specializations = formData.getAll('specializations[]')
         // Validate specializations count (allow all 8 available options)

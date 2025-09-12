@@ -29,17 +29,14 @@ export class TutorDashboard implements RouteComponent {
     private renderedElement: HTMLElement | null = null
 
     constructor() {
-        console.log('🔧 TutorDashboard constructor - using singleton pattern')
     }
 
     async render(): Promise<HTMLElement> {
         // Return cached element if already rendered (singleton pattern)
         if (this.renderedElement) {
-            console.log('🔄 Returning cached rendered element')
             return this.renderedElement
         }
         
-        console.log('🎨 Creating new rendered element')
         const user = authService.getUser()
         const el = document.createElement('div')
         el.className = 'tutor-container'
@@ -157,11 +154,6 @@ export class TutorDashboard implements RouteComponent {
     }
 
     mount(container: HTMLElement): void {
-        console.log('🔧 TutorDashboard mount called', {
-            hasContainer: !!this.container,
-            newContainer: container,
-            currentSection: this.currentSection
-        })
         
         // Always read URL section to support Ctrl+R and direct navigation
         let section = 'dashboard'
@@ -176,22 +168,15 @@ export class TutorDashboard implements RouteComponent {
             }
         }
         
-        console.log('🎬 Mount - section from URL:', section, { 
-            isFirstMount: !hasEverMounted,
-            currentSection: this.currentSection
-        })
         
         // If already mounted with the same container, only update section if it changed
         if (this.container === container) {
-            console.log('🔄 Same container, checking if section changed')
             if (this.currentSection !== section) {
-                console.log('📍 Section changed, updating content', { from: this.currentSection, to: section })
                 this.currentSection = section
                 globalCurrentSection = section
                 this.updateActiveNavLink()
                 this.loadSectionContent()
             } else {
-                console.log('⏭️ Same section, no update needed')
             }
             return
         }
@@ -221,7 +206,6 @@ export class TutorDashboard implements RouteComponent {
     }
 
     unmount(): void {
-        console.log('⚠️ TutorDashboard unmount called - this should not happen with singleton pattern!')
         
         // DO NOT unmount anything when using singleton pattern
         // The router should skip calling unmount for the same component instance
@@ -281,14 +265,12 @@ export class TutorDashboard implements RouteComponent {
         // Debounce rapid calls
         const now = Date.now()
         if (now - this.lastLoadTime < this.loadDebounceMs) {
-            console.log('⏱️ Debouncing rapid section load')
             return
         }
         this.lastLoadTime = now
         
         // Prevent concurrent loads
         if (this.isLoadingSection) {
-            console.log('⚠️ Section load already in progress, skipping...')
             return
         }
         
@@ -297,7 +279,6 @@ export class TutorDashboard implements RouteComponent {
         
         if (!contentDiv) return
         
-        console.log('🔄 Starting section load:', this.currentSection)
         this.isLoadingSection = true
         
         // Clean up previous components
@@ -380,7 +361,6 @@ export class TutorDashboard implements RouteComponent {
     }
 
     private async loadDashboardContent(): Promise<void> {
-        console.log('📊 Loading dashboard content')
         const contentDiv = this.container?.querySelector('#tutorContent')
         if (!contentDiv) {
             console.error('❌ No content div found for dashboard')
@@ -601,33 +581,24 @@ export class TutorDashboard implements RouteComponent {
     }
 
     private async loadProfileContent(): Promise<void> {
-        console.log('📋 loadProfileContent called', {
-            hasProfileComponent: !!this.profileComponent,
-            isLoadingSection: this.isLoadingSection,
-            currentSection: this.currentSection
-        })
         
         // Double-check we're still on profile section
         if (this.currentSection !== 'profile') {
-            console.log('⚠️ Section changed, aborting profile load')
             return
         }
         
         const contentDiv = this.container?.querySelector('#tutorContent')
         if (!contentDiv) {
-            console.log('⚠️ No content div found')
             return
         }
         
         // Clean up previous profile component if exists
         if (this.profileComponent) {
-            console.log('🔧 Cleaning up previous profile component')
             this.profileComponent.unmount()
             this.profileComponent = null
         }
         
         // Use TutorProfileEdit component
-        console.log('🔧 Creating new TutorProfileEdit instance')
         const component = new TutorProfileEdit()
         const profileEl = await component.render()
         
@@ -637,9 +608,7 @@ export class TutorDashboard implements RouteComponent {
         // Store reference before mounting
         this.profileComponent = component
         
-        console.log('🔧 Mounting TutorProfileEdit')
         await component.mount(profileEl)
-        console.log('✅ Profile component mounted successfully')
     }
 
     private async loadIssueReportContent(): Promise<void> {

@@ -51,14 +51,6 @@ export class Router {
     }
 
     async navigate(path: string, replace: boolean = false): Promise<boolean> {
-        // DEBUG: Log all navigation attempts
-        console.log('🧭 Router.navigate called:', { 
-            path, 
-            normalizedPath: RouteUtils.normalize(path), 
-            replace,
-            currentHash: window.location.hash
-        })
-        
         // Normalize path using RouteUtils
         const normalizedPath = RouteUtils.normalize(path)
 
@@ -255,7 +247,6 @@ export class Router {
                 console.error('Error unmounting component:', error)
             }
         } else if (this.currentRoute?.component === matchedRoute.component) {
-            console.log('🔄 Same component instance, skipping unmount (singleton)')
         }
 
         // Show loading state
@@ -385,13 +376,6 @@ export class Router {
     // Debug method
     debugRouting(enabled: boolean = true): void {
         if (enabled) {
-            console.log('Router Debug Mode Enabled')
-            console.log('Current route:', this.currentRoute)
-            console.log('Registered guards:', this.guards.map(g => g.name))
-            console.log('Navigation queue length:', this.navigationQueue.length)
-            console.log('Is navigating:', this.isNavigating)
-            console.log('Intended URL:', this.intendedUrl)
-
             window.__ROUTER_DEBUG__ = true
         } else {
             (window as any).__ROUTER_DEBUG__ = false

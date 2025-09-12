@@ -13,7 +13,6 @@ export class NavigationUtils {
      */
     static init(router: Router): void {
         NavigationUtils.router = router
-        console.log('🧭 Navigation utilities initialized')
     }
 
     /**
@@ -47,7 +46,6 @@ export class NavigationUtils {
             const router = NavigationUtils.getRouter()
             const normalizedPath = RouteUtils.normalize(path)
             
-            console.log(`🧭 NavigationUtils.to: ${path} -> ${normalizedPath}`, { replace })
             
             return await router.navigate(normalizedPath, replace)
         } catch (error) {
@@ -94,7 +92,6 @@ export class NavigationUtils {
      * Navigate to external URL
      */
     static external(url: string, newTab: boolean = false): void {
-        console.log(`🌐 External navigation: ${url}`, { newTab })
         
         if (newTab) {
             const link = document.createElement('a')

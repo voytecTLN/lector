@@ -189,7 +189,6 @@ export class StudentDashboard implements RouteComponent {
                 // Let browser handle navigation naturally - no preventDefault()
                 const section = link.getAttribute('data-section')
                 if (section) {
-                    console.log('🔍 StudentDashboard nav click:', section)
                     // Browser will navigate to href, which will trigger URL change and proper loading
                 }
             })
