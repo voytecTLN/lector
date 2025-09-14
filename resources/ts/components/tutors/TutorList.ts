@@ -166,7 +166,6 @@ export class TutorList implements RouteComponent {
                                             <th>Imię i nazwisko</th>
                                             <th>Email</th>
                                             <th>Języki</th>
-                                            <th>Doświadczenie</th>
                                             <th>Status</th>
                                             <th>Weryfikacja</th>
                                             <th>Przyjmuje studentów</th>
@@ -326,7 +325,7 @@ export class TutorList implements RouteComponent {
         if (this.tutors.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center text-muted py-4">
+                    <td colspan="7" class="text-center text-muted py-4">
                         <i class="bi bi-inbox display-4 d-block mb-2"></i>
                         Brak lektorów do wyświetlenia
                     </td>
@@ -360,9 +359,6 @@ export class TutorList implements RouteComponent {
                 <td>${tutor.email}</td>
                 <td>
                     ${profile ? this.tutorService.formatLanguageNames(profile.languages || []) : '-'}
-                </td>
-                <td>
-                    ${profile ? `${profile.years_experience} lat` : '-'}
                 </td>
                 <td>${this.getStatusBadge(tutor.status)}</td>
                 <td>${this.getVerificationBadge(profile?.verification_status, profile?.is_verified)}</td>

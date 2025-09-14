@@ -50,8 +50,8 @@ class LessonBookingConfirmation extends Notification implements ShouldQueue
         $this->lesson->load(['student', 'tutor']);
 
         $subject = $this->recipientType === 'student' 
-            ? 'Potwierdzenie rezerwacji lekcji #' . $this->lesson->id
-            : 'Nowa rezerwacja lekcji #' . $this->lesson->id;
+            ? 'Potwierdzenie rezerwacji lekcji'
+            : 'Nowa rezerwacja lekcji';
 
         return (new MailMessage)
             ->subject($subject . ' - Platforma Lektorów')

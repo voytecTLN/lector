@@ -48,8 +48,8 @@ class Lesson extends Model
 
     protected $casts = [
         'lesson_date' => 'date',
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i',
+        'start_time' => 'string',
+        'end_time' => 'string',
         'cancelled_at' => 'datetime',
         'feedback_submitted_at' => 'datetime',
         'status_updated_at' => 'datetime',
@@ -61,6 +61,22 @@ class Lesson extends Model
         'student_rating' => 'integer'
     ];
 
+    /**
+     * Helper method to create full lesson datetime
+     */
+    public function getLessonDateTime(): Carbon
+    {
+        return Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->start_time);
+    }
+    
+    /**
+     * Helper method to create lesson end datetime
+     */
+    public function getLessonEndDateTime(): Carbon
+    {
+        return Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->end_time);
+    }
+
     // Status constants
     const STATUS_SCHEDULED = 'scheduled';
     const STATUS_IN_PROGRESS = 'in_progress';
@@ -69,6 +85,7 @@ class Lesson extends Model
     const STATUS_NO_SHOW_STUDENT = 'no_show_student';
     const STATUS_NO_SHOW_TUTOR = 'no_show_tutor';
     const STATUS_TECHNICAL_ISSUES = 'technical_issues';
+    const STATUS_NOT_STARTED = 'not_started';
 
     const STATUSES = [
         self::STATUS_SCHEDULED,
@@ -77,7 +94,8 @@ class Lesson extends Model
         self::STATUS_CANCELLED,
         self::STATUS_NO_SHOW_STUDENT,
         self::STATUS_NO_SHOW_TUTOR,
-        self::STATUS_TECHNICAL_ISSUES
+        self::STATUS_TECHNICAL_ISSUES,
+        self::STATUS_NOT_STARTED
     ];
 
     // Lesson type constants
@@ -163,7 +181,17 @@ class Lesson extends Model
             return false;
         }
 
-        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->start_time->format('H:i:s'));
+        // Check if lesson hasn't started yet
+        return now()->lessThanOrEqualTo($this->getLessonDateTime());
+    }
+
+    public function isCancellationFree(): bool
+    {
+        if ($this->status !== self::STATUS_SCHEDULED) {
+            return false;
+        }
+
+        $lessonDateTime = $this->getLessonDateTime();
         $hoursUntilLesson = now()->diffInHours($lessonDateTime, false);
 
         return $hoursUntilLesson >= 12;
@@ -174,6 +202,8 @@ class Lesson extends Model
         if (!$this->canBeCancelled()) {
             return false;
         }
+
+        $isFreeCancel = $this->isCancellationFree();
 
         $this->update([
             'status' => self::STATUS_CANCELLED,
@@ -206,10 +236,11 @@ class Lesson extends Model
             }
         }
 
-        // Return hour to package if applicable
-        if ($this->packageAssignment) {
+        // Return hour to package only if it's a free cancellation (12+ hours before)
+        if ($this->packageAssignment && $isFreeCancel) {
             $this->packageAssignment->increment('hours_remaining');
         }
+        // If it's less than 12 hours - hour is NOT returned (student loses the hour)
 
         return true;
     }
@@ -257,8 +288,8 @@ class Lesson extends Model
     public function getFormattedDateTime(): string
     {
         return $this->lesson_date->format('d.m.Y') . ' ' . 
-               Carbon::parse($this->start_time)->format('H:i') . '-' . 
-               Carbon::parse($this->end_time)->format('H:i');
+               substr($this->start_time, 0, 5) . '-' . 
+               substr($this->end_time, 0, 5);
     }
 
     public function getLessonTypeName(): string
@@ -268,14 +299,12 @@ class Lesson extends Model
 
     public function isUpcoming(): bool
     {
-        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->start_time->format('H:i:s'));
-        return $lessonDateTime->isFuture() && $this->status === self::STATUS_SCHEDULED;
+        return $this->getLessonDateTime()->isFuture() && $this->status === self::STATUS_SCHEDULED;
     }
 
     public function isPast(): bool
     {
-        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->end_time->format('H:i:s'));
-        return $lessonDateTime->isPast();
+        return $this->getLessonEndDateTime()->isPast();
     }
 
     public function isToday(): bool
@@ -302,12 +331,11 @@ class Lesson extends Model
             return false;
         }
 
-        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->start_time->format('H:i:s'));
+        $lessonDateTime = $this->getLessonDateTime();
         $minutesUntilLesson = now()->diffInMinutes($lessonDateTime, false);
 
-        // Lektor może rozpocząć 15 minut wcześniej
-        // TODO: Dla testów zmieniono na 60 minut
-        return $minutesUntilLesson <= 60 && $minutesUntilLesson >= -120;
+        // Lektor może rozpocząć 11 minut wcześniej
+        return $minutesUntilLesson <= 11 && $minutesUntilLesson >= -80;
     }
 
     public function canJoinMeeting(): bool
@@ -316,12 +344,11 @@ class Lesson extends Model
             return false;
         }
 
-        $lessonDateTime = Carbon::parse($this->lesson_date->format('Y-m-d') . ' ' . $this->start_time->format('H:i:s'));
+        $lessonDateTime = $this->getLessonDateTime();
         $minutesUntilLesson = now()->diffInMinutes($lessonDateTime, false);
 
         // Student może dołączyć 10 minut wcześniej
-        // TODO: Dla testów zmieniono na 60 minut
-        return $minutesUntilLesson <= 60 && $minutesUntilLesson >= -120;
+        return $minutesUntilLesson <= 10 && $minutesUntilLesson >= -80;
     }
 
     public function getActiveMeetingParticipants()

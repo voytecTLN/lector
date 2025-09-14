@@ -142,7 +142,7 @@ export class StudentLessons {
                 <div class="col-md-6">
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle me-2"></i>
-                        <strong>Pamiętaj:</strong> Lekcje można anulować najpóźniej 12 godzin przed rozpoczęciem.
+                        <strong>Pamiętaj:</strong> Lekcje możesz anulować do momentu rozpoczęcia. Anulowanie 12+ godzin wcześniej zwraca godzinę do pakietu.
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -185,6 +185,28 @@ export class StudentLessons {
         `
     }
     
+    private formatTime(timeString: string): string {
+        // Extract only time part from full datetime string
+        return new Date(timeString).toTimeString().substring(0, 5) // "HH:MM"
+    }
+
+    private static formatTimeStatic(timeString: string): string {
+        // Handle different time formats from API
+        if (!timeString) return '00:00'
+        
+        // If it's already in HH:MM:SS or HH:MM format, extract HH:MM
+        if (timeString.includes(':') && !timeString.includes('T')) {
+            return timeString.substring(0, 5) // "HH:MM"
+        }
+        
+        // If it's a full datetime ISO string, parse and extract time
+        try {
+            return new Date(timeString).toTimeString().substring(0, 5)
+        } catch {
+            return timeString.substring(0, 5) // Fallback
+        }
+    }
+
     private canCancelLesson(lesson: any): boolean {
         // Handle different date formats that might come from the API
         let lessonDateStr = lesson.lesson_date
@@ -202,7 +224,10 @@ export class StudentLessons {
             startTimeStr = startTimeStr.substring(0, 5)
         }
         
-        const lessonDateTime = new Date(`${lessonDateStr}T${startTimeStr}`)
+        // Extract time part from start_time (now it's just "HH:MM:SS" string)
+        const startTimeOnly = lesson.start_time.substring(0, 5) // "HH:MM"
+        const lessonDateOnly = lesson.lesson_date.split('T')[0] // "YYYY-MM-DD"
+        const lessonDateTime = new Date(`${lessonDateOnly}T${startTimeOnly}:00`)
         const now = new Date()
         const hoursUntilLesson = (lessonDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
         
@@ -291,7 +316,7 @@ export class StudentLessons {
                                 </div>
                             </div>
                             <div class="col-md-2">
-                                <div class="fw-bold">${lesson.start_time} - ${lesson.end_time}</div>
+                                <div class="fw-bold">${this.formatTime(lesson.start_time)} - ${this.formatTime(lesson.end_time)}</div>
                                 <div class="small text-muted">${lesson.duration_minutes} min</div>
                             </div>
                             <div class="col-md-3">
@@ -356,6 +381,18 @@ export class StudentLessons {
                 return '<span class="badge bg-danger">Anulowana</span>'
             case 'no_show':
                 return '<span class="badge bg-warning">Nieobecność</span>'
+            case 'not_started':
+                return '<span class="badge bg-dark">Nie rozpoczęta</span>'
+            case 'scheduled':
+                return '<span class="badge bg-primary">Zaplanowana</span>'
+            case 'in_progress':
+                return '<span class="badge bg-info">W trakcie</span>'
+            case 'technical_issues':
+                return '<span class="badge bg-secondary">Problemy techniczne</span>'
+            case 'no_show_student':
+                return '<span class="badge bg-warning text-dark">Student nieobecny</span>'
+            case 'no_show_tutor':
+                return '<span class="badge bg-warning text-dark">Lektor nieobecny</span>'
             default:
                 return '<span class="badge bg-secondary">Nieznany</span>'
         }
@@ -363,13 +400,22 @@ export class StudentLessons {
     
     // Static methods for global access
     static async cancelLesson(lessonId: number): Promise<void> {
+        let formValues: any = null
+        
         try {
             // Najpierw pobierz szczegóły lekcji aby sprawdzić czas
             const response = await LessonService.getLessonDetails(lessonId)
-            const lesson = response.data
+            const lesson = response.data?.lesson || response.lesson || response.data || response
+            
+            if (!lesson || !lesson.lesson_date) {
+                throw new Error('Nie udało się pobrać szczegółów lekcji')
+            }
             
             // Sprawdź czy można anulować bez konsekwencji
-            const lessonDateTime = new Date(`${lesson.lesson_date}T${lesson.start_time}`)
+            // Extract time part from start_time (now it's just "HH:MM:SS" string)
+            const startTimeOnly = lesson.start_time.substring(0, 5) // "HH:MM"
+            const lessonDateOnly = lesson.lesson_date.split('T')[0] // "YYYY-MM-DD" 
+            const lessonDateTime = new Date(`${lessonDateOnly}T${startTimeOnly}:00`)
             const now = new Date()
             const hoursUntilLesson = (lessonDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
             const canCancelWithoutPenalty = hoursUntilLesson >= 12
@@ -378,27 +424,27 @@ export class StudentLessons {
             const warningHtml = canCancelWithoutPenalty ? 
                 `<div class="alert alert-info mt-3">
                     <i class="bi bi-info-circle me-2"></i>
-                    Możesz anulować tę lekcję bez żadnych konsekwencji.
+                    <strong>Anulowanie bezpłatne:</strong> Godzina zostanie zwrócona do Twojego pakietu.
                 </div>` :
-                `<div class="alert alert-danger mt-3">
+                `<div class="alert alert-warning mt-3">
                     <i class="bi bi-exclamation-triangle me-2"></i>
                     <strong>Uwaga!</strong> Anulowanie lekcji na mniej niż 12 godzin przed rozpoczęciem:
-                    <ul class="mb-0 mt-2">
-                        <li>Może skutkować utratą opłaty za lekcję</li>
-                        <li>Będzie odnotowane w Twojej historii</li>
-                        <li>Zbyt częste późne anulowania mogą wpłynąć na Twój dostęp do rezerwacji</li>
-                    </ul>
+                    <div class="mt-2" style="text-align: left;">
+                        • Godzina zostanie odliczona od Twojego pakietu<br>
+                        • Nie otrzymasz zwrotu godziny<br>
+                        • Nadal możesz anulować lekcję
+                    </div>
                 </div>`
             
             // Użyj SweetAlert2 dla lepszego UX
-            const { value: formValues } = await Swal.fire({
+            const { value } = await Swal.fire({
                 title: 'Anulowanie lekcji',
                 html: `
                     <div class="text-left">
                         <p class="mb-3">Czy na pewno chcesz anulować lekcję #${lessonId}?</p>
                         <div class="mb-3">
                             <strong>Data:</strong> ${new Date(lesson.lesson_date).toLocaleDateString('pl-PL')}<br>
-                            <strong>Godzina:</strong> ${lesson.start_time} - ${lesson.end_time}<br>
+                            <strong>Godzina:</strong> ${StudentLessons.formatTimeStatic(lesson.start_time)} - ${StudentLessons.formatTimeStatic(lesson.end_time)}<br>
                             <strong>Lektor:</strong> ${lesson.tutor?.name || 'Nieznany'}
                         </div>
                         <div class="form-group">
@@ -419,18 +465,19 @@ export class StudentLessons {
                 preConfirm: () => {
                     const reason = (document.getElementById('cancel-reason') as HTMLTextAreaElement)?.value
                     if (!canCancelWithoutPenalty && !reason) {
-                        Swal.showValidationMessage('Musisz podać powód anulowania lekcji poniżej 12h')
+                        Swal.showValidationMessage('Musisz podać powód anulowania przy utracie godziny z pakietu')
                         return false
                     }
                     return { reason: reason || 'Anulowanie przez studenta' }
                 }
             })
             
+            formValues = value
             if (!formValues) return
         } catch (error) {
             console.error('Error fetching lesson details:', error)
             // Jeśli nie uda się pobrać szczegółów, użyj standardowego dialogu
-            var formValues = await Swal.fire({
+            const { value: fallbackFormValues } = await Swal.fire({
                 title: 'Anulowanie lekcji',
                 html: `
                     <div class="text-left">
@@ -441,7 +488,7 @@ export class StudentLessons {
                         </div>
                         <div class="alert alert-warning mt-3">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            <strong>Uwaga:</strong> Anulowanie lekcji na mniej niż 12 godzin przed rozpoczęciem może skutkować konsekwencjami.
+                            <strong>Uwaga:</strong> Anulowanie na mniej niż 12 godzin spowoduje odliczenie godziny od pakietu.
                         </div>
                     </div>
                 `,
@@ -455,8 +502,9 @@ export class StudentLessons {
                     const reason = (document.getElementById('cancel-reason') as HTMLTextAreaElement)?.value
                     return { reason: reason || 'Anulowanie przez studenta' }
                 }
-            }).then(result => result.value)
+            })
             
+            formValues = fallbackFormValues
             if (!formValues) return
         }
 

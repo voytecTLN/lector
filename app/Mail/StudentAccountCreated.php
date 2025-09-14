@@ -11,7 +11,7 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Password;
 
-class TutorAccountCreated extends Mailable implements ShouldQueue
+class StudentAccountCreated extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -19,7 +19,7 @@ class TutorAccountCreated extends Mailable implements ShouldQueue
      * Create a new message instance.
      */
     public function __construct(
-        public User $tutor,
+        public User $student,
         public string $resetUrl
     ) {
         //
@@ -41,7 +41,7 @@ class TutorAccountCreated extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'emails.auth.tutor-account-created',
+            view: 'emails.auth.student-account-created',
         );
     }
 

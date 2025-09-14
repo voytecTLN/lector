@@ -190,4 +190,59 @@ export class BadgeRenderer {
 
         return this.render(role, config, 'Nieznana rola');
     }
+
+    /**
+     * Render lesson status badge
+     */
+    static lessonStatus(status: string | undefined): string {
+        const config: BadgeConfig = {
+            scheduled: {
+                label: 'Zaplanowana',
+                className: 'badge bg-primary',
+                icon: 'bi-calendar-event'
+            },
+            in_progress: {
+                label: 'W trakcie',
+                className: 'badge bg-info',
+                icon: 'bi-play-circle'
+            },
+            completed: {
+                label: 'Zakończona',
+                className: 'badge bg-success',
+                icon: 'bi-check-circle'
+            },
+            cancelled: {
+                label: 'Anulowana',
+                className: 'badge bg-danger',
+                icon: 'bi-x-circle'
+            },
+            not_started: {
+                label: 'Nie rozpoczęta',
+                className: 'badge bg-dark',
+                icon: 'bi-pause-circle'
+            },
+            no_show: {
+                label: 'Nieobecność',
+                className: 'badge bg-warning text-dark',
+                icon: 'bi-exclamation-triangle'
+            },
+            no_show_student: {
+                label: 'Student nieobecny',
+                className: 'badge bg-warning text-dark',
+                icon: 'bi-person-x'
+            },
+            no_show_tutor: {
+                label: 'Lektor nieobecny',
+                className: 'badge bg-warning text-dark',
+                icon: 'bi-person-slash'
+            },
+            technical_issues: {
+                label: 'Problemy techniczne',
+                className: 'badge bg-secondary',
+                icon: 'bi-exclamation-diamond'
+            }
+        };
+
+        return this.render(status, config, 'Nieznany status');
+    }
 }

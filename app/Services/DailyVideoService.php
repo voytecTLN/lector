@@ -283,6 +283,57 @@ class DailyVideoService
     }
 
     /**
+     * Sprawdza czy pokój jest pusty (brak aktywnych uczestników)
+     * 
+     * @param string $roomName
+     * @return bool
+     */
+    public function isRoomEmpty(string $roomName): bool
+    {
+        $participants = $this->getParticipants($roomName);
+        return empty($participants);
+    }
+
+    /**
+     * Sprawdza czy pokój był pusty przez określony czas
+     * 
+     * @param string $roomName
+     * @param int $emptyMinutes - ile minut pokój powinien być pusty
+     * @return bool
+     */
+    public function hasRoomBeenEmpty(string $roomName, int $emptyMinutes = 10): bool
+    {
+        // Sprawdź obecny stan pokoju
+        if (!$this->isRoomEmpty($roomName)) {
+            return false;
+        }
+        
+        // Znajdź lekcję dla tego pokoju
+        $lesson = \App\Models\Lesson::where('meeting_room_name', $roomName)->first();
+        if (!$lesson) {
+            return false;
+        }
+        
+        // Sprawdź czy wszyscy uczestnicy opuścili pokój więcej niż X minut temu
+        $lastActiveSession = $lesson->meetingSessions()
+            ->whereNotNull('left_at')
+            ->orderBy('left_at', 'desc')
+            ->first();
+            
+        if (!$lastActiveSession) {
+            // Jeśli nie ma żadnych sesji z left_at, sprawdź czy są aktywne sesje
+            $activeSessions = $lesson->meetingSessions()
+                ->whereNull('left_at')
+                ->count();
+                
+            return $activeSessions === 0;
+        }
+        
+        // Sprawdź czy ostatnia osoba opuściła pokój więcej niż X minut temu
+        return now()->diffInMinutes($lastActiveSession->left_at) >= $emptyMinutes;
+    }
+
+    /**
      * Pobiera URL do nagrania (jeśli dostępne)
      * 
      * @param string $roomName

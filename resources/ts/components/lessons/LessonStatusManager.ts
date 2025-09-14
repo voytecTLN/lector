@@ -28,6 +28,7 @@ export class LessonStatusManager {
             in_progress: 'W trakcie',
             completed: 'Zakończona',
             cancelled: 'Anulowana',
+            not_started: 'Nie rozpoczęta',
             no_show_student: 'Student nieobecny',
             no_show_tutor: 'Lektor nieobecny',
             technical_issues: 'Problemy techniczne'
@@ -162,6 +163,7 @@ export class LessonStatusManager {
                 <ul class="mb-0">
                     <li><strong>Zakończona</strong> - Lekcja odbyła się pomyślnie</li>
                     <li><strong>Anulowana</strong> - Lekcja została odwołana</li>
+                    <li><strong>Nie rozpoczęta</strong> - Lekcja nie rozpoczęła się po okresie oczekiwania</li>
                     <li><strong>Student nieobecny</strong> - Student nie pojawił się na lekcji</li>
                     <li><strong>Lektor nieobecny</strong> - Lektor nie pojawił się (godziny zostaną zwrócone)</li>
                     <li><strong>Problemy techniczne</strong> - Lekcja nie mogła się odbyć z powodu problemów technicznych</li>
@@ -179,6 +181,7 @@ export class LessonStatusManager {
             in_progress: 'bg-info',
             completed: 'bg-success',
             cancelled: 'bg-danger',
+            not_started: 'bg-dark',
             no_show_student: 'bg-warning',
             no_show_tutor: 'bg-warning',
             technical_issues: 'bg-secondary'
@@ -195,6 +198,7 @@ export class LessonStatusManager {
             in_progress: 'W trakcie',
             completed: 'Zakończona',
             cancelled: 'Anulowana',
+            not_started: 'Nie rozpoczęta',
             no_show_student: 'Student nieobecny',
             no_show_tutor: 'Lektor nieobecny',
             technical_issues: 'Problemy techniczne'

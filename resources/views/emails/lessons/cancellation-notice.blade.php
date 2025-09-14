@@ -3,12 +3,18 @@
 @section('title', 'Anulowanie lekcji')
 
 @section('content')
-    <h2 style="color: #dc3545;">PILNE: Anulowanie lekcji #{{ $lesson->id }}</h2>
+    <h2 style="color: #dc3545;">{{ $isUrgent ? 'PILNE: Anulowanie lekcji' : 'Anulowanie lekcji' }}</h2>
     
     <p>Witaj {{ $recipient->name }},</p>
     
     <div class="alert alert-warning">
-        <strong>Twoja lekcja została anulowana</strong><br>
+        <strong>
+            @if($cancelledBy && $cancelledBy->role === 'tutor')
+                Twoja lekcja została anulowana przez lektora
+            @else
+                Twoja lekcja została anulowana
+            @endif
+        </strong><br>
         @if($cancelledBy)
             Anulowane przez: {{ $cancelledBy->name }}<br>
         @endif
@@ -23,14 +29,14 @@
             <tr>
                 <td style="padding: 8px 0; color: #666;">Data:</td>
                 <td style="padding: 8px 0; color: #333; font-weight: 600;">
-                    {{ \Carbon\Carbon::parse($lesson->scheduled_at)->locale('pl')->isoFormat('dddd, D MMMM YYYY') }}
+                    {{ \Carbon\Carbon::parse($lesson->lesson_date)->locale('pl')->isoFormat('dddd, D MMMM YYYY') }}
                 </td>
             </tr>
             <tr>
                 <td style="padding: 8px 0; color: #666;">Godzina:</td>
                 <td style="padding: 8px 0; color: #333; font-weight: 600;">
-                    {{ \Carbon\Carbon::parse($lesson->scheduled_at)->format('H:i') }} - 
-                    {{ \Carbon\Carbon::parse($lesson->scheduled_at)->addMinutes($lesson->duration_minutes)->format('H:i') }}
+                    {{ \Carbon\Carbon::parse($lesson->start_time)->format('H:i') }} - 
+                    {{ \Carbon\Carbon::parse($lesson->end_time)->format('H:i') }}
                 </td>
             </tr>
             @if($recipientType === 'student')
@@ -47,11 +53,7 @@
         </table>
     </div>
     
-    @php
-        $hoursUntilLesson = \Carbon\Carbon::now()->diffInHours($lesson->scheduled_at);
-    @endphp
-    
-    @if($hoursUntilLesson < 12)
+    @if($isUrgent && (!$cancelledBy || $cancelledBy->role !== 'tutor'))
         <div class="alert alert-warning">
             <strong>Uwaga:</strong> Lekcja została anulowana mniej niż 12 godzin przed rozpoczęciem. 
             Mogą obowiązywać dodatkowe opłaty zgodnie z regulaminem.

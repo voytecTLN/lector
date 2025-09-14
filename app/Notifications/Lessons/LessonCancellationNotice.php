@@ -57,12 +57,18 @@ class LessonCancellationNotice extends Notification implements ShouldQueue
         $this->lesson->load(['student', 'tutor']);
 
         // Check if cancellation is urgent (less than 12 hours before lesson)
-        $hoursUntilLesson = now()->diffInHours($this->lesson->scheduled_at);
+        try {
+            $lessonDateTime = $this->lesson->getLessonDateTime();
+            $hoursUntilLesson = now()->diffInHours($lessonDateTime);
+        } catch (\Exception $e) {
+            // If parsing fails, default to non-urgent
+            $hoursUntilLesson = 24;
+        }
         $isUrgent = $hoursUntilLesson < 12;
 
         $subject = $isUrgent 
-            ? 'PILNE: Anulowanie lekcji #' . $this->lesson->id
-            : 'Anulowanie lekcji #' . $this->lesson->id;
+            ? 'PILNE: Anulowanie lekcji'
+            : 'Anulowanie lekcji';
 
         return (new MailMessage)
             ->subject($subject . ' - Platforma Lektorów')
@@ -72,7 +78,8 @@ class LessonCancellationNotice extends Notification implements ShouldQueue
                 'recipient' => $notifiable,
                 'recipientType' => $this->recipientType,
                 'cancelledBy' => $this->cancelledBy,
-                'reason' => $this->reason
+                'reason' => $this->reason,
+                'isUrgent' => $isUrgent
             ]);
     }
 

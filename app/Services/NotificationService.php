@@ -85,6 +85,9 @@ class NotificationService
             if (config('mail.enable_notifications', true)) {
                 // Send to student
                 $lesson->student->notify(new LessonBookingConfirmation($lesson, 'student'));
+                
+                // Send to tutor
+                $lesson->tutor->notify(new LessonBookingConfirmation($lesson, 'tutor'));
             }
 
         } catch (\Exception $e) {

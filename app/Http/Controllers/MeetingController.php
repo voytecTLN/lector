@@ -6,6 +6,7 @@ use App\Models\Lesson;
 use App\Models\MeetingSession;
 use App\Services\DailyVideoService;
 use App\Services\NotificationService;
+use App\Services\LessonStatusService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +18,8 @@ class MeetingController extends BaseController
 {
     public function __construct(
         private DailyVideoService $dailyService,
-        private NotificationService $notificationService
+        private NotificationService $notificationService,
+        private LessonStatusService $lessonStatusService
     ) {}
 
     /**
@@ -27,6 +29,12 @@ class MeetingController extends BaseController
     {
         try {
             $user = Auth::user();
+            
+            // Auto-check for lessons that should have been marked as not started
+            $this->lessonStatusService->handleNoShowScenarios($lesson);
+            
+            // Reload lesson in case status was updated
+            $lesson->refresh();
             
             // Sprawdź uprawnienia - tylko lektor może rozpocząć spotkanie
             if ($user->id !== $lesson->tutor_id) {
@@ -40,7 +48,7 @@ class MeetingController extends BaseController
             if (!$lesson->canStartMeeting()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Spotkanie można rozpocząć najwcześniej 15 minut przed planowaną godziną'
+                    'message' => 'Spotkanie można rozpocząć najwcześniej 11 minut przed planowaną godziną'
                 ], 422);
             }
 
@@ -134,6 +142,12 @@ class MeetingController extends BaseController
     {
         try {
             $user = Auth::user();
+            
+            // Auto-check for lessons that should have been marked as not started
+            $this->lessonStatusService->handleNoShowScenarios($lesson);
+            
+            // Reload lesson in case status was updated
+            $lesson->refresh();
             
             // Sprawdź uprawnienia - tylko uczestnik lekcji może dołączyć
             if ($user->id !== $lesson->student_id && $user->id !== $lesson->tutor_id) {

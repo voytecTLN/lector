@@ -3,7 +3,7 @@
 @section('title', 'Potwierdzenie rezerwacji lekcji')
 
 @section('content')
-    <h2>Potwierdzenie rezerwacji lekcji #{{ $lesson->id }}</h2>
+    <h2>Potwierdzenie rezerwacji lekcji</h2>
     
     <p>Witaj {{ $recipient->name }},</p>
     
@@ -19,14 +19,14 @@
             <tr>
                 <td style="padding: 8px 0; color: #666;">Data:</td>
                 <td style="padding: 8px 0; color: #333; font-weight: 600;">
-                    {{ \Carbon\Carbon::parse($lesson->scheduled_at)->locale('pl')->isoFormat('dddd, D MMMM YYYY') }}
+                    {{ \Carbon\Carbon::parse($lesson->lesson_date)->locale('pl')->isoFormat('dddd, D MMMM YYYY') }}
                 </td>
             </tr>
             <tr>
                 <td style="padding: 8px 0; color: #666;">Godzina:</td>
                 <td style="padding: 8px 0; color: #333; font-weight: 600;">
-                    {{ \Carbon\Carbon::parse($lesson->scheduled_at)->format('H:i') }} - 
-                    {{ \Carbon\Carbon::parse($lesson->scheduled_at)->addMinutes($lesson->duration_minutes)->format('H:i') }}
+                    {{ \Carbon\Carbon::parse($lesson->start_time)->format('H:i') }} - 
+                    {{ \Carbon\Carbon::parse($lesson->end_time)->format('H:i') }}
                 </td>
             </tr>
             <tr>
@@ -59,18 +59,31 @@
             Zobacz w kalendarzu
         </a>
     </div>
-    
-    <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <p style="margin: 0; color: #856404;">
-            <strong>Przypomnienie:</strong> Lekcja odbędzie się online. 
-            Link do pokoju zostanie udostępniony 15 minut przed rozpoczęciem zajęć.
-        </p>
-    </div>
+
+    @if($recipientType === 'student')
+        <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0; color: #856404;">
+                <strong>Przypomnienie:</strong> Lekcja odbędzie się online.
+                Link do pokoju zostanie udostępniony po utworzeniu pokoju przez lektora, nie wcześniej niż 10 minut przed rozpoczęciem zajęć.
+                Panel -> Nadchodzące lekcje -> Akcje (Szczegóły)
+            </p>
+        </div>
+    @else
+        <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0; color: #856404;">
+                <strong>Przypomnienie:</strong> Lekcja odbędzie się online.
+                Link do utworzenia pokoju lekcji zostanie udostępniony 10 minut przed rozpoczęciem zajęć.
+                Kalendarz -> Szczegóły (czerwona ikona)
+                Lub
+                Nadchodzące lekcje -> Lekcja
+            </p>
+        </div>
+    @endif
     
     <p style="font-size: 14px; color: #666;">
         <strong>Zasady anulowania:</strong><br>
-        Lekcję można anulować bezpłatnie do 12 godzin przed jej rozpoczęciem. 
-        Późniejsze anulowanie może wiązać się z opłatą.
+        Lekcję możesz anulować do momentu jej rozpoczęcia. Anulowanie co najmniej 12 godzin przed rozpoczęciem zwróci godzinę do Twojego pakietu. 
+        Anulowanie w krótszym czasie (mniej niż 12 godzin) spowoduje odliczenie godziny od pakietu.
     </p>
     
     @if($recipientType === 'student')

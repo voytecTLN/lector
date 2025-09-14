@@ -147,9 +147,7 @@ class StudentImportService
                     try {
                         $student = $this->createStudentFromRow($row);
                         
-                        // Send welcome email with temporary password
-                        $tempPassword = $row['temp_password'] ?? null; // Password created for this user
-                        $this->notificationService->sendWelcomeEmail($student, $tempPassword);
+                        // Email is automatically sent by StudentService based on is_import flag
                         
                         $successCount++;
                     } catch (Exception $e) {

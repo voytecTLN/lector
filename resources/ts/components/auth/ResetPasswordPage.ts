@@ -126,7 +126,7 @@ export class ResetPasswordPage implements RouteComponent {
                 
                 <div class="login-info-section">
                     <div class="info-content">
-                        <h2><i class="bi bi-shield-lock"></i> Bezpieczne resetowanie</h2>
+                        <h2><i class="bi bi-shield-lock"></i> Bezpieczny reset</h2>
                         <div class="info-text">
                             <p>Tworzysz nowe, bezpieczne hasło do swojego konta na Platformie Lektorów.</p>
                             
@@ -143,7 +143,7 @@ export class ResetPasswordPage implements RouteComponent {
                                 <ul>
                                     <li>Użyj unikalnego hasła, którego nigdzie indziej nie stosowałeś</li>
                                     <li>Nie udostępniaj hasła żadnej osobie trzeciej</li>
-                                    <li>Rozważ użycie menedżera haseł (np. Bitwarden, 1Password)</li>
+                                    <li>Rozważ użycie menedżera haseł (np. KeePass)</li>
                                     <li>Unikaj osobistych informacji w haśle</li>
                                 </ul>
                             </div>

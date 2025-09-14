@@ -114,6 +114,13 @@ class LessonController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 
+            \Log::info('LessonController::cancelLesson called', [
+                'lesson_id' => $lessonId,
+                'user_role' => $user->role,
+                'validated' => $validated,
+                'reason' => $validated['reason'] ?? null
+            ]);
+
             $success = $this->lessonService->cancelLesson(
                 $lessonId,
                 $user->role,
@@ -510,7 +517,7 @@ class LessonController extends Controller
     public function updateStatus(Request $request, int $lessonId): JsonResponse
     {
         $validated = $request->validate([
-            'status' => 'required|string|in:scheduled,in_progress,completed,cancelled,no_show_student,no_show_tutor,technical_issues',
+            'status' => 'required|string|in:scheduled,in_progress,completed,cancelled,not_started,no_show_student,no_show_tutor,technical_issues',
             'reason' => 'nullable|string|max:500'
         ]);
 

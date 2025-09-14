@@ -378,14 +378,34 @@ export class TutorDetails implements RouteComponent {
                 </ul>
             ` : ''}
 
-            ${profile.education && profile.education.length > 0 ? `
+            ${profile.education && this.hasEducationData(profile.education) ? `
                 <hr>
                 <h5 class="mb-3">Wykształcenie</h5>
                 <ul>
-                    ${profile.education.map(edu => `<li>${edu}</li>`).join('')}
+                    ${this.renderEducationList(profile.education)}
                 </ul>
             ` : ''}
         `
+    }
+
+    private hasEducationData(education: any): boolean {
+        if (Array.isArray(education)) {
+            return education.length > 0
+        }
+        if (typeof education === 'string') {
+            return education.trim().length > 0
+        }
+        return false
+    }
+
+    private renderEducationList(education: any): string {
+        if (Array.isArray(education)) {
+            return education.map(edu => `<li>${edu}</li>`).join('')
+        }
+        if (typeof education === 'string' && education.trim().length > 0) {
+            return `<li>${education}</li>`
+        }
+        return ''
     }
 
     private getAvailabilityContent(): string {

@@ -64,9 +64,29 @@ export class RegisterPage implements RouteComponent {
                     </form>
                 </div>
                 <div class="login-info-section">
-                    <div>
-                        <h2>Dołącz do nas!</h2>
-                        <p>Ucz się języków z najlepszymi lektorami online.</p>
+                    <div class="info-content">
+                        <h2><i class="bi bi-shield-lock"></i> Bezpieczne hasło</h2>
+                        <div class="info-text">
+                            <p>Tworzysz nowe, bezpieczne hasło do swojego konta na Platformie Lektorów.</p>
+                            
+                            <div class="security-tips">
+                                <h4><i class="bi bi-check-circle"></i> Wymagania bezpieczeństwa:</h4>
+                                <ul>
+                                    <li>Minimum 12 znaków długości</li>
+                                    <li>Kombinacja małych i wielkich liter</li>
+                                    <li>Co najmniej jedna cyfra</li>
+                                    <li>Znak specjalny (!@#$%^&* itp.)</li>
+                                </ul>
+                                <p></p>
+                                <h4><i class="bi bi-lightbulb"></i> Zalecenia ekspertów:</h4>
+                                <ul>
+                                    <li>Użyj unikalnego hasła, którego nigdzie indziej nie stosowałeś</li>
+                                    <li>Nie udostępniaj hasła żadnej osobie trzeciej</li>
+                                    <li>Rozważ użycie menedżera haseł (np. KeePass)</li>
+                                    <li>Unikaj osobistych informacji w haśle</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>`

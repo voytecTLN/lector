@@ -18,6 +18,47 @@ export class ChangelogPage implements RouteComponent {
     // Example changelog data - in real app this would come from API or config
     private changelog: ChangelogEntry[] = [
         {
+            version: "1.2.8",
+            releaseDate: "2025-09-14",
+            sections: {
+                student: [
+                    "Dodano automatyczne oznaczanie lekcji jako 'Nierozpocząte' po 15-minutowej karencji",
+                    "Poprawiono modalny dialog anulowania lekcji - lepszy UX i walidacja",
+                    "Naprawiono wyświetlanie godzin lekcji w emailach, modalach i listach",
+                    "Dodano informacje o zwrocie godzin w komunikatach anulowania",
+                    "Naprawiono błędy związane z formatowaniem czasu w komponentach lekcji",
+                    "Dodano nowe statusy lekcji z odpowiednimi etykietami i kolorami",
+                    "Wprowadzono zasady anulowania: studenci mogą anulować do momentu rozpoczęcia, z zwrotem godziny tylko przy ≥12h wyprzedzeniu",
+                    "Po dodaniu konta ucznia przez panel administracyjny teraz wysyłany jest email z linkiem do ustawienia hasła"
+                ],
+                tutor: [
+                    "Dodano modalny dialog anulowania lekcji z wymaganym polem powodu",
+                    "Wprowadzono zasady anulowania dla lektorów: mogą anulować do momentu rozpoczęcia, zawsze z zwrotem godziny do studenta",
+                    "Dodano informacje o statusie lekcji 'Nierozpoczęte' w historii lekcji",
+                    "Poprawiono wyświetlanie statusów lekcji w kalendarzu i listach",
+                    "Poprawiono godzinę lekcji w treści email, po rezerwacji lekcji przez studenta",
+                    "Naprawiono błędy związane z formatowaniem czasu w dashboard tutora",
+                    "Dodano lepszą obsługę automatycznego oznaczania pustych pokoi po 10 minutach",
+                    "Dodano lepszą obsługę automatycznego zamykania pokoju po 80 minutach",
+                    "Ulepszone komunikaty potwierdzające dla akcji na lekcjach"
+                ],
+                admin: [
+                    "Wprowadzono system automatycznego sprawdzania statusów lekcji co 5 minut",
+                    "Dodano nowy status lekcji 'not_started' do bazy danych",
+                    "Skonfigurowano cron job w kontenerze Docker dla automatycznych zadań (supervisord)",
+                    "Dodano obsługę statusu 'Nierozpoczęte' we wszystkich komponentach administracyjnych",
+                    "Naprawiono walidację statusów lekcji w kontrolerach",
+                    "Dodano komendę 'app:check-lesson-status' do automatycznego zarządzania statusami",
+                    "Poprawiono system zarządzania CSV importem studentów - uproszczono wymagane pola do nazwy i emaila",
+                    "Dodano pole 'Bio' do szczegółów studentów w panelu lektora",
+                    "Usunięto niepotrzebne kolumny z tabel zarządzania studentami",
+                    "Poprawiono filtrowanie historii lekcji według nazwy studenta via parametry URL",
+                    "Zaktualizowano szablony CSV z przykładami minimalnymi i kompletnymi",
+                    "Dodano migrację bazy danych dla nowego statusu lekcji"
+                ]
+            }
+        },
+        {
             version: "1.2.7",
             releaseDate: "2025-09-13",
             sections: {

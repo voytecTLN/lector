@@ -153,7 +153,12 @@ export class LessonDetailsModal {
                 scheduled: { text: 'Zaplanowana', class: 'badge bg-primary' },
                 completed: { text: 'Zakończona', class: 'badge bg-success' },
                 cancelled: { text: 'Anulowana', class: 'badge bg-danger' },
-                no_show: { text: 'Nieobecność', class: 'badge bg-warning text-dark' }
+                no_show: { text: 'Nieobecność', class: 'badge bg-warning text-dark' },
+                not_started: { text: 'Nie rozpoczęta', class: 'badge bg-dark' },
+                in_progress: { text: 'W trakcie', class: 'badge bg-info' },
+                technical_issues: { text: 'Problemy techniczne', class: 'badge bg-secondary' },
+                no_show_student: { text: 'Student nieobecny', class: 'badge bg-warning text-dark' },
+                no_show_tutor: { text: 'Lektor nieobecny', class: 'badge bg-warning text-dark' }
             }
             const statusInfo = statusMap[status] || { text: status, class: 'badge bg-secondary' }
             return `<span class="${statusInfo.class}">${statusInfo.text}</span>`

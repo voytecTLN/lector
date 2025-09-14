@@ -98,3 +98,4 @@ docs
 daily-debug.log
 
 .phpunit.result.cache
+MANUAL_TESTING_INSTRUCTIONS_v1.2.8.md

@@ -180,7 +180,7 @@ export class TutorLessonHistory {
     private async loadLessonHistory(): Promise<void> {
         try {
             const params = {
-                type: 'all', // Get all lessons and filter locally
+                type: 'past', // Get past lessons from backend
                 status: this.currentFilter.status !== 'all' ? this.currentFilter.status : undefined,
                 date_from: this.currentFilter.dateFrom || undefined,
                 date_to: this.currentFilter.dateTo || undefined
@@ -203,28 +203,7 @@ export class TutorLessonHistory {
             }
             
             
-            // Filter only past lessons OR completed/cancelled lessons
-            const now = new Date()
-            const historicalLessons = this.lessons.filter(lesson => {
-                // Include completed or cancelled lessons regardless of date
-                if (lesson.status === 'completed' || lesson.status === 'cancelled' || lesson.status === 'no_show') {
-                    return true
-                }
-                
-                // For other statuses, check if in the past
-                const lessonDate = new Date(`${lesson.lesson_date} ${lesson.start_time}`)
-                const isPast = lessonDate < now
-                return isPast
-            })
-            
-            this.lessons = historicalLessons
-            
-            // Sort by date descending (newest first)
-            this.lessons.sort((a, b) => {
-                const dateA = new Date(`${a.lesson_date} ${a.start_time}`)
-                const dateB = new Date(`${b.lesson_date} ${b.start_time}`)
-                return dateB.getTime() - dateA.getTime()
-            })
+            // Backend handles filtering and sorting
             
             this.filteredLessons = [...this.lessons]
             this.applyLocalFilters()
@@ -326,7 +305,13 @@ export class TutorLessonHistory {
             const statusMap: Record<string, { text: string; class: string }> = {
                 completed: { text: 'Zakończona', class: 'badge bg-success' },
                 cancelled: { text: 'Anulowana', class: 'badge bg-danger' },
-                no_show: { text: 'Nieobecność', class: 'badge bg-warning text-dark' }
+                no_show: { text: 'Nieobecność', class: 'badge bg-warning text-dark' },
+                not_started: { text: 'Nie rozpoczęta', class: 'badge bg-dark' },
+                scheduled: { text: 'Zaplanowana', class: 'badge bg-primary' },
+                in_progress: { text: 'W trakcie', class: 'badge bg-info' },
+                technical_issues: { text: 'Problemy techniczne', class: 'badge bg-secondary' },
+                no_show_student: { text: 'Student nieobecny', class: 'badge bg-warning text-dark' },
+                no_show_tutor: { text: 'Lektor nieobecny', class: 'badge bg-warning text-dark' }
             }
             const statusInfo = statusMap[status] || { text: status, class: 'badge bg-secondary' }
             return `<span class="${statusInfo.class}">${statusInfo.text}</span>`

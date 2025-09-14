@@ -49,7 +49,7 @@ export class FaqPage implements RouteComponent {
 
                             <div class="faq-item" style="background: #fff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 <h3 style="color: #e91e63; margin-bottom: 0.5rem;">Czy mogę odwołać lekcję?</h3>
-                                <p style="color: #475569; line-height: 1.6;">Tak, lekcję można odwołać do 12 godzin przed jej rozpoczęciem bez żadnych konsekwencji. Odwołania z krótszym wyprzedzeniem mogą wiązać się z odliczeniem godziny od pakietu zgodnie z regulaminem.</p>
+                                <p style="color: #475569; line-height: 1.6;">Tak, lekcję możesz odwołać do momentu jej rozpoczęcia. Jeśli odwołasz ją co najmniej 12 godzin przed rozpoczęciem, godzina zostanie zwrócona do Twojego pakietu. Przy odwołaniu z krótszym wyprzedzeniem (mniej niż 12 godzin) godzina zostanie odliczona od pakietu.</p>
                             </div>
 
                             <div class="faq-item" style="background: #fff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">

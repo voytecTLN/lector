@@ -677,7 +677,7 @@ export class StudentList implements RouteComponent {
     public async deleteStudent(studentId: number, studentName: string): Promise<void> {
         // Modal potwierdzenia - aktualnie deaktywacja
         const modalHtml = `
-        <div class="modal fade" id="deactivateStudentModal" tabindex="-1">
+        <div class="modal fade" id="deleteStudentModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -705,57 +705,60 @@ export class StudentList implements RouteComponent {
         modalDiv.innerHTML = modalHtml
         document.body.appendChild(modalDiv)
 
-        // Pokaż modal
-        const modal = new (window as any).bootstrap.Modal(document.getElementById('deleteStudentModal'))
-        modal.show()
+        // Pokaż modal - dodaj krótką zwłokę aby upewnić się że element jest w DOM
+        setTimeout(() => {
+            const modalElement = document.getElementById('deleteStudentModal')
+            if (modalElement) {
+                const modal = new (window as any).bootstrap.Modal(modalElement)
+                modal.show()
+                
+                // Obsługa przycisku potwierdzenia
+                const confirmBtn = document.getElementById('confirmDeactivate')
+                confirmBtn?.addEventListener('click', async () => {
+                    try {
+                        // Zablokuj przycisk podczas dezaktywacji
+                        confirmBtn.setAttribute('disabled', 'true')
+                        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Dezaktywuję...'
 
-        // Obsługa przycisku potwierdzenia
-        const confirmBtn = document.getElementById('confirmDelete')
-        confirmBtn?.addEventListener('click', async () => {
-            try {
-                // Zablokuj przycisk podczas usuwania
-                confirmBtn.setAttribute('disabled', 'true')
-                confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Usuwanie...'
+                        // Wywołaj API
+                        await this.studentService.deleteStudent(studentId)
 
-                // Wywołaj API
-                await this.studentService.deleteStudent(studentId)
+                        // Zamknij modal
+                        modal.hide()
 
-                // Zamknij modal
-                modal.hide()
+                        // Pokaż sukces
+                        document.dispatchEvent(new CustomEvent('notification:show', {
+                            detail: {
+                                type: 'success',
+                                message: `Student ${studentName} został dezaktywowany`
+                            }
+                        }))
 
-                // Pokaż sukces
-                document.dispatchEvent(new CustomEvent('notification:show', {
-                    detail: {
-                        type: 'success',
-                        message: `Student ${studentName} został usunięty`
+                        // Odśwież listę
+                        await this.loadStudents()
+                        await this.loadStats() // Odśwież też statystyki
+
+                    } catch (error: any) {
+                        // Pokaż błąd
+                        document.dispatchEvent(new CustomEvent('notification:show', {
+                            detail: {
+                                type: 'error',
+                                message: error.message || 'Błąd podczas dezaktywacji studenta'
+                            }
+                        }))
+
+                        // Przywróć przycisk
+                        confirmBtn.removeAttribute('disabled')
+                        confirmBtn.innerHTML = '<i class="bi bi-person-slash me-1"></i> Dezaktywuj'
                     }
-                }))
-
-                // Odśwież listę
-                await this.loadStudents()
-                await this.loadStats() // Odśwież też statystyki
-
-            } catch (error) {
-                console.error('Failed to delete student:', error)
-
-                // Pokaż błąd
-                document.dispatchEvent(new CustomEvent('notification:show', {
-                    detail: {
-                        type: 'error',
-                        message: 'Nie udało się usunąć studenta. Spróbuj ponownie.'
-                    }
-                }))
-
-                // Odblokuj przycisk
-                confirmBtn.removeAttribute('disabled')
-                confirmBtn.innerHTML = '<i class="bi bi-trash me-1"></i> Usuń studenta'
+                })
+                
+                // Cleanup po zamknięciu modala
+                modalElement.addEventListener('hidden.bs.modal', () => {
+                    modalDiv.remove()
+                })
             }
-        })
-
-        // Cleanup po zamknięciu modala
-        document.getElementById('deleteStudentModal')?.addEventListener('hidden.bs.modal', () => {
-            modalDiv.remove()
-        })
+        }, 10)
     }
 
     private isValidStatus(status: string): status is 'active' | 'inactive' | 'blocked' | 'unverified' {

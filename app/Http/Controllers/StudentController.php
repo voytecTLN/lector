@@ -45,9 +45,9 @@ class StudentController extends BaseController
             $data = $request->validated();
             
             
-            // Auto-verify users created by admin (like import)
+            // Auto-verify users created by admin
             $data['email_verified_at'] = now();
-            $data['is_import'] = true; // Skip welcome email
+            $data['is_admin_created'] = true; // Send account creation email with password reset
             
             $student = $this->studentService->createStudent($data);
             return $this->successResponse($student, 'Student został utworzony pomyślnie', 201);

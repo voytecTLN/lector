@@ -5,8 +5,10 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\StudentProfile;
+use App\Mail\StudentAccountCreated;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Exception;
 
@@ -53,9 +55,18 @@ class StudentService
             } else {
             }
 
-            // 4. Send welcome email (skip for imports)
+            // 4. Send appropriate email based on creation method
             $isImport = $data['is_import'] ?? false;
-            if (!$isImport) {
+            $isAdminCreated = $data['is_admin_created'] ?? false;
+            
+            if ($isImport || $isAdminCreated) {
+                // Generate password reset token and send account creation email
+                $resetToken = $user->generatePasswordResetToken();
+                $resetUrl = config('app.url') . '/#/reset-password?token=' . $resetToken . '&email=' . urlencode($user->email);
+                
+                Mail::to($user->email)->send(new StudentAccountCreated($user, $resetUrl));
+            } else {
+                // Send regular welcome email for self-registered students
                 $this->notificationService->sendWelcomeEmail($user);
             }
 

@@ -1,6 +1,7 @@
 import { LessonService } from '@services/LessonService'
 import { formatDate } from '@utils/date'
 import { AvatarHelper } from '@/utils/AvatarHelper'
+import Swal from 'sweetalert2'
 
 export class TutorLessons {
     private currentView: 'calendar' | 'list' = 'calendar'
@@ -148,10 +149,6 @@ export class TutorLessons {
                                 <i class="bi bi-clock me-1"></i>
                                 ${startTime} - ${endTime}
                             </small><br>
-                            <small class="text-muted">
-                                <i class="bi bi-translate me-1"></i>
-                                ${lesson.language || 'Nieznany język'}
-                            </small>
                         </p>
                         ${statusBadge}
                         ${isCompleted ? '<div class="mt-2"><small class="text-muted"><i class="bi bi-check-all me-1"></i>Lekcja została zakończona</small></div>' : ''}
@@ -803,6 +800,16 @@ export class TutorLessons {
                 return '<span class="badge bg-danger">Anulowana</span>'
             case 'no_show':
                 return '<span class="badge bg-warning">Nieobecność</span>'
+            case 'not_started':
+                return '<span class="badge bg-dark">Nie rozpoczęta</span>'
+            case 'in_progress':
+                return '<span class="badge bg-info">W trakcie</span>'
+            case 'technical_issues':
+                return '<span class="badge bg-secondary">Problemy techniczne</span>'
+            case 'no_show_student':
+                return '<span class="badge bg-warning text-dark">Student nieobecny</span>'
+            case 'no_show_tutor':
+                return '<span class="badge bg-warning text-dark">Lektor nieobecny</span>'
             default:
                 return '<span class="badge bg-secondary">Nieznany</span>'
         }
@@ -921,32 +928,152 @@ export class TutorLessons {
     }
     
     static async cancelLesson(lessonId: number): Promise<void> {
-        if (!confirm('Czy na pewno chcesz anulować tę lekcję?')) return
+        let formValues: any = null
         
         try {
-            const response = await LessonService.cancelTutorLesson(lessonId, 'Anulowane przez lektora')
+            // Pobierz szczegóły lekcji
+            const response = await LessonService.getLessonDetails(lessonId)
+            const lesson = response.data?.lesson || response.lesson || response.data || response
+            
+            if (!lesson || !lesson.lesson_date) {
+                throw new Error('Nie udało się pobrać szczegółów lekcji')
+            }
+            
+            // Użyj SweetAlert2 dla lepszego UX
+            const { value } = await Swal.fire({
+                title: 'Anulowanie lekcji',
+                html: `
+                    <div class="text-left">
+                        <p class="mb-3">Czy na pewno chcesz anulować lekcję #${lessonId}?</p>
+                        <div class="mb-3">
+                            <strong>Data:</strong> ${new Date(lesson.lesson_date).toLocaleDateString('pl-PL')}<br>
+                            <strong>Godzina:</strong> ${this.formatTimeStatic(lesson.start_time)} - ${this.formatTimeStatic(lesson.end_time)}<br>
+                            <strong>Student:</strong> ${lesson.student?.name || 'Nieznany'}
+                        </div>
+                        <div class="form-group">
+                            <label for="cancel-reason" class="form-label">Powód anulowania (wymagany):</label>
+                            <textarea id="cancel-reason" class="form-control" rows="3" 
+                                placeholder="Podaj powód anulowania lekcji..." 
+                                required></textarea>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Dla lektora:</strong>
+                            <div class="mt-2" style="text-align: left;">
+                                • Godzina zostanie zwrócona do pakietu studenta<br>
+                                • Student otrzyma powiadomienie o anulowaniu<br>
+                                • Wymagany jest powód anulowania
+                            </div>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Anuluj lekcję',
+                cancelButtonText: 'Wróć',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                focusConfirm: false,
+                preConfirm: () => {
+                    const reason = (document.getElementById('cancel-reason') as HTMLTextAreaElement)?.value
+                    if (!reason) {
+                        Swal.showValidationMessage('Musisz podać powód anulowania lekcji')
+                        return false
+                    }
+                    return { reason }
+                }
+            })
+            
+            formValues = value
+            if (!formValues) return
+        } catch (error) {
+            console.error('Error fetching lesson details:', error)
+            // Jeśli nie uda się pobrać szczegółów, użyj standardowego dialogu
+            const { value: fallbackFormValues } = await Swal.fire({
+                title: 'Anulowanie lekcji',
+                html: `
+                    <div class="text-left">
+                        <p class="mb-3">Czy na pewno chcesz anulować lekcję #${lessonId}?</p>
+                        <div class="form-group">
+                            <label for="cancel-reason" class="form-label">Powód anulowania (wymagany):</label>
+                            <textarea id="cancel-reason" class="form-control" rows="3" 
+                                placeholder="Podaj powód anulowania lekcji..." 
+                                required></textarea>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Dla lektora:</strong> Godzina zostanie zwrócona do pakietu studenta.
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Anuluj lekcję',
+                cancelButtonText: 'Wróć',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                focusConfirm: false,
+                preConfirm: () => {
+                    const reason = (document.getElementById('cancel-reason') as HTMLTextAreaElement)?.value
+                    if (!reason) {
+                        Swal.showValidationMessage('Musisz podać powód anulowania lekcji')
+                        return false
+                    }
+                    return { reason }
+                }
+            })
+            
+            formValues = fallbackFormValues
+            if (!formValues) return
+        }
+
+        // Pokaż loader
+        Swal.fire({
+            title: 'Anulowanie lekcji...',
+            text: 'Proszę czekać',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading()
+            }
+        })
+        
+        try {
+            const response = await LessonService.cancelTutorLesson(lessonId, formValues.reason)
             
             if (response.success) {
-                document.dispatchEvent(new CustomEvent('notification:show', {
-                    detail: {
-                        type: 'success',
-                        message: 'Lekcja została anulowana pomyślnie.',
-                        duration: 3000
-                    }
-                }))
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Lekcja anulowana',
+                    text: 'Lekcja została anulowana pomyślnie. Student został powiadomiony.',
+                    confirmButtonText: 'OK',
+                    timer: 3000,
+                    timerProgressBar: true
+                })
+                
+                // Odśwież listę lekcji
                 this.instance.loadLessons()
             } else {
                 throw new Error(response.message || 'Błąd podczas anulowania lekcji')
             }
         } catch (error: any) {
             console.error('Error canceling lesson:', error)
-            document.dispatchEvent(new CustomEvent('notification:show', {
-                detail: {
-                    type: 'error',
-                    message: error.message || 'Wystąpił błąd podczas anulowania lekcji',
-                    duration: 5000
-                }
-            }))
+            await Swal.fire({
+                icon: 'error',
+                title: 'Błąd anulowania',
+                text: error.message || 'Wystąpił błąd podczas anulowania lekcji',
+                confirmButtonText: 'OK'
+            })
+        }
+    }
+    
+    private static formatTimeStatic(timeString: string): string {
+        if (!timeString) return '00:00'
+        if (timeString.includes(':') && !timeString.includes('T')) {
+            return timeString.substring(0, 5) // "HH:MM"
+        }
+        try {
+            return new Date(timeString).toTimeString().substring(0, 5)
+        } catch {
+            return timeString.substring(0, 5)
         }
     }
     

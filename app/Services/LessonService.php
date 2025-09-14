@@ -7,16 +7,19 @@ use App\Models\User;
 use App\Models\TutorAvailabilitySlot;
 use App\Models\PackageAssignment;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
 
 class LessonService
 {
     protected $notificationService;
+    protected $lessonStatusService;
 
-    public function __construct(NotificationService $notificationService)
+    public function __construct(NotificationService $notificationService, LessonStatusService $lessonStatusService)
     {
         $this->notificationService = $notificationService;
+        $this->lessonStatusService = $lessonStatusService;
     }
     /**
      * Book a lesson for a student
@@ -157,26 +160,36 @@ class LessonService
      */
     public function cancelLesson(int $lessonId, string $cancelledBy, ?string $reason = null): bool
     {
-        $lesson = Lesson::findOrFail($lessonId);
-        
-        if (!$lesson->canBeCancelled()) {
-            throw new \Exception('Lekcja nie może zostać anulowana (mniej niż 12 godzin przed rozpoczęciem)');
-        }
-        
-        $result = $lesson->cancel($cancelledBy, $reason);
-        
-        if ($result) {
-            // Load relationships for email
-            $lesson->load(['student', 'tutor']);
+        try {
+            \Log::info('LessonService::cancelLesson called', [
+                'lesson_id' => $lessonId,
+                'cancelled_by' => $cancelledBy,
+                'reason' => $reason,
+                'reason_type' => gettype($reason)
+            ]);
             
-            // Get the user who cancelled
-            $cancelledByUser = User::find($cancelledBy);
+            // Use LessonStatusService for proper cancellation handling
+            $this->lessonStatusService->updateLessonStatus(
+                $lessonId,
+                Lesson::STATUS_CANCELLED,
+                $reason
+            );
+            
+            // Load lesson with relationships for email
+            $lesson = Lesson::with(['student', 'tutor'])->findOrFail($lessonId);
+            
+            // Get the user who cancelled (could be user ID or role string)
+            $cancelledByUser = is_numeric($cancelledBy) ? User::find($cancelledBy) : Auth::user();
             
             // Send cancellation notices
             $this->notificationService->sendLessonCancellationNotice($lesson, $cancelledByUser, $reason);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            // Re-throw with more context if needed
+            throw $e;
         }
-        
-        return $result;
     }
     
     /**
@@ -453,7 +466,7 @@ class LessonService
     }
     
     /**
-     * Apply upcoming lessons filter (future lessons including today's lessons that haven't started)
+     * Apply upcoming lessons filter (future lessons including today's lessons until end time)
      */
     private function applyUpcomingFilter($query)
     {
@@ -461,7 +474,7 @@ class LessonService
                     $q->where('lesson_date', '>', now()->toDateString())
                       ->orWhere(function($q2) {
                           $q2->where('lesson_date', '=', now()->toDateString())
-                             ->whereTime('start_time', '>', now()->subMinutes(15)->toTimeString());
+                             ->whereTime('end_time', '>', now()->toTimeString());
                       });
                 })
                 ->whereIn('status', [Lesson::STATUS_SCHEDULED, Lesson::STATUS_IN_PROGRESS])
@@ -471,15 +484,28 @@ class LessonService
     
     /**
      * Apply past lessons filter (past lessons including today's lessons that have ended)
+     * Also includes completed, cancelled, not_started lessons regardless of date
      */
     private function applyPastFilter($query)
     {
         return $query->where(function($q) {
-            $q->where('lesson_date', '<', now()->toDateString())
-              ->orWhere(function($q2) {
-                  $q2->where('lesson_date', '=', now()->toDateString())
-                     ->whereTime('end_time', '<', now()->toTimeString());
-              });
+            // Include completed, cancelled, not_started lessons regardless of date
+            $q->whereIn('status', [
+                Lesson::STATUS_COMPLETED,
+                Lesson::STATUS_CANCELLED, 
+                Lesson::STATUS_NOT_STARTED,
+                Lesson::STATUS_NO_SHOW_STUDENT,
+                Lesson::STATUS_NO_SHOW_TUTOR,
+                Lesson::STATUS_TECHNICAL_ISSUES
+            ])
+            // OR lessons that are in the past by date/time
+            ->orWhere(function($q2) {
+                $q2->where('lesson_date', '<', now()->toDateString())
+                   ->orWhere(function($q3) {
+                       $q3->where('lesson_date', '=', now()->toDateString())
+                          ->whereTime('end_time', '<', now()->toTimeString());
+                   });
+            });
         })->orderBy('lesson_date', 'desc')
           ->orderBy('start_time', 'desc');
     }
