@@ -347,9 +347,6 @@ export class TutorDashboard implements RouteComponent {
                 })
                 return
             default:
-                console.log('⚠️ Unknown section, loading dashboard:', { 
-                    currentSection: this.currentSection
-                })
                 // Load dashboard content for unknown sections
                 if (titleEl) titleEl.textContent = 'Dashboard'
                 this.loadingPromise = this.loadDashboardContent().finally(() => {

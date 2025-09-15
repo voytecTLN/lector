@@ -14,17 +14,11 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(Schedule $schedule)
     {
-        // Check lesson statuses every 15 minutes
-        $schedule->command('lessons:check-status')
-                 ->everyFifteenMinutes()
-                 ->withoutOverlapping()
-                 ->runInBackground();
+        // Check lesson statuses every 8 minutes
+        $schedule->command('lessons:check-status')->cron('*/8 * * * *');
 
         // Send meeting room notifications every minute
-        $schedule->command('lessons:send-meeting-room-notifications')
-                 ->everyMinute()
-                 ->withoutOverlapping()
-                 ->runInBackground();
+        $schedule->command('lessons:send-meeting-room-notifications')->everyMinute();
     }
 
     protected function commands()

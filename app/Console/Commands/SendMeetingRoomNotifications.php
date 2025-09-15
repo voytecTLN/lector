@@ -74,10 +74,7 @@ class SendMeetingRoomNotifications extends Command
                 $lessonDateTime = Carbon::parse($lesson->lesson_date->format('Y-m-d') . ' ' . $lesson->start_time);
                 $minutesUntilLesson = $now->diffInMinutes($lessonDateTime, false);
 
-                $this->line("Processing lesson ID: {$lesson->id} (in {$minutesUntilLesson} minutes)");
-                $this->line("  Tutor: {$lesson->tutor->name}");
-                $this->line("  Student: {$lesson->student->name}");
-                $this->line("  Time: {$lesson->lesson_date->format('d.m.Y')} at {$lesson->start_time}");
+                $this->line("Processing lesson ID: {$lesson->id} for {$lesson->tutor->name}");
 
                 // Send notification to tutor
                 $this->notificationService->sendTutorCanCreateRoom($lesson);
