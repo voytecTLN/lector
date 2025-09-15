@@ -33,7 +33,7 @@ class LessonStatusService
 
         DB::beginTransaction();
         try {
-            $lesson = Lesson::findOrFail($lessonId);
+            $lesson = Lesson::with('packageAssignment')->findOrFail($lessonId);
             $user = Auth::user();
 
             // Check permissions
@@ -41,16 +41,22 @@ class LessonStatusService
 
             // Store previous status for history
             $previousStatus = $lesson->status;
+            
+            // For cancellations, check if it's a free cancellation BEFORE changing status
+            $isFreeCancel = false;
+            if ($status === Lesson::STATUS_CANCELLED && $previousStatus === Lesson::STATUS_SCHEDULED) {
+                $isFreeCancel = $lesson->isCancellationFree();
+            }
 
             // Update lesson status
             $lesson->status = $status;
             $lesson->status_reason = $reason;
-            $lesson->status_updated_by = $user->id;
+            $lesson->status_updated_by = $user ? $user->id : null;
             $lesson->status_updated_at = now();
             $lesson->save();
 
-            // Handle special status scenarios
-            $this->handleStatusSideEffects($lesson, $previousStatus, $status);
+            // Handle special status scenarios (pass the pre-calculated free cancel flag)
+            $this->handleStatusSideEffects($lesson, $previousStatus, $status, $isFreeCancel);
 
             DB::commit();
             return $lesson->fresh(['student', 'tutor', 'packageAssignment']);
@@ -172,11 +178,11 @@ class LessonStatusService
     /**
      * Handle side effects of status changes
      */
-    private function handleStatusSideEffects(Lesson $lesson, string $previousStatus, string $newStatus): void
+    private function handleStatusSideEffects(Lesson $lesson, string $previousStatus, string $newStatus, bool $isFreeCancel = false): void
     {
         // Handle lesson cancellation
         if ($newStatus === Lesson::STATUS_CANCELLED) {
-            $this->handleLessonCancellation($lesson);
+            $this->handleLessonCancellation($lesson, $isFreeCancel);
         }
 
         // Refund hours if tutor no-show
@@ -204,7 +210,7 @@ class LessonStatusService
     /**
      * Handle lesson cancellation with proper hour management
      */
-    private function handleLessonCancellation(Lesson $lesson): void
+    private function handleLessonCancellation(Lesson $lesson, bool $isFreeCancel = false): void
     {
         $lesson->update([
             'cancelled_at' => now(),
@@ -242,13 +248,29 @@ class LessonStatusService
             if ($cancelledByUser && $cancelledByUser->role === 'tutor') {
                 $lesson->packageAssignment->increment('hours_remaining');
             }
-            // If student cancels - check timing
+            // If student cancels - use the pre-calculated timing check
             elseif ($cancelledByUser && $cancelledByUser->role === 'student') {
-                $isFreeCancel = $lesson->isCancellationFree();
+                \Log::info('Student cancellation check', [
+                    'lesson_id' => $lesson->id,
+                    'lesson_datetime' => $lesson->getLessonDateTime()->toString(),
+                    'now' => now()->toString(),
+                    'hours_until' => now()->diffInHours($lesson->getLessonDateTime(), false),
+                    'is_free_cancel' => $isFreeCancel,
+                    'package_id' => $lesson->packageAssignment ? $lesson->packageAssignment->id : null
+                ]);
                 
                 if ($isFreeCancel) {
                     // Free cancellation - return hour to package
                     $lesson->packageAssignment->increment('hours_remaining');
+                    \Log::info('Hour returned to package', [
+                        'lesson_id' => $lesson->id,
+                        'package_id' => $lesson->packageAssignment->id
+                    ]);
+                } else {
+                    \Log::info('Hour NOT returned - cancellation less than 12h before lesson', [
+                        'lesson_id' => $lesson->id,
+                        'package_id' => $lesson->packageAssignment ? $lesson->packageAssignment->id : null
+                    ]);
                 }
                 // If not free cancellation (< 12h) - hour is NOT returned (student loses it)
             }

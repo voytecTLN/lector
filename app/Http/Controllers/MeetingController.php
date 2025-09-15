@@ -48,7 +48,7 @@ class MeetingController extends BaseController
             if (!$lesson->canStartMeeting()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Spotkanie można rozpocząć najwcześniej 11 minut przed planowaną godziną'
+                    'message' => 'Spotkanie można rozpocząć najwcześniej 10 minut przed planowaną godziną'
                 ], 422);
             }
 
@@ -109,7 +109,7 @@ class MeetingController extends BaseController
 
                 // Send notification to student that room is available
                 $lesson->load(['student', 'tutor']);
-                $meetingUrl = config('app.url') . '/lesson/' . $lesson->id . '/meeting';
+                $meetingUrl = config('app.url') . '/#/lesson/' . $lesson->id . '/meeting';
                 $this->notificationService->sendLessonRoomAvailable($lesson, $meetingUrl);
 
                 return $this->successResponse([

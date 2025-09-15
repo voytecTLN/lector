@@ -43,7 +43,8 @@ class Lesson extends Model
         'meeting_token',
         'meeting_started_at',
         'meeting_ended_at',
-        'recording_url'
+        'recording_url',
+        'room_creation_notification_sent'
     ];
 
     protected $casts = [
@@ -188,12 +189,31 @@ class Lesson extends Model
     public function isCancellationFree(): bool
     {
         if ($this->status !== self::STATUS_SCHEDULED) {
+            \Log::info('isCancellationFree: Not scheduled', ['status' => $this->status]);
             return false;
         }
 
         $lessonDateTime = $this->getLessonDateTime();
-        $hoursUntilLesson = now()->diffInHours($lessonDateTime, false);
-
+        $now = now();
+        
+        // If lesson is in the past, it's not a free cancellation
+        if ($lessonDateTime->isPast()) {
+            \Log::info('isCancellationFree: Lesson is in the past');
+            return false;
+        }
+        
+        // Calculate hours until lesson (will be positive for future lessons)
+        $hoursUntilLesson = $now->diffInHours($lessonDateTime, false);
+        
+        \Log::info('isCancellationFree check', [
+            'lesson_id' => $this->id,
+            'lesson_datetime' => $lessonDateTime->toString(),
+            'now' => $now->toString(),
+            'hours_until' => $hoursUntilLesson,
+            'is_free' => $hoursUntilLesson >= 12
+        ]);
+        
+        // Free cancellation if 12 or more hours before lesson
         return $hoursUntilLesson >= 12;
     }
 

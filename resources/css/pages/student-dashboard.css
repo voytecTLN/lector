@@ -192,62 +192,219 @@
     background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
     color: white;
     padding: 2rem;
-    border-radius: 10px;
+    border-radius: 20px;
     margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
 }
 
-.welcome-card h2 {
+.welcome-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+}
+
+.welcome-text h2 {
     margin: 0 0 0.5rem 0;
     font-size: 1.75rem;
+    font-weight: 700;
 }
 
-.welcome-card p {
+.welcome-text p {
     margin: 0;
     opacity: 0.9;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.welcome-stats {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 1rem;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    min-width: 100px;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+/* Student Information Section */
+.student-info-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.student-info-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.student-info-section h3 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    position: relative;
+    z-index: 1;
+}
+
+.info-card {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.info-header i {
+    font-size: 1.25rem;
+    width: 24px;
+    text-align: center;
+}
+
+.info-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+}
+
+.info-card p {
+    margin: 0;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    opacity: 0.95;
 }
 
 /* Stats Grid */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
 }
 
 .stat-card {
     background: white;
-    padding: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+    position: relative;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1), 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.stat-card.highlight {
+    background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%);
+    border-color: #3b82f6;
+}
+
+.stat-card.highlight::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #1e40af);
+    border-radius: 15px 15px 0 0;
 }
 
 .stat-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 10px;
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 28px;
     color: white;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .stat-content {
-    flex: 1;
+    text-align: left;
 }
 
 .stat-number {
-    font-size: 1.5rem;
-    font-weight: bold;
+    font-size: 2.5rem;
+    font-weight: 700;
     color: #1e293b;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #1e293b, #475569);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .stat-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.25rem;
+}
+
+.stat-sublabel {
     font-size: 0.875rem;
     color: #64748b;
+    margin-bottom: 1rem;
 }
 
 /* Quick Actions */
@@ -628,12 +785,16 @@
     .student-main-content {
         margin-left: 0;
         padding: 1rem;
+        padding-top: 7rem;
     }
 
     .student-header {
         padding: 1rem;
         flex-wrap: wrap;
         gap: 1rem;
+        left: 0;
+        right: 1rem;
+        max-width: calc(100% - 2rem);
     }
 
     .student-mobile-menu-btn {
@@ -642,6 +803,22 @@
 
     .stats-grid {
         grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        padding: 1.5rem;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
     }
 
     .student-quick-actions {
@@ -661,13 +838,62 @@
         flex: 1;
     }
 
-    .student-header {
-        left: 0; /* Na mobile header na całą szerokość */
-        right: 1rem; /* Mniejszy margines na mobile */
-        max-width: calc(100% - 2rem); /* Dostosuj max-width */
+    /* Mobile specific styles for new sections */
+    .welcome-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
     }
 
-    .student-main-content {
-        padding-top: 7rem; /* NOWE: Więcej przestrzeni na mobile */
+    .welcome-stats {
+        justify-content: center;
     }
+
+    .student-info-section {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .student-info-section h3 {
+        font-size: 1.3rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .info-card {
+        padding: 1.25rem;
+    }
+
+    .info-header h4 {
+        font-size: 1rem;
+    }
+
+    .info-card p {
+        font-size: 0.9rem;
+    }
+}
+
+/* Dashboard section headers styling (matching TutorDashboard) */
+.dashboard-section h3 {
+    color: #1e293b;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+.dashboard-section h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #e91e63, #ad1457);
+    border-radius: 2px;
 }

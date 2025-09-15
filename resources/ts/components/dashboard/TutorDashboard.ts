@@ -403,8 +403,56 @@ export class TutorDashboard implements RouteComponent {
                     </div>
                 </div>
                 
+                <div class="tutor-info-section">
+                    <h3><i class="bi bi-info-circle"></i> Ważne informacje dla lektorów</h3>
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <div class="info-header">
+                                <i class="bi bi-eye text-primary"></i>
+                                <h4>Podgląd profilu</h4>
+                            </div>
+                            <p>Na stronie <strong>"Mój profil"</strong> obok przycisku "Zapisz zmiany" jest nowy przycisk <strong>"Podgląd profilu"</strong> dzięki któremu możesz zweryfikować jak widzą Cię uczniowie.</p>
+                        </div>
+                        
+                        <div class="info-card">
+                            <div class="info-header">
+                                <i class="bi bi-calendar-check text-success"></i>
+                                <h4>Powiadomienia o rezerwacjach</h4>
+                            </div>
+                            <p>Kiedy student zarezerwuje u Ciebie lekcję zostaniesz o tym poinformowany <strong>emailem</strong>. Lekcja zostanie dodana w sekcji <strong>"Kalendarz"</strong> kliknięcie w <i class="bi bi-eye"></i> otwiera szczegóły lekcji oraz <strong>"Nadchodzące lekcje"</strong> kliknięcie w lekcję otwiera szczegóły lekcji.</p>
+                        </div>
+                        
+                        <div class="info-card">
+                            <div class="info-header">
+                                <i class="bi bi-camera-video text-warning"></i>
+                                <h4>Rozpoczynanie lekcji</h4>
+                            </div>
+                            <p><strong>10 minut przed lekcją w szczegółach lekcji</strong> pojawi się przycisk "Rozpocznij spotkanie". Po kliknięciu sprawdź mikrofon/kamerę, kliknij "Dołącz" i czekaj na ucznia. Dostępny jest chat. Jeśli przypadkiem opuścisz lekcję, możesz do niej wrócić. "Zakończ spotkanie" definitywnie zamyka pokój i zmienia status lekcji na "Zakończona".</p>
+                        </div>
+                        
+                        <div class="info-card">
+                            <div class="info-header">
+                                <i class="bi bi-people text-info"></i>
+                                <h4>Moi studenci</h4>
+                            </div>
+                            <p>Każdy student który zarezerwuje u Ciebie lekcję pojawi się w zakładce <strong>"Moi studenci"</strong>. Możesz zobaczyć profil ucznia, historię lekcji oraz przesyłać materiały do nauki <strong>"Akcje → Materiały → Wybierz plik"</strong>.</p>
+                        </div>
+                        
+                        <div class="info-card">
+                            <div class="info-header">
+                                <i class="bi bi-journal-text text-secondary"></i>
+                                <h4>Wykaz zmian</h4>
+                            </div>
+                            <p>Zachęcamy do zaglądania w zakładkę <strong>"Wykaz zmian"</strong> gdzie możesz się dowiedzieć o nowych funkcjonalnościach platformy oraz naprawionych błędach.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-section">
+                    <h3>Statystyki</h3>
+                </div>
                 <div class="stats-grid">
-                    <div class="stat-card highlight">
+                    <div class="stat-card">
                         <div class="stat-icon" style="background: #3b82f6;">📚</div>
                         <div class="stat-content">
                             <div class="stat-number" id="upcomingLessons">${stats.data?.upcomingLessons || 0}</div>

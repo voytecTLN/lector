@@ -137,7 +137,7 @@ export class StudentTutors {
                             </div>
                             <div class="flex-grow-1">
                                 <h5 class="card-title mb-1">${tutor.name}</h5>
-                                <p class="card-text text-muted small">${tutor.city || 'Miasto nieznane'}</p>
+                                <p class="card-text text-muted small">${tutor.city || ''}</p>
                             </div>
                         </div>
                         
@@ -251,7 +251,7 @@ export class StudentTutors {
                                         })}
                                     </div>
                                     <h3 class="card-title">${tutor.name}</h3>
-                                    <p class="text-muted mb-2">${tutor.city || 'Miasto nieznane'}</p>
+                                    <p class="text-muted mb-2">${tutor.city || ''}</p>
                                     
                                     <div class="mb-3">
                                         ${profile.is_accepting_students 

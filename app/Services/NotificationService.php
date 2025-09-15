@@ -11,6 +11,7 @@ use App\Notifications\Auth\PasswordResetNotification;
 use App\Notifications\Lessons\LessonBookingConfirmation;
 use App\Notifications\Lessons\LessonCancellationNotice;
 use App\Notifications\Lessons\LessonRoomAvailable;
+use App\Notifications\Lessons\TutorCanCreateRoom;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
@@ -126,13 +127,26 @@ class NotificationService
     public function sendLessonRoomAvailable(Lesson $lesson, string $meetingUrl): void
     {
         try {
-
             if (config('mail.enable_notifications', true)) {
                 $lesson->student->notify(new LessonRoomAvailable($lesson, $meetingUrl));
             }
-
         } catch (\Exception $e) {
             Log::error("Failed to send room available notification for lesson {$lesson->id}: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send notification to tutor that they can create meeting room
+     */
+    public function sendTutorCanCreateRoom(Lesson $lesson): void
+    {
+        try {
+            if (config('mail.enable_notifications', true)) {
+                $dashboardUrl = config('app.url') . '/#/tutor/dashboard?section=nadchodzace';
+                $lesson->tutor->notify(new TutorCanCreateRoom($lesson, $dashboardUrl));
+            }
+        } catch (\Exception $e) {
+            Log::error("Failed to send tutor can create room notification for lesson {$lesson->id}: " . $e->getMessage());
         }
     }
 }

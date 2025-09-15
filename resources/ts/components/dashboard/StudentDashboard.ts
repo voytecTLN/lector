@@ -479,48 +479,123 @@ export class StudentDashboard implements RouteComponent {
     private async getDashboardContent(): Promise<string> {
         try {
             const stats = await studentService.getDashboardStats() || {}
+            const user = authService.getUser()
             
             return `
                 <div class="student-content-area">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="student-stat-card">
-                                <div class="student-stat-icon">📅</div>
-                                <div class="student-stat-content">
-                                    <h3>${stats.upcomingLessons || 0}</h3>
-                                    <p>Nadchodzące lekcje</p>
-                                </div>
+                    <!-- Welcome Card -->
+                    <div class="welcome-card">
+                        <div class="welcome-content">
+                            <div class="welcome-text">
+                                <h2>Witaj, ${user?.name || 'Student'}! 👋</h2>
+                                <p>Cieszymy się, że jesteś z nami w nauce języków. Sprawdź swoje nadchodzące lekcje i zarządzaj swoim pakietem godzin.</p>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="student-stat-card">
-                                <div class="student-stat-icon">✅</div>
-                                <div class="student-stat-content">
-                                    <h3>${stats.completedLessons || 0}</h3>
-                                    <p>Zakończone lekcje</p>
+                            <div class="welcome-stats">
+                                <div class="stat-item">
+                                    <span class="stat-number">${stats.remainingHours || 0}</span>
+                                    <span class="stat-label">Pozostałe godziny</span>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="student-stat-card">
-                                <div class="student-stat-icon">📦</div>
-                                <div class="student-stat-content">
-                                    <h3>${stats.remainingHours || 0}</h3>
-                                    <p>Pozostałe godziny</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="student-stat-card">
-                                <div class="student-stat-icon">👨‍🏫</div>
-                                <div class="student-stat-content">
-                                    <h3>${stats.activeTutors || 0}</h3>
-                                    <p>Aktywni lektorzy</p>
+                                <div class="stat-item">
+                                    <span class="stat-number">${stats.upcomingLessons || 0}</span>
+                                    <span class="stat-label">Nadchodzące lekcje</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Student Information Section -->
+                    <div class="student-info-section">
+                        <h3><i class="bi bi-info-circle"></i> Ważne informacje dla studentów</h3>
+                        <div class="info-grid">
+                            <div class="info-card">
+                                <div class="info-header">
+                                    <i class="bi bi-clock-history text-primary"></i>
+                                    <h4>Dostępne godziny</h4>
+                                </div>
+                                <p>Wszystkie informacje o dostępnych do wykorzystania godzinach w ramach pakietu znajdziesz w zakładce <strong>"Mój pakiet godzin"</strong>. Sprawdzaj regularnie swój stan godzin i daty ważności pakietów.</p>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-header">
+                                    <i class="bi bi-calendar-plus text-success"></i>
+                                    <h4>Rezerwacja lekcji</h4>
+                                </div>
+                                <p>W celu rezerwacji lekcji wejdź w sekcję <strong>"Zarezerwuj lekcję"</strong>, tutaj możesz przeglądać profile lektorów, możesz zapisać się na lekcję do więcej niż jednego lektora. Kiedy wybierzesz lektora kliknij <strong>"Sprawdź terminy"</strong>, otworzy się kalendarz. Klikając w kolejne dni, pod kalendarzem pokazują się godziny w których wybrany lektor jest dostępny, wybierz pasującą Ci godzinę i kliknij <strong>"Zarezerwuj lekcję"</strong>. Lekcja zostanie dodana do sekcji <strong>"Nadchodzące lekcje"</strong>.</p>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-header">
+                                    <i class="bi bi-camera-video text-warning"></i>
+                                    <h4>Dołączenie do lekcji</h4>
+                                </div>
+                                <p>Na 10 minut przed planowaną lekcją, lektor otrzyma możliwość utworzenia "pokoju", kiedy tylko to zrobi zostaniesz poinformowany o tym emailem, w treści wiadomości jest przycisk z linkiem do lekcji (otwórz w przeglądarce w której jesteś zalogowany/a do platformy). Jeśli link nie działa, możesz dołączyć do lekcji wchodząc w <strong>"Nadchodzące lekcje → Akcje → Szczegóły → Dołącz do lekcji"</strong>.</p>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-header">
+                                    <i class="bi bi-book text-info"></i>
+                                    <h4>Materiały</h4>
+                                </div>
+                                <p>Każdy lektor z którym masz lekcje, ma możliwość dodania materiałów do nauki. W sekcji <strong>"Materiały"</strong> znajdziesz wszystko co lektorzy dla Ciebie dodali z niezbędnymi informacjami kto i kiedy dodał materiał. Materiały mogą zawierać zadania domowe, dodatkowe ćwiczenia oraz przydatne zasoby.</p>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-header">
+                                    <i class="bi bi-journal-text text-secondary"></i>
+                                    <h4>Nowości i aktualizacje</h4>
+                                </div>
+                                <p>Zachęcamy do zaglądania w zakładkę <strong>"Wykaz zmian"</strong> gdzie możecie się dowiedzieć o nowych funkcjonalnościach platformy jak i o naprawionych błędach. Regularnie dodajemy nowe funkcje które ułatwią Ci naukę języka.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="dashboard-section">
+                        <h3>Statystyki</h3>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #3b82f6;">📅</div>
+                            <div class="stat-content">
+                                <div class="stat-number">${stats.upcomingLessons || 0}</div>
+                                <div class="stat-label">Nadchodzące lekcje</div>
+                                <div class="stat-sublabel">Zaplanowane na najbliższy czas</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #10b981;">✅</div>
+                            <div class="stat-content">
+                                <div class="stat-number">${stats.completedLessons || 0}</div>
+                                <div class="stat-label">Zakończone lekcje</div>
+                                <div class="stat-sublabel">Łącznie od początku</div>
+                            </div>
+                        </div>
+                        
+                        <!--
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #e91e63;">📦</div>
+                            <div class="stat-content">
+                                <div class="stat-number">${stats.remainingHours || 0}</div>
+                                <div class="stat-label">Pozostałe godziny</div>
+                                <div class="stat-sublabel">W aktywnych pakietach</div>
+                            </div>
+                        </div>
+                        -->
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #f59e0b;">👨‍🏫</div>
+                            <div class="stat-content">
+                                <div class="stat-number">${stats.activeTutors || 0}</div>
+                                <div class="stat-label">Aktywni lektorzy</div>
+                                <div class="stat-sublabel">Z którymi masz lekcje</div>
+                            </div>
+                        </div>
+                    </div>
                     
+                    <div class="dashboard-section">
+                        <h3>Zarządzanie</h3>
+                    </div>
                     <div class="row mt-4">
                         <div class="col-md-8">
                             <div class="card">

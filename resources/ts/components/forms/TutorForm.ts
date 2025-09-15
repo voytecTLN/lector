@@ -561,11 +561,19 @@ export class TutorForm implements RouteComponent {
             }
 
             if (profile.certifications) {
-                this.setFormValue('certifications', profile.certifications.join('\n'))
+                // Handle certifications as either array or string
+                const certificationsValue = Array.isArray(profile.certifications) 
+                    ? profile.certifications.join('\n')
+                    : profile.certifications
+                this.setFormValue('certifications', certificationsValue)
             }
 
             if (profile.education) {
-                this.setFormValue('education', profile.education.join('\n'))
+                // Handle education as either array or string
+                const educationValue = Array.isArray(profile.education) 
+                    ? profile.education.join('\n')
+                    : profile.education
+                this.setFormValue('education', educationValue)
             }
         }
     }

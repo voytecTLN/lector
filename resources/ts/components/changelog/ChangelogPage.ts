@@ -18,6 +18,35 @@ export class ChangelogPage implements RouteComponent {
     // Example changelog data - in real app this would come from API or config
     private changelog: ChangelogEntry[] = [
         {
+            version: "1.2.9",
+            releaseDate: "2025-09-15",
+            sections: {
+                student: [
+                    "Dodano sekcję 'Ważne informacje dla studentów' w dashboardzie z 5 kluczowymi wskazówkami",
+                    "Dodano wizualnie atrakcyjną kartę powitalną w dashboardzie studenta",
+                    "Przeprojektowano karty statystyk na nowoczesny design z ikonami i animacjami hover",
+                    "Poprawiono responsywność dashboardu studenta na urządzeniach mobilnych",
+                    "Dodano szczegółowe instrukcje dotyczące dostępnych godzin, rezerwacji lekcji, dołączania do pokojów i materiałów"
+                ],
+                tutor: [
+                    "Wprowadzono automatyczne powiadomienia email dla lektorów 10 minut przed możliwością utworzenia pokoju lekcyjnego",
+                    "Dodano sekcję 'Ważne informacje dla lektorów' w dashboardzie z 5 kluczowymi wskazówkami",
+                    "Dostosowano czas utworzenia pokoju: lektorzy mogą teraz utworzyć pokój na 11 minut przed lekcją",
+                    "Poprawiono formularz edycji profilu tutora - naprawiono błąd z polami wykształcenie i certyfikaty",
+                    "Dodano szczegółowe instrukcje dotyczące podglądu profilu, powiadomień o rezerwacjach, rozpoczynania lekcji i zarządzania studentami"
+                ],
+                admin: [
+                    "Dodano automatyczny system powiadomień email dla lektorów o możliwości utworzenia pokoju lekcyjnego",
+                    "Wprowadzono scheduled command 'lessons:send-meeting-room-notifications' uruchamiany co minutę",
+                    "Dodano nową kolumnę 'room_creation_notification_sent' w tabeli lessons z migracją",
+                    "Rozszerzono NotificationService o powiadomienia dla lektorów",
+                    "Utworzono nowy szablon email 'tutor-can-create-room' zgodny ze stylami systemu",
+                    "Zoptymalizowano timing spotkań: studenci mogą dołączyć na 10 minut przed lekcją",
+                    "Poprawiono monitorowanie i śledzenie wysyłania powiadomień o lekcjach"
+                ]
+            }
+        },
+        {
             version: "1.2.8",
             releaseDate: "2025-09-14",
             sections: {
