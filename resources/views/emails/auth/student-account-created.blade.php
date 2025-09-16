@@ -35,8 +35,9 @@
     
     <div class="alert alert-warning" style="margin-top: 30px;">
         <strong>Ważne informacje bezpieczeństwa:</strong><br>
-        • Link do resetowania hasła jest ważny przez 24 godziny<br>
+        • Link do ustawienia hasła jest ważny przez 24 godziny<br>
         • Nie udostępniaj tego linku nikomu innemu<br>
+        • Jeśli link wygasł, wejdź na stronę <a href="https://telenauka.pl/login">telenauka.pl/login</a> i skorzystaj z opcji "Zapomniałeś hasła?"<br>
     </div>
 <!--
     <p style="margin-top: 30px;">
