@@ -80,11 +80,13 @@
         </div>
     @endif
     
-    <p style="font-size: 14px; color: #666;">
-        <strong>Zasady anulowania:</strong><br>
-        Lekcję możesz anulować do momentu jej rozpoczęcia. Anulowanie co najmniej 12 godzin przed rozpoczęciem zwróci godzinę do Twojego pakietu. 
-        Anulowanie w krótszym czasie (mniej niż 12 godzin) spowoduje odliczenie godziny od pakietu.
-    </p>
+    @if($recipientType === 'student')
+        <p style="font-size: 14px; color: #666;">
+            <strong>Zasady anulowania:</strong><br>
+            Lekcję możesz anulować do momentu jej rozpoczęcia. Anulowanie co najmniej 12 godzin przed rozpoczęciem zwróci godzinę do Twojego pakietu. 
+            Anulowanie w krótszym czasie (mniej niż 12 godzin) spowoduje odliczenie godziny od pakietu.
+        </p>
+    @endif
     
     @if($recipientType === 'student')
         <p style="margin-top: 30px;">

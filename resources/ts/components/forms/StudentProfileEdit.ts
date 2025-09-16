@@ -527,7 +527,14 @@ export class StudentProfileEdit implements RouteComponent {
         } catch (error: any) {
             console.error('Profile update error:', error)
 
-            if (error.name !== 'ValidationError') {
+            // Handle ValidationError from ApiService
+            if (error.name === 'ValidationError' && error.errors) {
+                // Display validation errors on form fields
+                this.validationHandler?.displayValidationErrors(error.errors)
+                
+                // Show general error message
+                NotificationService.error('Sprawdź poprawność wypełnionych pól')
+            } else {
                 NotificationService.error('Wystąpił błąd podczas zapisywania profilu')
             }
         } finally {

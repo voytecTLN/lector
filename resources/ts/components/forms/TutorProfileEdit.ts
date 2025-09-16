@@ -757,13 +757,21 @@ export class TutorProfileEdit implements RouteComponent {
         } catch (error: any) {
             console.error('Profile update error:', error)
 
+            // Handle ValidationError from ApiService
+            if (error.name === 'ValidationError' && error.errors) {
+                // Display validation errors on form fields
+                this.validationHandler?.displayValidationErrors(error.errors)
+                
+                // Show general error message
+                NotificationService.error('Sprawdź poprawność wypełnionych pól')
+            }
             // Check for specializations validation error
-            if (error.response?.data?.errors?.specializations) {
+            else if (error.response?.data?.errors?.specializations) {
                 const specError = Array.isArray(error.response.data.errors.specializations) 
                     ? error.response.data.errors.specializations[0]
                     : error.response.data.errors.specializations
                 NotificationService.error(`Błąd specjalizacji: ${specError}`)
-            } else if (error.name !== 'ValidationError') {
+            } else {
                 NotificationService.error('Wystąpił błąd podczas zapisywania profilu')
             }
         } finally {
