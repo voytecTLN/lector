@@ -2,6 +2,7 @@ import Swal from 'sweetalert2'
 import {LessonService} from '@services/LessonService'
 import {authService} from '@services/AuthService'
 import {MeetingButton} from '../video/MeetingButton'
+import {LessonStatusManager} from '@/components/lessons/LessonStatusManager'
 import {AvatarHelper} from '@/utils/AvatarHelper'
 
 interface LessonDetails {
@@ -90,7 +91,7 @@ export class LessonDetailsModal {
             
             // Pokaż modal ze szczegółami
             await Swal.fire({
-                title: `Szczegóły lekcji #${lessonId}`,
+                title: `Szczegóły lekcji`,
                 html: html,
                 width: '600px',
                 showCancelButton: actionButtonText !== '',
@@ -197,6 +198,8 @@ export class LessonDetailsModal {
 
                 ${await this.buildMeetingSection(lesson)}
 
+                ${await this.buildStatusSection(lesson)}
+
                 <div class="mb-6">
                     <h3 class="h5 mb-4">Szczegóły zajęć</h3>
                     <div class="row g-3">
@@ -299,6 +302,44 @@ export class LessonDetailsModal {
         `
     }
 
+    private static async buildStatusSection(lesson: LessonDetails): Promise<string> {
+        const user = await authService.getCurrentUser()
+        
+        // Show status section only for tutors and only for certain statuses
+        if (user?.role !== 'tutor' || user.id !== lesson.tutor_id) {
+            return ''
+        }
+        
+        const canChangeStatus = lesson.status === 'completed' || lesson.status === 'no_show_student' || lesson.status === 'technical_issues'
+        
+        if (!canChangeStatus) {
+            return ''
+        }
+        
+        const statusLabel = LessonStatusManager.getStatusLabel(lesson.status)
+        const badgeClass = LessonStatusManager.getStatusBadgeClass(lesson.status)
+        
+        return `
+            <div class="mb-6 p-4 bg-warning bg-opacity-10 rounded">
+                <h3 class="h5 mb-3 d-flex align-items-center">
+                    <i class="bi bi-arrow-repeat me-2"></i>
+                    Zarządzanie statusem lekcji
+                </h3>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="mb-1 text-muted small">Aktualny status:</p>
+                        <span class="badge ${badgeClass}">${statusLabel}</span>
+                    </div>
+                    <button id="change-status-btn" class="btn btn-outline-warning btn-sm" 
+                            onclick="LessonDetailsModal.changeStatus(${lesson.id}, '${lesson.status}')">
+                        <i class="bi bi-arrow-repeat me-1"></i>
+                        Zmień status
+                    </button>
+                </div>
+            </div>
+        `
+    }
+
     private static async getTutorProfileButton(lesson: LessonDetails): Promise<string> {
         const user = await authService.getCurrentUser()
         
@@ -397,6 +438,33 @@ export class LessonDetailsModal {
             if ((window as any).StudentLessons) {
                 (window as any).StudentLessons.rateLesson(lesson.id)
             }
+        }
+    }
+    
+    static async changeStatus(lessonId: number, currentStatus: string): Promise<void> {
+        try {
+            // Close the current lesson details modal first
+            Swal.close()
+            
+            // Wait a bit for the modal to close
+            setTimeout(async () => {
+                const statusManager = new LessonStatusManager(lessonId, currentStatus, (newStatus: string) => {
+                    // After status change, reopen lesson details modal with updated data
+                    setTimeout(() => {
+                        LessonDetailsModal.show(lessonId)
+                    }, 300)
+                })
+                
+                await statusManager.showModal()
+            }, 200)
+            
+        } catch (error) {
+            console.error('Error in changeStatus:', error)
+            Swal.fire({
+                icon: 'error',
+                title: 'Błąd',
+                text: 'Wystąpił błąd podczas zmiany statusu'
+            })
         }
     }
 }

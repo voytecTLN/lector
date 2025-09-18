@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Lesson;
+use App\Models\LessonStatusHistory;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -55,6 +56,9 @@ class LessonStatusService
             $lesson->status_updated_at = now();
             $lesson->save();
 
+            // Record status change in history
+            $this->recordStatusChange($lesson, $previousStatus, $status, $reason, $user);
+
             // Handle special status scenarios (pass the pre-calculated free cancel flag)
             $this->handleStatusSideEffects($lesson, $previousStatus, $status, $isFreeCancel);
 
@@ -89,6 +93,9 @@ class LessonStatusService
             $lesson->status_updated_by = null; // System update
             $lesson->status_updated_at = now();
             $lesson->save();
+
+            // Record status change in history
+            $this->recordStatusChange($lesson, $previousStatus, $status, $reason, null, 'system');
             
             // Handle special status scenarios
             $this->handleStatusSideEffects($lesson, $previousStatus, $status);
@@ -282,74 +289,68 @@ class LessonStatusService
     }
 
     /**
+     * Record status change in history
+     */
+    private function recordStatusChange(Lesson $lesson, string $previousStatus, string $newStatus, ?string $reason, ?User $user, ?string $systemRole = null): void
+    {
+        // Don't record if status didn't actually change
+        if ($previousStatus === $newStatus) {
+            return;
+        }
+
+        LessonStatusHistory::create([
+            'lesson_id' => $lesson->id,
+            'status' => $newStatus,
+            'previous_status' => $previousStatus,
+            'reason' => $reason ?: $this->getDefaultReasonForStatus($newStatus),
+            'changed_by_role' => $systemRole ?: ($user ? $user->role : 'system'),
+            'changed_by_user_id' => $user ? $user->id : null,
+        ]);
+    }
+
+    /**
      * Get status change history for a lesson
      */
     public function getStatusHistory(int $lessonId): array
     {
-        // For now, return current status info
-        // In future, implement a separate status_history table
-        $lesson = Lesson::with(['statusUpdatedBy', 'tutor', 'student', 'cancelledBy'])->findOrFail($lessonId);
+        $lesson = Lesson::findOrFail($lessonId);
+        
+        // Get status history from dedicated table
+        $historyRecords = LessonStatusHistory::where('lesson_id', $lessonId)
+            ->with('changedByUser')
+            ->orderBy('created_at')
+            ->get();
 
         $history = [];
 
-        // Add current status if it was updated by a user
-        if ($lesson->status_updated_by && $lesson->status_updated_at) {
+        // Add initial creation status if no history exists
+        if ($historyRecords->isEmpty()) {
             $history[] = [
-                'status' => $lesson->status,
-                'reason' => $lesson->status_reason ?: $this->getDefaultReasonForStatus($lesson->status),
-                'changed_by' => $lesson->statusUpdatedBy->name,
-                'changed_at' => $lesson->status_updated_at->toIso8601String(),
-            ];
-        }
-        
-        // Add cancelled status if lesson was cancelled
-        if ($lesson->status === 'cancelled' && $lesson->cancelled_at) {
-            // Only add if not already added above
-            if (empty($history) || $history[count($history) - 1]['status'] !== 'cancelled') {
-                $cancelledBy = 'System';
-                if ($lesson->cancelled_by && $lesson->cancelledBy) {
-                    $cancelledBy = $lesson->cancelledBy->name;
-                }
-                
-                $history[] = [
-                    'status' => 'cancelled',
-                    'reason' => $lesson->cancellation_reason ?: 'Lekcja została anulowana',
-                    'changed_by' => $cancelledBy,
-                    'changed_at' => $lesson->cancelled_at->toIso8601String(),
-                ];
-            }
-        }
-        
-        // If status is not scheduled and we have no history, add current status
-        if (empty($history) && $lesson->status !== 'scheduled') {
-            // Generate simulated history based on current status
-            $statusReasons = [
-                'completed' => 'Lekcja została zakończona',
-                'in_progress' => 'Lekcja została rozpoczęta',
-                'cancelled' => 'Lekcja została anulowana',
-                'no_show_student' => 'Student nie pojawił się na lekcji',
-                'no_show_tutor' => 'Lektor nie pojawił się na lekcji',
-                'technical_issues' => 'Wystąpiły problemy techniczne'
-            ];
-            
-            $history[] = [
-                'status' => $lesson->status,
-                'reason' => $statusReasons[$lesson->status] ?? 'Status zmieniony',
+                'status' => 'scheduled',
+                'reason' => 'Lekcja została zaplanowana',
                 'changed_by' => 'System',
-                'changed_at' => $lesson->updated_at->toIso8601String(),
+                'changed_at' => $lesson->created_at->toIso8601String(),
             ];
         }
 
-        // Always add initial creation status
-        $history[] = [
-            'status' => 'scheduled',
-            'reason' => 'Lekcja została zaplanowana',
-            'changed_by' => 'System',
-            'changed_at' => $lesson->created_at->toIso8601String(),
-        ];
+        // Convert history records to array format
+        foreach ($historyRecords as $record) {
+            $changedBy = 'System';
+            if ($record->changedByUser) {
+                $changedBy = $record->changedByUser->name;
+            } elseif ($record->changed_by_role) {
+                $changedBy = ucfirst($record->changed_by_role);
+            }
 
-        // Return in chronological order (oldest first)
-        return array_reverse($history);
+            $history[] = [
+                'status' => $record->status,
+                'reason' => $record->reason,
+                'changed_by' => $changedBy,
+                'changed_at' => $record->created_at->toIso8601String(),
+            ];
+        }
+
+        return $history;
     }
     
     /**
@@ -546,6 +547,19 @@ class LessonStatusService
 
         foreach ($lessons as $lesson) {
             try {
+                // Log timeout detection
+                \Illuminate\Support\Facades\Log::channel('meetings')->warning('Meeting timeout detected - auto-completing lesson', [
+                    'lesson_id' => $lesson->id,
+                    'room_name' => $lesson->meeting_room_name,
+                    'student_id' => $lesson->student_id,
+                    'tutor_id' => $lesson->tutor_id,
+                    'meeting_started_at' => $lesson->meeting_started_at?->toIso8601String(),
+                    'timeout_minutes' => 80,
+                    'actual_duration_minutes' => $lesson->meeting_started_at?->diffInMinutes(now()),
+                    'lesson_date' => $lesson->lesson_date->format('Y-m-d'),
+                    'lesson_time' => $lesson->start_time
+                ]);
+
                 // Auto-complete the lesson
                 $this->updateLessonStatusSystem(
                     $lesson->id,
@@ -566,6 +580,17 @@ class LessonStatusService
                 $activeSessions = $lesson->meetingSessions()->whereNull('left_at')->get();
                 foreach ($activeSessions as $session) {
                     $session->endSession();
+                    
+                    // Log forced session end
+                    \Illuminate\Support\Facades\Log::channel('meetings')->info('Session ended due to timeout', [
+                        'lesson_id' => $lesson->id,
+                        'user_id' => $session->participant_id,
+                        'session_id' => $session->id,
+                        'joined_at' => $session->joined_at->toIso8601String(),
+                        'left_at' => $session->left_at->toIso8601String(),
+                        'duration_minutes' => $session->joined_at->diffInMinutes($session->left_at),
+                        'reason' => 'timeout_80min'
+                    ]);
                 }
 
             } catch (\Exception $e) {

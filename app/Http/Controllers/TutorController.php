@@ -263,9 +263,17 @@ class TutorController extends Controller
         ]);
 
         $tutorId = auth()->id();
-        $result = $this->tutorService->setAvailabilitySlots($tutorId, $request->slots);
-
-        return response()->json($result);
+        
+        try {
+            $result = $this->tutorService->setAvailabilitySlots($tutorId, $request->slots);
+            return response()->json($result);
+        } catch (\Exception $e) {
+            // Return specific error message from service
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 
     /**

@@ -223,7 +223,7 @@ export class TutorService {
             return response
 
         } catch (error) {
-            console.error('❌ Get tutor profile error:', error)
+            console.error('Error loading tutor profile:', error)
             throw error
         }
     }
@@ -245,7 +245,7 @@ export class TutorService {
             return response.data
 
         } catch (error) {
-            console.error('❌ Update tutor profile error:', error)
+            console.error('Error updating tutor profile:', error)
             throw error
         }
     }
@@ -258,7 +258,7 @@ export class TutorService {
             const response = await api.get<{ success: boolean, data: any[] }>('/tutors')
             return response.data || []
         } catch (error) {
-            console.error('❌ Get all tutors error:', error)
+            console.error('Error loading tutors list:', error)
             throw error
         }
     }
@@ -280,7 +280,7 @@ export class TutorService {
             const response = await api.get<{success: boolean, data: {students: any[], stats: any}}>(`/tutor/students?${params.toString()}`)
             return response.data || {students: [], stats: {}}
         } catch (error) {
-            console.error('❌ Get tutor students error:', error)
+            console.error('Error loading students:', error)
             throw error
         }
     }
@@ -302,7 +302,7 @@ export class TutorService {
             const response = await api.get<{success: boolean, data: {students: any[], stats: any}}>(`/admin/tutors/${tutorId}/students?${params.toString()}`)
             return response.data || {students: [], stats: {}}
         } catch (error) {
-            console.error('❌ Get tutor students for admin error:', error)
+            console.error('Error loading tutor students:', error)
             throw error
         }
     }
@@ -315,7 +315,7 @@ export class TutorService {
             const response = await api.get<{success: boolean, data: {student: any}}>(`/tutor/students/${studentId}`)
             return response.data?.student || response
         } catch (error) {
-            console.error('❌ Get student by ID error:', error)
+            console.error('Error loading student details:', error)
             throw error
         }
     }
@@ -329,7 +329,7 @@ export class TutorService {
             const responseData = response as any
             return responseData.materials || responseData.data?.materials || []
         } catch (error) {
-            console.error('❌ Get student materials error:', error)
+            console.error('Error loading student materials:', error)
             throw error
         }
     }
@@ -342,7 +342,7 @@ export class TutorService {
             const response = await api.get<any>(`/tutors/${tutorId}/public`)
             return response
         } catch (error) {
-            console.error('❌ Get public tutor profile error:', error)
+            console.error('Error loading tutor profile:', error)
             throw error
         }
     }

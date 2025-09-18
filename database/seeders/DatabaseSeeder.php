@@ -96,6 +96,7 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now()->subDays(365),
             'created_at' => now()->subDays(365),
             'last_login_at' => now()->subHours(1),
+            'account_source' => User::SOURCE_ADMIN,
         ]);
 
         // Admin 2 - Tomasz Administratorski
@@ -110,6 +111,7 @@ class DatabaseSeeder extends Seeder
             'status' => User::STATUS_ACTIVE,
             'email_verified_at' => now()->subDays(180),
             'created_at' => now()->subDays(180),
+            'account_source' => User::SOURCE_ADMIN,
         ]);
     }
 
@@ -133,6 +135,7 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now()->subDays(90),
             'created_at' => now()->subDays(90),
             'last_login_at' => now()->subHours(3),
+            'account_source' => User::SOURCE_ADMIN,
         ]);
 
         // Moderator 2 - Agnieszka Moderatorska
@@ -147,6 +150,7 @@ class DatabaseSeeder extends Seeder
             'status' => User::STATUS_ACTIVE,
             'email_verified_at' => now()->subDays(60),
             'created_at' => now()->subDays(60),
+            'account_source' => User::SOURCE_ADMIN,
         ]);
     }
 
@@ -250,6 +254,7 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now()->subDays(180),
             'created_at' => now()->subDays(180),
             'last_login_at' => now()->subHours(2),
+            'account_source' => User::SOURCE_ADMIN,
         ], [
             'languages' => ['english', 'german'],
             'specializations' => ['business', 'exam', 'conversation'],
@@ -288,6 +293,7 @@ class DatabaseSeeder extends Seeder
             'status' => User::STATUS_ACTIVE,
             'email_verified_at' => now()->subDays(120),
             'created_at' => now()->subDays(120),
+            'account_source' => User::SOURCE_ADMIN,
         ]);
 
         TutorProfile::create([
@@ -322,6 +328,7 @@ class DatabaseSeeder extends Seeder
             'status' => User::STATUS_ACTIVE,
             'email_verified_at' => now()->subDays(200),
             'created_at' => now()->subDays(200),
+            'account_source' => User::SOURCE_ADMIN,
         ]);
 
         TutorProfile::create([
@@ -356,6 +363,7 @@ class DatabaseSeeder extends Seeder
             'status' => User::STATUS_ACTIVE,
             'email_verified_at' => now()->subDays(5),
             'created_at' => now()->subDays(5),
+            'account_source' => User::SOURCE_ADMIN,
         ]);
 
         TutorProfile::create([
@@ -390,6 +398,7 @@ class DatabaseSeeder extends Seeder
             'status' => User::STATUS_INACTIVE,
             'email_verified_at' => now()->subDays(30),
             'created_at' => now()->subDays(30),
+            'account_source' => User::SOURCE_ADMIN,
         ]);
 
         TutorProfile::create([
@@ -440,6 +449,7 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now()->subDays(45),
             'created_at' => now()->subDays(45),
             'last_login_at' => now()->subHours(6),
+            'account_source' => User::SOURCE_IMPORT,
         ]);
 
         StudentProfile::create([
@@ -481,6 +491,7 @@ class DatabaseSeeder extends Seeder
             'status' => User::STATUS_ACTIVE,
             'email_verified_at' => now()->subDays(60),
             'created_at' => now()->subDays(60),
+            'account_source' => User::SOURCE_IMPORT,
         ]);
 
         StudentProfile::create([
@@ -521,6 +532,7 @@ class DatabaseSeeder extends Seeder
             'status' => User::STATUS_ACTIVE,
             'email_verified_at' => now()->subDays(30),
             'created_at' => now()->subDays(30),
+            'account_source' => User::SOURCE_IMPORT,
         ]);
 
         StudentProfile::create([
@@ -550,6 +562,7 @@ class DatabaseSeeder extends Seeder
             'status' => User::STATUS_ACTIVE,
             'email_verified_at' => now()->subDays(90),
             'created_at' => now()->subDays(90),
+            'account_source' => User::SOURCE_IMPORT,
         ]);
 
         StudentProfile::create([
@@ -586,6 +599,7 @@ class DatabaseSeeder extends Seeder
             'status' => User::STATUS_INACTIVE,
             'email_verified_at' => now()->subDays(120),
             'created_at' => now()->subDays(120),
+            'account_source' => User::SOURCE_IMPORT,
         ]);
 
         StudentProfile::create([
@@ -610,6 +624,7 @@ class DatabaseSeeder extends Seeder
             'status' => 'unverified',
             'email_verified_at' => null,
             'created_at' => now()->subDays(2),
+            'account_source' => User::SOURCE_IMPORT,
         ]);
 
         StudentProfile::create([
@@ -634,6 +649,7 @@ class DatabaseSeeder extends Seeder
             'status' => User::STATUS_BLOCKED,
             'email_verified_at' => now()->subDays(100),
             'created_at' => now()->subDays(100),
+            'account_source' => User::SOURCE_IMPORT,
         ]);
 
         StudentProfile::create([
@@ -659,6 +675,7 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now()->subDays(15),
             'created_at' => now()->subDays(15),
             'last_login_at' => now()->subHours(1),
+            'account_source' => User::SOURCE_IMPORT,
         ]);
 
         StudentProfile::create([
@@ -701,6 +718,7 @@ class DatabaseSeeder extends Seeder
             'status' => User::STATUS_ACTIVE,
             'email_verified_at' => now()->subDays(20),
             'created_at' => now()->subDays(20),
+            'account_source' => User::SOURCE_IMPORT,
         ]);
 
         StudentProfile::create([
@@ -742,6 +760,7 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now()->subDays(180),
             'created_at' => now()->subDays(180),
             'last_login_at' => now()->subDays(1),
+            'account_source' => User::SOURCE_IMPORT,
         ]);
 
         StudentProfile::create([

@@ -254,6 +254,16 @@ export class TutorForm implements RouteComponent {
                                         <option value="blocked">Zablokowany</option>
                                     </select>
                                 </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Źródło pochodzenia konta</label>
+                                    <select name="account_source" class="form-select">
+                                        <option value="rejestracja">Rejestracja</option>
+                                        <option value="admin" selected>Admin</option>
+                                        <option value="import">Import</option>
+                                        <option value="api">API</option>
+                                    </select>
+                                    <div class="form-text">Określa w jaki sposób zostało utworzone konto</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -528,6 +538,7 @@ export class TutorForm implements RouteComponent {
         this.setFormValue('birth_date', this.tutor.birth_date)
         this.setFormValue('city', this.tutor.city)
         this.setFormValue('status', this.tutor.status)
+        this.setFormValue('account_source', this.tutor.account_source || 'admin')
 
         // Tutor profile data
         const profile = this.tutor.tutor_profile

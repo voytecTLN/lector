@@ -14,11 +14,8 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(Schedule $schedule)
     {
-        // Check lesson statuses every 8 minutes
-        $schedule->command('lessons:check-status')->cron('*/8 * * * *');
-
-        // Send meeting room notifications every minute
-        $schedule->command('lessons:send-meeting-room-notifications')->everyMinute();
+        // Note: In Laravel 11, scheduling is now done in routes/console.php
+        // This method is kept for backwards compatibility but is not used
     }
 
     protected function commands()

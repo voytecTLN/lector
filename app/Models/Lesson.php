@@ -148,6 +148,11 @@ class Lesson extends Model
         return $this->hasMany(MeetingSession::class);
     }
 
+    public function statusHistory(): HasMany
+    {
+        return $this->hasMany(LessonStatusHistory::class)->orderBy('created_at');
+    }
+
     // Scopes
     public function scopeScheduled($query)
     {

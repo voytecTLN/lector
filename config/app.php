@@ -9,6 +9,17 @@ return [
     'locale' => 'pl',
     'key' => env('APP_KEY'),
     'cipher' => 'AES-256-CBC',
+    
+    /*
+    |--------------------------------------------------------------------------
+    | External API Keys
+    |--------------------------------------------------------------------------
+    |
+    | Comma-separated list of valid API keys for external integrations
+    |
+    */
+    
+    'external_api_keys' => env('EXTERNAL_API_KEYS', ''),
 
     'providers' => [
         // Laravel Framework Service Providers

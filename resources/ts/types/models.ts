@@ -111,6 +111,9 @@ export interface User {
   email_verified_at?: string
   last_login_at?: string
   last_login_ip?: string
+  terms_accepted?: boolean
+  terms_accepted_at?: string
+  account_source?: 'rejestracja' | 'admin' | 'import' | 'api'
   student_profile?: StudentProfile
   studentProfile?: StudentProfile  // camelCase alias
   tutor_profile?: TutorProfile

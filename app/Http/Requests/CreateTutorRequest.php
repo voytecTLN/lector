@@ -38,6 +38,7 @@ class CreateTutorRequest extends FormRequest
             'city' => ['nullable', 'string', 'max:255'],
             'country' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'in:active,inactive,blocked'],
+            'account_source' => ['nullable', 'in:rejestracja,admin,import,api'],
 
             // Tutor profile data
             'languages' => ['required', 'array', 'min:1'],

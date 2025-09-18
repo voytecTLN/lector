@@ -12,6 +12,7 @@ use App\Http\Controllers\LessonController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\Api\ExternalStudentController;
 
 // Health check - publiczny endpoint
 Route::get('/health', function () {
@@ -385,6 +386,8 @@ Route::middleware('auth:sanctum')->group(function () {
                         ->name('api.tutor.lessons.complete');
                     Route::put('/{lessonId}/no-show', [LessonController::class, 'markAsNoShow'])
                         ->name('api.tutor.lessons.no-show');
+                    Route::put('/{lessonId}/status', [LessonController::class, 'updateStatus'])
+                        ->name('api.tutor.lessons.update-status');
                     Route::get('/{lessonId}', [LessonController::class, 'show'])
                         ->name('api.tutor.lessons.show');
                     
@@ -451,6 +454,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         ->name('api.support.issue');
 });
 
+
+// External API endpoints - Zabezpieczone kluczem API
+Route::prefix('external')->middleware(['api.key'])->group(function () {
+    Route::post('/students', [\App\Http\Controllers\Api\ExternalStudentController::class, 'store'])
+        ->name('api.external.students.create');
+});
 
 // CSRF Cookie endpoint for SPA authentication
 Route::get('/sanctum/csrf-cookie', function () {

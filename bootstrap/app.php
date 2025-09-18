@@ -54,6 +54,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
             'verified' => \App\Http\Middleware\VerifiedMiddleware::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'api.key' => \App\Http\Middleware\ApiKeyMiddleware::class,
         ]);
 
         // Rate limiting configuration

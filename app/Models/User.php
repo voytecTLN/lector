@@ -33,7 +33,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'verification_token_hash',
         'verification_token_expires_at',
         'password_reset_token',
-        'password_reset_expires_at'
+        'password_reset_expires_at',
+        'terms_accepted',
+        'terms_accepted_at',
+        'account_source'
     ];
 
     protected $hidden = [
@@ -52,7 +55,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_login_at' => 'datetime',
         'password_reset_expires_at' => 'datetime',
         'verification_token_expires_at' => 'datetime',
-        'two_factor_recovery_codes' => 'array'
+        'two_factor_recovery_codes' => 'array',
+        'terms_accepted' => 'boolean',
+        'terms_accepted_at' => 'datetime'
     ];
 
     // Role constants
@@ -77,6 +82,19 @@ class User extends Authenticatable implements MustVerifyEmail
         self::STATUS_ACTIVE,
         self::STATUS_INACTIVE,
         self::STATUS_BLOCKED
+    ];
+
+    // Account source constants
+    public const SOURCE_REGISTRATION = 'rejestracja';
+    public const SOURCE_ADMIN = 'admin';
+    public const SOURCE_IMPORT = 'import';
+    public const SOURCE_API = 'api';
+
+    public const SOURCES = [
+        self::SOURCE_REGISTRATION,
+        self::SOURCE_ADMIN,
+        self::SOURCE_IMPORT,
+        self::SOURCE_API
     ];
 
     // Relationships
@@ -198,6 +216,41 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isBlocked(): bool
     {
         return $this->status === self::STATUS_BLOCKED;
+    }
+
+    // Terms acceptance methods
+    public function hasAcceptedTerms(): bool
+    {
+        return $this->terms_accepted === true;
+    }
+
+    public function acceptTerms(): void
+    {
+        $this->update([
+            'terms_accepted' => true,
+            'terms_accepted_at' => Carbon::now()
+        ]);
+    }
+
+    // Account source methods
+    public function isFromRegistration(): bool
+    {
+        return $this->account_source === self::SOURCE_REGISTRATION;
+    }
+
+    public function isFromAdmin(): bool
+    {
+        return $this->account_source === self::SOURCE_ADMIN;
+    }
+
+    public function isFromImport(): bool
+    {
+        return $this->account_source === self::SOURCE_IMPORT;
+    }
+
+    public function isFromApi(): bool
+    {
+        return $this->account_source === self::SOURCE_API;
     }
 
     // POPRAWIONA METODA - używamy tylko email_verified_at zgodnie z Laravel

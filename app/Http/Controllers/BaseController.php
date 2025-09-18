@@ -86,7 +86,7 @@ abstract class BaseController extends Controller
             ModelNotFoundException::class => 404,
             AuthorizationException::class => 403,
             QueryException::class => 500,
-            default => 500
+            default => 400  // Changed from 500 to 400 for business logic errors
         };
     }
 

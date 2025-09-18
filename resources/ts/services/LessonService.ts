@@ -70,7 +70,20 @@ class LessonServiceClass {
     }
 
     async updateLessonStatus(lessonId: number, statusUpdate: LessonStatusUpdate): Promise<any> {
-        const response = await api.put<LessonResponse>(`/lessons/${lessonId}/status`, statusUpdate)
+        // Get user role to determine correct endpoint
+        const { authService } = await import('@services/AuthService')
+        const user = await authService.getCurrentUser()
+        const userRole = user?.role || 'student'
+        
+        let endpoint = `/lessons/${lessonId}/status` // fallback
+        
+        if (userRole === 'tutor') {
+            endpoint = `/tutor/lessons/${lessonId}/status`
+        } else if (userRole === 'admin' || userRole === 'moderator') {
+            endpoint = `/admin/lessons/${lessonId}/status`
+        }
+        
+        const response = await api.put<LessonResponse>(endpoint, statusUpdate)
         return response
     }
 

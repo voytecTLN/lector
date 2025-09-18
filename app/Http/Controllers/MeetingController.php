@@ -96,13 +96,26 @@ class MeetingController extends BaseController
                 $lesson->update(['meeting_token' => $token]);
 
                 // Utwórz sesję dla lektora
-                MeetingSession::create([
+                $session = MeetingSession::create([
                     'lesson_id' => $lesson->id,
                     'participant_id' => $user->id,
                     'room_name' => $roomData['room_name'],
                     'joined_at' => now(),
                     'browser' => $request->header('User-Agent'),
                     'device_type' => $this->detectDeviceType($request)
+                ]);
+
+                // Log tutor joining (room creation)
+                \Illuminate\Support\Facades\Log::channel('meetings')->info('Tutor started meeting', [
+                    'lesson_id' => $lesson->id,
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'user_role' => 'tutor',
+                    'room_name' => $roomData['room_name'],
+                    'session_id' => $session->id,
+                    'device_type' => $session->device_type,
+                    'browser' => $session->browser,
+                    'joined_at' => $session->joined_at->toIso8601String()
                 ]);
 
                 DB::commit();
@@ -197,13 +210,39 @@ class MeetingController extends BaseController
 
             if (!$existingSession) {
                 // Utwórz nową sesję
-                MeetingSession::create([
+                $session = MeetingSession::create([
                     'lesson_id' => $lesson->id,
                     'participant_id' => $user->id,
                     'room_name' => $lesson->meeting_room_name,
                     'joined_at' => now(),
                     'browser' => $request->header('User-Agent'),
                     'device_type' => $this->detectDeviceType($request)
+                ]);
+
+                // Log user joining meeting
+                \Illuminate\Support\Facades\Log::channel('meetings')->info('User joined meeting', [
+                    'lesson_id' => $lesson->id,
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'user_role' => $user->role,
+                    'room_name' => $lesson->meeting_room_name,
+                    'session_id' => $session->id,
+                    'device_type' => $session->device_type,
+                    'browser' => $session->browser,
+                    'joined_at' => $session->joined_at->toIso8601String(),
+                    'is_moderator' => $isModerator
+                ]);
+            } else {
+                // Log existing session rejoin
+                \Illuminate\Support\Facades\Log::channel('meetings')->info('User rejoined meeting (existing session)', [
+                    'lesson_id' => $lesson->id,
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'user_role' => $user->role,
+                    'room_name' => $lesson->meeting_room_name,
+                    'session_id' => $existingSession->id,
+                    'original_joined_at' => $existingSession->joined_at->toIso8601String(),
+                    'is_moderator' => $isModerator
                 ]);
             }
 
@@ -250,7 +289,32 @@ class MeetingController extends BaseController
                 $activeSessions = $lesson->meetingSessions()->whereNull('left_at')->get();
                 foreach ($activeSessions as $session) {
                     $session->endSession();
+                    
+                    // Log user leaving meeting
+                    \Illuminate\Support\Facades\Log::channel('meetings')->info('User left meeting (forced by tutor end)', [
+                        'lesson_id' => $lesson->id,
+                        'user_id' => $session->participant_id,
+                        'user_name' => $session->participant->name,
+                        'user_role' => $session->participant->role,
+                        'room_name' => $lesson->meeting_room_name,
+                        'session_id' => $session->id,
+                        'joined_at' => $session->joined_at->toIso8601String(),
+                        'left_at' => $session->left_at->toIso8601String(),
+                        'duration_minutes' => $session->joined_at->diffInMinutes($session->left_at)
+                    ]);
                 }
+
+                // Log meeting end
+                \Illuminate\Support\Facades\Log::channel('meetings')->info('Meeting ended by tutor', [
+                    'lesson_id' => $lesson->id,
+                    'ended_by_user_id' => $user->id,
+                    'ended_by_user_name' => $user->name,
+                    'room_name' => $lesson->meeting_room_name,
+                    'meeting_started_at' => $lesson->meeting_started_at->toIso8601String(),
+                    'meeting_ended_at' => now()->toIso8601String(),
+                    'total_duration_minutes' => $lesson->meeting_started_at->diffInMinutes(now()),
+                    'participants_count' => $activeSessions->count()
+                ]);
 
                 // Zaktualizuj status lekcji
                 $lesson->update([
@@ -375,6 +439,16 @@ class MeetingController extends BaseController
                             
                         if ($session) {
                             $session->endSession();
+                            
+                            // Log participant leaving via webhook
+                            \Illuminate\Support\Facades\Log::channel('meetings')->info('User left meeting (webhook)', [
+                                'participant_id' => $participantId,
+                                'room_name' => $roomName,
+                                'session_id' => $session->id,
+                                'joined_at' => $session->joined_at->toIso8601String(),
+                                'left_at' => $session->left_at->toIso8601String(),
+                                'duration_minutes' => $session->joined_at->diffInMinutes($session->left_at)
+                            ]);
                         }
                     }
                     break;

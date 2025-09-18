@@ -71,6 +71,21 @@ class MeetingSession extends Model
         $this->left_at = now();
         $this->calculateDuration();
         $this->save();
+
+        // Log session end to meetings log
+        \Illuminate\Support\Facades\Log::channel('meetings')->info('User left meeting', [
+            'lesson_id' => $this->lesson_id,
+            'user_id' => $this->participant_id,
+            'user_name' => $this->participant->name ?? 'Unknown',
+            'user_role' => $this->participant->role ?? 'unknown',
+            'room_name' => $this->room_name,
+            'session_id' => $this->id,
+            'joined_at' => $this->joined_at->toIso8601String(),
+            'left_at' => $this->left_at->toIso8601String(),
+            'duration_minutes' => $this->getDurationInMinutes(),
+            'device_type' => $this->device_type,
+            'browser' => $this->browser
+        ]);
     }
 
     public function getDurationInMinutes(): float

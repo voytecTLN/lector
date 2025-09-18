@@ -9,5 +9,15 @@ return [
             'path' => storage_path('logs/emails.log'),
             'level' => 'info',
         ],
+        'api' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/api.log'),
+            'level' => 'info',
+        ],
+        'meetings' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/meetings.log'),
+            'level' => 'info',
+        ],
     ],
 ];

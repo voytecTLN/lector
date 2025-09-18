@@ -59,8 +59,8 @@ class MaterialsController extends Controller
             
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to fetch materials'
-            ], 500);
+                'message' => $e->getMessage() ?: 'Failed to fetch materials'
+            ], 400);
         }
     }
 
@@ -157,8 +157,8 @@ class MaterialsController extends Controller
             
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
+                'message' => $e->getMessage()
+            ], 400);
         }
     }
 
@@ -341,8 +341,8 @@ class MaterialsController extends Controller
             
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to fetch materials'
-            ], 500);
+                'message' => $e->getMessage() ?: 'Failed to fetch materials'
+            ], 400);
         }
     }
 }

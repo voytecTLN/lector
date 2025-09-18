@@ -76,6 +76,17 @@ class DailyVideoService
             $responseBody = $response->getBody()->getContents();
             $roomData = json_decode($responseBody, true);
             
+            // Log successful room creation
+            \Illuminate\Support\Facades\Log::channel('meetings')->info('Room created successfully', [
+                'lesson_id' => $lesson->id,
+                'room_name' => $roomData['name'],
+                'room_url' => $roomData['url'],
+                'student_id' => $lesson->student_id,
+                'tutor_id' => $lesson->tutor_id,
+                'lesson_date' => $lesson->lesson_date->format('Y-m-d'),
+                'lesson_time' => $lesson->start_time,
+                'created_at' => $roomData['created_at']
+            ]);
             
             return [
                 'success' => true,
@@ -95,6 +106,16 @@ class DailyVideoService
                 'error' => $e->getMessage(),
                 'response_body' => $responseBody,
                 'status_code' => $e->hasResponse() ? $e->getResponse()->getStatusCode() : null
+            ]);
+            
+            // Also log to meetings channel
+            \Illuminate\Support\Facades\Log::channel('meetings')->error('Room creation failed', [
+                'lesson_id' => $lesson->id,
+                'error' => $e->getMessage(),
+                'student_id' => $lesson->student_id,
+                'tutor_id' => $lesson->tutor_id,
+                'lesson_date' => $lesson->lesson_date->format('Y-m-d'),
+                'lesson_time' => $lesson->start_time
             ]);
             
             return [
@@ -135,12 +156,30 @@ class DailyVideoService
 
             $tokenData = json_decode($response->getBody()->getContents(), true);
             
+            // Log token generation
+            \Illuminate\Support\Facades\Log::channel('meetings')->info('Meeting token generated', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'user_role' => $user->role,
+                'room_name' => $roomName,
+                'is_moderator' => $isModerator
+            ]);
+            
             return $tokenData['token'] ?? null;
         } catch (GuzzleException $e) {
             Log::error('Daily.co token generation failed', [
                 'user_id' => $user->id,
                 'room_name' => $roomName,
                 'error' => $e->getMessage(),
+            ]);
+            
+            // Also log to meetings channel
+            \Illuminate\Support\Facades\Log::channel('meetings')->error('Token generation failed', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'user_role' => $user->role,
+                'room_name' => $roomName,
+                'error' => $e->getMessage()
             ]);
             
             return null;
@@ -180,11 +219,22 @@ class DailyVideoService
         try {
             $this->client->delete("rooms/{$roomName}");
             
+            // Log successful room deletion
+            \Illuminate\Support\Facades\Log::channel('meetings')->info('Room deleted successfully', [
+                'room_name' => $roomName
+            ]);
+            
             return true;
         } catch (GuzzleException $e) {
             Log::error('Daily.co room deletion failed', [
                 'room_name' => $roomName,
                 'error' => $e->getMessage(),
+            ]);
+            
+            // Also log to meetings channel
+            \Illuminate\Support\Facades\Log::channel('meetings')->error('Room deletion failed', [
+                'room_name' => $roomName,
+                'error' => $e->getMessage()
             ]);
             
             return false;
@@ -330,7 +380,7 @@ class DailyVideoService
         }
         
         // Sprawdź czy ostatnia osoba opuściła pokój więcej niż X minut temu
-        return now()->diffInMinutes($lastActiveSession->left_at) >= $emptyMinutes;
+        return $lastActiveSession->left_at->diffInMinutes(now()) >= $emptyMinutes;
     }
 
     /**

@@ -1,4 +1,5 @@
 import { LessonService } from '@services/LessonService'
+import { authService } from '@services/AuthService'
 
 interface StatusOption {
     value: string
@@ -21,17 +22,41 @@ export class LessonStatusManager {
      * Get available status options based on user role
      */
     private async getStatusOptions(): Promise<Record<string, string>> {
-        // TODO: Add getStatusOptions method to LessonService when backend endpoint is ready
-        // For now, return static options
-        return {
-            scheduled: 'Zaplanowana',
-            in_progress: 'W trakcie',
-            completed: 'Zakończona',
-            cancelled: 'Anulowana',
-            not_started: 'Nie rozpoczęta',
-            no_show_student: 'Student nieobecny',
-            no_show_tutor: 'Lektor nieobecny',
-            technical_issues: 'Problemy techniczne'
+        try {
+            // Get user role from authService
+            const user = await authService.getCurrentUser()
+            const userRole = user?.role || 'tutor'
+            
+            // If user is tutor, return limited options
+            if (userRole === 'tutor') {
+                return {
+                    completed: 'Zakończona',
+                    no_show_student: 'Student nieobecny',
+                    technical_issues: 'Problemy techniczne',
+                    cancelled: 'Anulowana'
+                }
+            }
+            
+            // For admin/moderator, return all options
+            return {
+                scheduled: 'Zaplanowana',
+                in_progress: 'W trakcie',
+                completed: 'Zakończona',
+                cancelled: 'Anulowana',
+                not_started: 'Nie rozpoczęta',
+                no_show_student: 'Student nieobecny',
+                no_show_tutor: 'Lektor nieobecny',
+                technical_issues: 'Problemy techniczne'
+            }
+        } catch (error) {
+            console.error('Error getting user role:', error)
+            // Default to tutor options as safer choice
+            return {
+                completed: 'Zakończona',
+                no_show_student: 'Student nieobecny',
+                technical_issues: 'Problemy techniczne',
+                cancelled: 'Anulowana'
+            }
         }
     }
 
@@ -81,7 +106,7 @@ export class LessonStatusManager {
         const statusOptions = await this.getStatusOptions()
         
         const modalHtml = `
-            <div class="modal fade" id="lessonStatusModal" tabindex="-1">
+            <div class="modal fade" id="lessonStatusModal" tabindex="-1" style="z-index: 10050;">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -125,9 +150,18 @@ export class LessonStatusManager {
         // Add modal to page
         document.body.insertAdjacentHTML('beforeend', modalHtml)
         
-        // Initialize Bootstrap modal
+        // Initialize Bootstrap modal with higher z-index
         const modalElement = document.getElementById('lessonStatusModal')!
         const modal = new (window as any).bootstrap.Modal(modalElement)
+        
+        // Set higher z-index to appear above SweetAlert2 modals (which use ~10000)
+        modalElement.style.zIndex = '10050'
+        
+        // Also set backdrop z-index if it exists
+        const backdrop = document.querySelector('.modal-backdrop')
+        if (backdrop) {
+            (backdrop as HTMLElement).style.zIndex = '10049'
+        }
         
         // Setup event listeners
         const saveBtn = modalElement.querySelector('#saveStatusBtn')
@@ -163,9 +197,7 @@ export class LessonStatusManager {
                 <ul class="mb-0">
                     <li><strong>Zakończona</strong> - Lekcja odbyła się pomyślnie</li>
                     <li><strong>Anulowana</strong> - Lekcja została odwołana</li>
-                    <li><strong>Nie rozpoczęta</strong> - Lekcja nie rozpoczęła się po okresie oczekiwania</li>
                     <li><strong>Student nieobecny</strong> - Student nie pojawił się na lekcji</li>
-                    <li><strong>Lektor nieobecny</strong> - Lektor nie pojawił się (godziny zostaną zwrócone)</li>
                     <li><strong>Problemy techniczne</strong> - Lekcja nie mogła się odbyć z powodu problemów technicznych</li>
                 </ul>
             </div>

@@ -139,6 +139,11 @@ export class ApiService {
           throw new ValidationError(result.errors, result.message || 'Błąd walidacji')
         }
 
+        // Business logic errors (400) - don't show generic notification
+        if (response.status === 400 && result.message) {
+          throw new Error(result.message)
+        }
+
         if (response.status === 403) {
           document.dispatchEvent(new CustomEvent('notification:show', {
             detail: {

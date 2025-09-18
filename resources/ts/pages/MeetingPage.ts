@@ -112,7 +112,7 @@ export class MeetingPage implements RouteComponent {
                                 </button>
                             </div>
                             <div class="col">
-                                <h5 class="mb-0 fw-semibold">Spotkanie online - Lekcja #${this.lessonId}</h5>
+                                <h5 class="mb-0 fw-semibold">Spotkanie online</h5>
                                 <small class="text-muted">${this.formatLessonInfo(lesson)}</small>
                             </div>
                             <div class="col-auto">

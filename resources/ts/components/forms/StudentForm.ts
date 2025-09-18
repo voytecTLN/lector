@@ -177,6 +177,16 @@ export class StudentForm implements RouteComponent {
                                 <option value="blocked">Zablokowany</option>
                             </select>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Źródło pochodzenia konta</label>
+                            <select name="account_source" class="form-select">
+                                <option value="rejestracja">Rejestracja</option>
+                                <option value="admin">Admin</option>
+                                <option value="import" selected>Import</option>
+                                <option value="api">API</option>
+                            </select>
+                            <div class="form-text">Określa w jaki sposób zostało utworzone konto</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -364,7 +374,7 @@ export class StudentForm implements RouteComponent {
         if (!this.form) return
 
         // Basic fields (excluding birth_date which needs special handling)
-        const fields = ['name', 'email', 'phone', 'city', 'status']
+        const fields = ['name', 'email', 'phone', 'city', 'status', 'account_source']
         fields.forEach(field => {
             const input = this.form!.querySelector(`[name="${field}"]`) as HTMLInputElement
             if (input && student[field as keyof User]) {

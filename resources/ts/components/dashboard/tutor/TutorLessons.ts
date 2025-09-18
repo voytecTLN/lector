@@ -1,6 +1,7 @@
 import { LessonService } from '@services/LessonService'
 import { formatDate } from '@utils/date'
 import { AvatarHelper } from '@/utils/AvatarHelper'
+import { LessonStatusManager } from '@/components/lessons/LessonStatusManager'
 import Swal from 'sweetalert2'
 
 export class TutorLessons {
@@ -323,6 +324,7 @@ export class TutorLessons {
     private renderLessonCell(lesson: any): string {
         const statusClass = this.getStatusClass(lesson.status)
         const canModify = lesson.status === 'scheduled' && this.canModifyLesson(lesson)
+        const canChangeStatus = lesson.status === 'completed' || lesson.status === 'no_show_student' || lesson.status === 'technical_issues'
         
         return `
             <div class="hour-cell lesson ${statusClass}" data-lesson-id="${lesson.id}">
@@ -335,6 +337,11 @@ export class TutorLessons {
                     <button class="btn btn-sm btn-outline-primary" onclick="TutorLessons.viewDetails(${lesson.id})" title="Szczegóły">
                         <i class="bi bi-eye"></i>
                     </button>
+                    ${canChangeStatus ? `
+                        <button class="btn btn-sm btn-outline-info" onclick="TutorLessons.changeStatus(${lesson.id}, '${lesson.status}')" title="Zmień status">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </button>
+                    ` : ''}
                     ${canModify ? `
                         <button class="btn btn-sm btn-success" onclick="TutorLessons.completeLesson(${lesson.id})" title="Oznacz jako zakończoną">
                             <i class="bi bi-check"></i>
@@ -473,6 +480,7 @@ export class TutorLessons {
         const lessonDate = new Date(lesson.lesson_date)
         const statusBadge = this.getStatusBadge(lesson.status)
         const canModify = lesson.status === 'scheduled' && this.canModifyLesson(lesson)
+        const canChangeStatus = lesson.status === 'completed' || lesson.status === 'no_show_student' || lesson.status === 'technical_issues'
         
         return `
             <tr>
@@ -498,6 +506,11 @@ export class TutorLessons {
                         <button class="btn btn-outline-primary" onclick="TutorLessons.viewDetails(${lesson.id})" title="Szczegóły">
                             <i class="bi bi-eye"></i>
                         </button>
+                        ${canChangeStatus ? `
+                            <button class="btn btn-outline-info" onclick="TutorLessons.changeStatus(${lesson.id}, '${lesson.status}')" title="Zmień status">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                        ` : ''}
                         ${canModify ? `
                             <button class="btn btn-outline-success" onclick="TutorLessons.completeLesson(${lesson.id})" title="Oznacz jako zakończoną">
                                 <i class="bi bi-check"></i>
@@ -1086,6 +1099,30 @@ export class TutorLessons {
                 detail: {
                     type: 'error',
                     message: 'Nie można załadować modalu szczegółów',
+                    duration: 3000
+                }
+            }))
+        }
+    }
+    
+    static async changeStatus(lessonId: number, currentStatus: string): Promise<void> {
+        try {
+            const statusManager = new LessonStatusManager(lessonId, currentStatus, (newStatus: string) => {
+                // Reload lessons after status update
+                this.instance.loadLessons()
+                // Also reload upcoming lessons if they're visible
+                if (document.getElementById('upcoming-lessons-container')) {
+                    this.instance.loadUpcomingLessons()
+                }
+            })
+            
+            await statusManager.showModal()
+        } catch (error) {
+            console.error('Error in changeStatus:', error)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Wystąpił błąd podczas zmiany statusu',
                     duration: 3000
                 }
             }))

@@ -823,7 +823,9 @@ export class HourlyAvailabilityCalendar {
             }
         } catch (error: any) {
             console.error('Failed to save availability:', error)
-            this.showNotification('error', error.message || 'Błąd podczas zapisywania dostępności')
+            // Use server message if available, otherwise fallback to error message
+            const message = error.response?.data?.message || error.message || 'Błąd podczas zapisywania dostępności'
+            this.showNotification('error', message)
         }
     }
 

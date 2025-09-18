@@ -19,17 +19,6 @@ class RoleMiddleware
     {
         $user = $request->user();
 
-        // Only log in development environments
-        if (app()->environment(['local', 'testing'])) {
-            \Log::info('RoleMiddleware - Debug info:', [
-                'url' => $request->url(),
-                'method' => $request->method(),
-                'required_roles' => $roles,
-                'user_id' => $user?->id,
-                'user_role' => $user?->role,
-                'has_any_role' => $user?->hasAnyRole($roles)
-            ]);
-        }
 
         if (!$user) {
             if (app()->environment(['local', 'testing'])) {
@@ -77,12 +66,6 @@ class RoleMiddleware
             return redirect()->route('unauthorized');
         }
 
-        if (app()->environment(['local', 'testing'])) {
-            \Log::info('RoleMiddleware - Access granted', [
-                'user_id' => $user->id,
-                'user_role' => $user->role
-            ]);
-        }
 
         return $next($request);
     }

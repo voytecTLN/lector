@@ -170,7 +170,7 @@ class StudentService
 
         } catch (Exception $e) {
             DB::rollBack();
-            \Log::error('❌ StudentService: Update failed', [
+            \Log::error('StudentService: Update failed', [
                 'student_id' => $studentId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

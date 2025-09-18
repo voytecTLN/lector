@@ -18,6 +18,67 @@ export class ChangelogPage implements RouteComponent {
     // Example changelog data - in real app this would come from API or config
     private changelog: ChangelogEntry[] = [
         {
+            version: "1.3.0",
+            releaseDate: "2025-09-18",
+            sections: {
+                student: [
+                    "Dodano pełną historię zmian statusów lekcji - teraz każda zmiana jest zapisywana z dokładnym czasem i powodem",
+                    "Poprawiono wyświetlanie historii statusów w szczegółach lekcji - pokazuje kompletny audyt trail",
+                    "Naprawiono błąd z harmonogramem automatyki - lekcje są teraz właściwie kończone po 80 minutach"
+                ],
+                tutor: [
+                    "Dodano możliwość zmiany statusu lekcji bezpośrednio z poziomu szczegółów lekcji",
+                    "Wprowadzono dedykowany system logowania pokojów spotkań",
+                    "Naprawiono konflikt z modalami - modal zmiany statusu poprawnie wyświetla się nad szczegółami lekcji",
+                ],
+                admin: [
+                    "Wprowadzono śledzenie źródła konta (web, api, admin) dla lepszej analityki",
+                    "Dodano zewnętrzne API dla integracji z systemami partnerów - umożliwia automatyczne tworzenie kont studentów",
+                    "Utworzono External Student API z autentykacją API key dla systemów partnerów",
+                    "Dodano nowe pole 'account_source' do tabeli users z migracją i seedowaniem istniejących danych",
+                    "Wprowadzono kompletny system historii statusów lekcji z dedykowaną tabelą lesson_status_history",
+                    "Naprawiono krytyczny problem z Laravel 11 scheduler - przeniesiono definicje z Kernel do routes/console.php",
+                    "Utworzono nowe migracje dla śledzenia źródła kont i historii statusów lekcji",
+                    "Poprawiono automatyczne kończenie lekcji po przekroczeniu 80 minut i pustych pokojach",
+                    "Dodano logowanie tworzenia pokojów, wejść/wyjść użytkowników, i automatycznych operacji",
+                    "Wprowadzono walidację regulaminu przy tworzeniu kont przez API i panel administracyjny"
+                ]
+            }
+        },
+        {
+            version: "1.2.10",
+            releaseDate: "2025-09-16",
+            sections: {
+                student: [
+                    "Poprawiono obsługę błędów walidacji w formularzach edycji profilu - teraz wyświetlają się konkretne komunikaty błędów",
+                    "Zaktualizowano emaile powitalane z informacją o 24-godzinnym czasie ważności linku resetowania hasła",
+                    "Dodano instrukcje odzyskiwania dostępu w przypadku wygaśnięcia linku resetowania hasła"
+                ],
+                tutor: [
+                    "Naprawiono wyświetlanie błędów walidacji w formularzu edycji profilu lektora",
+                    "Poprawiono obsługę błędów przy zapisywaniu zmian w profilu - teraz pokazują się szczegółowe komunikaty",
+                    "Usunięto mylące informacje o zasadach anulowania z emaili potwierdzających rezerwację lekcji"
+                ],
+                admin: [
+                    "Wprowadzono kompletny system logowania emaili do dedykowanego pliku emails.log",
+                    "Dodano automatyczne śledzenie wszystkich wysyłanych emaili z deduplicacją na podstawie hash",
+                    "Utworzono LogEmailSent listener dla eventów MessageSending",
+                    "Zaktualizowano szablony emaili z lepszymi instrukcjami odzyskiwania hasła",
+                    "Poprawiono system walidacji formularzy z właściwą obsługą błędów ValidationException"
+                ]
+            }
+        },
+        {
+            version: "1.2.9c",
+            releaseDate: "2025-09-15",
+            sections: {
+                admin: [
+                    "Zmieniono częstotliwość sprawdzania statusów lekcji z 5 na 8 minut dla optymalizacji wydajności",
+                    "Wyczyszczono zbędne logi z komend automatycznych dla lepszej czytelności logów systemu"
+                ]
+            }
+        },
+        {
             version: "1.2.9",
             releaseDate: "2025-09-15",
             sections: {

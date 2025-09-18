@@ -78,6 +78,7 @@ class UpdateStudentRequest extends FormRequest
                 Rule::in(['active', 'inactive', 'blocked']),
                 Rule::requiredIf(fn() => $this->user()->hasAnyRole(['admin', 'moderator']))
             ],
+            'account_source' => ['nullable', 'in:rejestracja,admin,import,api'],
 
             // Dane kontaktowe
             'phone' => [

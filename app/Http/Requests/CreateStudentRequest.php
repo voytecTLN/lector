@@ -51,6 +51,7 @@ class CreateStudentRequest extends FormRequest
                 'string',
                 'in:active,inactive,blocked'
             ],
+            'account_source' => ['nullable', 'in:rejestracja,admin,import,api'],
             
             // Dane kontaktowe - OPCJONALNE
             'phone' => [
