@@ -24,12 +24,14 @@ export class ChangelogPage implements RouteComponent {
                 student: [
                     "Dodano pełną historię zmian statusów lekcji - teraz każda zmiana jest zapisywana z dokładnym czasem i powodem",
                     "Poprawiono wyświetlanie historii statusów w szczegółach lekcji - pokazuje kompletny audyt trail",
-                    "Naprawiono błąd z harmonogramem automatyki - lekcje są teraz właściwie kończone po 80 minutach"
+                    "Naprawiono błąd z harmonogramem automatyki - lekcje są teraz właściwie kończone po 80 minutach",
+                    "Poprawiono wyświetlanie notyfikacji i komunikatów walidacji pól w formularzach"
                 ],
                 tutor: [
                     "Dodano możliwość zmiany statusu lekcji bezpośrednio z poziomu szczegółów lekcji",
                     "Wprowadzono dedykowany system logowania pokojów spotkań",
                     "Naprawiono konflikt z modalami - modal zmiany statusu poprawnie wyświetla się nad szczegółami lekcji",
+                    "Poprawiono wyświetlanie notyfikacji i komunikatów walidacji pól w formularzach"
                 ],
                 admin: [
                     "Wprowadzono śledzenie źródła konta (web, api, admin) dla lepszej analityki",
