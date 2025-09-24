@@ -166,30 +166,6 @@ export class TutorProfileEdit implements RouteComponent {
                 </div>
             </div>
 
-            <!-- Account Information -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Informacje o koncie</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Regulamin zaakceptowany</label>
-                            <div class="form-control-plaintext">
-                                <span id="terms-status" class="badge bg-secondary">Nie określono</span>
-                            </div>
-                            <div class="form-text" id="terms-date"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Źródło pochodzenia konta</label>
-                            <input type="text" name="account_source" class="form-control" readonly 
-                                   title="To pole może być edytowane tylko przez administratora">
-                            <div class="form-text">Określa w jaki sposób zostało utworzone konto</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Teaching Information -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -464,15 +440,6 @@ export class TutorProfileEdit implements RouteComponent {
                 input.value = String(value)
             }
         })
-
-        // Account information fields
-        const accountSourceInput = this.form!.querySelector('[name="account_source"]') as HTMLInputElement
-        if (accountSourceInput && this.profile!.account_source) {
-            accountSourceInput.value = this.profile!.account_source
-        }
-
-        // Update terms status display
-        this.updateTermsDisplay()
 
         // Special handling for birth_date field
         const birthDateInput = this.form!.querySelector('[name="birth_date"]') as HTMLInputElement
@@ -1139,30 +1106,4 @@ export class TutorProfileEdit implements RouteComponent {
         return specializations[code] || code
     }
 
-    /**
-     * Update terms acceptance display
-     */
-    private updateTermsDisplay(): void {
-        const termsStatus = this.container?.querySelector('#terms-status')
-        const termsDate = this.container?.querySelector('#terms-date')
-        
-        if (!termsStatus || !this.profile) return
-
-        if (this.profile.terms_accepted) {
-            termsStatus.textContent = 'Zaakceptowany'
-            termsStatus.className = 'badge bg-success'
-            
-            if (termsDate && this.profile.terms_accepted_at) {
-                const date = new Date(this.profile.terms_accepted_at)
-                termsDate.textContent = `Zaakceptowano: ${date.toLocaleDateString('pl-PL')} o ${date.toLocaleTimeString('pl-PL')}`
-            }
-        } else {
-            termsStatus.textContent = 'Nie zaakceptowany'
-            termsStatus.className = 'badge bg-warning'
-            
-            if (termsDate) {
-                termsDate.textContent = 'Regulamin nie został jeszcze zaakceptowany'
-            }
-        }
-    }
 }
