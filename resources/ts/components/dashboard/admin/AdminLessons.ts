@@ -551,16 +551,46 @@ export class AdminLessons {
                 params.append('date_to', instance.currentFilter.dateTo)
             }
 
-            // Fetch CSV data
-            const response = await fetch(`/api/lessons/export?${params}`, {
+            // Debug: sprawdź URL i parametry
+            const exportUrl = `/api/lessons/export?${params}`
+            console.log('Export URL:', exportUrl)
+            console.log('Export params:', Object.fromEntries(params.entries()))
+
+            // Test: sprawdź najpierw czy endpoint jest dostępny
+            const testResponse = await fetch('/api/lessons', {
                 method: 'GET',
                 headers: {
-                    'Accept': 'text/csv',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                 },
-                credentials: 'include'
+                credentials: 'same-origin'
             })
+            console.log('Test /api/lessons status:', testResponse.status)
+
+            // Test: sprawdź auth user
+            const authResponse = await fetch('/api/auth/me', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin'
+            })
+            console.log('Auth status:', authResponse.status)
+            if (authResponse.ok) {
+                const user = await authResponse.json()
+                console.log('Current user:', user)
+            }
+
+            // Fetch CSV data - bez niepotrzebnych headers
+            const response = await fetch(exportUrl, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin'
+            })
+
+            console.log('Response status:', response.status)
+            console.log('Response URL:', response.url)
 
             if (!response.ok) {
                 // Debug: sprawdź co zwraca server
