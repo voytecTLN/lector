@@ -7,7 +7,6 @@ export class LanguageUtils {
     static readonly SUPPORTED_LANGUAGES: LanguageOption[] = [
         { value: 'english', label: 'Angielski' },
         { value: 'german', label: 'Niemiecki' },
-        { value: 'french', label: 'Francuski' },
         { value: 'spanish', label: 'Hiszpański' }
     ]
 

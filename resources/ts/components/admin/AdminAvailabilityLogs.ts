@@ -12,7 +12,9 @@ export class AdminAvailabilityLogs {
         action: '',
         dateFrom: '',
         dateTo: '',
-        search: ''
+        search: '',
+        detailsDateFrom: '',
+        detailsDateTo: ''
     }
     private isLoading = false
     private stats: any = null
@@ -150,6 +152,31 @@ export class AdminAvailabilityLogs {
                                 </button>
                             </div>
                         </div>
+
+                        <!-- Details Date Filter -->
+                        <div class="row g-3 mt-2">
+                            <div class="col-12">
+                                <h6 class="text-muted">Filtr daty dla kolumny "Szczegóły"</h6>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Data szczegółów od</label>
+                                <input
+                                    type="date"
+                                    class="form-control"
+                                    id="details-date-from"
+                                    value="${this.filters.detailsDateFrom}"
+                                >
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Data szczegółów do</label>
+                                <input
+                                    type="date"
+                                    class="form-control"
+                                    id="details-date-to"
+                                    value="${this.filters.detailsDateTo}"
+                                >
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -228,7 +255,9 @@ export class AdminAvailabilityLogs {
             action: (document.getElementById('action-filter') as HTMLSelectElement)?.value || '',
             dateFrom: (document.getElementById('date-from') as HTMLInputElement)?.value || '',
             dateTo: (document.getElementById('date-to') as HTMLInputElement)?.value || '',
-            search: (document.getElementById('search-input') as HTMLInputElement)?.value || ''
+            search: (document.getElementById('search-input') as HTMLInputElement)?.value || '',
+            detailsDateFrom: (document.getElementById('details-date-from') as HTMLInputElement)?.value || '',
+            detailsDateTo: (document.getElementById('details-date-to') as HTMLInputElement)?.value || ''
         }
         this.currentPage = 1
         this.loadData()
@@ -240,9 +269,11 @@ export class AdminAvailabilityLogs {
             action: '',
             dateFrom: '',
             dateTo: '',
-            search: ''
+            search: '',
+            detailsDateFrom: '',
+            detailsDateTo: ''
         }
-        
+
         // Clear form inputs
         if (document.getElementById('search-input')) {
             (document.getElementById('search-input') as HTMLInputElement).value = ''
@@ -256,7 +287,13 @@ export class AdminAvailabilityLogs {
         if (document.getElementById('date-to')) {
             (document.getElementById('date-to') as HTMLInputElement).value = ''
         }
-        
+        if (document.getElementById('details-date-from')) {
+            (document.getElementById('details-date-from') as HTMLInputElement).value = ''
+        }
+        if (document.getElementById('details-date-to')) {
+            (document.getElementById('details-date-to') as HTMLInputElement).value = ''
+        }
+
         this.currentPage = 1
         this.loadData()
     }
@@ -276,8 +313,14 @@ export class AdminAvailabilityLogs {
         try {
             const params = new URLSearchParams({
                 page: this.currentPage.toString(),
-                per_page: '20',
-                ...this.filters
+                per_page: '20'
+            })
+
+            // Add all filters to params
+            Object.entries(this.filters).forEach(([key, value]) => {
+                if (value) {
+                    params.append(key, value)
+                }
             })
 
             const response = await api.get<any>(`/availability-logs?${params}`)
@@ -579,7 +622,9 @@ export class AdminAvailabilityLogs {
                 action: (document.getElementById('action-filter') as HTMLSelectElement)?.value || '',
                 dateFrom: (document.getElementById('date-from') as HTMLInputElement)?.value || '',
                 dateTo: (document.getElementById('date-to') as HTMLInputElement)?.value || '',
-                search: (document.getElementById('search-input') as HTMLInputElement)?.value || ''
+                search: (document.getElementById('search-input') as HTMLInputElement)?.value || '',
+                detailsDateFrom: (document.getElementById('details-date-from') as HTMLInputElement)?.value || '',
+                detailsDateTo: (document.getElementById('details-date-to') as HTMLInputElement)?.value || ''
             }
             
             

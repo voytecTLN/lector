@@ -18,6 +18,45 @@ export class ChangelogPage implements RouteComponent {
     // Example changelog data - in real app this would come from API or config
     private changelog: ChangelogEntry[] = [
         {
+            version: "1.3.1",
+            releaseDate: "2025-09-28",
+            sections: {
+                student: [
+                    "📚 Dodano nową sekcję 'Książki' - znajdziesz tam materiały PDF do nauki",
+                    "📖 Dodano 12 książek do angielskiego, hiszpańskiego i niemieckiego, podzielonych według poziomów (A1, A2, B1, B2) - każda do pobrania za darmo",
+                    "🇫🇷 Usunięto francuski z listy języków do wyboru w formularzu profilu (wróci w przyszłości)",
+                    "🎯 Zmieniono i dodano cele nauki - teraz możesz wybrać spośród 9 różnych celów nauki",
+                ],
+                tutor: [
+                    "📚 Dodano sekcję 'Książki' w menu",
+                    "📖 Dodano książki z materiałami do nauki - angielski, hiszpański, niemiecki na różnych poziomach",
+                    "🇫🇷 Usunięto francuski z formularza edycji profilu (zostanie przywrócony w przyszłości)",
+                    "⭐ Zwiększono limit specjalizacji z 8 do 9 - możesz wybrać więcej obszarów nauczania",
+                    "📝 Naprawiono nazwy specjalizacji - teraz wyświetlają się po polsku na Twoim profilu",
+                    "⚡ Dodano możliwość zmiany statusu lekcji bezpośrednio w szczegółach lekcji",
+                    "🎥 Ulepszono system śledzenia spotkań - lepsze informacje o tym co dzieje się podczas lekcji"
+                ],
+                admin: [
+                    "📅 Dodano filtry dat w logach dostępności - możesz szukać wpisów z określonego okresu",
+                    "🔄 Dodano przycisk 'Resetuj filtry' na stronie lekcji - szybko wyczyścisz wszystkie filtry",
+                    "📊 Dodano eksport CSV lekcji - pobierz dane z uwzględnieniem aktywnych filtrów",
+                    "🎯 Rozszerzono opcje celów nauki o 'Kultura' - teraz jest 9 różnych celów do wyboru",
+                    "⭐ Zwiększono limit specjalizacji lektorów do 9 opcji",
+                    "🇫🇷 Usunięto francuski z formularzy tworzenia kont (zachowano w systemie na przyszłość)",
+                    "🔗 Dodano zewnętrzne API dla partnerów - automatyczne tworzenie kont studentów z innych systemów",
+                    "🔐 Wprowadzono bezpieczną autoryzację dla zewnętrznych systemów z kluczami API",
+                    "📋 Dodano śledzenie źródła konta - widzisz czy konto zostało utworzone przez web, admin czy API",
+                    "📄 Dodano walidację akceptacji regulaminu przy tworzeniu kont przez zewnętrzne systemy",
+                    "🕐 Wprowadzono pełną historię zmian statusów lekcji - każda zmiana jest zapisywana z datą i autorem",
+                    "📝 Dodano automatyczne wypełnianie historii dla już istniejących lekcji",
+                    "🎥 Wprowadzono szczegółowe logowanie spotkań do osobnego pliku",
+                    "⚙️ Naprawiono problem z automatycznymi zadaniami systemu - scheduler znów działa poprawnie",
+                    "🔧 Dodano narzędzie do migracji danych historycznych lekcji",
+                    "📈 Wprowadzono ograniczenia dla zewnętrznego API (10 żądań na minutę) dla stabilności systemu"
+                ]
+            }
+        },
+        {
             version: "1.3.0",
             releaseDate: "2025-09-18",
             sections: {

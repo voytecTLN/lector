@@ -142,14 +142,15 @@ export class TutorService {
      */
     getSpecializationOptions(): Array<{ value: string, label: string }> {
         return [
-            { value: 'business', label: 'Język biznesowy' },
             { value: 'conversation', label: 'Konwersacje' },
             { value: 'exam', label: 'Przygotowanie do egzaminów' },
             { value: 'grammar', label: 'Gramatyka' },
+            { value: 'listening', label: 'Rozumienie ze słuchu' },
+            { value: 'writing', label: 'Pisanie' },
             { value: 'pronunciation', label: 'Wymowa' },
-            { value: 'academic', label: 'Język akademicki' },
-            { value: 'travel', label: 'Język w podróży' },
-            { value: 'kids', label: 'Zajęcia dla dzieci' }
+            { value: 'business', label: 'Język biznesowy' },
+            { value: 'culture', label: 'Kultura i zwyczaje' },
+            { value: 'travel', label: 'Język w podróży' }
         ]
     }
 

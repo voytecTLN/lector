@@ -31,4 +31,25 @@ class StudentProfile extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // Language constants - same as TutorProfile for consistency
+    public const LANGUAGES = [
+        'english' => 'Angielski',
+        'german' => 'Niemiecki',
+        'french' => 'Francuski',
+        'spanish' => 'Hiszpański',
+    ];
+
+    // Learning goals constants
+    public const LEARNING_GOALS = [
+        'conversation' => 'Konwersacje',
+        'exam' => 'Przygotowanie do egzaminów',
+        'grammar' => 'Gramatyka',
+        'listening' => 'Rozumienie ze słuchu',
+        'writing' => 'Pisanie',
+        'pronunciation' => 'Wymowa',
+        'business' => 'Język biznesowy',
+        'culture' => 'Kultura i zwyczaje',
+        'travel' => 'Język w podróży'
+    ];
 }

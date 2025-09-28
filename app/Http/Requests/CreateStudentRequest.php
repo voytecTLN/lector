@@ -102,12 +102,12 @@ class CreateStudentRequest extends FormRequest
             'learning_goals' => [
                 'nullable',
                 'array',
-                'max:8'
+                'max:9'
             ],
             'learning_goals.*' => [
                 'string',
                 'distinct',
-                'in:conversation,business,exam,travel,academic,hobby,culture,career'
+                'in:conversation,exam,grammar,listening,writing,pronunciation,business,culture,travel'
             ],
             'preferred_schedule' => [
                 'nullable',

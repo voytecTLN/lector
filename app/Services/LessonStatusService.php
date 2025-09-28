@@ -314,7 +314,7 @@ class LessonStatusService
     public function getStatusHistory(int $lessonId): array
     {
         $lesson = Lesson::findOrFail($lessonId);
-        
+
         // Get status history from dedicated table
         $historyRecords = LessonStatusHistory::where('lesson_id', $lessonId)
             ->with('changedByUser')
@@ -323,8 +323,14 @@ class LessonStatusService
 
         $history = [];
 
-        // Add initial creation status if no history exists
-        if ($historyRecords->isEmpty()) {
+        // Always check if the first record is the initial status
+        // If not, add it from the lesson creation time
+        $hasInitialStatus = $historyRecords->first() &&
+                           $historyRecords->first()->previous_status === null &&
+                           $historyRecords->first()->status === 'scheduled';
+
+        if (!$hasInitialStatus) {
+            // Add initial creation status from lesson creation
             $history[] = [
                 'status' => 'scheduled',
                 'reason' => 'Lekcja została zaplanowana',

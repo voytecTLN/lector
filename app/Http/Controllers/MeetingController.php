@@ -81,9 +81,15 @@ class MeetingController extends BaseController
                 $lesson->update([
                     'meeting_room_name' => $roomData['room_name'],
                     'meeting_room_url' => $roomData['room_url'],
-                    'meeting_started_at' => now(),
-                    'status' => Lesson::STATUS_IN_PROGRESS
+                    'meeting_started_at' => now()
                 ]);
+
+                // Update status through service to record in history
+                $this->lessonStatusService->updateLessonStatusSystem(
+                    $lesson->id,
+                    Lesson::STATUS_IN_PROGRESS,
+                    'Lektor rozpoczął spotkanie'
+                );
 
                 // Wygeneruj token dla lektora
                 $token = $this->dailyService->generateMeetingToken($user, $roomData['room_name'], true);
@@ -318,9 +324,15 @@ class MeetingController extends BaseController
 
                 // Zaktualizuj status lekcji
                 $lesson->update([
-                    'meeting_ended_at' => now(),
-                    'status' => Lesson::STATUS_COMPLETED
+                    'meeting_ended_at' => now()
                 ]);
+
+                // Update status through service to record in history
+                $this->lessonStatusService->updateLessonStatusSystem(
+                    $lesson->id,
+                    Lesson::STATUS_COMPLETED,
+                    'Spotkanie zakończone przez lektora'
+                );
 
                 // Spróbuj pobrać URL nagrania (jeśli włączone)
                 if (config('services.daily.enable_recording')) {

@@ -15,7 +15,7 @@ export class AvailabilityLogsService {
 
     async exportToCSV(filters: any): Promise<Blob> {
         const params: any = {}
-        
+
         if (filters.tutorId) {
             params.tutor_id = filters.tutorId
         }
@@ -30,6 +30,12 @@ export class AvailabilityLogsService {
         }
         if (filters.search) {
             params.search = filters.search
+        }
+        if (filters.detailsDateFrom) {
+            params.detailsDateFrom = filters.detailsDateFrom
+        }
+        if (filters.detailsDateTo) {
+            params.detailsDateTo = filters.detailsDateTo
         }
 
         

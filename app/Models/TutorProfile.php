@@ -80,14 +80,15 @@ class TutorProfile extends Model
 
     // Specialization constants
     public const SPECIALIZATIONS = [
-        'business' => 'Język biznesowy',
         'conversation' => 'Konwersacje',
         'exam' => 'Przygotowanie do egzaminów',
         'grammar' => 'Gramatyka',
+        'listening' => 'Rozumienie ze słuchu',
+        'writing' => 'Pisanie',
         'pronunciation' => 'Wymowa',
-        'academic' => 'Język akademicki',
-        'travel' => 'Język w podróży',
-        'kids' => 'Zajęcia dla dzieci'
+        'business' => 'Język biznesowy',
+        'culture' => 'Kultura i zwyczaje',
+        'travel' => 'Język w podróży'
     ];
 
     // Lesson type constants

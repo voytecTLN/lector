@@ -121,6 +121,12 @@ export class StudentDashboard implements RouteComponent {
                                 </a>
                             </li>
                             <li class="student-nav-item">
+                                <a href="?section=ksiazki" class="student-nav-link" data-section="ksiazki">
+                                    <span class="student-nav-icon">📖</span>
+                                    Książki
+                                </a>
+                            </li>
+                            <li class="student-nav-item">
                                 <a href="?section=historia" class="student-nav-link" data-section="historia">
                                     <span class="student-nav-icon">🕐</span>
                                     Historia lekcji
@@ -344,6 +350,10 @@ export class StudentDashboard implements RouteComponent {
             case 'materialy':
                 pageTitle.textContent = 'Materiały'
                 contentArea.innerHTML = this.getMaterialsContent()
+                break
+            case 'ksiazki':
+                pageTitle.textContent = 'Książki'
+                contentArea.innerHTML = this.getBooksContent()
                 break
             case 'tutor-profile':
                 pageTitle.textContent = 'Profil lektora'
@@ -952,6 +962,226 @@ export class StudentDashboard implements RouteComponent {
 
     private getMaterialsContent(): string {
         return this.studentMaterials.getMaterialsContent()
+    }
+
+    private getBooksContent(): string {
+        return `
+            <div class="student-content-area">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2>Książki do nauki języków</h2>
+                            <small class="text-muted">Materiały w formacie PDF do pobrania</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- English Section -->
+                <div class="row mb-5">
+                    <div class="col-12">
+                        <h3 class="mb-3">🇬🇧 Angielski</h3>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                        <h5 class="card-title">Poziom A1</h5>
+                                        <p class="card-text">Podstawy języka angielskiego</p>
+                                        <a href="/books/angielski_a1.pdf" class="btn btn-primary" download>
+                                            <i class="bi bi-download me-2"></i>Pobierz PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                        <h5 class="card-title">Poziom A2</h5>
+                                        <p class="card-text">Podstawowy angielski</p>
+                                        <a href="/books/angielski_a2.pdf" class="btn btn-primary" download>
+                                            <i class="bi bi-download me-2"></i>Pobierz PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                        <h5 class="card-title">Poziom B1</h5>
+                                        <p class="card-text">Średniozaawansowany angielski</p>
+                                        <a href="/books/angielski_b1.pdf" class="btn btn-primary" download>
+                                            <i class="bi bi-download me-2"></i>Pobierz PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                        <h5 class="card-title">Poziom B2</h5>
+                                        <p class="card-text">Zaawansowany angielski</p>
+                                        <a href="/books/angielski_b2.pdf" class="btn btn-primary" download>
+                                            <i class="bi bi-download me-2"></i>Pobierz PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spanish Section -->
+                <div class="row mb-5">
+                    <div class="col-12">
+                        <h3 class="mb-3">🇪🇸 Hiszpański</h3>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                        <h5 class="card-title">Poziom A1</h5>
+                                        <p class="card-text">Podstawy języka hiszpańskiego</p>
+                                        <a href="/books/hiszpanski_a1.pdf" class="btn btn-primary" download>
+                                            <i class="bi bi-download me-2"></i>Pobierz PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                        <h5 class="card-title">Poziom A2</h5>
+                                        <p class="card-text">Podstawowy hiszpański</p>
+                                        <a href="/books/hiszpanski_a2.pdf" class="btn btn-primary" download>
+                                            <i class="bi bi-download me-2"></i>Pobierz PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                        <h5 class="card-title">Poziom A3</h5>
+                                        <p class="card-text">Rozszerzony podstawowy hiszpański</p>
+                                        <a href="/books/hiszpanski_a3.pdf" class="btn btn-primary" download>
+                                            <i class="bi bi-download me-2"></i>Pobierz PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                        <h5 class="card-title">Poziom B1</h5>
+                                        <p class="card-text">Średniozaawansowany hiszpański</p>
+                                        <a href="/books/hiszpanski_b1.pdf" class="btn btn-primary" download>
+                                            <i class="bi bi-download me-2"></i>Pobierz PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- German Section -->
+                <div class="row mb-5">
+                    <div class="col-12">
+                        <h3 class="mb-3">🇩🇪 Niemiecki</h3>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                        <h5 class="card-title">Poziom A1</h5>
+                                        <p class="card-text">Podstawy języka niemieckiego</p>
+                                        <a href="/books/niemiecki_a1.pdf" class="btn btn-primary" download>
+                                            <i class="bi bi-download me-2"></i>Pobierz PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                        <h5 class="card-title">Poziom A2</h5>
+                                        <p class="card-text">Podstawowy niemiecki</p>
+                                        <a href="/books/niemiecki_a2.pdf" class="btn btn-primary" download>
+                                            <i class="bi bi-download me-2"></i>Pobierz PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                        <h5 class="card-title">Poziom B1</h5>
+                                        <p class="card-text">Średniozaawansowany niemiecki</p>
+                                        <a href="/books/niemiecki_b1.pdf" class="btn btn-primary" download>
+                                            <i class="bi bi-download me-2"></i>Pobierz PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                        <h5 class="card-title">Poziom B2</h5>
+                                        <p class="card-text">Zaawansowany niemiecki</p>
+                                        <a href="/books/niemiecki_b2.pdf" class="btn btn-primary" download>
+                                            <i class="bi bi-download me-2"></i>Pobierz PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Informacja:</strong> Te materiały są dostępne do pobrania i używania w celach edukacyjnych.
+                            Każdy plik zawiera program nauki dla danego poziomu językowego.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `
     }
 
     private async loadUpcomingLessonsPreview(): Promise<void> {

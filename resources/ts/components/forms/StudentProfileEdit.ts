@@ -268,13 +268,14 @@ export class StudentProfileEdit implements RouteComponent {
     private generateGoalCheckboxes(): string {
         const goals = [
             { value: 'conversation', label: 'Konwersacje' },
+            { value: 'exam', label: 'Przygotowanie do egzaminów' },
+            { value: 'grammar', label: 'Gramatyka' },
+            { value: 'listening', label: 'Rozumienie ze słuchu' },
+            { value: 'writing', label: 'Pisanie' },
+            { value: 'pronunciation', label: 'Wymowa' },
             { value: 'business', label: 'Język biznesowy' },
-            { value: 'exam', label: 'Egzaminy' },
-            { value: 'travel', label: 'Podróże' },
-            { value: 'academic', label: 'Język akademicki' },
-            { value: 'hobby', label: 'Hobby' },
-            { value: 'culture', label: 'Kultura' },
-            { value: 'career', label: 'Rozwój kariery' }
+            { value: 'culture', label: 'Kultura i zwyczaje' },
+            { value: 'travel', label: 'Język w podróży' }
         ]
 
         return goals.map(goal => `

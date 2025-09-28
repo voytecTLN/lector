@@ -58,7 +58,7 @@ class UpdateTutorRequest extends FormRequest
             // Tutor profile data
             'languages' => ['sometimes', 'required', 'array', 'min:1', 'max:4'],
             'languages.*' => ['required', 'string', 'in:' . implode(',', array_keys(TutorProfile::LANGUAGES))],
-            'specializations' => ['sometimes', 'required', 'array', 'min:1', 'max:8'],
+            'specializations' => ['sometimes', 'required', 'array', 'min:1', 'max:9'],
             'specializations.*' => ['required', 'string', 'in:' . implode(',', array_keys(TutorProfile::SPECIALIZATIONS))],
             'description' => ['nullable', 'string', 'max:2000'],
             'years_experience' => ['sometimes', 'required', 'integer', 'min:0', 'max:50'],
@@ -106,7 +106,7 @@ class UpdateTutorRequest extends FormRequest
             'languages.*.in' => 'Wybrany język jest nieprawidłowy.',
             'specializations.required' => 'Należy wybrać co najmniej jedną specjalizację.',
             'specializations.min' => 'Należy wybrać co najmniej jedną specjalizację.',
-            'specializations.max' => 'Można wybrać maksymalnie 8 specjalizacji.',
+            'specializations.max' => 'Można wybrać maksymalnie 9 specjalizacji.',
             'specializations.*.in' => 'Wybrana specjalizacja jest nieprawidłowa.',
             'description.max' => 'Opis nie może być dłuższy niż 2000 znaków.',
             'years_experience.required' => 'Doświadczenie jest wymagane.',

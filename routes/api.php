@@ -282,6 +282,8 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.admin.lessons.stats');
                 Route::get('/status-options', [LessonController::class, 'getStatusOptions'])
                     ->name('api.admin.lessons.status-options');
+                Route::get('/export', [LessonController::class, 'exportLessons'])
+                    ->name('api.admin.lessons.export');
                 Route::get('/{lessonId}', [LessonController::class, 'show'])
                     ->name('api.admin.lessons.show');
                 Route::put('/{lessonId}/cancel', [LessonController::class, 'adminCancelLesson'])

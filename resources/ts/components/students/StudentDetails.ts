@@ -1395,13 +1395,14 @@ export class StudentDetails implements RouteComponent {
     private getGoalLabel(goal: string): string {
         const labels: Record<string, string> = {
             conversation: 'Konwersacje',
-            business: 'Język biznesowy',
             exam: 'Przygotowanie do egzaminów',
-            travel: 'Podróże',
-            academic: 'Język akademicki',
-            hobby: 'Hobby',
-            culture: 'Kultura',
-            career: 'Rozwój kariery'
+            grammar: 'Gramatyka',
+            listening: 'Rozumienie ze słuchu',
+            writing: 'Pisanie',
+            pronunciation: 'Wymowa',
+            business: 'Język biznesowy',
+            culture: 'Kultura i zwyczaje',
+            travel: 'Język w podróży'
         }
         return labels[goal] || goal
     }

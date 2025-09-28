@@ -121,7 +121,7 @@ class UpdateStudentRequest extends FormRequest
             'learning_languages.*' => [
                 'string',
                 'distinct',
-                'in:english,german,french,spanish,italian,portuguese,russian,chinese,japanese,polish'
+                'in:english,german,spanish,italian,portuguese,russian,chinese,japanese,polish,french'
             ],
             'current_levels' => [
                 'sometimes',
@@ -136,12 +136,12 @@ class UpdateStudentRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'array',
-                'max:8'  // Allow all 8 available options
+                'max:9'  // Allow all 9 available options
             ],
             'learning_goals.*' => [
                 'string',
                 'distinct',
-                'in:conversation,business,exam,travel,academic,hobby,culture,career'
+                'in:conversation,exam,grammar,listening,writing,pronunciation,business,culture,travel'
             ],
             'preferred_schedule' => [
                 'sometimes',

@@ -91,13 +91,23 @@ class LessonService
             
             // Deduct hours from package
             $packageAssignment->decrement('hours_remaining', 1);
-            
+
+            // Record initial status in history
+            \App\Models\LessonStatusHistory::create([
+                'lesson_id' => $lesson->id,
+                'status' => Lesson::STATUS_SCHEDULED,
+                'previous_status' => null,
+                'reason' => 'Lekcja została zaplanowana',
+                'changed_by_role' => $student->role ?? 'student',
+                'changed_by_user_id' => $student->id,
+            ]);
+
             // Load relationships for email
             $lesson->load(['student', 'tutor']);
-            
+
             // Send booking confirmation emails
             $this->notificationService->sendLessonBookingConfirmation($lesson);
-            
+
             return $lesson;
         });
     }
@@ -288,13 +298,20 @@ class LessonService
     public function completeLesson(int $lessonId): Lesson
     {
         $lesson = Lesson::findOrFail($lessonId);
-        
+
         if ($lesson->status !== Lesson::STATUS_SCHEDULED) {
             throw new \Exception('Tylko zaplanowane lekcje mogą być oznaczone jako zakończone');
         }
-        
-        $lesson->complete();
-        
+
+        // Use status service to record history
+        $statusService = app(\App\Services\LessonStatusService::class);
+        $lesson = $statusService->updateLessonStatus($lessonId, Lesson::STATUS_COMPLETED, 'Lekcja oznaczona jako zakończona');
+
+        // Update tutor statistics
+        if ($lesson->tutor->tutorProfile) {
+            $lesson->tutor->tutorProfile->incrementLessons();
+        }
+
         return $lesson;
     }
     
@@ -304,13 +321,15 @@ class LessonService
     public function markAsNoShow(int $lessonId): Lesson
     {
         $lesson = Lesson::findOrFail($lessonId);
-        
+
         if ($lesson->status !== Lesson::STATUS_SCHEDULED) {
             throw new \Exception('Tylko zaplanowane lekcje mogą być oznaczone jako nieobecność');
         }
-        
-        $lesson->markAsNoShow();
-        
+
+        // Use status service to record history
+        $statusService = app(\App\Services\LessonStatusService::class);
+        $lesson = $statusService->updateLessonStatus($lessonId, Lesson::STATUS_NO_SHOW_STUDENT, 'Lekcja oznaczona jako nieobecność studenta');
+
         return $lesson;
     }
     
@@ -492,7 +511,7 @@ class LessonService
             // Include completed, cancelled, not_started lessons regardless of date
             $q->whereIn('status', [
                 Lesson::STATUS_COMPLETED,
-                Lesson::STATUS_CANCELLED, 
+                Lesson::STATUS_CANCELLED,
                 Lesson::STATUS_NOT_STARTED,
                 Lesson::STATUS_NO_SHOW_STUDENT,
                 Lesson::STATUS_NO_SHOW_TUTOR,
@@ -508,5 +527,42 @@ class LessonService
             });
         })->orderBy('lesson_date', 'desc')
           ->orderBy('start_time', 'desc');
+    }
+
+    /**
+     * Get filtered lessons query for export
+     */
+    public function getFilteredLessonsQuery($request)
+    {
+        $query = Lesson::query();
+
+        // Apply status filter
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Apply tutor filter
+        if ($request->has('tutor_id') && $request->tutor_id) {
+            $query->where('tutor_id', $request->tutor_id);
+        }
+
+        // Apply student filter
+        if ($request->has('student_id') && $request->student_id) {
+            $query->where('student_id', $request->student_id);
+        }
+
+        // Apply date range filter
+        if ($request->has('date_from') && $request->date_from) {
+            $query->whereDate('lesson_date', '>=', $request->date_from);
+        }
+        if ($request->has('date_to') && $request->date_to) {
+            $query->whereDate('lesson_date', '<=', $request->date_to);
+        }
+
+        // Default ordering
+        $query->orderBy('lesson_date', 'desc')
+              ->orderBy('start_time', 'desc');
+
+        return $query;
     }
 }

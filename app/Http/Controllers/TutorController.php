@@ -455,7 +455,7 @@ class TutorController extends Controller
             'languages' => 'nullable|array',
             'languages.*' => 'string|in:english,german,french,spanish,italian,portuguese,russian,chinese,japanese,polish',
             'specializations' => 'nullable|array',
-            'specializations.*' => 'string|in:business,conversation,exam,grammar,pronunciation,academic,travel,kids',
+            'specializations.*' => 'string|in:conversation,exam,grammar,listening,writing,pronunciation,business,culture,travel',
             'certifications' => 'nullable|array',
             'certifications.*' => 'string|max:255',
             'password' => 'nullable|string|min:8|confirmed',

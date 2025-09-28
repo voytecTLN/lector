@@ -721,9 +721,9 @@ export class TutorProfileEdit implements RouteComponent {
                 
                 const specializations = formData.getAll('specializations[]')
                 
-                // Validate specializations count (allow all 8 available options)
-                if (specializations.length > 8) {
-                    NotificationService.error('Możesz wybrać maksymalnie 8 specjalizacji')
+                // Validate specializations count (allow all 9 available options)
+                if (specializations.length > 9) {
+                    NotificationService.error('Możesz wybrać maksymalnie 9 specjalizacji')
                     return
                 }
                 
@@ -813,9 +813,9 @@ export class TutorProfileEdit implements RouteComponent {
         data.languages = formData.getAll('languages[]')
         
         const specializations = formData.getAll('specializations[]')
-        // Validate specializations count (allow all 8 available options)
-        if (specializations.length > 8) {
-            throw new Error('Możesz wybrać maksymalnie 8 specjalizacji')
+        // Validate specializations count (allow all 9 available options)
+        if (specializations.length > 9) {
+            throw new Error('Możesz wybrać maksymalnie 9 specjalizacji')
         }
         data.specializations = specializations
         
@@ -1094,14 +1094,15 @@ export class TutorProfileEdit implements RouteComponent {
      */
     private getSpecializationName(code: string): string {
         const specializations: { [key: string]: string } = {
-            'business': 'Język biznesowy',
             'conversation': 'Konwersacje',
             'exam': 'Przygotowanie do egzaminów',
             'grammar': 'Gramatyka',
+            'listening': 'Rozumienie ze słuchu',
+            'writing': 'Pisanie',
             'pronunciation': 'Wymowa',
-            'academic': 'Język akademicki',
-            'travel': 'Język w podróży',
-            'kids': 'Zajęcia dla dzieci'
+            'business': 'Język biznesowy',
+            'culture': 'Kultura i zwyczaje',
+            'travel': 'Język w podróży'
         }
         return specializations[code] || code
     }

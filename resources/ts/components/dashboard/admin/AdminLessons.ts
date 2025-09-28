@@ -87,6 +87,13 @@ export class AdminLessons {
                             </div>
                         </div>
                     </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button class="btn btn-outline-secondary" onclick="AdminLessons.resetFilters()">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>Resetuj filtry
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `
@@ -458,6 +465,38 @@ export class AdminLessons {
         instance.currentPage = 1 // Reset to first page when filtering
         instance.loadLessons()
     }
+
+    static resetFilters(): void {
+        const instance = AdminLessons.instance
+
+        // Reset filter values in UI
+        const statusFilter = document.getElementById('status-filter') as HTMLSelectElement
+        if (statusFilter) statusFilter.value = 'all'
+
+        const tutorFilter = document.getElementById('tutor-filter') as HTMLSelectElement
+        if (tutorFilter) tutorFilter.value = ''
+
+        const studentFilter = document.getElementById('student-filter') as HTMLSelectElement
+        if (studentFilter) studentFilter.value = ''
+
+        const dateFrom = document.getElementById('date-from') as HTMLInputElement
+        if (dateFrom) dateFrom.value = ''
+
+        const dateTo = document.getElementById('date-to') as HTMLInputElement
+        if (dateTo) dateTo.value = ''
+
+        // Reset internal filter state
+        instance.currentFilter = {
+            status: 'all',
+            tutorId: '',
+            studentId: '',
+            dateFrom: '',
+            dateTo: ''
+        }
+
+        instance.currentPage = 1
+        instance.loadLessons()
+    }
     
     static goToPage(page: number): void {
         const instance = AdminLessons.instance
@@ -482,13 +521,84 @@ export class AdminLessons {
     }
     
     static async exportLessons(): Promise<void> {
-        document.dispatchEvent(new CustomEvent('notification:show', {
-            detail: {
-                type: 'info',
-                message: 'Eksport lekcji - funkcja w przygotowaniu',
-                duration: 3000
+        try {
+            const instance = AdminLessons.instance
+
+            // Show loading notification
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'info',
+                    message: 'Przygotowywanie eksportu...',
+                    duration: 2000
+                }
+            }))
+
+            // Build query params from current filters
+            const params = new URLSearchParams()
+            if (instance.currentFilter.status !== 'all') {
+                params.append('status', instance.currentFilter.status)
             }
-        }))
+            if (instance.currentFilter.tutorId) {
+                params.append('tutor_id', instance.currentFilter.tutorId)
+            }
+            if (instance.currentFilter.studentId) {
+                params.append('student_id', instance.currentFilter.studentId)
+            }
+            if (instance.currentFilter.dateFrom) {
+                params.append('date_from', instance.currentFilter.dateFrom)
+            }
+            if (instance.currentFilter.dateTo) {
+                params.append('date_to', instance.currentFilter.dateTo)
+            }
+
+            // Fetch CSV data
+            const response = await fetch(`/api/lessons/export?${params}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/csv',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'include'
+            })
+
+            if (!response.ok) {
+                throw new Error('Błąd podczas eksportu danych')
+            }
+
+            // Get the blob from response
+            const blob = await response.blob()
+
+            // Create download link
+            const url = window.URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = `lekcje_${new Date().toISOString().split('T')[0]}.csv`
+            document.body.appendChild(link)
+            link.click()
+
+            // Cleanup
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+
+            // Show success notification
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'success',
+                    message: 'Eksport CSV został zakończony',
+                    duration: 3000
+                }
+            }))
+
+        } catch (error) {
+            console.error('Error exporting lessons:', error)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Nie udało się wyeksportować danych',
+                    duration: 5000
+                }
+            }))
+        }
     }
     
     static async changeStatus(lessonId: number, currentStatus: string): Promise<void> {

@@ -572,7 +572,7 @@ class LessonController extends Controller
     {
         $user = Auth::user();
         $statuses = \App\Services\LessonStatusService::getStatusLabels();
-        
+
         // Filter based on user role
         if ($user->role === 'tutor') {
             $allowedStatuses = ['in_progress', 'completed', 'no_show_student', 'technical_issues', 'cancelled'];
@@ -583,5 +583,95 @@ class LessonController extends Controller
             'success' => true,
             'data' => $statuses
         ]);
+    }
+
+    /**
+     * Export lessons to CSV
+     */
+    public function exportLessons(Request $request)
+    {
+        try {
+            $query = $this->lessonService->getFilteredLessonsQuery($request);
+
+            // Get all lessons matching filters (no pagination for export)
+            $lessons = $query->with(['student', 'tutor', 'package'])->get();
+
+            // Generate CSV content
+            $csvData = [];
+            $csvData[] = ['ID', 'Data lekcji', 'Godzina rozpoczęcia', 'Godzina zakończenia', 'Student', 'Email studenta',
+                         'Lektor', 'Email lektora', 'Status', 'Typ lekcji', 'Język', 'Temat',
+                         'Ocena studenta', 'Komentarz studenta', 'Notatki', 'Cena', 'Link do spotkania',
+                         'Data utworzenia', 'Data aktualizacji'];
+
+            foreach ($lessons as $lesson) {
+                $statusLabels = [
+                    'scheduled' => 'Zaplanowana',
+                    'in_progress' => 'W trakcie',
+                    'completed' => 'Zakończona',
+                    'cancelled' => 'Anulowana',
+                    'no_show_student' => 'Student nieobecny',
+                    'no_show_tutor' => 'Lektor nieobecny',
+                    'technical_issues' => 'Problemy techniczne'
+                ];
+
+                $lessonTypes = [
+                    'individual' => 'Indywidualna',
+                    'group' => 'Grupowa',
+                    'intensive' => 'Intensywna',
+                    'conversation' => 'Konwersacja'
+                ];
+
+                $csvData[] = [
+                    $lesson->id,
+                    $lesson->lesson_date,
+                    $lesson->start_time,
+                    $lesson->end_time,
+                    $lesson->student ? $lesson->student->name : '-',
+                    $lesson->student ? $lesson->student->email : '-',
+                    $lesson->tutor ? $lesson->tutor->name : '-',
+                    $lesson->tutor ? $lesson->tutor->email : '-',
+                    $statusLabels[$lesson->status] ?? $lesson->status,
+                    $lessonTypes[$lesson->lesson_type] ?? $lesson->lesson_type,
+                    $lesson->language ?: '-',
+                    $lesson->topic ?: '-',
+                    $lesson->student_rating ?: '-',
+                    $lesson->student_comment ?: '-',
+                    $lesson->notes ?: '-',
+                    $lesson->price ? number_format($lesson->price, 2) . ' zł' : '-',
+                    $lesson->meeting_link ?: '-',
+                    $lesson->created_at->format('Y-m-d H:i:s'),
+                    $lesson->updated_at->format('Y-m-d H:i:s')
+                ];
+            }
+
+            // Create CSV output
+            $filename = 'lekcje_' . now()->format('Y-m-d_H-i-s') . '.csv';
+            $headers = [
+                'Content-Type' => 'text/csv; charset=utf-8',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Pragma' => 'no-cache',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires' => '0'
+            ];
+
+            $callback = function() use ($csvData) {
+                $file = fopen('php://output', 'w');
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM for UTF-8
+
+                foreach ($csvData as $row) {
+                    fputcsv($file, $row, ';');
+                }
+
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Błąd podczas eksportu: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

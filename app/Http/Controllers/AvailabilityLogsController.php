@@ -27,12 +27,20 @@ class AvailabilityLogsController extends Controller
             $query->where('action', $request->action);
         }
 
-        // Filter by date range
+        // Filter by date range (creation date)
         if ($request->date_from) {
             $query->where('created_at', '>=', Carbon::parse($request->date_from)->startOfDay());
         }
         if ($request->date_to) {
             $query->where('created_at', '<=', Carbon::parse($request->date_to)->endOfDay());
+        }
+
+        // Filter by details date range (date column - availability date)
+        if ($request->detailsDateFrom) {
+            $query->whereDate('date', '>=', $request->detailsDateFrom);
+        }
+        if ($request->detailsDateTo) {
+            $query->whereDate('date', '<=', $request->detailsDateTo);
         }
 
         // Search by tutor name
@@ -186,6 +194,14 @@ class AvailabilityLogsController extends Controller
         }
         if ($request->date_to) {
             $query->where('created_at', '<=', Carbon::parse($request->date_to)->endOfDay());
+        }
+
+        // Filter by details date range (date column - availability date)
+        if ($request->detailsDateFrom) {
+            $query->whereDate('date', '>=', $request->detailsDateFrom);
+        }
+        if ($request->detailsDateTo) {
+            $query->whereDate('date', '<=', $request->detailsDateTo);
         }
 
         if ($request->search) {
