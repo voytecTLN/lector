@@ -556,13 +556,28 @@ export class AdminLessons {
                 method: 'GET',
                 headers: {
                     'Accept': 'text/csv',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                 },
                 credentials: 'include'
             })
 
             if (!response.ok) {
-                throw new Error('Błąd podczas eksportu danych')
+                // Debug: sprawdź co zwraca server
+                const errorText = await response.text()
+                console.error('Export error response:', errorText)
+                console.error('Response status:', response.status)
+                console.error('Response headers:', Object.fromEntries(response.headers.entries()))
+                throw new Error(`Błąd podczas eksportu danych: ${response.status} - ${errorText.substring(0, 200)}`)
+            }
+
+            // Check if response is actually CSV
+            const contentType = response.headers.get('content-type')
+            if (!contentType || !contentType.includes('csv')) {
+                const responseText = await response.text()
+                console.error('Expected CSV but got:', contentType)
+                console.error('Response body:', responseText.substring(0, 500))
+                throw new Error('Server nie zwrócił pliku CSV. Sprawdź logi serwera.')
             }
 
             // Get the blob from response

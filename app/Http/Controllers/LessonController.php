@@ -590,6 +590,13 @@ class LessonController extends Controller
      */
     public function exportLessons(Request $request)
     {
+        \Log::info('Export lessons request received', [
+            'user_id' => auth()->id(),
+            'user_role' => auth()->user()?->role,
+            'params' => $request->all(),
+            'headers' => $request->headers->all()
+        ]);
+
         try {
             $query = $this->lessonService->getFilteredLessonsQuery($request);
 
@@ -665,9 +672,19 @@ class LessonController extends Controller
                 fclose($file);
             };
 
+            \Log::info('Export lessons completed successfully', [
+                'lessons_count' => count($lessons),
+                'filename' => $filename
+            ]);
+
             return response()->stream($callback, 200, $headers);
 
         } catch (\Exception $e) {
+            \Log::error('Export lessons failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Błąd podczas eksportu: ' . $e->getMessage()
