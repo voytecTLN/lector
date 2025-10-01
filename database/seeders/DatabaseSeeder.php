@@ -11,6 +11,13 @@ use App\Models\StudentProfile;
 use App\Models\TutorProfile;
 use App\Models\Package;
 use App\Models\PackageAssignment;
+use App\Models\Lesson;
+use App\Models\LessonMaterial;
+use App\Models\LessonStatusHistory;
+use App\Models\TutorAvailabilitySlot;
+use App\Models\TutorAvailabilityLog;
+use App\Models\MeetingSession;
+use App\Models\AdminAuditLog;
 
 class DatabaseSeeder extends Seeder
 {
@@ -64,6 +71,24 @@ class DatabaseSeeder extends Seeder
             // Create Student Users with Profiles and Package Assignments
             $this->createStudentUsers($packages);
 
+            // Create Tutor Availability Slots
+            $this->createTutorAvailabilitySlots();
+
+            // Create Lessons
+            $this->createLessons();
+
+            // Create Lesson Materials
+            $this->createLessonMaterials();
+
+            // Create Meeting Sessions
+            $this->createMeetingSessions();
+
+            // Create Admin Audit Logs
+            $this->createAdminAuditLogs();
+
+            // Create Tutor Availability Logs
+            $this->createTutorAvailabilityLogs();
+
             $this->command->info('✅ Database seeding completed successfully!');
             $this->command->info('📧 Login credentials (password for all: password):');
             $this->command->info('   Admin: admin@test.com');
@@ -81,11 +106,11 @@ class DatabaseSeeder extends Seeder
      */
     private function createAdminUsers(): void
     {
-        $this->command->info('👑 Creating admin users...');
+        $this->command->info('👑 Creating admin user...');
 
-        // Admin 1 - Administrator Główny
+        // Admin - Administrator Główny
         $this->createUserIfNotExists([
-            'name' => 'Administrator Główny',
+            'name' => 'Administrator',
             'email' => 'admin@test.com',
             'password' => Hash::make('password'),
             'role' => User::ROLE_ADMIN,
@@ -98,21 +123,6 @@ class DatabaseSeeder extends Seeder
             'last_login_at' => now()->subHours(1),
             'account_source' => User::SOURCE_ADMIN,
         ]);
-
-        // Admin 2 - Tomasz Administratorski
-        $this->createUserIfNotExists([
-            'name' => 'Tomasz Administratorski',
-            'email' => 'tomasz.admin@test.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_ADMIN,
-            'phone' => '+48 987 654 321',
-            'city' => 'Kraków',
-            'country' => 'Polska',
-            'status' => User::STATUS_ACTIVE,
-            'email_verified_at' => now()->subDays(180),
-            'created_at' => now()->subDays(180),
-            'account_source' => User::SOURCE_ADMIN,
-        ]);
     }
 
     /**
@@ -120,11 +130,11 @@ class DatabaseSeeder extends Seeder
      */
     private function createModeratorUsers(): void
     {
-        $this->command->info('🛡️  Creating moderator users...');
+        $this->command->info('🛡️  Creating moderator user...');
 
-        // Moderator 1 - Moderator Główny
+        // Moderator
         $this->createUserIfNotExists([
-            'name' => 'Moderator Główny',
+            'name' => 'Moderator',
             'email' => 'moderator@test.com',
             'password' => Hash::make('password'),
             'role' => User::ROLE_MODERATOR,
@@ -135,21 +145,6 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now()->subDays(90),
             'created_at' => now()->subDays(90),
             'last_login_at' => now()->subHours(3),
-            'account_source' => User::SOURCE_ADMIN,
-        ]);
-
-        // Moderator 2 - Agnieszka Moderatorska
-        $this->createUserIfNotExists([
-            'name' => 'Agnieszka Moderatorska',
-            'email' => 'agnieszka.mod@test.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_MODERATOR,
-            'phone' => '+48 555 987 654',
-            'city' => 'Wrocław',
-            'country' => 'Polska',
-            'status' => User::STATUS_ACTIVE,
-            'email_verified_at' => now()->subDays(60),
-            'created_at' => now()->subDays(60),
             'account_source' => User::SOURCE_ADMIN,
         ]);
     }
@@ -170,58 +165,36 @@ class DatabaseSeeder extends Seeder
         $packages = [];
 
         $packages[] = Package::create([
-            'name' => 'Pakiet Próbny',
-            'description' => 'Idealny na początek - poznaj swojego lektora',
+            'name' => 'Pakiet Starter',
+            'description' => 'Idealny na początek',
             'hours_count' => 5,
             'price' => 350.00,
             'validity_days' => 30,
             'is_active' => true,
             'sort_order' => 1,
-            'color' => '#10b981', // green
+            'color' => '#10b981',
         ]);
 
         $packages[] = Package::create([
-            'name' => 'Pakiet Standardowy',
-            'description' => 'Najpopularniejszy wybór - optymalne tempo nauki',
+            'name' => 'Pakiet Standard',
+            'description' => 'Najpopularniejszy wybór',
             'hours_count' => 10,
             'price' => 650.00,
             'validity_days' => 60,
             'is_active' => true,
             'sort_order' => 2,
-            'color' => '#3b82f6', // blue
+            'color' => '#3b82f6',
         ]);
 
         $packages[] = Package::create([
-            'name' => 'Pakiet Rozszerzony',
-            'description' => 'Dla zdeterminowanych - szybkie postępy',
+            'name' => 'Pakiet Premium',
+            'description' => 'Dla zaawansowanych',
             'hours_count' => 20,
             'price' => 1200.00,
             'validity_days' => 90,
             'is_active' => true,
             'sort_order' => 3,
-            'color' => '#8b5cf6', // purple
-        ]);
-
-        $packages[] = Package::create([
-            'name' => 'Pakiet Premium',
-            'description' => 'Maksymalne zaangażowanie - najlepsze rezultaty',
-            'hours_count' => 40,
-            'price' => 2200.00,
-            'validity_days' => 120,
-            'is_active' => true,
-            'sort_order' => 4,
-            'color' => '#f59e0b', // amber
-        ]);
-
-        $packages[] = Package::create([
-            'name' => 'Pakiet Intensywny',
-            'description' => 'Kurs intensywny - szybkie rezultaty',
-            'hours_count' => 30,
-            'price' => 1650.00,
-            'validity_days' => 45,
-            'is_active' => true,
-            'sort_order' => 5,
-            'color' => '#ef4444', // red
+            'color' => '#8b5cf6',
         ]);
 
         return $packages;
@@ -233,14 +206,14 @@ class DatabaseSeeder extends Seeder
     private function createTutorUsers(): void
     {
         $this->command->info('👩‍🏫 Creating tutor users...');
-        
+
         // Skip if tutors already exist
         if (User::where('role', User::ROLE_TUTOR)->count() > 0) {
             $this->command->info('⚠️  Tutors already exist, skipping creation');
             return;
         }
 
-        // Tutor 1 - Anna Kowalska (Verified)
+        // Tutor 1 - Anna Kowalska (Verified, Active)
         $this->createUserIfNotExists([
             'name' => 'Anna Kowalska',
             'email' => 'anna.kowalska@test.com',
@@ -280,7 +253,7 @@ class DatabaseSeeder extends Seeder
             ])
         ], 'tutor');
 
-        // Tutor 2 - Piotr Wiśniewski (Verified)
+        // Tutor 2 - Piotr Wiśniewski (Pending verification)
         $tutor2 = User::create([
             'name' => 'Piotr Wiśniewski',
             'email' => 'piotr.wisniewski@test.com',
@@ -291,134 +264,28 @@ class DatabaseSeeder extends Seeder
             'city' => 'Kraków',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
-            'email_verified_at' => now()->subDays(120),
-            'created_at' => now()->subDays(120),
-            'account_source' => User::SOURCE_ADMIN,
-        ]);
-
-        TutorProfile::create([
-            'user_id' => $tutor2->id,
-            'languages' => ['german', 'french'],
-            'specializations' => ['conversation', 'grammar', 'pronunciation'],
-            'description' => 'Native speaker języka niemieckiego. Uczę niemieckiego i francuskiego na wszystkich poziomach. Stawiam na praktyczne wykorzystanie języka w codziennych sytuacjach.',
-            'years_experience' => 5,
-            'certifications' => ['TestDaF', 'Goethe-Zertifikat C2'],
-            'education' => ['Licencjat z Lingwistyki Stosowanej - Uniwersytet Jagielloński'],
-            'average_rating' => 4.9,
-            'total_lessons' => 780,
-            'total_students' => 56,
-            'is_accepting_students' => true,
-            'max_students_per_week' => 20,
-            'lesson_types' => ['individual', 'conversation'],
-            'is_verified' => true,
-            'verified_at' => now()->subDays(115),
-            'verification_status' => TutorProfile::VERIFICATION_APPROVED,
-        ]);
-
-        // Tutor 3 - Maria Dąbrowska (Verified)
-        $tutor3 = User::create([
-            'name' => 'Maria Dąbrowska',
-            'email' => 'maria.dabrowska@test.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_TUTOR,
-            'phone' => '+48 600 333 444',
-            'birth_date' => '1988-11-08',
-            'city' => 'Gdańsk',
-            'country' => 'Polska',
-            'status' => User::STATUS_ACTIVE,
-            'email_verified_at' => now()->subDays(200),
-            'created_at' => now()->subDays(200),
-            'account_source' => User::SOURCE_ADMIN,
-        ]);
-
-        TutorProfile::create([
-            'user_id' => $tutor3->id,
-            'languages' => ['spanish', 'italian', 'portuguese'],
-            'specializations' => ['grammar', 'exam', 'academic'],
-            'description' => 'Jestem pasjonatką języków romańskich. Ukończyłam studia doktoranckie z językoznawstwa. Przygotowuję do egzaminów DELE, CILS i innych certyfikatów.',
-            'years_experience' => 10,
-            'certifications' => ['DELE C2', 'CILS C2', 'CELPE-Bras'],
-            'education' => ['Doktor nauk humanistycznych - Uniwersytet Gdański', 'Magister Filologii Romańskiej'],
-            'average_rating' => 4.7,
-            'total_lessons' => 2100,
-            'total_students' => 143,
-            'is_accepting_students' => true,
-            'max_students_per_week' => 15,
-            'lesson_types' => ['individual', 'group', 'academic'],
-            'is_verified' => true,
-            'verified_at' => now()->subDays(195),
-            'verification_status' => TutorProfile::VERIFICATION_APPROVED,
-        ]);
-
-        // Tutor 4 - James Wilson (Pending verification)
-        $tutor4 = User::create([
-            'name' => 'James Wilson',
-            'email' => 'james.wilson@test.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_TUTOR,
-            'phone' => '+48 600 444 555',
-            'birth_date' => '1982-05-12',
-            'city' => 'Wrocław',
-            'country' => 'Polska',
-            'status' => User::STATUS_ACTIVE,
             'email_verified_at' => now()->subDays(5),
             'created_at' => now()->subDays(5),
             'account_source' => User::SOURCE_ADMIN,
         ]);
 
         TutorProfile::create([
-            'user_id' => $tutor4->id,
-            'languages' => ['english'],
-            'specializations' => ['business', 'conversation', 'pronunciation'],
-            'description' => 'Native English speaker from the UK. Experienced Business English teacher. I specialize in presentation skills and negotiation techniques.',
-            'years_experience' => 12,
+            'user_id' => $tutor2->id,
+            'languages' => ['german', 'spanish'],
+            'specializations' => ['conversation', 'grammar'],
+            'description' => 'Nauczyciel języków obcych z pasją.',
+            'years_experience' => 3,
             'certifications' => [],
-            'education' => ['MBA - Oxford University'],
+            'education' => ['Licencjat z Filologii'],
             'average_rating' => 0,
             'total_lessons' => 0,
             'total_students' => 0,
             'is_accepting_students' => true,
-            'max_students_per_week' => 30,
-            'lesson_types' => ['individual', 'group'],
-            'is_verified' => false,
-            'verification_status' => TutorProfile::VERIFICATION_PENDING,
-            'verification_notes' => 'Nowy lektor - dokumenty w trakcie weryfikacji',
-        ]);
-
-        // Tutor 5 - Katarzyna Zielińska (Rejected)
-        $tutor5 = User::create([
-            'name' => 'Katarzyna Zielińska',
-            'email' => 'katarzyna.zielinska@test.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_TUTOR,
-            'phone' => '+48 600 555 666',
-            'birth_date' => '1995-09-20',
-            'city' => 'Łódź',
-            'country' => 'Polska',
-            'status' => User::STATUS_INACTIVE,
-            'email_verified_at' => now()->subDays(30),
-            'created_at' => now()->subDays(30),
-            'account_source' => User::SOURCE_ADMIN,
-        ]);
-
-        TutorProfile::create([
-            'user_id' => $tutor5->id,
-            'languages' => ['russian', 'chinese'],
-            'specializations' => ['conversation'],
-            'description' => 'Uczę języka rosyjskiego i chińskiego.',
-            'years_experience' => 2,
-            'certifications' => [],
-            'education' => ['Student Sinologii'],
-            'average_rating' => 0,
-            'total_lessons' => 0,
-            'total_students' => 0,
-            'is_accepting_students' => false,
-            'max_students_per_week' => 10,
+            'max_students_per_week' => 15,
             'lesson_types' => ['individual'],
             'is_verified' => false,
-            'verification_status' => TutorProfile::VERIFICATION_REJECTED,
-            'verification_notes' => 'Brak wymaganych kwalifikacji',
-            'verified_at' => now()->subDays(25),
+            'verification_status' => TutorProfile::VERIFICATION_PENDING,
+            'verification_notes' => 'Dokumenty w trakcie weryfikacji',
         ]);
     }
 
@@ -428,14 +295,14 @@ class DatabaseSeeder extends Seeder
     private function createStudentUsers(array $packages): void
     {
         $this->command->info('🎓 Creating student users...');
-        
+
         // Skip if students already exist
         if (User::where('role', User::ROLE_STUDENT)->count() > 0) {
             $this->command->info('⚠️  Students already exist, skipping creation');
             return;
         }
 
-        // Student 1 - Jan Nowak (Active with package)
+        // Student 1 - Jan Nowak (Active with active package)
         $student1 = User::create([
             'name' => 'Jan Nowak',
             'email' => 'jan.nowak@test.com',
@@ -470,64 +337,23 @@ class DatabaseSeeder extends Seeder
         // Assign package to student 1
         PackageAssignment::create([
             'student_id' => $student1->id,
-            'package_id' => $packages[2]->id, // Pakiet Rozszerzony
+            'package_id' => $packages[2]->id, // Pakiet Premium
             'assigned_at' => now()->subDays(10),
             'expires_at' => now()->addDays(80),
             'hours_remaining' => 15.5,
             'is_active' => true,
-            'notes' => 'Student bardzo zmotywowany, regularnie uczestniczy w lekcjach',
+            'notes' => 'Regularnie uczestniczy w lekcjach',
         ]);
 
-        // Student 2 - Alicja Kowalczyk (Active with package)
+        // Student 2 - Maria Zielińska (Active, no package)
         $student2 = User::create([
-            'name' => 'Alicja Kowalczyk',
-            'email' => 'alicja.kowalczyk@test.com',
+            'name' => 'Maria Zielińska',
+            'email' => 'maria.zielinska@test.com',
             'password' => Hash::make('password'),
             'role' => User::ROLE_STUDENT,
             'phone' => '+48 700 222 333',
             'birth_date' => '1998-03-15',
             'city' => 'Kraków',
-            'country' => 'Polska',
-            'status' => User::STATUS_ACTIVE,
-            'email_verified_at' => now()->subDays(60),
-            'created_at' => now()->subDays(60),
-            'account_source' => User::SOURCE_IMPORT,
-        ]);
-
-        StudentProfile::create([
-            'user_id' => $student2->id,
-            'learning_languages' => ['spanish', 'french'],
-            'current_levels' => json_encode([
-                'spanish' => 'B1',
-                'french' => 'A1'
-            ]),
-            'learning_goals' => ['travel', 'conversation'],
-            'preferred_schedule' => json_encode([
-                'preferred_days' => ['tuesday', 'thursday'],
-                'preferred_times' => ['morning'],
-                'lesson_duration' => 45,
-            ])
-        ]);
-
-        // Assign package to student 2
-        PackageAssignment::create([
-            'student_id' => $student2->id,
-            'package_id' => $packages[1]->id, // Pakiet Standardowy
-            'assigned_at' => now()->subDays(5),
-            'expires_at' => now()->addDays(55),
-            'hours_remaining' => 8.0,
-            'is_active' => true,
-        ]);
-
-        // Student 3 - Michał Lewandowski (Active, no package)
-        $student3 = User::create([
-            'name' => 'Michał Lewandowski',
-            'email' => 'michal.lewandowski@test.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_STUDENT,
-            'phone' => '+48 700 333 444',
-            'birth_date' => '1992-07-10',
-            'city' => 'Gdańsk',
             'country' => 'Polska',
             'status' => User::STATUS_ACTIVE,
             'email_verified_at' => now()->subDays(30),
@@ -536,271 +362,388 @@ class DatabaseSeeder extends Seeder
         ]);
 
         StudentProfile::create([
-            'user_id' => $student3->id,
-            'learning_languages' => ['english'],
+            'user_id' => $student2->id,
+            'learning_languages' => ['spanish'],
             'current_levels' => json_encode([
-                'english' => 'C1'
+                'spanish' => 'B1'
             ]),
-            'learning_goals' => ['exam', 'academic'],
-            'preferred_schedule' => json_encode([
-                'preferred_days' => ['saturday', 'sunday'],
-                'preferred_times' => ['afternoon'],
-                'lesson_duration' => 90,
-            ])
+            'learning_goals' => ['travel', 'conversation'],
         ]);
 
-        // Student 4 - Ewa Wójcik (Active with expired package)
-        $student4 = User::create([
-            'name' => 'Ewa Wójcik',
-            'email' => 'ewa.wojcik@test.com',
+        // Student 3 - Tomasz Kowalski (Inactive with expired package)
+        $student3 = User::create([
+            'name' => 'Tomasz Kowalski',
+            'email' => 'tomasz.kowalski@test.com',
             'password' => Hash::make('password'),
             'role' => User::ROLE_STUDENT,
-            'phone' => '+48 700 444 555',
-            'birth_date' => '2000-11-25',
-            'city' => 'Wrocław',
+            'phone' => '+48 700 333 444',
+            'birth_date' => '1992-07-10',
+            'city' => 'Gdańsk',
             'country' => 'Polska',
-            'status' => User::STATUS_ACTIVE,
+            'status' => User::STATUS_INACTIVE,
             'email_verified_at' => now()->subDays(90),
             'created_at' => now()->subDays(90),
             'account_source' => User::SOURCE_IMPORT,
         ]);
 
         StudentProfile::create([
-            'user_id' => $student4->id,
-            'learning_languages' => ['german', 'italian'],
-            'current_levels' => json_encode([
-                'german' => 'B1',
-                'italian' => 'A2'
-            ]),
-            'learning_goals' => ['business', 'conversation'],
-        ]);
-
-        // Expired package
-        PackageAssignment::create([
-            'student_id' => $student4->id,
-            'package_id' => $packages[0]->id, // Pakiet Próbny
-            'assigned_at' => now()->subDays(40),
-            'expires_at' => now()->subDays(10),
-            'hours_remaining' => 0,
-            'is_active' => false,
-            'notes' => 'Pakiet wygasł - student rozważa zakup kolejnego',
-        ]);
-
-        // Student 5 - Piotr Kamiński (Inactive)
-        $student5 = User::create([
-            'name' => 'Piotr Kamiński',
-            'email' => 'piotr.kaminski@test.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_STUDENT,
-            'phone' => '+48 700 555 666',
-            'birth_date' => '1988-04-05',
-            'city' => 'Poznań',
-            'country' => 'Polska',
-            'status' => User::STATUS_INACTIVE,
-            'email_verified_at' => now()->subDays(120),
-            'created_at' => now()->subDays(120),
-            'account_source' => User::SOURCE_IMPORT,
-        ]);
-
-        StudentProfile::create([
-            'user_id' => $student5->id,
-            'learning_languages' => ['english'],
-            'current_levels' => json_encode([
-                'english' => 'B2'
-            ]),
-            'learning_goals' => ['business'],
-        ]);
-
-        // Student 6 - Testowy Niezweryfikowany (Unverified)
-        $student6 = User::create([
-            'name' => 'Testowy Niezweryfikowany',
-            'email' => 'unverified.student@test.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_STUDENT,
-            'phone' => '+48 700 666 777',
-            'birth_date' => '1990-06-15',
-            'city' => 'Łódź',
-            'country' => 'Polska',
-            'status' => 'unverified',
-            'email_verified_at' => null,
-            'created_at' => now()->subDays(2),
-            'account_source' => User::SOURCE_IMPORT,
-        ]);
-
-        StudentProfile::create([
-            'user_id' => $student6->id,
-            'learning_languages' => ['english'],
-            'current_levels' => json_encode([
-                'english' => 'A1'
-            ]),
-            'learning_goals' => ['conversation'],
-        ]);
-
-        // Student 7 - Anna Zielińska (Blocked)
-        $student7 = User::create([
-            'name' => 'Anna Zielińska',
-            'email' => 'anna.zielinska@test.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_STUDENT,
-            'phone' => '+48 700 777 888',
-            'birth_date' => '1994-09-30',
-            'city' => 'Katowice',
-            'country' => 'Polska',
-            'status' => User::STATUS_BLOCKED,
-            'email_verified_at' => now()->subDays(100),
-            'created_at' => now()->subDays(100),
-            'account_source' => User::SOURCE_IMPORT,
-        ]);
-
-        StudentProfile::create([
-            'user_id' => $student7->id,
-            'learning_languages' => ['french'],
-            'current_levels' => json_encode([
-                'french' => 'B1'
-            ]),
-            'learning_goals' => ['exam'],
-        ]);
-
-        // Student 8 - Krzysztof Mazur (Active with Premium package)
-        $student8 = User::create([
-            'name' => 'Krzysztof Mazur',
-            'email' => 'krzysztof.mazur@test.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_STUDENT,
-            'phone' => '+48 700 888 999',
-            'birth_date' => '1985-12-20',
-            'city' => 'Szczecin',
-            'country' => 'Polska',
-            'status' => User::STATUS_ACTIVE,
-            'email_verified_at' => now()->subDays(15),
-            'created_at' => now()->subDays(15),
-            'last_login_at' => now()->subHours(1),
-            'account_source' => User::SOURCE_IMPORT,
-        ]);
-
-        StudentProfile::create([
-            'user_id' => $student8->id,
-            'learning_languages' => ['english', 'spanish', 'chinese'],
-            'current_levels' => json_encode([
-                'english' => 'C1',
-                'spanish' => 'B2',
-                'chinese' => 'A1'
-            ]),
-            'learning_goals' => ['business', 'exam', 'academic'],
-            'preferred_schedule' => json_encode([
-                'preferred_days' => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
-                'preferred_times' => ['evening'],
-                'lesson_duration' => 60,
-            ])
-        ]);
-
-        // Assign Premium package
-        PackageAssignment::create([
-            'student_id' => $student8->id,
-            'package_id' => $packages[3]->id, // Pakiet Premium
-            'assigned_at' => now()->subDays(7),
-            'expires_at' => now()->addDays(113),
-            'hours_remaining' => 38.0,
-            'is_active' => true,
-            'notes' => 'VIP student - CEO firmy międzynarodowej',
-        ]);
-
-        // Student 9 - Monika Pawlak (Active with intensive package)
-        $student9 = User::create([
-            'name' => 'Monika Pawlak',
-            'email' => 'monika.pawlak@test.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_STUDENT,
-            'phone' => '+48 700 999 000',
-            'birth_date' => '1997-02-14',
-            'city' => 'Lublin',
-            'country' => 'Polska',
-            'status' => User::STATUS_ACTIVE,
-            'email_verified_at' => now()->subDays(20),
-            'created_at' => now()->subDays(20),
-            'account_source' => User::SOURCE_IMPORT,
-        ]);
-
-        StudentProfile::create([
-            'user_id' => $student9->id,
+            'user_id' => $student3->id,
             'learning_languages' => ['german'],
             'current_levels' => json_encode([
                 'german' => 'A2'
             ]),
-            'learning_goals' => ['exam', 'travel'],
-            'preferred_schedule' => json_encode([
-                'preferred_days' => ['monday', 'tuesday', 'wednesday', 'thursday'],
-                'preferred_times' => ['morning', 'afternoon'],
-                'lesson_duration' => 90,
-            ])
+            'learning_goals' => ['exam'],
         ]);
 
-        // Assign Intensive package
+        // Expired package
         PackageAssignment::create([
-            'student_id' => $student9->id,
-            'package_id' => $packages[4]->id, // Pakiet Intensywny
-            'assigned_at' => now()->subDays(3),
-            'expires_at' => now()->addDays(42),
-            'hours_remaining' => 27.5,
-            'is_active' => true,
-            'notes' => 'Przygotowanie do wyjazdu służbowego do Niemiec',
-        ]);
-
-        // Student 10 - Robert Kaczmarek (Active, multiple packages history)
-        $student10 = User::create([
-            'name' => 'Robert Kaczmarek',
-            'email' => 'robert.kaczmarek@test.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_STUDENT,
-            'phone' => '+48 700 000 111',
-            'birth_date' => '1991-08-08',
-            'city' => 'Białystok',
-            'country' => 'Polska',
-            'status' => User::STATUS_ACTIVE,
-            'email_verified_at' => now()->subDays(180),
-            'created_at' => now()->subDays(180),
-            'last_login_at' => now()->subDays(1),
-            'account_source' => User::SOURCE_IMPORT,
-        ]);
-
-        StudentProfile::create([
-            'user_id' => $student10->id,
-            'learning_languages' => ['english'],
-            'current_levels' => json_encode([
-                'english' => 'B2'
-            ]),
-            'learning_goals' => ['conversation', 'pronunciation'],
-        ]);
-
-        // Old expired package
-        PackageAssignment::create([
-            'student_id' => $student10->id,
-            'package_id' => $packages[0]->id,
-            'assigned_at' => now()->subDays(150),
-            'expires_at' => now()->subDays(120),
+            'student_id' => $student3->id,
+            'package_id' => $packages[0]->id, // Pakiet Starter
+            'assigned_at' => now()->subDays(40),
+            'expires_at' => now()->subDays(10),
             'hours_remaining' => 0,
             'is_active' => false,
+            'notes' => 'Pakiet wygasł',
+        ]);
+    }
+
+    /**
+     * Create tutor availability slots
+     */
+    private function createTutorAvailabilitySlots(): void
+    {
+        $this->command->info('📅 Creating tutor availability slots...');
+
+        $tutors = User::where('role', User::ROLE_TUTOR)
+            ->whereHas('tutorProfile', function($q) {
+                $q->where('is_verified', true);
+            })
+            ->take(1)
+            ->get();
+
+        foreach ($tutors as $tutor) {
+            // Create slots for the next 7 days
+            for ($day = 0; $day < 7; $day++) {
+                $date = now()->addDays($day)->format('Y-m-d');
+
+                // Morning slots (9:00-12:00)
+                for ($hour = 9; $hour < 12; $hour++) {
+                    TutorAvailabilitySlot::create([
+                        'tutor_id' => $tutor->id,
+                        'date' => $date,
+                        'start_hour' => $hour,
+                        'end_hour' => $hour + 1,
+                        'is_available' => true,
+                        'hours_booked' => ($day === 2 && $hour === 10) ? 1 : 0
+                    ]);
+                }
+
+                // Afternoon slots (14:00-17:00)
+                for ($hour = 14; $hour < 17; $hour++) {
+                    TutorAvailabilitySlot::create([
+                        'tutor_id' => $tutor->id,
+                        'date' => $date,
+                        'start_hour' => $hour,
+                        'end_hour' => $hour + 1,
+                        'is_available' => true,
+                        'hours_booked' => 0
+                    ]);
+                }
+            }
+        }
+
+        $this->command->info('✅ Created availability slots for ' . $tutors->count() . ' tutors');
+    }
+
+    /**
+     * Create lessons
+     */
+    private function createLessons(): void
+    {
+        $this->command->info('📚 Creating lessons...');
+
+        $tutors = User::where('role', User::ROLE_TUTOR)->get();
+
+        $students = User::where('role', User::ROLE_STUDENT)->get();
+
+        if ($tutors->isEmpty() || $students->isEmpty()) {
+            $this->command->info('⚠️  Not enough tutors or students to create lessons');
+            return;
+        }
+
+        // Past completed lesson
+        $lessonDate = now()->subDays(5);
+        Lesson::create([
+            'tutor_id' => $tutors->first()->id,
+            'student_id' => $students->first()->id,
+            'lesson_date' => $lessonDate->format('Y-m-d'),
+            'start_time' => '10:00:00',
+            'end_time' => '11:00:00',
+            'duration_minutes' => 60,
+            'status' => 'completed',
+            'language' => 'english',
+            'topic' => 'Business English - Negotiations',
+            'notes' => 'Great progress with negotiation vocabulary',
+            'student_rating' => 5,
+            'student_feedback' => 'Excellent lesson, very practical examples',
+            'meeting_room_name' => 'room_' . uniqid(),
+            'meeting_room_url' => 'https://meet.example.com/room_' . uniqid(),
         ]);
 
-        // Another expired package
-        PackageAssignment::create([
-            'student_id' => $student10->id,
-            'package_id' => $packages[1]->id,
-            'assigned_at' => now()->subDays(90),
-            'expires_at' => now()->subDays(30),
-            'hours_remaining' => 0,
-            'is_active' => false,
+        // Upcoming scheduled lesson
+        $futureDate = now()->addDays(2);
+        Lesson::create([
+            'tutor_id' => $tutors->first()->id,
+            'student_id' => $students->first()->id,
+            'lesson_date' => $futureDate->format('Y-m-d'),
+            'start_time' => '14:00:00',
+            'end_time' => '15:00:00',
+            'duration_minutes' => 60,
+            'status' => 'scheduled',
+            'language' => 'english',
+            'topic' => 'Business Presentations',
         ]);
 
-        // Current active package
-        PackageAssignment::create([
-            'student_id' => $student10->id,
-            'package_id' => $packages[1]->id,
-            'assigned_at' => now()->subDays(15),
-            'expires_at' => now()->addDays(45),
-            'hours_remaining' => 7.0,
-            'is_active' => true,
-            'notes' => 'Stały klient - trzeci zakupiony pakiet',
+        // Cancelled lesson
+        $cancelledDate = now()->subDays(1);
+        Lesson::create([
+            'tutor_id' => $tutors->first()->id,
+            'student_id' => $students->get(1)->id,
+            'lesson_date' => $cancelledDate->format('Y-m-d'),
+            'start_time' => '11:00:00',
+            'end_time' => '11:45:00',
+            'duration_minutes' => 45,
+            'status' => 'cancelled',
+            'language' => 'german',
+            'topic' => 'Grammar Review',
+            'cancellation_reason' => 'Student was sick',
+            'cancelled_by' => 'student',
+            'cancelled_at' => $cancelledDate,
         ]);
+
+        // In progress lesson
+        $todayDate = now();
+        Lesson::create([
+            'tutor_id' => $tutors->last()->id,
+            'student_id' => $students->last()->id,
+            'lesson_date' => $todayDate->format('Y-m-d'),
+            'start_time' => $todayDate->copy()->subMinutes(30)->format('H:i:s'),
+            'end_time' => $todayDate->copy()->addMinutes(30)->format('H:i:s'),
+            'duration_minutes' => 60,
+            'status' => 'in_progress',
+            'language' => 'spanish',
+            'topic' => 'Travel Conversations',
+            'meeting_room_name' => 'room_' . uniqid(),
+            'meeting_room_url' => 'https://meet.example.com/room_' . uniqid(),
+        ]);
+
+        // Scheduled lesson for tomorrow
+        $tomorrowDate = now()->addDay();
+        Lesson::create([
+            'tutor_id' => $tutors->first()->id,
+            'student_id' => $students->first()->id,
+            'lesson_date' => $tomorrowDate->format('Y-m-d'),
+            'start_time' => '16:00:00',
+            'end_time' => '17:30:00',
+            'duration_minutes' => 90,
+            'status' => 'scheduled',
+            'language' => 'french',
+            'topic' => 'Introduction to French',
+        ]);
+
+        $this->command->info('✅ Created 5 lessons with various statuses');
+    }
+
+    /**
+     * Create lesson materials
+     */
+    private function createLessonMaterials(): void
+    {
+        $this->command->info('📎 Creating lesson materials...');
+
+        $lessons = Lesson::whereIn('status', ['completed', 'in_progress'])->get();
+
+        if ($lessons->isEmpty()) {
+            $this->command->info('⚠️  No lessons to attach materials to');
+            return;
+        }
+
+        foreach ($lessons->take(2) as $lesson) {
+            LessonMaterial::create([
+                'lesson_id' => $lesson->id,
+                'student_id' => $lesson->student_id,
+                'tutor_id' => $lesson->tutor_id,
+                'original_name' => 'lesson_worksheet_' . $lesson->id . '.pdf',
+                'file_path' => 'materials/lessons/' . $lesson->id . '/worksheet.pdf',
+                'file_size' => 256789,
+                'mime_type' => 'application/pdf',
+            ]);
+
+            LessonMaterial::create([
+                'lesson_id' => $lesson->id,
+                'student_id' => $lesson->student_id,
+                'tutor_id' => $lesson->tutor_id,
+                'original_name' => 'audio_exercise_' . $lesson->id . '.mp3',
+                'file_path' => 'materials/lessons/' . $lesson->id . '/audio.mp3',
+                'file_size' => 4567890,
+                'mime_type' => 'audio/mpeg',
+            ]);
+        }
+
+        $this->command->info('✅ Created lesson materials');
+    }
+
+    /**
+     * Create meeting sessions
+     */
+    private function createMeetingSessions(): void
+    {
+        $this->command->info('🎥 Creating meeting sessions...');
+
+        $completedLesson = Lesson::where('status', 'completed')->first();
+        $inProgressLesson = Lesson::where('status', 'in_progress')->first();
+
+        if ($completedLesson) {
+            $joinedAt = now()->subDays(5)->setHour(10)->setMinute(0);
+            // Create sessions for tutor and student
+            MeetingSession::create([
+                'lesson_id' => $completedLesson->id,
+                'participant_id' => $completedLesson->tutor_id,
+                'room_name' => 'room_' . $completedLesson->id,
+                'joined_at' => $joinedAt,
+                'left_at' => $joinedAt->copy()->addMinutes($completedLesson->duration_minutes),
+                'duration_seconds' => $completedLesson->duration_minutes * 60,
+                'connection_quality' => 'good',
+            ]);
+
+            MeetingSession::create([
+                'lesson_id' => $completedLesson->id,
+                'participant_id' => $completedLesson->student_id,
+                'room_name' => 'room_' . $completedLesson->id,
+                'joined_at' => $joinedAt->copy()->addSeconds(30),
+                'left_at' => $joinedAt->copy()->addMinutes($completedLesson->duration_minutes),
+                'duration_seconds' => ($completedLesson->duration_minutes * 60) - 30,
+                'connection_quality' => 'excellent',
+            ]);
+        }
+
+        if ($inProgressLesson) {
+            $joinedAt = now()->subMinutes(30);
+            // Only tutor and student joined, no one left yet
+            MeetingSession::create([
+                'lesson_id' => $inProgressLesson->id,
+                'participant_id' => $inProgressLesson->tutor_id,
+                'room_name' => 'room_' . $inProgressLesson->id,
+                'joined_at' => $joinedAt,
+                'left_at' => null,
+                'duration_seconds' => null,
+                'connection_quality' => 'good',
+            ]);
+
+            MeetingSession::create([
+                'lesson_id' => $inProgressLesson->id,
+                'participant_id' => $inProgressLesson->student_id,
+                'room_name' => 'room_' . $inProgressLesson->id,
+                'joined_at' => $joinedAt->copy()->addMinutes(2),
+                'left_at' => null,
+                'duration_seconds' => null,
+                'connection_quality' => 'fair',
+            ]);
+        }
+
+        $this->command->info('✅ Created meeting sessions');
+    }
+
+    /**
+     * Create admin audit logs
+     */
+    private function createAdminAuditLogs(): void
+    {
+        $this->command->info('📝 Creating admin audit logs...');
+
+        $admin = User::where('role', User::ROLE_ADMIN)->first();
+        $moderator = User::where('role', User::ROLE_MODERATOR)->first();
+
+        if ($admin) {
+            AdminAuditLog::create([
+                'admin_user_id' => $admin->id,
+                'action' => 'create',
+                'model_type' => 'App\\Models\\User',
+                'model_id' => User::where('role', User::ROLE_STUDENT)->first()->id ?? 1,
+                'model_name' => 'Student Account',
+                'new_values' => [
+                    'role' => User::ROLE_STUDENT,
+                    'status' => User::STATUS_ACTIVE
+                ],
+                'ip_address' => '192.168.1.100',
+                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0',
+                'description' => 'Created new student account',
+            ]);
+
+            AdminAuditLog::create([
+                'admin_user_id' => $admin->id,
+                'action' => 'update',
+                'model_type' => 'App\\Models\\Package',
+                'model_id' => Package::first()->id ?? 1,
+                'model_name' => 'Pakiet Starter',
+                'old_values' => ['price' => 300],
+                'new_values' => ['price' => 350],
+                'ip_address' => '192.168.1.100',
+                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0',
+                'description' => 'Updated package price',
+            ]);
+        }
+
+        if ($moderator) {
+            AdminAuditLog::create([
+                'admin_user_id' => $moderator->id,
+                'action' => 'update',
+                'model_type' => 'App\\Models\\TutorProfile',
+                'model_id' => TutorProfile::where('is_verified', true)->first()->id ?? 1,
+                'model_name' => 'Tutor Profile',
+                'old_values' => ['verification_status' => 'pending'],
+                'new_values' => ['verification_status' => 'approved', 'verified_at' => now()],
+                'ip_address' => '192.168.1.101',
+                'user_agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15',
+                'description' => 'Verified tutor profile',
+            ]);
+        }
+
+        $this->command->info('✅ Created admin audit logs');
+    }
+
+    /**
+     * Create tutor availability logs
+     */
+    private function createTutorAvailabilityLogs(): void
+    {
+        $this->command->info('📊 Creating tutor availability logs...');
+
+        $tutors = User::where('role', User::ROLE_TUTOR)->take(2)->get();
+
+        foreach ($tutors as $tutor) {
+            TutorAvailabilityLog::create([
+                'tutor_id' => $tutor->id,
+                'date' => now()->subDays(3),
+                'action' => 'added',
+                'new_slots' => ['9:00-12:00', '14:00-17:00'],
+                'description' => 'Initial availability setup',
+                'ip_address' => '192.168.1.' . rand(1, 255),
+                'user_agent' => 'Mozilla/5.0',
+            ]);
+
+            TutorAvailabilityLog::create([
+                'tutor_id' => $tutor->id,
+                'date' => now(),
+                'action' => 'updated',
+                'old_slots' => ['9:00-12:00', '14:00-17:00'],
+                'new_slots' => ['10:00-13:00', '15:00-18:00'],
+                'description' => 'Updated available hours',
+                'ip_address' => '192.168.1.' . rand(1, 255),
+                'user_agent' => 'Mozilla/5.0',
+            ]);
+        }
+
+        $this->command->info('✅ Created tutor availability logs');
     }
 }

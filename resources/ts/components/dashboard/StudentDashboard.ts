@@ -215,7 +215,7 @@ export class StudentDashboard implements RouteComponent {
         const logoutBtn = document.getElementById('logoutBtn')
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
-                this.handleLogout()
+                document.dispatchEvent(new CustomEvent('app:logout'))
             })
         }
 
@@ -1202,21 +1202,4 @@ export class StudentDashboard implements RouteComponent {
         }
     }
 
-    private async handleLogout(): Promise<void> {
-        try {
-            // Call logout API
-            await authService.logout()
-            
-            // Clear any stored tokens/data
-            localStorage.removeItem('auth_token')
-            sessionStorage.clear()
-            
-            // Redirect to login page
-            window.location.href = '/login'
-        } catch (error) {
-            console.error('Error during logout:', error)
-            // Even if logout fails, redirect to login
-            window.location.href = '/login'
-        }
-    }
 }

@@ -411,12 +411,11 @@ export class AvailabilityCalendar {
                                 <div class="hours-fill ${percentage > 100 ? 'danger' : percentage > 80 ? 'warning' : ''}" 
                                      style="width: ${Math.min(percentage, 100)}%"></div>
                             </div>
-                            <div class="d-flex justify-content-between">
-                                <span>${week.totalHours}h / ${week.limit}h</span>
-                                <span class="${isOverLimit ? 'text-danger' : 'text-success'}">
-                                    ${isOverLimit ? 'Przekroczony limit!' : `Pozostało: ${week.remaining}h`}
-                                </span>
-                            </div>
+                            ${isOverLimit ? `
+                                <div class="text-danger mt-2">
+                                    Godziny dla tygodnia od ${new Date(week.weekStart).toLocaleDateString('pl-PL')} zostały wykorzystane
+                                </div>
+                            ` : ''}
                         </div>
                     `
                 }).join('')}

@@ -10,6 +10,8 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\CheckLessonStatus::class,
         Commands\SendMeetingRoomNotifications::class,
+        Commands\SendTutorAvailabilityAlert::class,
+        Commands\LogoutAllUsers::class,
     ];
 
     protected function schedule(Schedule $schedule)

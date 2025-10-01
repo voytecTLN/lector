@@ -164,6 +164,10 @@ Route::middleware('auth:sanctum')->group(function () {
                     ->name('api.admin.students.redirect');
                 Route::get('/tutors', [AdminController::class, 'redirectToTutors'])
                     ->name('api.admin.tutors.redirect');
+
+                // Check availability alert
+                Route::post('/check-availability-alert', [AdminController::class, 'checkAvailabilityAlert'])
+                    ->name('api.admin.check-availability-alert');
             });
         });
 

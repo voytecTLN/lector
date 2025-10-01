@@ -47,6 +47,14 @@ export class TutorDetails implements RouteComponent {
                     .nav-tabs .nav-link:hover {
                         border-color: transparent;
                     }
+                    .verification-card {
+                        cursor: pointer;
+                        transition: transform 0.2s, box-shadow 0.2s;
+                    }
+                    .verification-card:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    }
                 </style>
                 
                 <!-- Loading -->
@@ -115,12 +123,18 @@ export class TutorDetails implements RouteComponent {
 
     async mount(container: HTMLElement): Promise<void> {
         this.container = container
+        // Set global instance for onclick handlers
+        ;(window as any).currentTutorDetailsInstance = this
         await this.loadTutorData()
     }
 
     unmount(): void {
         this.container = null
         this.tutor = null
+        // Clear global instance
+        if ((window as any).currentTutorDetailsInstance === this) {
+            ;(window as any).currentTutorDetailsInstance = null
+        }
         if (this.availabilityCalendar) {
             this.availabilityCalendar.unmount()
             this.availabilityCalendar = null
@@ -217,12 +231,13 @@ export class TutorDetails implements RouteComponent {
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card border-info">
+                <div class="card border-info verification-card" onclick="window.currentTutorDetailsInstance?.showVerificationDetailsModal()">
                     <div class="card-body">
                         <h6 class="text-muted mb-2">Weryfikacja</h6>
                         <div class="d-flex align-items-center">
                             ${this.getVerificationBadge(profile?.verification_status, profile?.is_verified)}
                         </div>
+                        ${profile?.verification_notes ? '<small class="text-muted mt-1"><i class="bi bi-chat-left-text"></i> Kliknij aby zobaczyć komentarz</small>' : ''}
                     </div>
                 </div>
             </div>
@@ -595,6 +610,129 @@ export class TutorDetails implements RouteComponent {
             default:
                 return '<span class="badge bg-secondary">Nieznany</span>'
         }
+    }
+
+    showVerificationDetailsModal(): void {
+        // Show modal with verification details
+        if (!this.tutor || !this.tutor.tutor_profile) return
+
+        const profile = this.tutor.tutor_profile
+        const verifiedAt = profile.verified_at ? new Date(profile.verified_at).toLocaleDateString('pl-PL', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : null
+
+        const modalHtml = `
+            <div class="modal fade" id="verificationDetailsModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="bi bi-shield-check me-2"></i>
+                                Szczegóły weryfikacji
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="text-muted small">Status weryfikacji</label>
+                                <div class="d-flex align-items-center mt-1">
+                                    ${this.getVerificationBadge(profile.verification_status, profile.is_verified)}
+                                    ${verifiedAt ? `<span class="text-muted ms-2 small">${verifiedAt}</span>` : ''}
+                                </div>
+                            </div>
+
+                            ${profile.verification_notes ? `
+                                <div class="mb-3">
+                                    <label class="text-muted small">Komentarz weryfikacji</label>
+                                    <div class="card mt-1">
+                                        <div class="card-body">
+                                            <p class="mb-0">${profile.verification_notes}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Brak komentarza weryfikacji
+                                </div>
+                            `}
+
+                            <div class="mb-3">
+                                <label class="text-muted small">Informacje dodatkowe</label>
+                                <table class="table table-sm table-borderless mt-1">
+                                    <tr>
+                                        <td class="text-muted">Lektor:</td>
+                                        <td>${this.tutor.name}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Email:</td>
+                                        <td>${this.tutor.email}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Doświadczenie:</td>
+                                        <td>${profile.years_experience || 0} lat</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle me-1"></i>
+                                Zamknij
+                            </button>
+                            ${profile.verification_status === 'pending' ? `
+                                <button type="button" class="btn btn-primary" onclick="window.currentTutorDetailsInstance?.closeVerificationDetailsAndOpenVerification()">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Weryfikuj lektora
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('verificationDetailsModal')
+        if (existingModal) {
+            existingModal.remove()
+        }
+
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml)
+
+        // Get modal element
+        const modalElement = document.getElementById('verificationDetailsModal') as HTMLElement
+
+        // Initialize Bootstrap modal
+        const modal = new (window as any).bootstrap.Modal(modalElement)
+
+        // Clean up when modal is hidden
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            modalElement.remove()
+        })
+
+        // Show modal
+        modal.show()
+    }
+
+    closeVerificationDetailsAndOpenVerification(): void {
+        // Close the details modal
+        const detailsModal = document.getElementById('verificationDetailsModal')
+        if (detailsModal) {
+            const bsModal = (window as any).bootstrap.Modal.getInstance(detailsModal)
+            if (bsModal) {
+                bsModal.hide()
+            }
+        }
+        // Wait a moment then open verification modal
+        setTimeout(() => {
+            this.showVerificationModal()
+        }, 300)
     }
 
     private showVerificationModal(): void {

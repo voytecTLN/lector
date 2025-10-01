@@ -541,6 +541,7 @@ export class TutorDashboard implements RouteComponent {
         contentDiv.innerHTML = `
             <div class="tutor-content-area">
                 <div class="row mb-4">
+                    <!--
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-header">
@@ -564,6 +565,7 @@ export class TutorDashboard implements RouteComponent {
                             </div>
                         </div>
                     </div>
+                    -->
                     
                     <div class="col-md-6">
                         <div class="card">

@@ -50,6 +50,14 @@ export class AdminAvailabilityLogs {
                         <button class="btn btn-outline-primary me-2" id="refresh-logs">
                             <i class="bi bi-arrow-clockwise"></i> Odśwież
                         </button>
+                        <div class="btn-group me-2" role="group">
+                            <select class="form-select" id="month-selector" style="max-width: 200px;">
+                                ${this.getMonthOptions()}
+                            </select>
+                            <button class="btn btn-warning" id="check-availability-alert">
+                                <i class="bi bi-search"></i> Sprawdź Dostępność
+                            </button>
+                        </div>
                         <button class="btn btn-success" id="export-csv">
                             <i class="bi bi-download"></i> Eksport CSV
                         </button>
@@ -239,6 +247,11 @@ export class AdminAvailabilityLogs {
         // Export CSV
         document.getElementById('export-csv')?.addEventListener('click', () => {
             this.exportToCSV()
+        })
+
+        // Check availability alert
+        document.getElementById('check-availability-alert')?.addEventListener('click', () => {
+            this.checkAvailabilityAlert()
         })
 
         // Enter key in search
@@ -613,6 +626,114 @@ export class AdminAvailabilityLogs {
             `
         }
     }
+
+    private getMonthOptions(): string {
+        const options = []
+        const currentDate = new Date()
+        const currentYear = currentDate.getFullYear()
+        const currentMonth = currentDate.getMonth() // 0-based
+
+        // Generate months from January of current year to previous month
+        for (let month = 0; month < currentMonth; month++) {
+            const date = new Date(currentYear, month, 1)
+            const value = `${currentYear}-${String(month + 1).padStart(2, '0')}`
+            const label = date.toLocaleDateString('pl-PL', {
+                month: 'long',
+                year: 'numeric'
+            })
+            options.push(`<option value="${value}">${label}</option>`)
+        }
+
+        // Add months from previous year if current month is January
+        if (currentMonth === 0) {
+            for (let month = 0; month < 12; month++) {
+                const date = new Date(currentYear - 1, month, 1)
+                const value = `${currentYear - 1}-${String(month + 1).padStart(2, '0')}`
+                const label = date.toLocaleDateString('pl-PL', {
+                    month: 'long',
+                    year: 'numeric'
+                })
+                options.unshift(`<option value="${value}">${label}</option>`)
+            }
+        }
+
+        // Default to previous month
+        const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1
+        const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear
+        const defaultValue = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`
+
+        // Mark default as selected
+        return options.map(option =>
+            option.includes(`value="${defaultValue}"`)
+                ? option.replace('>', ' selected>')
+                : option
+        ).join('')
+    }
+
+    private async checkAvailabilityAlert() {
+        const button = document.getElementById('check-availability-alert') as HTMLButtonElement
+        const monthSelector = document.getElementById('month-selector') as HTMLSelectElement
+
+        if (!button || !monthSelector) return
+
+        const selectedMonth = monthSelector.value
+        if (!selectedMonth) {
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Wybierz miesiąc do sprawdzenia'
+                }
+            }))
+            return
+        }
+
+        // Show loading state
+        const originalText = button.innerHTML
+        button.innerHTML = '<i class="bi bi-hourglass-split"></i> Sprawdzanie...'
+        button.disabled = true
+
+        try {
+            const response = await api.post('/admin/check-availability-alert', {
+                month: selectedMonth
+            })
+
+            if (response && (response as any).success) {
+                const data = (response as any).data
+                const tutorCount = data?.tutorCount || 0
+
+                if (tutorCount > 0) {
+                    document.dispatchEvent(new CustomEvent('notification:show', {
+                        detail: {
+                            type: 'warning',
+                            message: `Znaleziono ${tutorCount} lektorów z niewystarczającą dostępnością. Email został wysłany.`
+                        }
+                    }))
+                } else {
+                    document.dispatchEvent(new CustomEvent('notification:show', {
+                        detail: {
+                            type: 'success',
+                            message: 'Wszyscy lektorzy mają wystarczającą dostępność w tym miesiącu.'
+                        }
+                    }))
+                }
+            } else {
+                throw new Error('Niepowodzenie sprawdzania')
+            }
+        } catch (error) {
+            console.error('Error checking availability alert:', error)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Nie udało się sprawdzić dostępności lektorów'
+                }
+            }))
+        } finally {
+            // Restore button state
+            button.innerHTML = originalText
+            button.disabled = false
+        }
+    }
+
 
     private async exportToCSV() {
         try {

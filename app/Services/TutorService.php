@@ -409,7 +409,7 @@ class TutorService
                 });
                 
                 if (($existingHours + $newHours) > $weeklyLimit) {
-                    throw new Exception("Przekroczono liczbę godzin dla tygodnia od {$weekStart}");
+                    throw new Exception("Godziny dla tygodnia od {$weekStart} zostały wykorzystane");
                 }
             }
 

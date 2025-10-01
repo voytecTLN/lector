@@ -375,27 +375,26 @@ export class HourlyAvailabilityCalendar {
 
     private renderWeeklySummary(): string {
         const stats = this.calculateWeeklyStats()
-        
+
         return `
             <h5 class="mb-3">Podsumowanie tygodniowe</h5>
             <div class="week-stats">
                 ${stats.map((week, index) => {
                     const percentage = (week.totalHours / week.limit) * 100
                     const isOverLimit = week.totalHours > week.limit
-                    
+
                     return `
                         <div class="week-card ${isOverLimit ? 'over-limit' : ''}">
                             <h6>Tydzień ${index + 1} (od ${new Date(week.weekStart).toLocaleDateString('pl-PL')})</h6>
                             <div class="hours-bar">
-                                <div class="hours-fill ${percentage > 100 ? 'danger' : percentage > 80 ? 'warning' : ''}" 
+                                <div class="hours-fill ${percentage > 100 ? 'danger' : percentage > 80 ? 'warning' : ''}"
                                      style="width: ${Math.min(percentage, 100)}%"></div>
                             </div>
-                            <div class="d-flex justify-content-between">
-                                <span>${week.totalHours}h / ${week.limit}h</span>
-                                <span class="${isOverLimit ? 'text-danger' : 'text-success'}">
-                                    ${isOverLimit ? 'Przekroczony limit!' : `Pozostało: ${week.remaining}h`}
-                                </span>
-                            </div>
+                            ${isOverLimit ? `
+                                <div class="text-danger mt-2">
+                                    Godziny dla tygodnia od ${new Date(week.weekStart).toLocaleDateString('pl-PL')} zostały wykorzystane
+                                </div>
+                            ` : ''}
                         </div>
                     `
                 }).join('')}

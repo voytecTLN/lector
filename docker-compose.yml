@@ -18,9 +18,9 @@ services:
     ports:
       - "8000:80"
     volumes:
-      - .:/var/www/html:ro
-      - ./storage/app/public:/var/www/html/public/storage:ro
-      - ./docker/nginx/dev.conf:/etc/nginx/conf.d/default.conf:ro
+      - .:/var/www/html
+      - ./storage/app/public:/var/www/html/public/storage
+      - ./docker/nginx/dev.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - app
     networks:

@@ -220,4 +220,71 @@ class AdminController extends Controller
             default => 'Nieznany'
         };
     }
+
+    /**
+     * Redirect to students page
+     */
+    public function redirectToStudents(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'redirect' => '/admin/dashboard?section=uczniowie'
+        ]);
+    }
+
+    /**
+     * Redirect to tutors page
+     */
+    public function redirectToTutors(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'redirect' => '/admin/dashboard?section=lektorzy'
+        ]);
+    }
+
+    /**
+     * Check availability alert for specific month
+     */
+    public function checkAvailabilityAlert(Request $request): JsonResponse
+    {
+        $request->validate([
+            'month' => 'required|date_format:Y-m'
+        ]);
+
+        try {
+            $month = $request->input('month');
+
+            // Run the artisan command with specific month
+            \Artisan::call('tutors:availability-alert', ['--month' => $month]);
+
+            $output = \Artisan::output();
+
+            // Try to extract tutor count from output
+            $tutorCount = 0;
+            if (preg_match('/(\d+)\s+lektorów?\s+z\s+niewystarczającą\s+dostępnością/i', $output, $matches)) {
+                $tutorCount = (int) $matches[1];
+            } elseif (strpos($output, 'nie znaleziono') !== false || strpos($output, 'wszyscy lektorzy') !== false) {
+                $tutorCount = 0;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sprawdzanie dostępności zakończone pomyślnie',
+                'data' => [
+                    'tutorCount' => $tutorCount,
+                    'month' => $month,
+                    'output' => $output
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to check availability alert: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Nie udało się sprawdzić dostępności lektorów: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

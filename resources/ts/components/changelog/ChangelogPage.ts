@@ -18,6 +18,29 @@ export class ChangelogPage implements RouteComponent {
     // Example changelog data - in real app this would come from API or config
     private changelog: ChangelogEntry[] = [
         {
+            version: "1.3.2",
+            releaseDate: "2025-10-01",
+            sections: {
+                admin: [
+                    "📊 Poprawiono system testowych danych - dodano przykładowe dane do wszystkich sekcji systemu",
+                    "📅 Uproszczono widok dostępności lektorów - usunięto skomplikowane liczniki godzin",
+                    "⚠️ Zmieniono komunikaty o godzinach na bardziej zrozumiałe dla użytkowników",
+                    "✅ Dodano możliwość podglądu komentarzy weryfikacji lektorów",
+                    "📧 Utworzono automatyczny system powiadomień email:",
+                    "  • System sprawdza dostępność lektorów co miesiąc",
+                    "  • Wysyła alert jeśli lektor ma mniej niż 20 godzin dostępności",
+                    "  • Email zawiera listę lektorów z ich godzinami",
+                    "  • Uruchamia się automatycznie 1-go dnia każdego miesiąca",
+                    "  • Można sprawdzać ręcznie wybierając miesiąc w panelu administracyjnym",
+                    "🔧 Naprawiono błędy w systemie danych testowych",
+                    "💬 Kliknięcie w 'Weryfikacja' teraz pokazuje szczegóły weryfikacji lektora",
+                    "📧 Dodano ustawienie email dla alertów w konfiguracji systemu",
+                    "🔄 Dodano automatyczne wylogowywanie wszystkich użytkowników codziennie o 4:00 rano",
+                    "🔍 Dodano przycisk 'Sprawdź Dostępność' z wyborem miesiąca na stronie logów dostępności"
+                ]
+            }
+        },
+        {
             version: "1.3.1",
             releaseDate: "2025-09-28",
             sections: {
