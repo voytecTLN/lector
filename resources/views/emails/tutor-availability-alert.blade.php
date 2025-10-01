@@ -12,9 +12,18 @@
             Szanowni Państwo,
         </p>
 
-        <p style="margin-bottom: 20px;">
-            <strong>{{ $tutorCount }}</strong> {{ $tutorCount === 1 ? 'lektor nie ustawił' : 'lektorów nie ustawiło' }} wymaganej minimalnej dostępności <strong>20 godzin</strong> w miesiącu <strong>{{ $monthName }}</strong>.
-        </p>
+        @if($tutorCount === 0)
+            <p style="margin-bottom: 20px; color: #28a745; font-weight: 600;">
+                ✅ Wszyscy lektorzy mają wystarczającą dostępność (minimum 20 godzin) w miesiącu <strong>{{ $monthName }}</strong>.
+            </p>
+            <p style="margin-bottom: 20px;">
+                Gratulacje! Nie ma żadnych problemów z dostępnością lektorów w tym miesiącu.
+            </p>
+        @else
+            <p style="margin-bottom: 20px;">
+                <strong>{{ $tutorCount }}</strong> {{ $tutorCount === 1 ? 'lektor nie ustawił' : 'lektorów nie ustawiło' }} wymaganej minimalnej dostępności <strong>20 godzin</strong> w miesiącu <strong>{{ $monthName }}</strong>.
+            </p>
+        @endif
 
         @if($tutorCount > 0)
             <div style="margin: 25px 0;">

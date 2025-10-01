@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\AdminService;
+use App\Services\TutorAvailabilityService;
 use App\Http\Requests\CreateAdminRequest;
 use App\Http\Requests\UpdateAdminRequest;
 use Illuminate\Http\Request;
@@ -12,7 +13,8 @@ use Illuminate\Http\JsonResponse;
 class AdminController extends Controller
 {
     public function __construct(
-        private AdminService $adminService
+        private AdminService $adminService,
+        private TutorAvailabilityService $tutorAvailabilityService
     ) {
         $this->middleware(['auth:sanctum', 'verified', 'role:admin']);
     }
@@ -255,26 +257,18 @@ class AdminController extends Controller
         try {
             $month = $request->input('month');
 
-            // Run the artisan command with specific month
-            \Artisan::call('tutors:availability-alert', ['--month' => $month]);
-
-            $output = \Artisan::output();
-
-            // Try to extract tutor count from output
-            $tutorCount = 0;
-            if (preg_match('/(\d+)\s+lektorów?\s+z\s+niewystarczającą\s+dostępnością/i', $output, $matches)) {
-                $tutorCount = (int) $matches[1];
-            } elseif (strpos($output, 'nie znaleziono') !== false || strpos($output, 'wszyscy lektorzy') !== false) {
-                $tutorCount = 0;
-            }
+            // Use service directly instead of Artisan command to avoid exec() issues
+            $result = $this->tutorAvailabilityService->checkTutorAvailability($month, true);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Sprawdzanie dostępności zakończone pomyślnie',
                 'data' => [
-                    'tutorCount' => $tutorCount,
+                    'tutorCount' => $result['tutorCount'],
                     'month' => $month,
-                    'output' => $output
+                    'totalTutors' => $result['totalTutors'],
+                    'emailSent' => $result['emailSent'],
+                    'message' => $result['message']
                 ]
             ]);
         } catch (\Exception $e) {

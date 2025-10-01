@@ -158,4 +158,80 @@ class TutorAvailabilityLog extends Model
     {
         return $query->whereBetween('created_at', [$startDate, $endDate]);
     }
+
+    /**
+     * Get slot details with calculated hours for availability service
+     */
+    public function getSlotDetails(): array
+    {
+        $slots = [];
+
+        if ($this->action === 'added' && $this->new_slots) {
+            foreach ($this->new_slots as $slot) {
+                $slots[] = [
+                    'hours' => $this->calculateSlotHours($slot),
+                    'slot' => $slot
+                ];
+            }
+        } elseif ($this->action === 'deleted' && $this->old_slots) {
+            foreach ($this->old_slots as $slot) {
+                $slots[] = [
+                    'hours' => $this->calculateSlotHours($slot),
+                    'slot' => $slot
+                ];
+            }
+        } elseif ($this->action === 'updated') {
+            // For updated, we need net change
+            $oldHours = 0;
+            $newHours = 0;
+
+            if ($this->old_slots) {
+                foreach ($this->old_slots as $slot) {
+                    $oldHours += $this->calculateSlotHours($slot);
+                }
+            }
+
+            if ($this->new_slots) {
+                foreach ($this->new_slots as $slot) {
+                    $newHours += $this->calculateSlotHours($slot);
+                }
+            }
+
+            $netChange = $newHours - $oldHours;
+
+            if ($netChange != 0) {
+                $slots[] = [
+                    'hours' => abs($netChange),
+                    'slot' => 'net_change',
+                    'is_net_change' => true,
+                    'positive' => $netChange > 0
+                ];
+            }
+        }
+
+        return $slots;
+    }
+
+    /**
+     * Calculate hours for a single slot
+     */
+    private function calculateSlotHours($slot): int
+    {
+        if (is_array($slot) && isset($slot['start_time']) && isset($slot['end_time'])) {
+            $startHour = (int) explode(':', $slot['start_time'])[0];
+            $endHour = (int) explode(':', $slot['end_time'])[0];
+            return max(0, $endHour - $startHour);
+        }
+
+        // Fallback for other formats
+        if (is_string($slot) && strpos($slot, '-') !== false) {
+            [$start, $end] = explode('-', $slot);
+            $startHour = (int) explode(':', $start)[0];
+            $endHour = (int) explode(':', $end)[0];
+            return max(0, $endHour - $startHour);
+        }
+
+        // Default to 1 hour if can't parse
+        return 1;
+    }
 }

@@ -55,7 +55,7 @@ export class AdminAvailabilityLogs {
                                 ${this.getMonthOptions()}
                             </select>
                             <button class="btn btn-warning" id="check-availability-alert">
-                                <i class="bi bi-search"></i> Sprawdź Dostępność
+                                <i class="bi bi-search"></i> Sprawdź minimalną dostępność
                             </button>
                         </div>
                         <button class="btn btn-success" id="export-csv">
