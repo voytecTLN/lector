@@ -32,16 +32,13 @@
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                     <thead>
                         <tr style="background-color: #f8f9fa;">
-                            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left; font-weight: 600;">
+                            <th style="border: 1px solid #dee2e6; padding: 10px; text-align: left; font-weight: 600; width: 50%;">
                                 Lektor
                             </th>
-                            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left; font-weight: 600;">
-                                Email
-                            </th>
-                            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">
+                            <th style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: 600; width: 25%;">
                                 Godziny
                             </th>
-                            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center; font-weight: 600;">
+                            <th style="border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: 600; width: 25%;">
                                 Status
                             </th>
                         </tr>
@@ -49,24 +46,22 @@
                     <tbody>
                         @foreach($tutors as $tutor)
                             <tr>
-                                <td style="border: 1px solid #dee2e6; padding: 12px;">
-                                    <strong>{{ $tutor['tutor']->name }}</strong>
+                                <td style="border: 1px solid #dee2e6; padding: 10px;">
+                                    <strong>{{ $tutor['tutor']->name }}</strong><br>
+                                    <small style="color: #6c757d;">{{ $tutor['tutor']->email }}</small>
                                 </td>
-                                <td style="border: 1px solid #dee2e6; padding: 12px;">
-                                    {{ $tutor['tutor']->email }}
-                                </td>
-                                <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
+                                <td style="border: 1px solid #dee2e6; padding: 10px; text-align: center;">
                                     <span style="color: #dc3545; font-weight: 600;">
                                         {{ $tutor['hours'] }} / 20
                                     </span>
                                 </td>
-                                <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">
+                                <td style="border: 1px solid #dee2e6; padding: 10px; text-align: center;">
                                     @if($tutor['hours'] === 0)
-                                        <span style="background-color: #dc3545; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                        <span style="background-color: #dc3545; color: white; padding: 4px 6px; border-radius: 4px; font-size: 11px;">
                                             BRAK DOSTĘPNOŚCI
                                         </span>
                                     @else
-                                        <span style="background-color: #fd7e14; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                        <span style="background-color: #fd7e14; color: white; padding: 4px 6px; border-radius: 4px; font-size: 11px;">
                                             NIEWYSTARCZAJĄCA
                                         </span>
                                     @endif
@@ -101,6 +96,73 @@
                 </ul>
             </div>
 
+        @endif
+
+        <!-- Unverified Tutors Section -->
+        @if($unverifiedCount > 0)
+            <div style="margin-top: 40px; border-top: 2px solid #ffc107; padding-top: 25px;">
+                <h2 style="color: #856404; margin-bottom: 20px;">
+                    ⚠️ Lektorzy niezweryfikowani ({{ $unverifiedCount }})
+                </h2>
+
+                <p style="margin-bottom: 20px; color: #856404;">
+                    Poniżej znajdują się lektorzy którzy nie zostali jeszcze zweryfikowani, dlatego nie są sprawdzani pod kątem dostępności:
+                </p>
+
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <thead>
+                        <tr style="background-color: #fff3cd;">
+                            <th style="border: 1px solid #ffeaa7; padding: 10px; text-align: left; font-weight: 600; width: 40%;">
+                                Lektor
+                            </th>
+                            <th style="border: 1px solid #ffeaa7; padding: 10px; text-align: center; font-weight: 600; width: 20%;">
+                                Godziny
+                            </th>
+                            <th style="border: 1px solid #ffeaa7; padding: 10px; text-align: center; font-weight: 600; width: 20%;">
+                                Data utworzenia
+                            </th>
+                            <th style="border: 1px solid #ffeaa7; padding: 10px; text-align: center; font-weight: 600; width: 20%;">
+                                Status
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($unverifiedTutors as $tutor)
+                            <tr>
+                                <td style="border: 1px solid #ffeaa7; padding: 10px;">
+                                    <strong>{{ $tutor->name }}</strong><br>
+                                    <small style="color: #856404;">{{ $tutor->email }}</small>
+                                </td>
+                                <td style="border: 1px solid #ffeaa7; padding: 10px; text-align: center;">
+                                    <span style="color: #6c757d; font-weight: 600;">
+                                        0 / 20
+                                    </span>
+                                </td>
+                                <td style="border: 1px solid #ffeaa7; padding: 10px; text-align: center;">
+                                    {{ $tutor->created_at->format('d.m.Y') }}
+                                </td>
+                                <td style="border: 1px solid #ffeaa7; padding: 10px; text-align: center;">
+                                    <span style="background-color: #ffc107; color: #856404; padding: 4px 6px; border-radius: 4px; font-size: 11px;">
+                                        NIEZWERYFIKOWANY
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
+                <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 15px; margin: 20px 0;">
+                    <h4 style="color: #856404; margin-top: 0; margin-bottom: 10px;">
+                        📋 Zalecane działania dla niezweryfikowanych:
+                    </h4>
+                    <ul style="color: #856404; margin: 0; padding-left: 20px;">
+                        <li>Sprawdź dokumenty lektorów oczekujących na weryfikację</li>
+                        <li>Skontaktuj się z lektorami w sprawie kompletności profilu</li>
+                        <li>Przeprowadź proces weryfikacji zgodnie z procedurami</li>
+                        <li>Po weryfikacji lektorzy będą uwzględniani w sprawdzaniu dostępności</li>
+                    </ul>
+                </div>
+            </div>
         @endif
 
         <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 14px;">

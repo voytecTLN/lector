@@ -30,6 +30,15 @@ class TutorAvailabilityService
                 ->with('tutorProfile')
                 ->get();
 
+            // Get all active unverified tutors for additional info
+            $unverifiedTutors = User::where('role', User::ROLE_TUTOR)
+                ->where('status', User::STATUS_ACTIVE)
+                ->whereHas('tutorProfile', function ($query) {
+                    $query->where('is_verified', false);
+                })
+                ->with('tutorProfile')
+                ->get();
+
             if ($tutors->isEmpty()) {
                 return [
                     'success' => true,
@@ -60,18 +69,20 @@ class TutorAvailabilityService
                     ? 'All tutors have sufficient availability (20+ hours)'
                     : "Found " . count($lowAvailabilityTutors) . " tutors with insufficient availability",
                 'tutors' => $lowAvailabilityTutors,
+                'unverifiedTutors' => $unverifiedTutors,
+                'unverifiedCount' => $unverifiedTutors->count(),
                 'checkMonth' => $checkMonth,
                 'totalTutors' => $tutors->count()
             ];
 
             // Send email if requested (always for testing, regardless of issues)
             if ($sendEmail) {
-                if (count($lowAvailabilityTutors) > 0) {
-                    $this->sendAvailabilityAlert($lowAvailabilityTutors, $checkMonth);
+                if (count($lowAvailabilityTutors) > 0 || $unverifiedTutors->count() > 0) {
+                    $this->sendAvailabilityAlert($lowAvailabilityTutors, $checkMonth, $unverifiedTutors);
                     $result['emailSent'] = true;
                 } else {
                     // For testing purposes, send a "no issues" email
-                    $this->sendNoIssuesAlert($checkMonth);
+                    $this->sendNoIssuesAlert($checkMonth, $unverifiedTutors);
                     $result['emailSent'] = true;
                     $result['emailType'] = 'no_issues';
                 }
@@ -120,7 +131,7 @@ class TutorAvailabilityService
     /**
      * Send availability alert email
      */
-    private function sendAvailabilityAlert(array $lowAvailabilityTutors, Carbon $checkMonth): void
+    private function sendAvailabilityAlert(array $lowAvailabilityTutors, Carbon $checkMonth, $unverifiedTutors = []): void
     {
         $adminEmail = config('mail.admin_alert');
 
@@ -130,8 +141,8 @@ class TutorAvailabilityService
         }
 
         try {
-            Log::info("Attempting to send availability alert to {$adminEmail} for " . count($lowAvailabilityTutors) . " tutors");
-            Mail::to($adminEmail)->send(new TutorAvailabilityAlert($lowAvailabilityTutors, $checkMonth));
+            Log::info("Attempting to send availability alert to {$adminEmail} for " . count($lowAvailabilityTutors) . " tutors and " . (is_countable($unverifiedTutors) ? count($unverifiedTutors) : 0) . " unverified");
+            Mail::to($adminEmail)->send(new TutorAvailabilityAlert($lowAvailabilityTutors, $checkMonth, $unverifiedTutors));
             Log::info("Availability alert sent successfully to {$adminEmail}");
         } catch (\Exception $e) {
             Log::error('Failed to send availability alert email: ' . $e->getMessage());
@@ -142,7 +153,7 @@ class TutorAvailabilityService
     /**
      * Send "no issues" alert for testing
      */
-    private function sendNoIssuesAlert(Carbon $checkMonth): void
+    private function sendNoIssuesAlert(Carbon $checkMonth, $unverifiedTutors = []): void
     {
         $adminEmail = config('mail.admin_alert');
 
@@ -155,7 +166,7 @@ class TutorAvailabilityService
             Log::info("Sending 'no issues' test email to {$adminEmail}");
 
             // Send with empty array to trigger "no issues" email
-            Mail::to($adminEmail)->send(new TutorAvailabilityAlert([], $checkMonth));
+            Mail::to($adminEmail)->send(new TutorAvailabilityAlert([], $checkMonth, $unverifiedTutors));
             Log::info("No issues alert sent successfully to {$adminEmail}");
         } catch (\Exception $e) {
             Log::error('Failed to send no issues alert email: ' . $e->getMessage());

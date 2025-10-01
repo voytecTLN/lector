@@ -16,14 +16,16 @@ class TutorAvailabilityAlert extends Mailable
 
     public array $lowAvailabilityTutors;
     public Carbon $checkMonth;
+    public $unverifiedTutors;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(array $lowAvailabilityTutors, Carbon $checkMonth)
+    public function __construct(array $lowAvailabilityTutors, Carbon $checkMonth, $unverifiedTutors = [])
     {
         $this->lowAvailabilityTutors = $lowAvailabilityTutors;
         $this->checkMonth = $checkMonth;
+        $this->unverifiedTutors = $unverifiedTutors;
     }
 
     /**
@@ -47,7 +49,9 @@ class TutorAvailabilityAlert extends Mailable
                 'tutors' => $this->lowAvailabilityTutors,
                 'month' => $this->checkMonth,
                 'tutorCount' => count($this->lowAvailabilityTutors),
-                'monthName' => $this->checkMonth->translatedFormat('F Y')
+                'monthName' => $this->checkMonth->translatedFormat('F Y'),
+                'unverifiedTutors' => $this->unverifiedTutors,
+                'unverifiedCount' => is_countable($this->unverifiedTutors) ? count($this->unverifiedTutors) : 0
             ]
         );
     }
