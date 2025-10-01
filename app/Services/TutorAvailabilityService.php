@@ -122,7 +122,7 @@ class TutorAvailabilityService
      */
     private function sendAvailabilityAlert(array $lowAvailabilityTutors, Carbon $checkMonth): void
     {
-        $adminEmail = env('ADMIN_ALERT_EMAIL');
+        $adminEmail = config('mail.admin_alert');
 
         if (!$adminEmail) {
             Log::warning('Admin alert email not configured - ADMIN_ALERT_EMAIL not set');
@@ -144,7 +144,7 @@ class TutorAvailabilityService
      */
     private function sendNoIssuesAlert(Carbon $checkMonth): void
     {
-        $adminEmail = env('ADMIN_ALERT_EMAIL');
+        $adminEmail = config('mail.admin_alert');
 
         if (!$adminEmail) {
             Log::warning('Admin alert email not configured - ADMIN_ALERT_EMAIL not set');

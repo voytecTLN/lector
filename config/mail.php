@@ -78,6 +78,9 @@ return [
     'support_lessons' => env('SUPPORT_EMAIL_LESSONS', 'support-lessons@platforma-lektorow.local'),
     'support_business' => env('SUPPORT_EMAIL_BUSINESS', 'support-biz@platforma-lektorow.local'),
 
+    // Admin alert email
+    'admin_alert' => env('ADMIN_ALERT_EMAIL'),
+
     'markdown' => [
         'theme' => 'default',
 
