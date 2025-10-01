@@ -46,20 +46,23 @@ export class AdminAvailabilityLogs {
             <div class="availability-logs-container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2>Logi Dostępności Lektorów</h2>
-                    <div>
-                        <button class="btn btn-outline-primary me-2" id="refresh-logs">
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-outline-primary btn-sm" id="refresh-logs">
                             <i class="bi bi-arrow-clockwise"></i> Odśwież
                         </button>
-                        <div class="btn-group me-2" role="group">
-                            <select class="form-select" id="month-selector" style="max-width: 200px;">
+                        <div class="btn-group" role="group">
+                            <select class="form-select form-select-sm" id="month-selector" style="max-width: 160px;">
                                 ${this.getMonthOptions()}
                             </select>
-                            <button class="btn btn-warning" id="check-availability-alert">
-                                <i class="bi bi-search"></i> Sprawdź minimalną dostępność
+                            <button class="btn btn-warning btn-sm" id="check-availability-alert">
+                                <i class="bi bi-search"></i> Min. dostępność
+                            </button>
+                            <button class="btn btn-info btn-sm" id="check-full-availability">
+                                <i class="bi bi-list-check"></i> Raport
                             </button>
                         </div>
-                        <button class="btn btn-success" id="export-csv">
-                            <i class="bi bi-download"></i> Eksport CSV
+                        <button class="btn btn-success btn-sm" id="export-csv">
+                            <i class="bi bi-download"></i> CSV
                         </button>
                     </div>
                 </div>
@@ -252,6 +255,11 @@ export class AdminAvailabilityLogs {
         // Check availability alert
         document.getElementById('check-availability-alert')?.addEventListener('click', () => {
             this.checkAvailabilityAlert()
+        })
+
+        // Check full availability report
+        document.getElementById('check-full-availability')?.addEventListener('click', () => {
+            this.checkFullAvailabilityReport()
         })
 
         // Enter key in search
@@ -734,6 +742,61 @@ export class AdminAvailabilityLogs {
         }
     }
 
+
+    private async checkFullAvailabilityReport() {
+        const button = document.getElementById('check-full-availability') as HTMLButtonElement
+        const monthSelector = document.getElementById('month-selector') as HTMLSelectElement
+
+        if (!button || !monthSelector) return
+
+        const selectedMonth = monthSelector.value
+        if (!selectedMonth) {
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Wybierz miesiąc do sprawdzenia'
+                }
+            }))
+            return
+        }
+
+        // Show loading state
+        const originalText = button.innerHTML
+        button.innerHTML = '<i class="bi bi-hourglass-split"></i> Generowanie...'
+        button.disabled = true
+
+        try {
+            const response = await api.post('/admin/full-availability-report', {
+                month: selectedMonth
+            })
+
+            if (response && (response as any).success) {
+                const data = (response as any).data
+                const totalTutors = data?.totalTutors || 0
+
+                document.dispatchEvent(new CustomEvent('notification:show', {
+                    detail: {
+                        type: 'success',
+                        message: `Raport dla ${totalTutors} lektorów został wysłany email.`
+                    }
+                }))
+            } else {
+                throw new Error('Niepowodzenie generowania raportu')
+            }
+        } catch (error) {
+            console.error('Error generating full availability report:', error)
+            document.dispatchEvent(new CustomEvent('notification:show', {
+                detail: {
+                    type: 'error',
+                    message: 'Nie udało się wygenerować raportu wszystkich lektorów'
+                }
+            }))
+        } finally {
+            // Restore button state
+            button.innerHTML = originalText
+            button.disabled = false
+        }
+    }
 
     private async exportToCSV() {
         try {

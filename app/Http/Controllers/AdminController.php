@@ -281,4 +281,38 @@ class AdminController extends Controller
         }
     }
 
+    /**
+     * Generate full availability report for all tutors
+     */
+    public function fullAvailabilityReport(Request $request): JsonResponse
+    {
+        $request->validate([
+            'month' => 'required|date_format:Y-m'
+        ]);
+
+        try {
+            $month = $request->input('month');
+
+            // Use service to generate full report
+            $result = $this->tutorAvailabilityService->generateFullAvailabilityReport($month);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Raport dostępności został wygenerowany i wysłany',
+                'data' => [
+                    'totalTutors' => $result['totalTutors'],
+                    'month' => $month,
+                    'emailSent' => $result['emailSent']
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to generate full availability report: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Nie udało się wygenerować raportu dostępności: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

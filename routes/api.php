@@ -168,6 +168,10 @@ Route::middleware('auth:sanctum')->group(function () {
                 // Check availability alert
                 Route::post('/check-availability-alert', [AdminController::class, 'checkAvailabilityAlert'])
                     ->name('api.admin.check-availability-alert');
+
+                // Full availability report
+                Route::post('/full-availability-report', [AdminController::class, 'fullAvailabilityReport'])
+                    ->name('api.admin.full-availability-report');
             });
         });
 

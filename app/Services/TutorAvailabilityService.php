@@ -173,4 +173,75 @@ class TutorAvailabilityService
             throw $e;
         }
     }
+
+    /**
+     * Generate full availability report for all verified tutors
+     */
+    public function generateFullAvailabilityReport(string $monthString): array
+    {
+        try {
+            // Parse month
+            $checkMonth = Carbon::createFromFormat('Y-m', $monthString)->startOfMonth();
+            $monthEnd = $checkMonth->copy()->endOfMonth();
+
+            // Get all active verified tutors
+            $tutors = User::where('role', User::ROLE_TUTOR)
+                ->where('status', User::STATUS_ACTIVE)
+                ->whereHas('tutorProfile', function ($query) {
+                    $query->where('is_verified', true);
+                })
+                ->with('tutorProfile')
+                ->orderBy('name')
+                ->get();
+
+            $tutorReports = [];
+
+            foreach ($tutors as $tutor) {
+                $availabilityHours = $this->calculateTutorAvailabilityHours($tutor->id, $checkMonth, $monthEnd);
+
+                $tutorReports[] = [
+                    'tutor' => $tutor,
+                    'hours' => $availabilityHours
+                ];
+            }
+
+            // Send email report
+            $this->sendFullAvailabilityReport($tutorReports, $checkMonth);
+
+            return [
+                'success' => true,
+                'totalTutors' => count($tutorReports),
+                'month' => $monthString,
+                'emailSent' => true
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('TutorAvailabilityService full report error: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Send full availability report email
+     */
+    private function sendFullAvailabilityReport(array $tutorReports, Carbon $checkMonth): void
+    {
+        $adminEmail = config('mail.admin_alert');
+
+        if (!$adminEmail) {
+            Log::warning('Admin alert email not configured - ADMIN_ALERT_EMAIL not set');
+            return;
+        }
+
+        try {
+            Log::info("Sending full availability report to {$adminEmail} for " . count($tutorReports) . " tutors");
+
+            // Use new mail class for full report
+            Mail::to($adminEmail)->send(new \App\Mail\TutorFullAvailabilityReport($tutorReports, $checkMonth));
+            Log::info("Full availability report sent successfully to {$adminEmail}");
+        } catch (\Exception $e) {
+            Log::error('Failed to send full availability report email: ' . $e->getMessage());
+            throw $e;
+        }
+    }
 }
