@@ -85,7 +85,7 @@ class ExternalStudentController extends Controller
                 'phone' => $request->input('phone'),
                 'birth_date' => $request->input('birth_date'),
                 'city' => $request->input('city'),
-                'country' => $request->input('country'),
+                'country' => $request->input('country', 'Polska'), // Domyślnie 'Polska' jeśli nie podano
                 'status' => User::STATUS_ACTIVE,
                 'account_source' => User::SOURCE_API,
                 // Automatycznie zaakceptowany regulamin (został zaakceptowany w źródłowej platformie)
