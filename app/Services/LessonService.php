@@ -541,14 +541,34 @@ class LessonService
             $query->where('status', $request->status);
         }
 
-        // Apply tutor filter
+        // Apply tutor filter (search by name or email)
         if ($request->has('tutor_id') && $request->tutor_id) {
-            $query->where('tutor_id', $request->tutor_id);
+            if (is_numeric($request->tutor_id)) {
+                // If numeric, assume it's an ID (for backward compatibility)
+                $query->where('tutor_id', $request->tutor_id);
+            } else {
+                // Text search by name or email
+                $query->whereHas('tutor', function ($q) use ($request) {
+                    $searchTerm = '%' . $request->tutor_id . '%';
+                    $q->where('name', 'like', $searchTerm)
+                      ->orWhere('email', 'like', $searchTerm);
+                });
+            }
         }
 
-        // Apply student filter
+        // Apply student filter (search by name or email)
         if ($request->has('student_id') && $request->student_id) {
-            $query->where('student_id', $request->student_id);
+            if (is_numeric($request->student_id)) {
+                // If numeric, assume it's an ID (for backward compatibility)
+                $query->where('student_id', $request->student_id);
+            } else {
+                // Text search by name or email
+                $query->whereHas('student', function ($q) use ($request) {
+                    $searchTerm = '%' . $request->student_id . '%';
+                    $q->where('name', 'like', $searchTerm)
+                      ->orWhere('email', 'like', $searchTerm);
+                });
+            }
         }
 
         // Apply date range filter

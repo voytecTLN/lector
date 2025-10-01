@@ -18,8 +18,25 @@ export class ChangelogPage implements RouteComponent {
     // Example changelog data - in real app this would come from API or config
     private changelog: ChangelogEntry[] = [
         {
-            version: "1.3.2",
+            version: "1.3.3",
             releaseDate: "2025-10-01",
+            sections: {
+                admin: [
+                    "📊 Całkowicie przeprojektowano stronę raport dostępności lektorów",
+                    "📊 Całkowicie przeprojektowano filtry na stronie raportu dostępności lektorów",
+                    "📥 Poprawiono eksport CSV raportów dostępności",
+                    "🎨 Ulepszona stylizacja interfejsu",
+                    "🐛 Naprawiono błędy w eksporcie CSV lekcji - teraz działa poprawnie we wszystkich sekcjach",
+                    "🐛 Naprawiono eksport lekcji - wyeliminowano błąd 500",
+                    "📊 Ulepszono format eksportu CSV lekcji",
+                    "🔍 Całkowicie przeprojektowano filtry w sekcji 'Wszystkie lekcje'",
+                    "📧 Naprawiono wartości w emailach alertów dostępności"
+                ]
+            }
+        },
+        {
+            version: "1.3.2",
+            releaseDate: "2025-09-30",
             sections: {
                 admin: [
                     "📊 Poprawiono system testowych danych - dodano przykładowe dane do wszystkich sekcji systemu",

@@ -13,23 +13,35 @@ export interface ReportFilters {
 }
 
 export interface AvailabilityReportData {
+    mode?: string
     summary: {
         totalAdded: number
         totalRemoved: number
         totalModified: number
         activeTutors: number
+        totalSlots?: number
+        totalTutors?: number
         dateRange: {
             from: string
             to: string
         }
     }
     tutors: Array<{
-        tutorId: number
+        tutorId?: number
         tutorName: string
         added: number
         removed: number
-        modified: number
-        lastActivity: string
+        modified?: number
+        lastActivity?: string
+        net?: number
+        netto?: number
+    }>
+    slots?: Array<{
+        id: number
+        tutorName: string
+        date: string
+        time: string
+        [key: string]: any
     }>
     dailyActivity?: Array<{
         date: string

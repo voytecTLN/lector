@@ -57,7 +57,7 @@ class TutorAvailabilityService
                 if ($availabilityHours < 20) {
                     $lowAvailabilityTutors[] = [
                         'tutor' => $tutor,
-                        'hours' => $availabilityHours
+                        'hours' => $availabilityHours  // Wartość netto bez podwajania
                     ];
                 }
             }
@@ -201,7 +201,7 @@ class TutorAvailabilityService
 
                 $tutorReports[] = [
                     'tutor' => $tutor,
-                    'hours' => $availabilityHours
+                    'hours' => $availabilityHours  // Wartość netto bez podwajania
                 ];
             }
 

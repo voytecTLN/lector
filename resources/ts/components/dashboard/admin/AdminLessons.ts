@@ -1,6 +1,4 @@
 import { LessonService } from '@services/LessonService'
-import { tutorService } from '@services/TutorService'
-import { studentService } from '@services/StudentService'
 import { LessonStatusManager } from '@/components/lessons/LessonStatusManager'
 import { AvatarHelper } from '@/utils/AvatarHelper'
 
@@ -55,7 +53,7 @@ export class AdminLessons {
                     <div class="row g-3">
                         <div class="col-md-3">
                             <label for="status-filter" class="form-label">Status</label>
-                            <select class="form-select" id="status-filter" onchange="AdminLessons.applyFilters()">
+                            <select class="form-select" id="status-filter">
                                 <option value="all">Wszystkie</option>
                                 <option value="scheduled">Zaplanowane</option>
                                 <option value="in_progress">W trakcie</option>
@@ -67,28 +65,27 @@ export class AdminLessons {
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label for="tutor-filter" class="form-label">Lektor</label>
-                            <select class="form-select" id="tutor-filter" onchange="AdminLessons.applyFilters()">
-                                <option value="">Wszyscy</option>
-                            </select>
+                            <label for="student-filter" class="form-label">Student</label>
+                            <input type="text" class="form-control" id="student-filter" placeholder="Imię, nazwisko lub email...">
                         </div>
                         <div class="col-md-3">
-                            <label for="student-filter" class="form-label">Student</label>
-                            <select class="form-select" id="student-filter" onchange="AdminLessons.applyFilters()">
-                                <option value="">Wszyscy</option>
-                            </select>
+                            <label for="tutor-filter" class="form-label">Lektor</label>
+                            <input type="text" class="form-control" id="tutor-filter" placeholder="Imię, nazwisko lub email...">
                         </div>
                         <div class="col-md-3">
                             <label for="date-range" class="form-label">Zakres dat</label>
                             <div class="input-group">
-                                <input type="date" class="form-control" id="date-from" onchange="AdminLessons.applyFilters()">
+                                <input type="date" class="form-control" id="date-from">
                                 <span class="input-group-text">-</span>
-                                <input type="date" class="form-control" id="date-to" onchange="AdminLessons.applyFilters()">
+                                <input type="date" class="form-control" id="date-to">
                             </div>
                         </div>
                     </div>
                     <div class="row mt-3">
                         <div class="col-12">
+                            <button class="btn btn-primary me-2" onclick="AdminLessons.applyFilters()">
+                                <i class="bi bi-funnel me-2"></i>Filtruj
+                            </button>
                             <button class="btn btn-outline-secondary" onclick="AdminLessons.resetFilters()">
                                 <i class="bi bi-arrow-counterclockwise me-2"></i>Resetuj filtry
                             </button>
@@ -101,8 +98,6 @@ export class AdminLessons {
     
     private async loadLessons(): Promise<void> {
         try {
-            // Load tutors and students for filters
-            await this.loadFilterOptions()
             
             // Build query params
             const params = new URLSearchParams()
@@ -135,32 +130,6 @@ export class AdminLessons {
         }
     }
     
-    private async loadFilterOptions(): Promise<void> {
-        try {
-            // Load tutors
-            const tutorsResponse = await tutorService.getAllTutors()
-            const tutors = tutorsResponse || []
-            
-            const tutorSelect = document.getElementById('tutor-filter') as HTMLSelectElement
-            if (tutorSelect) {
-                tutorSelect.innerHTML = '<option value="">Wszyscy</option>' + 
-                    tutors.map((tutor: any) => `<option value="${tutor.id}">${tutor.name}</option>`).join('')
-            }
-            
-            // Load students
-            const studentsResponse = await studentService.getAllStudents()
-            const students = studentsResponse || []
-            
-            const studentSelect = document.getElementById('student-filter') as HTMLSelectElement
-            if (studentSelect) {
-                studentSelect.innerHTML = '<option value="">Wszyscy</option>' + 
-                    students.map((student: any) => `<option value="${student.id}">${student.name}</option>`).join('')
-            }
-        } catch (error) {
-            console.error('Error loading filter options:', error)
-            // Don't block lesson loading if filter options fail
-        }
-    }
     
     private renderLessons(lessons: any[]): void {
         const container = document.getElementById('lessons-container')
@@ -457,8 +426,8 @@ export class AdminLessons {
         const instance = AdminLessons.instance
         instance.currentFilter = {
             status: (document.getElementById('status-filter') as HTMLSelectElement)?.value || 'all',
-            tutorId: (document.getElementById('tutor-filter') as HTMLSelectElement)?.value || '',
-            studentId: (document.getElementById('student-filter') as HTMLSelectElement)?.value || '',
+            tutorId: (document.getElementById('tutor-filter') as HTMLInputElement)?.value || '',
+            studentId: (document.getElementById('student-filter') as HTMLInputElement)?.value || '',
             dateFrom: (document.getElementById('date-from') as HTMLInputElement)?.value || '',
             dateTo: (document.getElementById('date-to') as HTMLInputElement)?.value || ''
         }
@@ -473,10 +442,10 @@ export class AdminLessons {
         const statusFilter = document.getElementById('status-filter') as HTMLSelectElement
         if (statusFilter) statusFilter.value = 'all'
 
-        const tutorFilter = document.getElementById('tutor-filter') as HTMLSelectElement
+        const tutorFilter = document.getElementById('tutor-filter') as HTMLInputElement
         if (tutorFilter) tutorFilter.value = ''
 
-        const studentFilter = document.getElementById('student-filter') as HTMLSelectElement
+        const studentFilter = document.getElementById('student-filter') as HTMLInputElement
         if (studentFilter) studentFilter.value = ''
 
         const dateFrom = document.getElementById('date-from') as HTMLInputElement
@@ -533,85 +502,30 @@ export class AdminLessons {
                 }
             }))
 
-            // Build query params from current filters
-            const params = new URLSearchParams()
+
+            // Use LessonService like other exports
+            const { LessonService } = await import('../../../services/LessonService')
+
+            // Convert our filters to the format expected by LessonService
+            const filters: any = {}
             if (instance.currentFilter.status !== 'all') {
-                params.append('status', instance.currentFilter.status)
+                filters.status = instance.currentFilter.status
             }
             if (instance.currentFilter.tutorId) {
-                params.append('tutor_id', instance.currentFilter.tutorId)
+                filters.tutor_id = instance.currentFilter.tutorId
             }
             if (instance.currentFilter.studentId) {
-                params.append('student_id', instance.currentFilter.studentId)
+                filters.student_id = instance.currentFilter.studentId
             }
             if (instance.currentFilter.dateFrom) {
-                params.append('date_from', instance.currentFilter.dateFrom)
+                filters.date_from = instance.currentFilter.dateFrom
             }
             if (instance.currentFilter.dateTo) {
-                params.append('date_to', instance.currentFilter.dateTo)
+                filters.date_to = instance.currentFilter.dateTo
             }
 
-            // Debug: sprawdź URL i parametry
-            const exportUrl = `/api/lessons/export?${params}`
-            console.log('Export URL:', exportUrl)
-            console.log('Export params:', Object.fromEntries(params.entries()))
-
-            // Test: sprawdź najpierw czy endpoint jest dostępny
-            const testResponse = await fetch('/api/lessons', {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                credentials: 'same-origin'
-            })
-            console.log('Test /api/lessons status:', testResponse.status)
-
-            // Test: sprawdź auth user
-            const authResponse = await fetch('/api/auth/me', {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                credentials: 'same-origin'
-            })
-            console.log('Auth status:', authResponse.status)
-            if (authResponse.ok) {
-                const user = await authResponse.json()
-                console.log('Current user:', user)
-            }
-
-            // Fetch CSV data - bez niepotrzebnych headers
-            const response = await fetch(exportUrl, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                credentials: 'same-origin'
-            })
-
-            console.log('Response status:', response.status)
-            console.log('Response URL:', response.url)
-
-            if (!response.ok) {
-                // Debug: sprawdź co zwraca server
-                const errorText = await response.text()
-                console.error('Export error response:', errorText)
-                console.error('Response status:', response.status)
-                console.error('Response headers:', Object.fromEntries(response.headers.entries()))
-                throw new Error(`Błąd podczas eksportu danych: ${response.status} - ${errorText.substring(0, 200)}`)
-            }
-
-            // Check if response is actually CSV
-            const contentType = response.headers.get('content-type')
-            if (!contentType || !contentType.includes('csv')) {
-                const responseText = await response.text()
-                console.error('Expected CSV but got:', contentType)
-                console.error('Response body:', responseText.substring(0, 500))
-                throw new Error('Server nie zwrócił pliku CSV. Sprawdź logi serwera.')
-            }
-
-            // Get the blob from response
-            const blob = await response.blob()
+            // Get CSV blob using the service
+            const blob = await LessonService.exportLessons('csv', filters)
 
             // Create download link
             const url = window.URL.createObjectURL(blob)

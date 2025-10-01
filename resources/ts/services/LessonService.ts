@@ -154,28 +154,21 @@ class LessonServiceClass {
         }
     }
 
-    async exportLessons(format: 'csv' | 'pdf' = 'csv', filters?: any): Promise<Blob> {
-        const params = new URLSearchParams({ format })
+    async exportToCSV(filters?: any): Promise<Blob> {
+        const params: any = {}
         if (filters) {
             Object.entries(filters).forEach(([key, value]) => {
-                if (value) params.append(key, value as string)
+                if (value) params[key] = value as string
             })
         }
-        
-        // Use fetch directly for blob response
-        const response = await fetch(`/api/lessons/export?${params.toString()}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-                'Accept': 'application/octet-stream',
-            },
-        })
+        params.format = 'csv'
 
-        if (!response.ok) {
-            throw new Error('Export failed')
-        }
+        return await api.get<Blob>('/lessons/export', params, { responseType: 'blob' })
+    }
 
-        return await response.blob()
+    // Legacy method for backward compatibility
+    async exportLessons(format: 'csv' | 'pdf' = 'csv', filters?: any): Promise<Blob> {
+        return await this.exportToCSV(filters)
     }
 }
 

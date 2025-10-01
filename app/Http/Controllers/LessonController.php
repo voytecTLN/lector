@@ -398,31 +398,10 @@ class LessonController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 
-            $query = \App\Models\Lesson::with(['student', 'tutor', 'tutor.tutorProfile']);
+            // Use the service method to get filtered query
+            $query = $this->lessonService->getFilteredLessonsQuery($request);
 
-            // Apply filters
-            if ($request->has('status') && $request->status !== 'all') {
-                $query->where('status', $request->status);
-            }
-
-            if ($request->has('tutor_id')) {
-                $query->where('tutor_id', $request->tutor_id);
-            }
-
-            if ($request->has('student_id')) {
-                $query->where('student_id', $request->student_id);
-            }
-
-            if ($request->has('date_from')) {
-                $query->where('lesson_date', '>=', $request->date_from);
-            }
-
-            if ($request->has('date_to')) {
-                $query->where('lesson_date', '<=', $request->date_to);
-            }
-
-            $lessons = $query->orderBy('lesson_date', 'desc')
-                            ->orderBy('start_time', 'desc')
+            $lessons = $query->with(['student', 'tutor', 'tutor.tutorProfile'])
                             ->get();
 
             return response()->json([
@@ -601,13 +580,12 @@ class LessonController extends Controller
             $query = $this->lessonService->getFilteredLessonsQuery($request);
 
             // Get all lessons matching filters (no pagination for export)
-            $lessons = $query->with(['student', 'tutor', 'package'])->get();
+            $lessons = $query->with(['student', 'tutor', 'packageAssignment', 'packageAssignment.package'])->get();
 
             // Generate CSV content
             $csvData = [];
-            $csvData[] = ['ID', 'Data lekcji', 'Godzina rozpoczęcia', 'Godzina zakończenia', 'Student', 'Email studenta',
-                         'Lektor', 'Email lektora', 'Status', 'Typ lekcji', 'Język', 'Temat',
-                         'Ocena studenta', 'Komentarz studenta', 'Notatki', 'Cena', 'Link do spotkania',
+            $csvData[] = ['ID', 'Data lekcji', 'Godzina rozpoczęcia', 'Godzina zakończenia', 'Student', 'Lektor',
+                         'Status', 'Język', 'Ocena studenta', 'Komentarz studenta', 'Notatki',
                          'Data utworzenia', 'Data aktualizacji'];
 
             foreach ($lessons as $lesson) {
@@ -621,31 +599,19 @@ class LessonController extends Controller
                     'technical_issues' => 'Problemy techniczne'
                 ];
 
-                $lessonTypes = [
-                    'individual' => 'Indywidualna',
-                    'group' => 'Grupowa',
-                    'intensive' => 'Intensywna',
-                    'conversation' => 'Konwersacja'
-                ];
 
                 $csvData[] = [
                     $lesson->id,
                     $lesson->lesson_date,
                     $lesson->start_time,
                     $lesson->end_time,
-                    $lesson->student ? $lesson->student->name : '-',
-                    $lesson->student ? $lesson->student->email : '-',
-                    $lesson->tutor ? $lesson->tutor->name : '-',
-                    $lesson->tutor ? $lesson->tutor->email : '-',
+                    $lesson->student ? $lesson->student->name . ' (' . $lesson->student->email . ')' : '-',
+                    $lesson->tutor ? $lesson->tutor->name . ' (' . $lesson->tutor->email . ')' : '-',
                     $statusLabels[$lesson->status] ?? $lesson->status,
-                    $lessonTypes[$lesson->lesson_type] ?? $lesson->lesson_type,
                     $lesson->language ?: '-',
-                    $lesson->topic ?: '-',
                     $lesson->student_rating ?: '-',
                     $lesson->student_comment ?: '-',
                     $lesson->notes ?: '-',
-                    $lesson->price ? number_format($lesson->price, 2) . ' zł' : '-',
-                    $lesson->meeting_link ?: '-',
                     $lesson->created_at->format('Y-m-d H:i:s'),
                     $lesson->updated_at->format('Y-m-d H:i:s')
                 ];

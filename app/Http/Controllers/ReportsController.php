@@ -121,9 +121,10 @@ class ReportsController extends Controller
             'dateTo' => 'nullable|date|after_or_equal:dateFrom',
             'tutorId' => 'nullable|exists:users,id',
             'studentId' => 'nullable|exists:users,id',
-            'action' => 'nullable|string|in:added,updated,deleted,bulk_update',
+            'action' => 'nullable|string|in:added,updated,deleted,bulk_update,net-availability',
             'status' => 'nullable|string',
-            'format' => 'nullable|string|in:json,csv,pdf'
+            'format' => 'nullable|string|in:json,csv,pdf',
+            'mode' => 'nullable|string|in:summary,net-availability'
         ]);
 
         // Ustaw domyślne daty jeśli nie podano
@@ -161,15 +162,59 @@ class ReportsController extends Controller
             // Nagłówki CSV w zależności od typu raportu
             switch($reportType) {
                 case 'tutor-availability':
-                    fputcsv($file, ['Lektor', 'Dodane', 'Usunięte', 'Zmodyfikowane', 'Ostatnia aktywność']);
-                    foreach ($data['tutors'] as $tutor) {
+                    if (isset($data['mode']) && $data['mode'] === 'net-availability') {
+                        // Format dostępności netto - podsumowanie + pełen log
+
+                        // Sekcja 1: Podsumowanie tutorów
+                        fputcsv($file, ['=== PODSUMOWANIE WEDŁUG LEKTORÓW ===']);
+                        fputcsv($file, ['Nazwa lektora', 'Dodane', 'Usunięte', 'Netto']);
+
+                        foreach ($data['tutors'] as $tutor) {
+                            fputcsv($file, [
+                                $tutor['tutorName'],
+                                $tutor['added'],
+                                $tutor['removed'],
+                                $tutor['netto']
+                            ]);
+                        }
+
+                        // Pusta linia
+                        fputcsv($file, []);
+
+                        // Sekcja 2: Pełen log netto
+                        fputcsv($file, ['=== PEŁEN RAPORT DOSTĘPNOŚCI NETTO ===']);
                         fputcsv($file, [
-                            $tutor['tutorName'],
-                            $tutor['added'],
-                            $tutor['removed'],
-                            $tutor['modified'],
-                            $tutor['lastActivity']
+                            'ID',
+                            'Data',
+                            'Godzina',
+                            'Lektor',
+                            'Data dostępności',
+                            'Godzina dostępności'
                         ]);
+
+                        foreach ($data['slots'] as $slot) {
+                            $createdAt = \Carbon\Carbon::parse($slot['created_at']);
+                            fputcsv($file, [
+                                $slot['log_id'] ?? $slot['id'],
+                                $createdAt->format('Y-m-d'),
+                                $createdAt->format('H:i:s'),
+                                $slot['tutorName'],
+                                $slot['date'],
+                                $slot['timeSlot']
+                            ]);
+                        }
+                    } else {
+                        // Stary format podsumowania
+                        fputcsv($file, ['Lektor', 'Dodane', 'Usunięte', 'Godziny (netto)', 'Ostatnia aktywność']);
+                        foreach ($data['tutors'] as $tutor) {
+                            fputcsv($file, [
+                                $tutor['tutorName'],
+                                $tutor['added'],
+                                $tutor['removed'],
+                                $tutor['hoursNet'] . 'h',
+                                $tutor['lastActivity']
+                            ]);
+                        }
                     }
                     break;
                     
@@ -207,4 +252,5 @@ class ReportsController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
 }

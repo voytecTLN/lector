@@ -28,7 +28,7 @@ export class ReportsHub {
         },
         {
             id: 'student-activity',
-            title: 'Aktywność studentów',
+            title: 'Aktywność studentów [W trakcie przygotowania]',
             icon: '👨‍🎓',
             description: 'Rezerwacje, uczestnictwo, anulowania',
             category: 'student',
